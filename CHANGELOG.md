@@ -2,6 +2,17 @@
 
 All notable changes to the "Noted" extension will be documented in this file.
 
+## [1.0.7] - 2025-10-03
+
+### Features
+- Enhance description in README for clarity on extension capabilities
+- Update release scripts to include changelog generation
+- Update contribution guidelines to include code style and testing requirements
+- Add changelog script and dependency for automated changelog generation
+
+### Bug Fixes
+- Improve formatting and clarity in README sections
+
 ## [1.0.4] - 2025-10-03
 
 ### Changed
