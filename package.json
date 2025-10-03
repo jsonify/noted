@@ -1,0 +1,220 @@
+{
+  "name": "noted",
+  "displayName": "Noted",
+  "description": "Organized workspace notes with templates, search, and daily tracking",
+  "version": "1.0.3",
+  "icon": "icon.png",
+  "publisher": "jsonify",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jsonify/noted"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:noted.openToday"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "notedExplorer",
+          "title": "Noted",
+          "icon": "$(notebook)"
+        }
+      ]
+    },
+    "views": {
+      "notedExplorer": [
+        {
+          "id": "notedView",
+          "name": "Notes"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "notedView",
+        "contents": "Welcome to Noted! 📝\n\nYour digital scratch pad for tracking solutions, bugs, and daily progress.\n\nTo get started, choose where to store your notes:\n[Use Default Location](command:noted.setupDefaultFolder)\nNotes will be stored in your workspace under 'Notes/'\n\n[Choose Custom Location](command:noted.setupCustomFolder)\nSelect a different folder for your notes\n\nOnce set up, you can:\n• Press Cmd+Shift+N to open today's note\n• Use templates for structured notes\n• Search across all your notes\n• Track your daily progress"
+      }
+    ],
+    "commands": [
+      {
+        "command": "noted.openToday",
+        "title": "Noted: Open Today's Note",
+        "icon": "$(add)"
+      },
+      {
+        "command": "noted.openWithTemplate",
+        "title": "Noted: Open with Template"
+      },
+      {
+        "command": "noted.insertTimestamp",
+        "title": "Noted: Insert Timestamp",
+        "icon": "$(watch)"
+      },
+      {
+        "command": "noted.changeFormat",
+        "title": "Noted: Toggle File Format (txt/md)",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "noted.refresh",
+        "title": "Noted: Refresh Notes",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "noted.searchNotes",
+        "title": "Noted: Search Notes",
+        "icon": "$(search)"
+      },
+      {
+        "command": "noted.showStats",
+        "title": "Noted: Show Note Statistics",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "noted.exportNotes",
+        "title": "Noted: Export Notes",
+        "icon": "$(export)"
+      },
+      {
+        "command": "noted.moveNotesFolder",
+        "title": "Noted: Move Notes Folder"
+      },
+      {
+        "command": "noted.setupDefaultFolder",
+        "title": "Noted: Setup Default Notes Folder"
+      },
+      {
+        "command": "noted.setupCustomFolder",
+        "title": "Noted: Setup Custom Notes Folder"
+      },
+      {
+        "command": "noted.deleteNote",
+        "title": "Noted: Delete Note"
+      },
+      {
+        "command": "noted.renameNote",
+        "title": "Noted: Rename Note"
+      },
+      {
+        "command": "noted.duplicateNote",
+        "title": "Noted: Duplicate Note"
+      },
+      {
+        "command": "noted.copyPath",
+        "title": "Noted: Copy Path"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "noted.openToday",
+          "when": "view == notedView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "noted.searchNotes",
+          "when": "view == notedView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "noted.refresh",
+          "when": "view == notedView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "noted.showStats",
+          "when": "view == notedView",
+          "group": "actions@1"
+        },
+        {
+          "command": "noted.exportNotes",
+          "when": "view == notedView",
+          "group": "actions@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "noted.deleteNote",
+          "when": "view == notedView && viewItem == note",
+          "group": "edit@1"
+        },
+        {
+          "command": "noted.renameNote",
+          "when": "view == notedView && viewItem == note",
+          "group": "edit@2"
+        },
+        {
+          "command": "noted.duplicateNote",
+          "when": "view == notedView && viewItem == note",
+          "group": "edit@3"
+        },
+        {
+          "command": "noted.copyPath",
+          "when": "view == notedView && viewItem == note",
+          "group": "clipboard@1"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "noted.openToday",
+        "key": "ctrl+shift+n",
+        "mac": "cmd+shift+n"
+      },
+      {
+        "command": "noted.insertTimestamp",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t"
+      }
+    ],
+    "configuration": {
+      "title": "Noted",
+      "properties": {
+        "noted.notesFolder": {
+          "type": "string",
+          "default": "Notes",
+          "description": "Folder name for storing notes"
+        },
+        "noted.fileFormat": {
+          "type": "string",
+          "enum": [
+            "txt",
+            "md"
+          ],
+          "default": "txt",
+          "description": "File format for notes"
+        },
+        "noted.useTemplate": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use a custom template for new notes"
+        },
+        "noted.template": {
+          "type": "string",
+          "default": "{date}\n==================================================\n\nPROBLEM:\n\n\nSTEPS TAKEN:\n1. \n\nSOLUTION:\n\n\nNOTES:\n",
+          "description": "Template for new notes. Use {date} and {time} as placeholders.",
+          "editPresentation": "multilineText"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "packageManager": "pnpm@10.18.0",
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0"
+  }
+}

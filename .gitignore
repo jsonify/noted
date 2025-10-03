@@ -1,0 +1,21 @@
+# Compiled output
+out/
+*.vsix
+
+# Dependencies
+node_modules/
+
+# IDE
+.vscode-test/
+.vscode/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# pnpm
+pnpm-lock.yaml
+.pnpm-debug.log*
