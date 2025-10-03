@@ -94,3 +94,4 @@ MIT
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+Please ensure to follow the existing code style and include tests for new features.
