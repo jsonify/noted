@@ -12,15 +12,15 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 
 ## Usage
 
-1. **Open Today's Note**: 
+1. **Open Today's Note**:
    - Keyboard: `Ctrl+Shift+N` (Windows/Linux) or `Cmd+Shift+N` (Mac)
    - Command Palette: "Noted: Open Today's Note"
 
-2. **Insert Timestamp**: 
+2. **Insert Timestamp**:
    - Keyboard: `Ctrl+Shift+T` (Windows/Linux) or `Cmd+Shift+T` (Mac)
    - Command Palette: "Noted: Insert Timestamp"
 
-3. **Toggle Format**: 
+3. **Toggle Format**:
    - Command Palette: "Noted: Toggle File Format (txt/md)"
 
 ## Configuration
@@ -32,7 +32,7 @@ Access settings via VS Code Settings (search for "Noted"):
 - **Use Template**: Enable custom templates for new notes
 - **Template**: Customize your note structure (supports {date} and {time} placeholders)
 
-### Example Template for Problem Solving:
+### Example Template for Problem Solving
 
 ```
 {date}
@@ -54,12 +54,14 @@ NOTES:
 ## Installation
 
 ### From VS Code Marketplace
+
 1. Open VS Code
 2. Go to Extensions (Ctrl+Shift+X / Cmd+Shift+X)
 3. Search for "Noted"
 4. Click Install
 
 ### Manual Installation
+
 1. Download the latest `.vsix` file from the releases page
 2. Open VS Code
 3. Go to Extensions view
@@ -78,6 +80,7 @@ NOTES:
 ## Folder Structure
 
 Your notes will be organized like this:
+
 ```
 Notes/
   └── 2025/
