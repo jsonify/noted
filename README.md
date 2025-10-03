@@ -1,6 +1,6 @@
 # Noted Extension
 
-A VS Code extension for quick daily note-taking - your digital scratch pad!
+A VS Code extension for quick daily note-taking, meeting notes, project ideas, and more - your digital scratch pad!
 
 ## Features
 
