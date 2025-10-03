@@ -209,7 +209,10 @@
   "scripts": {
     "vscode:prepublish": "pnpm run compile",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "release:patch": "pnpm version patch && pnpm run package",
+    "release:minor": "pnpm version minor && pnpm run package",
+    "release:major": "pnpm version major && pnpm run package"
   },
   "packageManager": "pnpm@10.18.0",
   "devDependencies": {
