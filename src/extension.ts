@@ -362,9 +362,11 @@ async function createNoteFromTemplate(templateType: string) {
     const month = now.toLocaleString('en-US', { month: '2-digit' });
     const monthName = now.toLocaleString('en-US', { month: 'long' });
     const folderName = `${month}-${monthName}`;
+    const day = now.toLocaleString('en-US', { day: '2-digit' });
     
     const notePath = path.join(rootPath, notesFolder, year, folderName);
-    const fileName = `${sanitizedName}.${fileFormat}`;
+    // Prepend date to the sanitized name
+    const fileName = `${year}-${month}-${day}-${sanitizedName}.${fileFormat}`;
     const filePath = path.join(notePath, fileName);
 
     if (!fs.existsSync(notePath)) {
