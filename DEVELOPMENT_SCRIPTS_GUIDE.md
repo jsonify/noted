@@ -132,11 +132,11 @@ chore: update dependencies
 
 All release scripts follow this pattern:
 1. **Generate changelog** from commit history (before version bump)
-2. **Bump version** in [`package.json`](package.json:5) and create git tag
-3. **Commit changelog** to the version bump commit
+2. **Commit changelog** to git (separate commit)
+3. **Bump version** in [`package.json`](package.json:5) and create git tag
 4. **Create package** for distribution
 
-**⚠️ Important:** The changelog must be generated BEFORE the version bump because `conventional-changelog` uses git tags to determine which commits to include. If the tag is created first, there are no "new" commits to process.
+**⚠️ Important:** The changelog must be generated BEFORE the version bump and committed as a separate step because `conventional-changelog` uses git tags to determine which commits to include. If the tag is created first, there are no "new" commits to process.
 
 ### `release:patch` - Patch Release
 ```bash

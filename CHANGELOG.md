@@ -2,6 +2,14 @@
 
 All notable changes to the "Noted" extension will be documented in this file.
 
+## [1.0.10] - 2025-10-10
+
+### Features
+- Update changelog generation process and release scripts
+
+### Bug Fixes
+- Format changelog for consistency and clarity
+
 ## [1.0.9] - 2025-10-10
 
 ### Features
