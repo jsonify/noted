@@ -5,7 +5,6 @@ import * as fs from 'fs';
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
     
-    // DEBUG: Log current configuration state
     const config = vscode.workspace.getConfiguration('noted');
     const notesFolder = config.get<string>('notesFolder', 'Notes');
     const workspaceFolders = vscode.workspace.workspaceFolders;
