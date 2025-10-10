@@ -2,7 +2,7 @@
   "name": "noted",
   "displayName": "Noted",
   "description": "Organized workspace notes with templates, search, and daily tracking",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "icon": "icon.png",
   "publisher": "jsonify",
   "repository": {
