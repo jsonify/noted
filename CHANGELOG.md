@@ -2,6 +2,18 @@
 
 All notable changes to the "Noted" extension will be documented in this file.
 
+## [1.0.9] - 2025-10-10
+
+### Features
+- Update release scripts to automatically commit changelog changes
+- Add command to show current notes folder configuration for debugging
+- Prepend date to note filenames for better organization
+
+## [1.0.8] - 2025-10-10
+
+### Features
+- Enhanced release process documentation
+
 ## [1.0.7] - 2025-10-03
 
 ### Features
