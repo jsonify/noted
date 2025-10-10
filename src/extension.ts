@@ -4,6 +4,16 @@ import * as fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
+    
+    // DEBUG: Log current configuration state
+    const config = vscode.workspace.getConfiguration('noted');
+    const notesFolder = config.get<string>('notesFolder', 'Notes');
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    console.log('[NOTED DEBUG] Extension activated with:');
+    console.log('[NOTED DEBUG] - notesFolder config:', notesFolder);
+    console.log('[NOTED DEBUG] - is absolute path:', path.isAbsolute(notesFolder));
+    console.log('[NOTED DEBUG] - workspace folders:', workspaceFolders?.length || 0);
+    console.log('[NOTED DEBUG] - resolved notes path:', getNotesPath());
 
     // Check if notes folder is configured
     initializeNotesFolder();
@@ -180,41 +190,52 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command to setup default folder
     let setupDefaultFolder = vscode.commands.registerCommand('noted.setupDefaultFolder', async () => {
+        // Create a default path in user's home directory if no workspace is available
+        let defaultNotesPath: string;
         const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders) {
-            vscode.window.showErrorMessage('Please open a workspace folder first');
-            return;
+        
+        if (workspaceFolders) {
+            // If workspace exists, use workspace/Notes
+            const rootPath = workspaceFolders[0].uri.fsPath;
+            defaultNotesPath = path.join(rootPath, 'Notes');
+        } else {
+            // No workspace, use ~/Notes as a sensible default
+            const homeDir = require('os').homedir();
+            defaultNotesPath = path.join(homeDir, 'Notes');
+        }
+        
+        // Check if the path already exists or create it
+        if (!fs.existsSync(defaultNotesPath)) {
+            try {
+                fs.mkdirSync(defaultNotesPath, { recursive: true });
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create default notes folder: ${error}`);
+                return;
+            }
         }
 
         const config = vscode.workspace.getConfiguration('noted');
-        const notesFolder = config.get<string>('notesFolder', 'Notes');
-        const rootPath = workspaceFolders[0].uri.fsPath;
-        const notesPath = path.join(rootPath, notesFolder);
-
-        fs.mkdirSync(notesPath, { recursive: true });
         
-        // Save to global configuration so it persists across all windows
-        await config.update('notesFolder', notesPath, vscode.ConfigurationTarget.Global);
+        // Always save absolute path to global configuration so it works across all windows
+        await config.update('notesFolder', defaultNotesPath, vscode.ConfigurationTarget.Global);
         
-        vscode.window.showInformationMessage(`Notes folder created at: ${notesPath}`);
+        console.log('[NOTED DEBUG] Setup default folder:', defaultNotesPath);
+        vscode.window.showInformationMessage(`Notes folder created at: ${defaultNotesPath}`);
         notesProvider.refresh();
     });
 
     // Command to setup custom folder
     let setupCustomFolder = vscode.commands.registerCommand('noted.setupCustomFolder', async () => {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders) {
-            vscode.window.showErrorMessage('Please open a workspace folder first');
-            return;
-        }
+        // Start from user's home directory as a sensible default
+        const homeDir = require('os').homedir();
+        const defaultUri = vscode.Uri.file(homeDir);
 
-        const rootPath = workspaceFolders[0].uri.fsPath;
         const selectedUri = await vscode.window.showOpenDialog({
             canSelectFiles: false,
             canSelectFolders: true,
             canSelectMany: false,
             openLabel: 'Select Notes Folder',
-            defaultUri: vscode.Uri.file(rootPath),
+            defaultUri: defaultUri,
             title: 'Choose where to store your notes'
         });
 
@@ -228,13 +249,19 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             if (!fs.existsSync(selectedPath)) {
-                fs.mkdirSync(selectedPath, { recursive: true });
+                try {
+                    fs.mkdirSync(selectedPath, { recursive: true });
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to create notes folder: ${error}`);
+                    return;
+                }
             }
 
             const config = vscode.workspace.getConfiguration('noted');
-            // Save absolute path to global configuration
+            // Always save absolute path to global configuration
             await config.update('notesFolder', selectedPath, vscode.ConfigurationTarget.Global);
             
+            console.log('[NOTED DEBUG] Setup custom folder:', selectedPath);
             vscode.window.showInformationMessage(`Notes folder set to: ${selectedPath}`);
             notesProvider.refresh();
         }
@@ -259,21 +286,33 @@ async function initializeNotesFolder() {
 }
 
 function getNotesPath(): string | null {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
-        return null;
-    }
-
     const config = vscode.workspace.getConfiguration('noted');
     const notesFolder = config.get<string>('notesFolder', 'Notes');
-
-    // If absolute path, use it directly; otherwise make it relative to workspace
+    
+    console.log('[NOTED DEBUG] getNotesPath() called:');
+    console.log('[NOTED DEBUG] - notesFolder config:', notesFolder);
+    console.log('[NOTED DEBUG] - is absolute:', path.isAbsolute(notesFolder));
+    
+    // If absolute path, use it directly (this is the preferred approach for global configuration)
     if (path.isAbsolute(notesFolder)) {
+        console.log('[NOTED DEBUG] - returning absolute path:', notesFolder);
         return notesFolder;
     }
 
-    const rootPath = workspaceFolders[0].uri.fsPath;
-    return path.join(rootPath, notesFolder);
+    // For relative paths, try to resolve against workspace first, then fall back to current folder
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    console.log('[NOTED DEBUG] - workspaceFolders exist:', !!workspaceFolders);
+    
+    if (workspaceFolders) {
+        const rootPath = workspaceFolders[0].uri.fsPath;
+        const resolvedPath = path.join(rootPath, notesFolder);
+        console.log('[NOTED DEBUG] - returning workspace-relative path:', resolvedPath);
+        return resolvedPath;
+    }
+
+    // No workspace and relative path - this means user hasn't configured a default location yet
+    console.log('[NOTED DEBUG] - no workspace and relative path, returning null');
+    return null;
 }
 
 async function moveNotesFolderLocation() {
@@ -653,7 +692,11 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
 
     getChildren(element?: TreeItem): Thenable<TreeItem[]> {
         const notesPath = getNotesPath();
+        console.log('[NOTED DEBUG] TreeProvider.getChildren() called:');
+        console.log('[NOTED DEBUG] - notesPath:', notesPath);
+        
         if (!notesPath) {
+            console.log('[NOTED DEBUG] - showing welcome screen (no notesPath)');
             return Promise.resolve([]);
         }
 
@@ -661,17 +704,24 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
         if (!fs.existsSync(notesPath)) {
             const config = vscode.workspace.getConfiguration('noted');
             const notesFolder = config.get<string>('notesFolder', 'Notes');
+            console.log('[NOTED DEBUG] - notes folder does not exist, checking if should auto-create');
+            console.log('[NOTED DEBUG] - notesFolder config:', notesFolder);
+            console.log('[NOTED DEBUG] - is absolute:', path.isAbsolute(notesFolder));
 
-            // Only create if a custom path was set (absolute path means user configured it)
+            // Auto-create if it's an absolute path (user has configured it)
             if (path.isAbsolute(notesFolder)) {
+                console.log('[NOTED DEBUG] - auto-creating configured absolute path folder');
                 try {
                     fs.mkdirSync(notesPath, { recursive: true });
+                    console.log('[NOTED DEBUG] - successfully created notes folder');
                 } catch (error) {
-                    console.error('Failed to create notes folder:', error);
+                    console.error('[NOTED DEBUG] Failed to create notes folder:', error);
+                    vscode.window.showErrorMessage(`Failed to create notes folder: ${error}`);
                     return Promise.resolve([]);
                 }
             } else {
-                // Not configured yet, show welcome screen
+                console.log('[NOTED DEBUG] - relative path without workspace, showing welcome screen');
+                // Not properly configured yet, show welcome screen
                 return Promise.resolve([]);
             }
         }
