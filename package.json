@@ -110,6 +110,10 @@
       {
         "command": "noted.copyPath",
         "title": "Noted: Copy Path"
+      },
+      {
+        "command": "noted.showConfig",
+        "title": "Noted: Show Configuration (Debug)"
       }
     ],
     "menus": {

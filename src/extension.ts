@@ -156,10 +156,26 @@ export function activate(context: vscode.ExtensionContext) {
         const base = path.basename(item.label, ext);
         const newName = `${base}-copy${ext}`;
         const newPath = path.join(dir, newName);
-        
+
         fs.writeFileSync(newPath, content);
         notesProvider.refresh();
         vscode.window.showInformationMessage(`Duplicated as ${newName}`);
+    });
+
+    // Command to show current notes folder configuration (for debugging)
+    let showNotesConfig = vscode.commands.registerCommand('noted.showConfig', async () => {
+        const config = vscode.workspace.getConfiguration('noted');
+        const notesFolder = config.get<string>('notesFolder', 'Notes');
+        const notesPath = getNotesPath();
+        const isAbsolute = path.isAbsolute(notesFolder);
+
+        const message = `Notes Configuration:\n\n` +
+            `Config value: ${notesFolder}\n` +
+            `Is absolute: ${isAbsolute}\n` +
+            `Resolved path: ${notesPath}\n` +
+            `Exists: ${notesPath && fs.existsSync(notesPath)}`;
+
+        vscode.window.showInformationMessage(message, { modal: true });
     });
 
     // Command to setup default folder
@@ -176,7 +192,11 @@ export function activate(context: vscode.ExtensionContext) {
         const notesPath = path.join(rootPath, notesFolder);
 
         fs.mkdirSync(notesPath, { recursive: true });
-        vscode.window.showInformationMessage(`Notes folder created at: ${notesFolder}/`);
+        
+        // Save to global configuration so it persists across all windows
+        await config.update('notesFolder', notesPath, vscode.ConfigurationTarget.Global);
+        
+        vscode.window.showInformationMessage(`Notes folder created at: ${notesPath}`);
         notesProvider.refresh();
     });
 
@@ -206,26 +226,25 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage('Cannot use .vscode directory for notes');
                 return;
             }
-            
-            const relativePath = path.relative(rootPath, selectedPath);
-            const folderToSave = selectedPath.startsWith(rootPath) ? relativePath : selectedPath;
 
             if (!fs.existsSync(selectedPath)) {
                 fs.mkdirSync(selectedPath, { recursive: true });
             }
 
             const config = vscode.workspace.getConfiguration('noted');
-            await config.update('notesFolder', folderToSave, vscode.ConfigurationTarget.Workspace);
-            vscode.window.showInformationMessage(`Notes folder set to: ${folderToSave}`);
+            // Save absolute path to global configuration
+            await config.update('notesFolder', selectedPath, vscode.ConfigurationTarget.Global);
+            
+            vscode.window.showInformationMessage(`Notes folder set to: ${selectedPath}`);
             notesProvider.refresh();
         }
     });
 
     context.subscriptions.push(
-        openTodayNote, openWithTemplate, insertTimestamp, changeFormat, 
-        refreshNotes, openNote, deleteNote, renameNote, copyPath, 
+        openTodayNote, openWithTemplate, insertTimestamp, changeFormat,
+        refreshNotes, openNote, deleteNote, renameNote, copyPath,
         searchNotes, showStats, exportNotes, duplicateNote, moveNotesFolder,
-        setupDefaultFolder, setupCustomFolder
+        setupDefaultFolder, setupCustomFolder, showNotesConfig
     );
 }
 
@@ -235,13 +254,26 @@ async function initializeNotesFolder() {
         return;
     }
 
-    const config = vscode.workspace.getConfiguration('noted');
-    const notesFolder = config.get<string>('notesFolder', 'notes');
-    const rootPath = workspaceFolders[0].uri.fsPath;
-    const notesPath = path.join(rootPath, notesFolder);
-
     // Check if notes folder exists - if not, tree view will show welcome actions
     // User can click buttons in the tree view to set up
+}
+
+function getNotesPath(): string | null {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+        return null;
+    }
+
+    const config = vscode.workspace.getConfiguration('noted');
+    const notesFolder = config.get<string>('notesFolder', 'Notes');
+
+    // If absolute path, use it directly; otherwise make it relative to workspace
+    if (path.isAbsolute(notesFolder)) {
+        return notesFolder;
+    }
+
+    const rootPath = workspaceFolders[0].uri.fsPath;
+    return path.join(rootPath, notesFolder);
 }
 
 async function moveNotesFolderLocation() {
@@ -253,52 +285,81 @@ async function moveNotesFolderLocation() {
 
     const config = vscode.workspace.getConfiguration('noted');
     const currentFolder = config.get<string>('notesFolder', 'notes');
+    
+    // Handle both relative and absolute paths
     const rootPath = workspaceFolders[0].uri.fsPath;
-    const currentPath = path.join(rootPath, currentFolder);
+    const currentPath = path.isAbsolute(currentFolder) 
+        ? currentFolder 
+        : path.join(rootPath, currentFolder);
 
     if (!fs.existsSync(currentPath)) {
         vscode.window.showErrorMessage('Current notes folder does not exist');
         return;
     }
 
-    const newFolderName = await vscode.window.showInputBox({
-        prompt: 'Enter new folder name for notes',
-        value: currentFolder,
-        placeHolder: 'my-notes'
+    const selectedUri = await vscode.window.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        openLabel: 'Select New Notes Location',
+        defaultUri: vscode.Uri.file(path.dirname(currentPath)),
+        title: 'Choose new location for your notes'
     });
 
-    if (!newFolderName || newFolderName === currentFolder) {
+    if (!selectedUri || !selectedUri[0]) {
         return;
     }
 
-    const newPath = path.join(rootPath, newFolderName);
+    const newPath = selectedUri[0].fsPath;
 
-    if (fs.existsSync(newPath)) {
-        vscode.window.showErrorMessage('Destination folder already exists');
+    if (fs.existsSync(newPath) && fs.readdirSync(newPath).length > 0) {
+        vscode.window.showErrorMessage('Destination folder must be empty');
         return;
     }
 
     try {
-        fs.renameSync(currentPath, newPath);
-        await config.update('notesFolder', newFolderName, vscode.ConfigurationTarget.Workspace);
-        vscode.window.showInformationMessage(`Notes moved to: ${newFolderName}`);
+        if (!fs.existsSync(newPath)) {
+            fs.mkdirSync(newPath, { recursive: true });
+        }
+        
+        // Copy all files recursively
+        const copyRecursive = (src: string, dest: string) => {
+            const entries = fs.readdirSync(src, { withFileTypes: true });
+            for (const entry of entries) {
+                const srcPath = path.join(src, entry.name);
+                const destPath = path.join(dest, entry.name);
+                if (entry.isDirectory()) {
+                    fs.mkdirSync(destPath, { recursive: true });
+                    copyRecursive(srcPath, destPath);
+                } else {
+                    fs.copyFileSync(srcPath, destPath);
+                }
+            }
+        };
+        
+        copyRecursive(currentPath, newPath);
+        
+        // Delete old folder
+        fs.rmSync(currentPath, { recursive: true });
+        
+        // Save to global configuration
+        await config.update('notesFolder', newPath, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`Notes moved to: ${newPath}`);
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to move notes: ${error}`);
     }
 }
 
 async function openDailyNote(templateType?: string) {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
+    const notesPath = getNotesPath();
+    if (!notesPath) {
         vscode.window.showErrorMessage('Please open a workspace folder first');
         return;
     }
 
     const config = vscode.workspace.getConfiguration('noted');
-    const notesFolder = config.get<string>('notesFolder', 'notes');
     const fileFormat = config.get<string>('fileFormat', 'txt');
 
-    const rootPath = workspaceFolders[0].uri.fsPath;
     const now = new Date();
     
     const year = now.getFullYear().toString();
@@ -308,11 +369,11 @@ async function openDailyNote(templateType?: string) {
     const day = now.toLocaleString('en-US', { day: '2-digit' });
     const fileName = `${year}-${month}-${day}.${fileFormat}`;
     
-    const notePath = path.join(rootPath, notesFolder, year, folderName);
-    const filePath = path.join(notePath, fileName);
+    const noteFolder = path.join(notesPath, year, folderName);
+    const filePath = path.join(noteFolder, fileName);
 
-    if (!fs.existsSync(notePath)) {
-        fs.mkdirSync(notePath, { recursive: true });
+    if (!fs.existsSync(noteFolder)) {
+        fs.mkdirSync(noteFolder, { recursive: true });
     }
 
     if (!fs.existsSync(filePath)) {
@@ -329,8 +390,8 @@ async function openDailyNote(templateType?: string) {
 }
 
 async function createNoteFromTemplate(templateType: string) {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
+    const notesPath = getNotesPath();
+    if (!notesPath) {
         vscode.window.showErrorMessage('Please open a workspace folder first');
         return;
     }
@@ -352,25 +413,21 @@ async function createNoteFromTemplate(templateType: string) {
         .replace(/[^a-z0-9-_]/g, '');
 
     const config = vscode.workspace.getConfiguration('noted');
-    const notesFolder = config.get<string>('notesFolder', 'notes');
     const fileFormat = config.get<string>('fileFormat', 'txt');
 
-    const rootPath = workspaceFolders[0].uri.fsPath;
     const now = new Date();
     
     const year = now.getFullYear().toString();
     const month = now.toLocaleString('en-US', { month: '2-digit' });
     const monthName = now.toLocaleString('en-US', { month: 'long' });
     const folderName = `${month}-${monthName}`;
-    const day = now.toLocaleString('en-US', { day: '2-digit' });
     
-    const notePath = path.join(rootPath, notesFolder, year, folderName);
-    // Prepend date to the sanitized name
-    const fileName = `${year}-${month}-${day}-${sanitizedName}.${fileFormat}`;
-    const filePath = path.join(notePath, fileName);
+    const noteFolder = path.join(notesPath, year, folderName);
+    const fileName = `${sanitizedName}.${fileFormat}`;
+    const filePath = path.join(noteFolder, fileName);
 
-    if (!fs.existsSync(notePath)) {
-        fs.mkdirSync(notePath, { recursive: true });
+    if (!fs.existsSync(noteFolder)) {
+        fs.mkdirSync(noteFolder, { recursive: true });
     }
 
     if (fs.existsSync(filePath)) {
@@ -452,15 +509,10 @@ NEXT STEPS:
 }
 
 async function searchInNotes(query: string): Promise<Array<{file: string, preview: string}>> {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
+    const notesPath = getNotesPath();
+    if (!notesPath) {
         return [];
     }
-
-    const config = vscode.workspace.getConfiguration('noted');
-    const notesFolder = config.get<string>('notesFolder', 'notes');
-    const rootPath = workspaceFolders[0].uri.fsPath;
-    const notesPath = path.join(rootPath, notesFolder);
 
     if (!fs.existsSync(notesPath)) {
         return [];
@@ -494,15 +546,10 @@ async function searchInNotes(query: string): Promise<Array<{file: string, previe
 }
 
 async function getNoteStats(): Promise<{total: number, thisWeek: number, thisMonth: number}> {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
+    const notesPath = getNotesPath();
+    if (!notesPath) {
         return { total: 0, thisWeek: 0, thisMonth: 0 };
     }
-
-    const config = vscode.workspace.getConfiguration('noted');
-    const notesFolder = config.get<string>('notesFolder', 'notes');
-    const rootPath = workspaceFolders[0].uri.fsPath;
-    const notesPath = path.join(rootPath, notesFolder);
 
     if (!fs.existsSync(notesPath)) {
         return { total: 0, thisWeek: 0, thisMonth: 0 };
@@ -536,20 +583,22 @@ async function getNoteStats(): Promise<{total: number, thisWeek: number, thisMon
 }
 
 async function exportNotesToFile(range: string) {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
+    const notesPath = getNotesPath();
+    if (!notesPath) {
+        vscode.window.showErrorMessage('Please open a workspace folder first');
         return;
     }
-
-    const config = vscode.workspace.getConfiguration('noted');
-    const notesFolder = config.get<string>('notesFolder', 'notes');
-    const rootPath = workspaceFolders[0].uri.fsPath;
-    const notesPath = path.join(rootPath, notesFolder);
 
     if (!fs.existsSync(notesPath)) {
         vscode.window.showErrorMessage('No notes found');
         return;
     }
+
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+        return;
+    }
+    const rootPath = workspaceFolders[0].uri.fsPath;
 
     const now = new Date();
     let filterDate: Date;
@@ -603,18 +652,28 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
     }
 
     getChildren(element?: TreeItem): Thenable<TreeItem[]> {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders) {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
             return Promise.resolve([]);
         }
 
-        const config = vscode.workspace.getConfiguration('noted');
-        const notesFolder = config.get<string>('notesFolder', 'notes');
-        const rootPath = workspaceFolders[0].uri.fsPath;
-        const notesPath = path.join(rootPath, notesFolder);
-
+        // Auto-create the notes folder if it's configured but doesn't exist
         if (!fs.existsSync(notesPath)) {
-            return Promise.resolve([]);
+            const config = vscode.workspace.getConfiguration('noted');
+            const notesFolder = config.get<string>('notesFolder', 'Notes');
+
+            // Only create if a custom path was set (absolute path means user configured it)
+            if (path.isAbsolute(notesFolder)) {
+                try {
+                    fs.mkdirSync(notesPath, { recursive: true });
+                } catch (error) {
+                    console.error('Failed to create notes folder:', error);
+                    return Promise.resolve([]);
+                }
+            } else {
+                // Not configured yet, show welcome screen
+                return Promise.resolve([]);
+            }
         }
 
         if (!element) {
