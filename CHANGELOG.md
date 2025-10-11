@@ -2,6 +2,35 @@
 
 All notable changes to the "Noted" extension will be documented in this file.
 
+## [1.1.0] - 2025-10-10
+
+### Features
+
+- Add templates view and enhance welcome messages for better user guidance
+
+## [1.0.13] - 2025-10-10
+
+### Bug Fixes
+
+- Improve release scripts to conditionally commit changelog changes
+
+### Other Changes
+
+- Remove debug log for current configuration state
+
+## [1.0.12] - 2025-10-10
+
+### Features
+
+- Enhance notes folder setup and logging for better user experience
+
+## [1.0.11] - 2025-10-10
+
+### Features
+
+- Update release scripts to commit changelog changes separately
+- Clarify changelog generation process in development guide
+
 ## [1.0.10] - 2025-10-10
 
 ### Features
