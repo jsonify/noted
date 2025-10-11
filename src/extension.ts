@@ -17,9 +17,13 @@ export function activate(context: vscode.ExtensionContext) {
     // Check if notes folder is configured
     initializeNotesFolder();
 
-    // Create tree data provider
+    // Create tree data provider for main notes view
     const notesProvider = new NotesTreeProvider();
     vscode.window.registerTreeDataProvider('notedView', notesProvider);
+
+    // Create tree data provider for templates view (empty, uses viewsWelcome)
+    const templatesProvider = new TemplatesTreeProvider();
+    vscode.window.registerTreeDataProvider('notedTemplatesView', templatesProvider);
 
     // Command to open today's note
     let openTodayNote = vscode.commands.registerCommand('noted.openToday', async () => {
@@ -677,6 +681,24 @@ async function exportNotesToFile(range: string) {
     vscode.window.showInformationMessage(`Exported to ${path.basename(exportPath)}`);
 }
 
+class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
+    readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
+
+    refresh(): void {
+        this._onDidChangeTreeData.fire();
+    }
+
+    getTreeItem(element: TreeItem): vscode.TreeItem {
+        return element;
+    }
+
+    // Return empty array - templates are shown via viewsWelcome
+    getChildren(element?: TreeItem): Thenable<TreeItem[]> {
+        return Promise.resolve([]);
+    }
+}
+
 class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
@@ -726,35 +748,25 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
         }
 
         if (!element) {
-            // Root level - show templates, recent, and years
+            // Root level - show recent notes and years
             const items: TreeItem[] = [];
-            
-            // Template section
-            items.push(new SectionItem('Templates', 'templates'));
-            
+
             // Recent notes section
             items.push(new SectionItem('Recent Notes', 'recent'));
-            
+
             // Years
             const years = fs.readdirSync(notesPath)
                 .filter(f => fs.statSync(path.join(notesPath, f)).isDirectory())
                 .sort()
                 .reverse();
-            
-            items.push(...years.map(year => 
+
+            items.push(...years.map(year =>
                 new NoteItem(year, path.join(notesPath, year), vscode.TreeItemCollapsibleState.Collapsed, 'year')
             ));
-            
+
             return Promise.resolve(items);
         } else if (element instanceof SectionItem) {
-            if (element.sectionType === 'templates') {
-                return Promise.resolve([
-                    new TemplateItem('Problem/Solution', 'problem-solution'),
-                    new TemplateItem('Meeting Notes', 'meeting'),
-                    new TemplateItem('Research', 'research'),
-                    new TemplateItem('Quick Note', 'quick')
-                ]);
-            } else if (element.sectionType === 'recent') {
+            if (element.sectionType === 'recent') {
                 return this.getRecentNotes(notesPath);
             }
         } else if (element instanceof NoteItem) {
@@ -849,22 +861,7 @@ class SectionItem extends TreeItem {
         public readonly sectionType: string
     ) {
         super(label, vscode.TreeItemCollapsibleState.Collapsed);
-        this.iconPath = new vscode.ThemeIcon(sectionType === 'templates' ? 'file-code' : 'history');
-    }
-}
-
-class TemplateItem extends TreeItem {
-    constructor(
-        public readonly label: string,
-        public readonly templateType: string
-    ) {
-        super(label, vscode.TreeItemCollapsibleState.None);
-        this.iconPath = new vscode.ThemeIcon('new-file');
-        this.command = {
-            command: 'noted.openWithTemplate',
-            title: 'Open with Template',
-            arguments: [templateType]
-        };
+        this.iconPath = new vscode.ThemeIcon('history');
     }
 }
 

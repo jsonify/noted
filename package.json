@@ -32,12 +32,20 @@
     "views": {
       "notedExplorer": [
         {
+          "id": "notedTemplatesView",
+          "name": "Templates"
+        },
+        {
           "id": "notedView",
-          "name": "Notes"
+          "name": "My Notes"
         }
       ]
     },
     "viewsWelcome": [
+      {
+        "view": "notedTemplatesView",
+        "contents": "Document bugs and troubleshooting sessions.\n[Problem/Solution Note](command:noted.openWithTemplate?%5B%22problem-solution%22%5D)\n\nOrganize meeting notes and action items.\n[Meeting Note](command:noted.openWithTemplate?%5B%22meeting%22%5D)\n\nStructure your research and findings.\n[Research Note](command:noted.openWithTemplate?%5B%22research%22%5D)\n\nCreate a simple dated note.\n[Quick Note](command:noted.openWithTemplate?%5B%22quick%22%5D)"
+      },
       {
         "view": "notedView",
         "contents": "Welcome to Noted! 📝\n\nYour digital scratch pad for tracking solutions, bugs, and daily progress.\n\nTo get started, choose where to store your notes:\n[Use Default Location](command:noted.setupDefaultFolder)\nNotes will be stored in your workspace under 'Notes/'\n\n[Choose Custom Location](command:noted.setupCustomFolder)\nSelect a different folder for your notes\n\nOnce set up, you can:\n• Press Cmd+Shift+N to open today's note\n• Use templates for structured notes\n• Search across all your notes\n• Track your daily progress"
