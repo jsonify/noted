@@ -1,4 +1,8 @@
-## [1.1.1](https://github.com/jsonify/noted/compare/v1.0.5...v1.1.1) (2025-10-14)
+# [1.2.0](https://github.com/jsonify/noted/compare/v1.3.0...v1.2.0) (2025-10-14)
+
+
+
+## [1.2.0](https://github.com/jsonify/noted/compare/v1.1.0...v1.2.0) (2025-10-14)
 
 
 ### Bug Fixes
