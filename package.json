@@ -120,6 +120,10 @@
         "title": "Noted: Copy Path"
       },
       {
+        "command": "noted.revealInExplorer",
+        "title": "Noted: Show in System Explorer"
+      },
+      {
         "command": "noted.showConfig",
         "title": "Noted: Show Configuration (Debug)"
       }
@@ -172,6 +176,11 @@
           "command": "noted.copyPath",
           "when": "view == notedView && viewItem == note",
           "group": "clipboard@1"
+        },
+        {
+          "command": "noted.revealInExplorer",
+          "when": "view == notedView && viewItem == note",
+          "group": "clipboard@2"
         }
       ]
     },

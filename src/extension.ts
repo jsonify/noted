@@ -108,6 +108,11 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage('Path copied to clipboard');
     });
 
+    // Command to reveal in file explorer
+    let revealInExplorer = vscode.commands.registerCommand('noted.revealInExplorer', async (item: NoteItem) => {
+        await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(item.filePath));
+    });
+
     // Command to search notes
     let searchNotes = vscode.commands.registerCommand('noted.searchNotes', async () => {
         const query = await vscode.window.showInputBox({
@@ -272,7 +277,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         openTodayNote, openWithTemplate, insertTimestamp, changeFormat,
-        refreshNotes, openNote, deleteNote, renameNote, copyPath,
+        refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, showStats, exportNotes, duplicateNote, moveNotesFolder,
         setupDefaultFolder, setupCustomFolder, showNotesConfig
     );
