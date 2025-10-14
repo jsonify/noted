@@ -458,14 +458,20 @@ async function createNoteFromTemplate(templateType: string) {
     const fileFormat = config.get<string>('fileFormat', 'txt');
 
     const now = new Date();
-    
+
     const year = now.getFullYear().toString();
     const month = now.toLocaleString('en-US', { month: '2-digit' });
     const monthName = now.toLocaleString('en-US', { month: 'long' });
     const folderName = `${month}-${monthName}`;
-    
+    const day = now.toLocaleString('en-US', { day: '2-digit' });
+    const time = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).replace(':', '');
+
     const noteFolder = path.join(notesPath, year, folderName);
-    const fileName = `${sanitizedName}.${fileFormat}`;
+    const fileName = `${year}-${month}-${day}-${time}-${sanitizedName}.${fileFormat}`;
     const filePath = path.join(noteFolder, fileName);
 
     if (!fs.existsSync(noteFolder)) {
