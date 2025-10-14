@@ -426,13 +426,16 @@ async function createNewCustomTemplate() {
     }
 
     // Create a starter template
-    const starterContent = `{filename}
+    const starterContent = `File: {filename}
 Created: {date} at {time}
 ==================================================
 
 [Your template content here]
 
-Use {filename}, {date}, and {time} as placeholders.
+Available placeholders:
+- {filename}: The name of the note file
+- {date}: The current date
+- {time}: The current time
 `;
 
     fs.writeFileSync(templateFile, starterContent);
