@@ -32,7 +32,43 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // Command to open with template
-    let openWithTemplate = vscode.commands.registerCommand('noted.openWithTemplate', async (templateType: string) => {
+    let openWithTemplate = vscode.commands.registerCommand('noted.openWithTemplate', async (templateType?: string) => {
+        // If no template type provided, show picker
+        if (!templateType) {
+            const customTemplates = getCustomTemplates();
+            const builtInTemplates = [
+                { label: 'Problem/Solution', value: 'problem-solution', description: 'Document bugs and troubleshooting' },
+                { label: 'Meeting', value: 'meeting', description: 'Organize meeting notes and action items' },
+                { label: 'Research', value: 'research', description: 'Structure your research and findings' },
+                { label: 'Quick', value: 'quick', description: 'Simple dated note' }
+            ];
+
+            const items = [
+                ...builtInTemplates.map(t => ({
+                    label: t.label,
+                    description: t.description,
+                    detail: 'Built-in',
+                    value: t.value
+                })),
+                ...customTemplates.map(t => ({
+                    label: t,
+                    description: 'Custom template',
+                    detail: 'Custom',
+                    value: t
+                }))
+            ];
+
+            const selected = await vscode.window.showQuickPick(items, {
+                placeHolder: 'Select a template'
+            });
+
+            if (!selected) {
+                return;
+            }
+
+            templateType = selected.value;
+        }
+
         await createNoteFromTemplate(templateType);
         notesProvider.refresh();
     });
@@ -232,6 +268,22 @@ export function activate(context: vscode.ExtensionContext) {
         notesProvider.refresh();
     });
 
+    // Command to create custom template
+    let createCustomTemplate = vscode.commands.registerCommand('noted.createCustomTemplate', async () => {
+        await createNewCustomTemplate();
+        templatesProvider.refresh();
+    });
+
+    // Command to open templates folder
+    let openTemplatesFolder = vscode.commands.registerCommand('noted.openTemplatesFolder', async () => {
+        const templatesPath = getTemplatesPath();
+        if (templatesPath && fs.existsSync(templatesPath)) {
+            await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(templatesPath));
+        } else {
+            vscode.window.showErrorMessage('Templates folder does not exist');
+        }
+    });
+
     // Command to setup custom folder
     let setupCustomFolder = vscode.commands.registerCommand('noted.setupCustomFolder', async () => {
         // Start from user's home directory as a sensible default
@@ -279,7 +331,8 @@ export function activate(context: vscode.ExtensionContext) {
         openTodayNote, openWithTemplate, insertTimestamp, changeFormat,
         refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, showStats, exportNotes, duplicateNote, moveNotesFolder,
-        setupDefaultFolder, setupCustomFolder, showNotesConfig
+        setupDefaultFolder, setupCustomFolder, showNotesConfig,
+        createCustomTemplate, openTemplatesFolder
     );
 }
 
@@ -296,11 +349,11 @@ async function initializeNotesFolder() {
 function getNotesPath(): string | null {
     const config = vscode.workspace.getConfiguration('noted');
     const notesFolder = config.get<string>('notesFolder', 'Notes');
-    
+
     console.log('[NOTED DEBUG] getNotesPath() called:');
     console.log('[NOTED DEBUG] - notesFolder config:', notesFolder);
     console.log('[NOTED DEBUG] - is absolute:', path.isAbsolute(notesFolder));
-    
+
     // If absolute path, use it directly (this is the preferred approach for global configuration)
     if (path.isAbsolute(notesFolder)) {
         console.log('[NOTED DEBUG] - returning absolute path:', notesFolder);
@@ -310,7 +363,7 @@ function getNotesPath(): string | null {
     // For relative paths, try to resolve against workspace first, then fall back to current folder
     const workspaceFolders = vscode.workspace.workspaceFolders;
     console.log('[NOTED DEBUG] - workspaceFolders exist:', !!workspaceFolders);
-    
+
     if (workspaceFolders) {
         const rootPath = workspaceFolders[0].uri.fsPath;
         const resolvedPath = path.join(rootPath, notesFolder);
@@ -321,6 +374,72 @@ function getNotesPath(): string | null {
     // No workspace and relative path - this means user hasn't configured a default location yet
     console.log('[NOTED DEBUG] - no workspace and relative path, returning null');
     return null;
+}
+
+function getTemplatesPath(): string | null {
+    const notesPath = getNotesPath();
+    if (!notesPath) {
+        return null;
+    }
+    return path.join(notesPath, '.noted-templates');
+}
+
+function getCustomTemplates(): string[] {
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath || !fs.existsSync(templatesPath)) {
+        return [];
+    }
+
+    return fs.readdirSync(templatesPath)
+        .filter(f => f.endsWith('.txt') || f.endsWith('.md'))
+        .map(f => path.basename(f, path.extname(f)));
+}
+
+async function createNewCustomTemplate() {
+    const templateName = await vscode.window.showInputBox({
+        prompt: 'Enter template name',
+        placeHolder: 'my-template'
+    });
+
+    if (!templateName) {
+        return;
+    }
+
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        vscode.window.showErrorMessage('Please configure notes folder first');
+        return;
+    }
+
+    // Create templates folder if it doesn't exist
+    if (!fs.existsSync(templatesPath)) {
+        fs.mkdirSync(templatesPath, { recursive: true });
+    }
+
+    const config = vscode.workspace.getConfiguration('noted');
+    const fileFormat = config.get<string>('fileFormat', 'txt');
+    const templateFile = path.join(templatesPath, `${templateName}.${fileFormat}`);
+
+    if (fs.existsSync(templateFile)) {
+        vscode.window.showErrorMessage('Template already exists');
+        return;
+    }
+
+    // Create a starter template
+    const starterContent = `{filename}
+Created: {date} at {time}
+==================================================
+
+[Your template content here]
+
+Use {filename}, {date}, and {time} as placeholders.
+`;
+
+    fs.writeFileSync(templateFile, starterContent);
+
+    const document = await vscode.workspace.openTextDocument(templateFile);
+    await vscode.window.showTextDocument(document);
+    vscode.window.showInformationMessage(`Template created: ${templateName}`);
 }
 
 async function moveNotesFolderLocation() {
@@ -500,26 +619,46 @@ async function createNoteFromTemplate(templateType: string) {
 }
 
 function generateTemplate(templateType: string | undefined, date: Date, filename?: string): string {
-    const dateStr = date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+    const dateStr = date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
     });
-    const timeStr = date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
+    const timeStr = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
         minute: '2-digit',
-        hour12: true 
+        hour12: true
     });
 
     const frontmatter = filename ? `File: ${filename}\nCreated: ${dateStr} at ${timeStr}\n${'='.repeat(50)}\n\n` : `${dateStr}\n${'='.repeat(50)}\n\n`;
 
+    // Check if it's a custom template
+    const templatesPath = getTemplatesPath();
+    if (templatesPath && templateType && fs.existsSync(templatesPath)) {
+        const config = vscode.workspace.getConfiguration('noted');
+        const fileFormat = config.get<string>('fileFormat', 'txt');
+        const customTemplatePath = path.join(templatesPath, `${templateType}.${fileFormat}`);
+
+        if (fs.existsSync(customTemplatePath)) {
+            let content = fs.readFileSync(customTemplatePath, 'utf8');
+
+            // Replace placeholders
+            content = content.replace(/{filename}/g, filename || '');
+            content = content.replace(/{date}/g, dateStr);
+            content = content.replace(/{time}/g, timeStr);
+
+            return content;
+        }
+    }
+
+    // Built-in templates
     const templates: Record<string, string> = {
         'problem-solution': `${frontmatter}PROBLEM:
 
 
 STEPS TAKEN:
-1. 
+1.
 
 SOLUTION:
 
@@ -527,29 +666,29 @@ SOLUTION:
 NOTES:
 
 `,
-        'meeting': `${frontmatter}MEETING: 
-ATTENDEES: 
+        'meeting': `${frontmatter}MEETING:
+ATTENDEES:
 
 AGENDA:
-- 
+-
 
 NOTES:
 
 
 ACTION ITEMS:
-- 
+-
 
 `,
-        'research': `${frontmatter}TOPIC: 
+        'research': `${frontmatter}TOPIC:
 
 QUESTIONS:
-- 
+-
 
 FINDINGS:
 
 
 SOURCES:
-- 
+-
 
 NEXT STEPS:
 

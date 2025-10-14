@@ -44,7 +44,7 @@
     "viewsWelcome": [
       {
         "view": "notedTemplatesView",
-        "contents": "Document bugs and troubleshooting sessions.\n[Problem/Solution Note](command:noted.openWithTemplate?%5B%22problem-solution%22%5D)\n\nOrganize meeting notes and action items.\n[Meeting Note](command:noted.openWithTemplate?%5B%22meeting%22%5D)\n\nStructure your research and findings.\n[Research Note](command:noted.openWithTemplate?%5B%22research%22%5D)\n\nCreate a simple dated note.\n[Quick Note](command:noted.openWithTemplate?%5B%22quick%22%5D)"
+        "contents": "Create a new note from a template.\n\n[Choose Template...](command:noted.openWithTemplate)\n\n---\n\nQuick Access\n\n[Problem/Solution](command:noted.openWithTemplate?%5B%22problem-solution%22%5D) • [Meeting](command:noted.openWithTemplate?%5B%22meeting%22%5D) • [Research](command:noted.openWithTemplate?%5B%22research%22%5D) • [Quick](command:noted.openWithTemplate?%5B%22quick%22%5D)\n\n---\n\nManage Templates\n\n[Create New Template](command:noted.createCustomTemplate)\n\n[Open Templates Folder](command:noted.openTemplatesFolder)"
       },
       {
         "view": "notedView",
@@ -122,6 +122,14 @@
       {
         "command": "noted.revealInExplorer",
         "title": "Noted: Show in System Explorer"
+      },
+      {
+        "command": "noted.createCustomTemplate",
+        "title": "Noted: Create Custom Template"
+      },
+      {
+        "command": "noted.openTemplatesFolder",
+        "title": "Noted: Open Templates Folder"
       },
       {
         "command": "noted.showConfig",
