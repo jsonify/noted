@@ -1,6 +1,15 @@
 # [1.2.0](https://github.com/jsonify/noted/compare/v1.3.0...v1.2.0) (2025-10-14)
 
 
+### Bug Fixes
+
+* correct version to 1.2.0 ([2d31dac](https://github.com/jsonify/noted/commit/2d31dac75aaaf8b48e025d4d2b638e220cbc513e))
+
+
+
+# [1.2.0](https://github.com/jsonify/noted/compare/v1.3.0...v1.2.0) (2025-10-14)
+
+
 
 ## [1.2.0](https://github.com/jsonify/noted/compare/v1.1.0...v1.2.0) (2025-10-14)
 
