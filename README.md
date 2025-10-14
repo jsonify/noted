@@ -29,9 +29,9 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 Access settings via VS Code Settings (search for "Noted"):
 
 - **Notes Folder**: Change where notes are stored (default: "Notes")
-- **File Format**: Choose .txt or .md (default: "txt")
+- **File Format**: Choose between .txt or .md format (default: "txt")
 - **Use Template**: Enable custom templates for new notes
-- **Template**: Customize your note structure (supports {date} and {time} placeholders)
+- **Template**: Customize your note structure (supports {date}, {time}, and {filename} placeholders)
 
 ### Example Template for Problem Solving
 
