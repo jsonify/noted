@@ -6,9 +6,10 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 
 - **Quick Access**: Press `Ctrl+Shift+N` (or `Cmd+Shift+N` on Mac) to instantly open today's note
 - **Auto-Organization**: Notes are automatically organized in `Notes/YEAR/MM-MonthName/YYYY-MM-DD.txt`
-- **Timestamps**: Press `Ctrl+Shift+T` (or `Cmd+Shift+T`) to insert a timestamp
+- **Timestamps**: Press `Ctrl+Shift+T` (or `Cmd+Shift+T`) to insert a timestamp with custom note filenames
 - **Flexible Format**: Default .txt files, easily switch to .md with a command
-- **Optional Templates**: Set up a template for structured problem-solving notes
+- **Built-in Templates**: Choose from Problem/Solution, Meeting, Research, or Quick note templates
+- **Custom Templates**: Create and manage your own reusable note templates
 
 ## Usage
 
