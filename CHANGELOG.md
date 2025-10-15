@@ -1,3 +1,14 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [1.2.6](https://github.com/jsonify/noted/compare/v1.2.5...v1.2.6) (2025-10-15)
+
+
+### Features
+
+* replace conventional-changelog workflow with standard-version for reliable changelog generation ([90df5ea](https://github.com/jsonify/noted/commit/90df5ea9edfe17e67026d223c59c12b6f025c59c))
+
 ## [1.2.4](https://github.com/jsonify/noted/compare/v1.2.3...v1.2.4) (2025-10-14)
 
 
