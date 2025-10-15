@@ -241,15 +241,17 @@
     "watch": "tsc -watch -p ./",
     "package": "vsce package",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
-    "release:patch": "pnpm version patch && pnpm run changelog && (git diff --quiet CHANGELOG.md || (git add CHANGELOG.md && git commit --amend --no-edit)) && pnpm run package",
-    "release:minor": "pnpm version minor && pnpm run changelog && (git diff --quiet CHANGELOG.md || (git add CHANGELOG.md && git commit --amend --no-edit)) && pnpm run package",
-    "release:major": "pnpm version major && pnpm run changelog && (git diff --quiet CHANGELOG.md || (git add CHANGELOG.md && git commit --amend --no-edit)) && pnpm run package"
+    "release:patch": "standard-version --release-as patch && pnpm run package",
+    "release:minor": "standard-version --release-as minor && pnpm run package",
+    "release:major": "standard-version --release-as major && pnpm run package",
+    "release": "standard-version && pnpm run package"
   },
   "packageManager": "pnpm@10.18.0",
   "devDependencies": {
     "@types/node": "^18.0.0",
     "@types/vscode": "^1.80.0",
     "conventional-changelog-cli": "^5.0.0",
+    "standard-version": "^9.5.0",
     "typescript": "^5.0.0"
   }
 }
