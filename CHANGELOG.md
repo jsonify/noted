@@ -1,3 +1,12 @@
+## [1.2.4](https://github.com/jsonify/noted/compare/v1.2.3...v1.2.4) (2025-10-14)
+
+
+### Bug Fixes
+
+* change duplicate note error message from error to warning for better UX ([309dfdd](https://github.com/jsonify/noted/commit/309dfdd))
+
+
+
 ## [1.2.3](https://github.com/jsonify/noted/compare/v1.2.2...v1.2.3) (2025-10-14)
 
 
