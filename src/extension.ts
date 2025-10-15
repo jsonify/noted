@@ -606,7 +606,7 @@ async function createNoteFromTemplate(templateType: string) {
     }
 
     if (fs.existsSync(filePath)) {
-        vscode.window.showErrorMessage('Note already exists');
+        vscode.window.showWarningMessage('A note with this name already exists');
         return;
     }
 
