@@ -22,10 +22,32 @@ This is a VS Code extension called "Noted" (published as "noted" by jsonify) tha
 
 ### Core Components
 
-**Extension Entry Point** (`src/extension.ts`):
-- Single-file architecture with all functionality in one module
-- Uses VS Code TreeDataProvider pattern for sidebar UI
-- File operations use Node.js `fs` and `path` modules directly (synchronous operations)
+**Modular Architecture** (completed):
+The extension now uses a fully modular architecture with clear separation of concerns:
+
+- **`src/extension.ts`** (1570 lines): Entry point and command registration
+- **`src/constants.ts`**: Shared constants, templates, and patterns
+- **`src/utils/`**: Validation and helper functions
+  - `validators.ts`: Folder name validation
+  - `dateHelpers.ts`: Date formatting utilities
+  - `folderHelpers.ts`: Recursive folder operations
+- **`src/services/`**: Business logic and file operations
+  - `configService.ts`: Configuration management
+  - `fileSystemService.ts`: Async file operation wrappers
+  - `noteService.ts`: Note operations (search, stats, export)
+  - `templateService.ts`: Template generation
+- **`src/providers/`**: VS Code tree view providers
+  - `treeItems.ts`: Tree item classes
+  - `templatesTreeProvider.ts`: Templates view
+  - `notesTreeProvider.ts`: Main notes tree with drag-and-drop
+- **`src/commands/`**: Command handlers
+- **`src/calendar/`**: Calendar view functionality
+  - `calendarHelpers.ts`: Calendar date operations
+  - `calendarView.ts`: Webview and HTML generation
+
+**File Operations**:
+- All file I/O uses `fs.promises` API with async/await pattern
+- Comprehensive error handling with try/catch blocks and user-friendly messages
 
 ### Key Classes
 
@@ -86,12 +108,13 @@ All commands are registered in `activate()` and defined in package.json contribu
 
 ## Important Implementation Details
 
-1. **File I/O is synchronous**: Uses `fs.readFileSync`, `fs.writeFileSync`, etc. throughout
-2. **No error handling around fs operations**: Direct fs calls without try/catch
-3. **Search is recursive and synchronous**: `searchInNotes()` recursively reads all note files
+1. **File I/O is asynchronous**: All operations use `fs.promises` API with async/await pattern
+2. **Comprehensive error handling**: All file operations wrapped in try/catch with user-friendly messages
+3. **Search is recursive and async**: `searchInNotes()` in `noteService.ts` recursively reads all note files
 4. **Date formatting**: Uses `toLocaleString('en-US', ...)` for consistent formatting
 5. **Note names from templates**: Sanitized with `.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '')`
 6. **Tree view welcome**: Defined in package.json `viewsWelcome` with markdown buttons
+7. **Modular structure**: Code split across 13+ modules for maintainability and testability
 
 ## VS Code Extension Specifics
 

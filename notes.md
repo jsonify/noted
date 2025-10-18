@@ -124,13 +124,14 @@ All templates automatically include a timestamp header with creation date and ti
 
 ## Architecture Notes
 
-- **Modular architecture** (in progress - 85% complete): Code organized into focused modules
+- **Modular architecture** (completed): Code organized into focused modules
   - `src/constants.ts` - Shared constants and templates
   - `src/utils/` - Validation and helper functions
   - `src/services/` - Business logic and file operations
   - `src/providers/` - VS Code tree view providers
   - `src/commands/` - Command handlers
-  - `src/calendar/` - Calendar view functionality
+  - `src/calendar/` - Calendar view functionality (helpers and webview)
+  - `src/extension.ts` - Entry point and command registration (1570 lines, down from 2119)
 - **Asynchronous file operations**: All file I/O uses `fs.promises` API with async/await pattern
 - **Comprehensive error handling**: All file operations wrapped in try/catch with user-friendly error messages
 - **TreeDataProvider pattern**: Standard VS Code tree view implementation with async support
@@ -139,12 +140,13 @@ All templates automatically include a timestamp header with creation date and ti
 
 ## Recent Updates
 
-### Modular Architecture Refactoring (In Progress)
-- **Split 2119-line extension.ts into focused modules**: 85% complete
-- **12 new module files created**: constants, utils, services, providers, commands, calendar
+### Modular Architecture Refactoring (Completed)
+- **Split 2119-line extension.ts into focused modules**: 100% complete
+- **13 new module files created**: constants, utils, services, providers, commands, calendar
 - **All modules compile successfully**: TypeScript compilation passes without errors
 - **Maintained backward compatibility**: Extension continues working during refactoring
-- **Remaining work**: Complete calendar view extraction and wire up extension.ts
+- **26% code reduction**: extension.ts reduced from 2119 to 1570 lines
+- **Calendar module**: Split into calendarHelpers.ts and calendarView.ts for better organization
 
 ### Async/Await Refactoring (Completed)
 - **Converted all file operations to async**: Replaced synchronous fs methods with `fs.promises` API
