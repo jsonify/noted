@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Quick Links
+
+- **[notes.md](./notes.md)**: Complete list of implemented features and current capabilities
+- **[plan.md](./plan.md)**: Development roadmap, planned features, and todo list
+
 ## Project Overview
 
 This is a VS Code extension called "Noted" (published as "noted" by jsonify) that provides organized workspace notes with templates, search, and daily tracking. The extension creates a sidebar activity bar with a tree view for managing notes organized by year/month.

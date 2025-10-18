@@ -151,6 +151,11 @@
       {
         "command": "noted.deleteFolder",
         "title": "Noted: Delete Folder"
+      },
+      {
+        "command": "noted.showCalendar",
+        "title": "Noted: Show Calendar View",
+        "icon": "$(calendar)"
       }
     ],
     "menus": {
@@ -174,6 +179,11 @@
           "command": "noted.refresh",
           "when": "view == notedView",
           "group": "navigation@4"
+        },
+        {
+          "command": "noted.showCalendar",
+          "when": "view == notedView",
+          "group": "navigation@5"
         },
         {
           "command": "noted.showStats",

@@ -14,6 +14,8 @@ Four built-in note templates accessible from the Templates view:
 - **Research**: Structured research with questions, findings, and sources
 - **Quick**: Simple dated note
 
+All templates automatically include a timestamp header with creation date and time.
+
 ### Timestamps
 - **Insert Timestamp** (`Cmd+Shift+T`): Insert `[HH:MM AM/PM]` at cursor position
 
@@ -33,6 +35,19 @@ Four built-in note templates accessible from the Templates view:
 - **Copy Path**: Copy note file path to clipboard
 
 ## Search & Discovery
+
+### Calendar View (NEW)
+- **Show Calendar View**: Visual monthly calendar for navigating daily notes
+- **Interactive Date Selection**: Click any date to see all notes created on that day
+- **Notes List Display**: Shows all notes for selected date below calendar
+  - Click on individual notes to open them
+  - Create new notes directly from the calendar
+  - "Create Another Note" button when notes already exist
+- **Visual Indicators**:
+  - Days with notes are highlighted
+  - Current day marked with special border
+- **Month Navigation**: Previous/Next month buttons and "Today" quick jump
+- **Multi-note Support**: Handles multiple notes per day (daily notes + templated notes)
 
 ### Search
 - **Full-Text Search**: Search across all notes with preview of matching lines
@@ -97,6 +112,7 @@ Four built-in note templates accessible from the Templates view:
 - Create Folder
 - Search Notes
 - Refresh
+- Show Calendar View
 - Show Statistics
 - Export Notes
 
