@@ -852,7 +852,10 @@ function generateTemplate(templateType: string | undefined, date: Date, filename
         hour12: true
     });
 
-    const frontmatter = filename ? `File: ${filename}\nCreated: ${dateStr} at ${timeStr}\n${'='.repeat(50)}\n\n` : `${dateStr}\n${'='.repeat(50)}\n\n`;
+    // Always include timestamp in frontmatter
+    const frontmatter = filename
+        ? `File: ${filename}\nCreated: ${dateStr} at ${timeStr}\n${'='.repeat(50)}\n\n`
+        : `Created: ${dateStr} at ${timeStr}\n${'='.repeat(50)}\n\n`;
 
     // Check if it's a custom template
     const templatesPath = getTemplatesPath();
