@@ -216,6 +216,169 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(`Duplicated as ${newName}`);
     });
 
+    // Command to create custom folder
+    let createFolder = vscode.commands.registerCommand('noted.createFolder', async () => {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            vscode.window.showErrorMessage('Please configure a notes folder first');
+            return;
+        }
+
+        const folderName = await vscode.window.showInputBox({
+            prompt: 'Enter folder name (will be created at root level)',
+            placeHolder: 'my-folder',
+            validateInput: (value) => {
+                if (!isValidCustomFolderName(value)) {
+                    if (!value || value.trim().length === 0) {
+                        return 'Folder name cannot be empty';
+                    }
+                    if (isYearFolder(value) || isMonthFolder(value)) {
+                        return 'Cannot use date patterns (YYYY or MM-MonthName) for custom folders';
+                    }
+                    return 'Invalid folder name (check for invalid characters)';
+                }
+                return null;
+            }
+        });
+
+        if (!folderName) {
+            return;
+        }
+
+        // Always create custom folders at root level
+        const newFolderPath = path.join(notesPath, folderName);
+
+        if (fs.existsSync(newFolderPath)) {
+            vscode.window.showErrorMessage('Folder already exists');
+            return;
+        }
+
+        try {
+            fs.mkdirSync(newFolderPath, { recursive: true });
+            notesProvider.refresh();
+            vscode.window.showInformationMessage(`Created folder: ${folderName}`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to create folder: ${error}`);
+        }
+    });
+
+    // Command to move note
+    let moveNote = vscode.commands.registerCommand('noted.moveNote', async (item: NoteItem) => {
+        const notesPath = getNotesPath();
+        if (!notesPath || item.type !== 'note') {
+            return;
+        }
+
+        // Get all available folders
+        const folders = await getAllFolders(notesPath);
+
+        if (folders.length === 0) {
+            vscode.window.showInformationMessage('No folders available');
+            return;
+        }
+
+        const items = folders.map(f => ({
+            label: f.name,
+            description: f.path,
+            folder: f
+        }));
+
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select destination folder'
+        });
+
+        if (!selected) {
+            return;
+        }
+
+        const newPath = path.join(selected.folder.path, path.basename(item.filePath));
+
+        if (fs.existsSync(newPath)) {
+            vscode.window.showErrorMessage('A file with this name already exists in the destination folder');
+            return;
+        }
+
+        try {
+            fs.renameSync(item.filePath, newPath);
+            notesProvider.refresh();
+            vscode.window.showInformationMessage(`Moved to ${selected.folder.name}`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to move note: ${error}`);
+        }
+    });
+
+    // Command to rename folder
+    let renameFolder = vscode.commands.registerCommand('noted.renameFolder', async (item: NoteItem) => {
+        if (item.type !== 'custom-folder') {
+            vscode.window.showErrorMessage('Only custom folders can be renamed');
+            return;
+        }
+
+        const newName = await vscode.window.showInputBox({
+            prompt: 'Enter new folder name',
+            value: item.label,
+            validateInput: (value) => {
+                if (!isValidCustomFolderName(value)) {
+                    if (!value || value.trim().length === 0) {
+                        return 'Folder name cannot be empty';
+                    }
+                    if (isYearFolder(value) || isMonthFolder(value)) {
+                        return 'Cannot use date patterns (YYYY or MM-MonthName) for custom folders';
+                    }
+                    return 'Invalid folder name (check for invalid characters)';
+                }
+                return null;
+            }
+        });
+
+        if (!newName || newName === item.label) {
+            return;
+        }
+
+        const parentDir = path.dirname(item.filePath);
+        const newPath = path.join(parentDir, newName);
+
+        if (fs.existsSync(newPath)) {
+            vscode.window.showErrorMessage('A folder with this name already exists');
+            return;
+        }
+
+        try {
+            fs.renameSync(item.filePath, newPath);
+            notesProvider.refresh();
+            vscode.window.showInformationMessage(`Renamed to ${newName}`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to rename folder: ${error}`);
+        }
+    });
+
+    // Command to delete folder
+    let deleteFolder = vscode.commands.registerCommand('noted.deleteFolder', async (item: NoteItem) => {
+        if (item.type !== 'custom-folder') {
+            vscode.window.showErrorMessage('Only custom folders can be deleted');
+            return;
+        }
+
+        const answer = await vscode.window.showWarningMessage(
+            `Delete folder "${item.label}" and all its contents?`,
+            { modal: true },
+            'Delete',
+            'Cancel'
+        );
+
+        if (answer !== 'Delete') {
+            return;
+        }
+
+        try {
+            fs.rmSync(item.filePath, { recursive: true, force: true });
+            notesProvider.refresh();
+            vscode.window.showInformationMessage(`Deleted folder: ${item.label}`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to delete folder: ${error}`);
+        }
+    });
+
     // Command to show current notes folder configuration (for debugging)
     let showNotesConfig = vscode.commands.registerCommand('noted.showConfig', async () => {
         const config = vscode.workspace.getConfiguration('noted');
@@ -332,7 +495,8 @@ export function activate(context: vscode.ExtensionContext) {
         refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, showStats, exportNotes, duplicateNote, moveNotesFolder,
         setupDefaultFolder, setupCustomFolder, showNotesConfig,
-        createCustomTemplate, openTemplatesFolder
+        createCustomTemplate, openTemplatesFolder,
+        createFolder, moveNote, renameFolder, deleteFolder
     );
 }
 
@@ -344,6 +508,60 @@ async function initializeNotesFolder() {
 
     // Check if notes folder exists - if not, tree view will show welcome actions
     // User can click buttons in the tree view to set up
+}
+
+// Helper function to check if a folder name matches year pattern (YYYY)
+function isYearFolder(name: string): boolean {
+    return /^\d{4}$/.test(name);
+}
+
+// Helper function to check if a folder name matches month pattern (MM-MonthName)
+function isMonthFolder(name: string): boolean {
+    return /^\d{2}-[A-Za-z]+$/.test(name);
+}
+
+// Helper function to validate custom folder name
+function isValidCustomFolderName(name: string): boolean {
+    // Don't allow empty names
+    if (!name || name.trim().length === 0) {
+        return false;
+    }
+
+    // Don't allow names that match date patterns
+    if (isYearFolder(name) || isMonthFolder(name)) {
+        return false;
+    }
+
+    // Don't allow invalid filesystem characters
+    const invalidChars = /[<>:"|?*]/;
+    if (invalidChars.test(name)) {
+        return false;
+    }
+
+    return true;
+}
+
+// Helper function to get all folders recursively
+async function getAllFolders(rootPath: string): Promise<Array<{name: string, path: string}>> {
+    const folders: Array<{name: string, path: string}> = [];
+
+    function scanDir(dir: string, relativePath: string = '') {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.isDirectory()) {
+                const fullPath = path.join(dir, entry.name);
+                const relPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
+                folders.push({
+                    name: relPath,
+                    path: fullPath
+                });
+                scanDir(fullPath, relPath);
+            }
+        }
+    }
+
+    scanDir(rootPath);
+    return folders;
 }
 
 function getNotesPath(): string | null {
@@ -847,7 +1065,7 @@ class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
     }
 
     // Return empty array - templates are shown via viewsWelcome
-    getChildren(element?: TreeItem): Thenable<TreeItem[]> {
+    getChildren(_element?: TreeItem): Thenable<TreeItem[]> {
         return Promise.resolve([]);
     }
 }
@@ -901,18 +1119,37 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
         }
 
         if (!element) {
-            // Root level - show recent notes and years
+            // Root level - show recent notes, years, and custom folders
             const items: TreeItem[] = [];
 
             // Recent notes section
             items.push(new SectionItem('Recent Notes', 'recent'));
 
-            // Years
-            const years = fs.readdirSync(notesPath)
+            // Get all directories in notes path
+            const entries = fs.readdirSync(notesPath)
                 .filter(f => fs.statSync(path.join(notesPath, f)).isDirectory())
                 .sort()
                 .reverse();
 
+            // Separate years and custom folders
+            const years: string[] = [];
+            const customFolders: string[] = [];
+
+            entries.forEach(entry => {
+                if (isYearFolder(entry)) {
+                    years.push(entry);
+                } else {
+                    customFolders.push(entry);
+                }
+            });
+
+            // Add custom folders first (sorted alphabetically)
+            customFolders.sort();
+            items.push(...customFolders.map(folder =>
+                new NoteItem(folder, path.join(notesPath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
+            ));
+
+            // Then add years (already sorted in reverse)
             items.push(...years.map(year =>
                 new NoteItem(year, path.join(notesPath, year), vscode.TreeItemCollapsibleState.Collapsed, 'year')
             ));
@@ -924,21 +1161,60 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
             }
         } else if (element instanceof NoteItem) {
             if (element.type === 'year') {
-                const months = fs.readdirSync(element.filePath)
+                const entries = fs.readdirSync(element.filePath)
                     .filter(f => fs.statSync(path.join(element.filePath, f)).isDirectory())
                     .sort()
                     .reverse();
-                
-                return Promise.resolve(months.map(month => 
+
+                // In year folders, show months and custom folders
+                const months: string[] = [];
+                const customFolders: string[] = [];
+
+                entries.forEach(entry => {
+                    if (isMonthFolder(entry)) {
+                        months.push(entry);
+                    } else {
+                        customFolders.push(entry);
+                    }
+                });
+
+                const items: NoteItem[] = [];
+
+                // Add custom folders first
+                customFolders.sort();
+                items.push(...customFolders.map(folder =>
+                    new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
+                ));
+
+                // Then add months
+                items.push(...months.map(month =>
                     new NoteItem(month, path.join(element.filePath, month), vscode.TreeItemCollapsibleState.Collapsed, 'month')
                 ));
-            } else if (element.type === 'month') {
-                const notes = fs.readdirSync(element.filePath)
-                    .filter(f => f.endsWith('.txt') || f.endsWith('.md'))
+
+                return Promise.resolve(items);
+            } else if (element.type === 'month' || element.type === 'custom-folder') {
+                // Both month and custom folders can contain notes and subfolders
+                const entries = fs.readdirSync(element.filePath, { withFileTypes: true });
+                const items: NoteItem[] = [];
+
+                // Get subdirectories (custom folders only, no date folders allowed inside)
+                const subfolders = entries
+                    .filter(e => e.isDirectory())
+                    .map(e => e.name)
+                    .sort();
+
+                items.push(...subfolders.map(folder =>
+                    new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
+                ));
+
+                // Get notes
+                const notes = entries
+                    .filter(e => !e.isDirectory() && (e.name.endsWith('.txt') || e.name.endsWith('.md')))
+                    .map(e => e.name)
                     .sort()
                     .reverse();
-                
-                return Promise.resolve(notes.map(note => {
+
+                items.push(...notes.map(note => {
                     const filePath = path.join(element.filePath, note);
                     const item = new NoteItem(note, filePath, vscode.TreeItemCollapsibleState.None, 'note');
                     item.command = {
@@ -946,9 +1222,10 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
                         title: 'Open Note',
                         arguments: [filePath]
                     };
-                    item.contextValue = 'note';
                     return item;
                 }));
+
+                return Promise.resolve(items);
             }
         }
 
@@ -989,24 +1266,6 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
 
 class TreeItem extends vscode.TreeItem {}
 
-class WelcomeItem extends TreeItem {
-    constructor(message: string, icon: string, contextValue: string) {
-        super(message, vscode.TreeItemCollapsibleState.None);
-        this.iconPath = new vscode.ThemeIcon(icon);
-        this.contextValue = contextValue;
-    }
-}
-
-class ActionItem extends TreeItem {
-    constructor(label: string, icon: string, command: string) {
-        super(label, vscode.TreeItemCollapsibleState.None);
-        this.iconPath = new vscode.ThemeIcon(icon);
-        this.command = {
-            command: command,
-            title: label
-        };
-    }
-}
 
 class SectionItem extends TreeItem {
     constructor(
@@ -1020,24 +1279,30 @@ class SectionItem extends TreeItem {
 
 class NoteItem extends TreeItem {
     public filePath: string;
-    
+
     constructor(
         public readonly label: string,
         filePath: string,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-        public readonly type: 'year' | 'month' | 'note'
+        public readonly type: 'year' | 'month' | 'note' | 'custom-folder'
     ) {
         super(label, collapsibleState);
-        
+
         this.filePath = filePath;
         this.resourceUri = vscode.Uri.file(filePath);
-        
+
         if (type === 'note') {
             this.iconPath = new vscode.ThemeIcon('note');
+            this.contextValue = 'note';
         } else if (type === 'month') {
             this.iconPath = new vscode.ThemeIcon('calendar');
-        } else {
+            this.contextValue = 'month';
+        } else if (type === 'year') {
             this.iconPath = new vscode.ThemeIcon('folder');
+            this.contextValue = 'year';
+        } else if (type === 'custom-folder') {
+            this.iconPath = new vscode.ThemeIcon('folder-opened');
+            this.contextValue = 'custom-folder';
         }
     }
 }

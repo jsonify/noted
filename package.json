@@ -134,6 +134,23 @@
       {
         "command": "noted.showConfig",
         "title": "Noted: Show Configuration (Debug)"
+      },
+      {
+        "command": "noted.createFolder",
+        "title": "Noted: Create Folder",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "noted.moveNote",
+        "title": "Noted: Move Note to Folder"
+      },
+      {
+        "command": "noted.renameFolder",
+        "title": "Noted: Rename Folder"
+      },
+      {
+        "command": "noted.deleteFolder",
+        "title": "Noted: Delete Folder"
       }
     ],
     "menus": {
@@ -144,14 +161,19 @@
           "group": "navigation@1"
         },
         {
-          "command": "noted.searchNotes",
+          "command": "noted.createFolder",
           "when": "view == notedView",
           "group": "navigation@2"
         },
         {
-          "command": "noted.refresh",
+          "command": "noted.searchNotes",
           "when": "view == notedView",
           "group": "navigation@3"
+        },
+        {
+          "command": "noted.refresh",
+          "when": "view == notedView",
+          "group": "navigation@4"
         },
         {
           "command": "noted.showStats",
@@ -166,19 +188,34 @@
       ],
       "view/item/context": [
         {
-          "command": "noted.deleteNote",
+          "command": "noted.renameFolder",
+          "when": "view == notedView && viewItem == custom-folder",
+          "group": "folder@2"
+        },
+        {
+          "command": "noted.deleteFolder",
+          "when": "view == notedView && viewItem == custom-folder",
+          "group": "folder@3"
+        },
+        {
+          "command": "noted.moveNote",
           "when": "view == notedView && viewItem == note",
           "group": "edit@1"
         },
         {
-          "command": "noted.renameNote",
+          "command": "noted.deleteNote",
           "when": "view == notedView && viewItem == note",
           "group": "edit@2"
         },
         {
-          "command": "noted.duplicateNote",
+          "command": "noted.renameNote",
           "when": "view == notedView && viewItem == note",
           "group": "edit@3"
+        },
+        {
+          "command": "noted.duplicateNote",
+          "when": "view == notedView && viewItem == note",
+          "group": "edit@4"
         },
         {
           "command": "noted.copyPath",
