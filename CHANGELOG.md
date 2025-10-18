@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/jsonify/noted/compare/v1.2.6...v1.3.0) (2025-10-18)
+
+
+### Features
+
+* add calendar view command and integrate with notes management ([4699418](https://github.com/jsonify/noted/commit/46994189a6c2022c4be619c0df9b9f4ea1976a41))
+* Add core functionality for notes management and templates ([6f5c53b](https://github.com/jsonify/noted/commit/6f5c53b07eb07a1817612aacbfa4a14886e9b074))
+* add custom folder management features including create, move, rename, and delete functionalities ([e990e8f](https://github.com/jsonify/noted/commit/e990e8f78692c8cc4a46e9e66457d1f37689fe5c))
+* always include timestamp in frontmatter for generated templates ([2bbe060](https://github.com/jsonify/noted/commit/2bbe0606d6c283ddd066ed1d53ad0beb13f41835))
+* implement drag-and-drop functionality for moving notes between folders ([2fca0ed](https://github.com/jsonify/noted/commit/2fca0ed1f30b493d775f271a456a71e384c5fef0))
+* refactor file operations to async with comprehensive error handling ([b3729fa](https://github.com/jsonify/noted/commit/b3729fa2d427ff2ddd8ad9f097c8f9fd2d782d50))
+* refactored the Noted extension to use asynchronous file operations with comprehensive error handling ([e9001ea](https://github.com/jsonify/noted/commit/e9001ea848e036610dfacb72c69d89df8c544de3))
+
 ### [1.2.6](https://github.com/jsonify/noted/compare/v1.2.5...v1.2.6) (2025-10-15)
 
 
