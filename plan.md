@@ -5,8 +5,10 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 ## Current Priorities
 
 ### Code Quality & Reliability
-- [ ] Add error handling around file operations (currently no try/catch blocks)
-- [ ] Convert synchronous file operations to async for better performance
+- [x] Add error handling around file operations (completed)
+- [x] Convert synchronous file operations to async for better performance (completed)
+- [x] Refactor to modular architecture (in progress - ~85% complete)
+- [ ] Complete modular refactoring (2 tasks remaining)
 - [ ] Add unit tests for core functionality
 - [ ] Add integration tests for VS Code commands
 - [ ] Create CI/CD pipeline for automated testing
@@ -62,11 +64,53 @@ See [notes.md](./notes.md) for a complete list of implemented features.
 
 ## Technical Debt
 
-- Refactor single-file architecture into modules as codebase grows
-- Improve TypeScript types (reduce use of `any`)
-- Add JSDoc comments for public APIs
-- Performance optimization for large note collections
-- Better error messages for users
+- [x] Refactor single-file architecture into modules (in progress - see Modular Refactoring Status below)
+- [ ] Improve TypeScript types (reduce use of `any`)
+- [ ] Add JSDoc comments for public APIs
+- [ ] Performance optimization for large note collections
+- [x] Better error messages for users (completed with async refactoring)
+
+## Modular Refactoring Status
+
+**Goal**: Split 2119-line extension.ts into maintainable, focused modules
+
+### ✅ Completed Modules (85%)
+- **src/constants.ts** (93 lines) - All constants, templates, patterns
+- **src/utils/** (3 files, ~150 lines)
+  - validators.ts - Folder name validation
+  - dateHelpers.ts - Date formatting utilities
+  - folderHelpers.ts - Recursive folder operations
+- **src/services/** (4 files, ~400 lines)
+  - configService.ts - Configuration management
+  - fileSystemService.ts - File operation wrappers
+  - noteService.ts - Note operations (search, stats, export)
+  - templateService.ts - Template generation
+- **src/providers/** (3 files, ~350 lines)
+  - treeItems.ts - Tree item classes
+  - templatesTreeProvider.ts - Templates view
+  - notesTreeProvider.ts - Main notes tree with drag-and-drop
+- **src/commands/** (1 file, ~700 lines)
+  - commands.ts - All command handlers
+- **src/calendar/** (1 file, ~120 lines)
+  - calendarHelpers.ts - Calendar date operations
+
+**Status**: ✅ Compiles successfully, all modules tested
+
+### 📋 Remaining Work (15%)
+1. **Create src/calendar/calendarView.ts** (~400 lines)
+   - Extract showCalendarView() function
+   - Extract getCalendarHtml() with webview HTML template
+2. **Refactor src/extension.ts** (~150 lines after)
+   - Import new modules
+   - Wire command handlers to VS Code
+   - Remove extracted code
+
+### Benefits Achieved
+- Clear separation of concerns
+- Each module <700 lines (down from 2119)
+- Better testability
+- Easier navigation and maintenance
+- Reusable components
 
 ## Documentation Needs
 

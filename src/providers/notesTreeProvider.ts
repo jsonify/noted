@@ -1,0 +1,331 @@
+import * as vscode from 'vscode';
+import * as path from 'path';
+import { TreeItem, NoteItem, SectionItem } from './treeItems';
+import { getNotesPath } from '../services/configService';
+import { pathExists, createDirectory, readDirectoryWithTypes, getFileStats, renameFile } from '../services/fileSystemService';
+import { isYearFolder, isMonthFolder } from '../utils/validators';
+import { DEFAULTS, SUPPORTED_EXTENSIONS } from '../constants';
+
+/**
+ * Tree data provider for the main notes view
+ * Implements drag-and-drop for moving notes between folders
+ */
+export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vscode.TreeDragAndDropController<TreeItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
+    readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
+
+    // Drag and drop support
+    dropMimeTypes = ['application/vnd.code.tree.notedView'];
+    dragMimeTypes = ['text/uri-list'];
+
+    refresh(): void {
+        this._onDidChangeTreeData.fire();
+    }
+
+    async handleDrag(source: readonly TreeItem[], dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Promise<void> {
+        // Only allow dragging notes, not folders or sections
+        const notes = source.filter(item => item instanceof NoteItem && item.type === 'note');
+        if (notes.length > 0) {
+            dataTransfer.set('application/vnd.code.tree.notedView', new vscode.DataTransferItem(notes));
+        }
+    }
+
+    async handleDrop(target: TreeItem | undefined, dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Promise<void> {
+        const transferItem = dataTransfer.get('application/vnd.code.tree.notedView');
+        if (!transferItem) {
+            return;
+        }
+
+        const draggedItems = transferItem.value as NoteItem[];
+        if (!draggedItems || draggedItems.length === 0) {
+            return;
+        }
+
+        // Determine the target folder
+        let targetFolderPath: string | null = null;
+
+        if (!target) {
+            // Dropped on root - not allowed
+            vscode.window.showErrorMessage('Cannot move notes to root level');
+            return;
+        }
+
+        if (target instanceof NoteItem) {
+            if (target.type === 'note') {
+                // Dropped on another note - move to its parent folder
+                targetFolderPath = path.dirname(target.filePath);
+            } else if (target.type === 'month' || target.type === 'custom-folder') {
+                // Dropped on a folder - use that folder
+                targetFolderPath = target.filePath;
+            } else if (target.type === 'year') {
+                // Dropped on a year - not allowed (no direct notes in year folders)
+                vscode.window.showErrorMessage('Cannot move notes directly into year folders. Please drop into a month folder.');
+                return;
+            }
+        } else if (target instanceof SectionItem) {
+            // Dropped on section - not allowed
+            vscode.window.showErrorMessage('Cannot move notes into sections');
+            return;
+        }
+
+        if (!targetFolderPath) {
+            return;
+        }
+
+        // Move each dragged note
+        for (const draggedItem of draggedItems) {
+            if (!(draggedItem instanceof NoteItem) || draggedItem.type !== 'note') {
+                continue;
+            }
+
+            const sourceFilePath = draggedItem.filePath;
+            const fileName = path.basename(sourceFilePath);
+            const destinationPath = path.join(targetFolderPath, fileName);
+
+            // Check if source and destination are the same
+            if (sourceFilePath === destinationPath) {
+                continue;
+            }
+
+            // Check if file already exists at destination
+            if (await pathExists(destinationPath)) {
+                vscode.window.showErrorMessage(`A file named "${fileName}" already exists in the destination folder`);
+                continue;
+            }
+
+            try {
+                await renameFile(sourceFilePath, destinationPath);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to move note: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        }
+
+        // Refresh the tree view
+        this.refresh();
+
+        if (draggedItems.length === 1) {
+            vscode.window.showInformationMessage(`Moved note to ${path.basename(targetFolderPath)}`);
+        } else {
+            vscode.window.showInformationMessage(`Moved ${draggedItems.length} notes to ${path.basename(targetFolderPath)}`);
+        }
+    }
+
+    getTreeItem(element: TreeItem): vscode.TreeItem {
+        return element;
+    }
+
+    async getChildren(element?: TreeItem): Promise<TreeItem[]> {
+        const notesPath = getNotesPath();
+        console.log('[NOTED DEBUG] TreeProvider.getChildren() called:');
+        console.log('[NOTED DEBUG] - notesPath:', notesPath);
+
+        if (!notesPath) {
+            console.log('[NOTED DEBUG] - showing welcome screen (no notesPath)');
+            return [];
+        }
+
+        // Auto-create the notes folder if it's configured but doesn't exist
+        if (!(await pathExists(notesPath))) {
+            const config = vscode.workspace.getConfiguration('noted');
+            const notesFolder = config.get<string>('notesFolder', 'Notes');
+            console.log('[NOTED DEBUG] - notes folder does not exist, checking if should auto-create');
+            console.log('[NOTED DEBUG] - notesFolder config:', notesFolder);
+            console.log('[NOTED DEBUG] - is absolute:', path.isAbsolute(notesFolder));
+
+            // Auto-create if it's an absolute path (user has configured it)
+            if (path.isAbsolute(notesFolder)) {
+                console.log('[NOTED DEBUG] - auto-creating configured absolute path folder');
+                try {
+                    await createDirectory(notesPath);
+                    console.log('[NOTED DEBUG] - successfully created notes folder');
+                } catch (error) {
+                    console.error('[NOTED DEBUG] Failed to create notes folder:', error);
+                    vscode.window.showErrorMessage(`Failed to create notes folder: ${error instanceof Error ? error.message : String(error)}`);
+                    return [];
+                }
+            } else {
+                console.log('[NOTED DEBUG] - relative path without workspace, showing welcome screen');
+                // Not properly configured yet, show welcome screen
+                return [];
+            }
+        }
+
+        if (!element) {
+            // Root level - show recent notes, years, and custom folders
+            const items: TreeItem[] = [];
+
+            // Recent notes section
+            items.push(new SectionItem('Recent Notes', 'recent'));
+
+            try {
+                // Get all directories in notes path
+                const allEntries = await readDirectoryWithTypes(notesPath);
+                const entries = [];
+
+                for (const entry of allEntries) {
+                    if (entry.isDirectory()) {
+                        entries.push(entry.name);
+                    }
+                }
+
+                entries.sort().reverse();
+
+                // Separate years and custom folders
+                const years: string[] = [];
+                const customFolders: string[] = [];
+
+                entries.forEach(entry => {
+                    if (isYearFolder(entry)) {
+                        years.push(entry);
+                    } else {
+                        customFolders.push(entry);
+                    }
+                });
+
+                // Add custom folders first (sorted alphabetically)
+                customFolders.sort();
+                items.push(...customFolders.map(folder =>
+                    new NoteItem(folder, path.join(notesPath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
+                ));
+
+                // Then add years (already sorted in reverse)
+                items.push(...years.map(year =>
+                    new NoteItem(year, path.join(notesPath, year), vscode.TreeItemCollapsibleState.Collapsed, 'year')
+                ));
+            } catch (error) {
+                console.error('[NOTED] Error reading notes directory:', error);
+            }
+
+            return items;
+        } else if (element instanceof SectionItem) {
+            if (element.sectionType === 'recent') {
+                return this.getRecentNotes(notesPath);
+            }
+        } else if (element instanceof NoteItem) {
+            if (element.type === 'year') {
+                try {
+                    const allEntries = await readDirectoryWithTypes(element.filePath);
+                    const entries = [];
+
+                    for (const entry of allEntries) {
+                        if (entry.isDirectory()) {
+                            entries.push(entry.name);
+                        }
+                    }
+
+                    entries.sort().reverse();
+
+                    // In year folders, show months and custom folders
+                    const months: string[] = [];
+                    const customFolders: string[] = [];
+
+                    entries.forEach(entry => {
+                        if (isMonthFolder(entry)) {
+                            months.push(entry);
+                        } else {
+                            customFolders.push(entry);
+                        }
+                    });
+
+                    const items: NoteItem[] = [];
+
+                    // Add custom folders first
+                    customFolders.sort();
+                    items.push(...customFolders.map(folder =>
+                        new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
+                    ));
+
+                    // Then add months
+                    items.push(...months.map(month =>
+                        new NoteItem(month, path.join(element.filePath, month), vscode.TreeItemCollapsibleState.Collapsed, 'month')
+                    ));
+
+                    return items;
+                } catch (error) {
+                    console.error('[NOTED] Error reading year folder:', element.filePath, error);
+                    return [];
+                }
+            } else if (element.type === 'month' || element.type === 'custom-folder') {
+                // Both month and custom folders can contain notes and subfolders
+                try {
+                    const entries = await readDirectoryWithTypes(element.filePath);
+                    const items: NoteItem[] = [];
+
+                    // Get subdirectories (custom folders only, no date folders allowed inside)
+                    const subfolders = entries
+                        .filter(e => e.isDirectory())
+                        .map(e => e.name)
+                        .sort();
+
+                    items.push(...subfolders.map(folder =>
+                        new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
+                    ));
+
+                    // Get notes
+                    const notes = entries
+                        .filter(e => !e.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => e.name.endsWith(ext)))
+                        .map(e => e.name)
+                        .sort()
+                        .reverse();
+
+                    items.push(...notes.map(note => {
+                        const filePath = path.join(element.filePath, note);
+                        const item = new NoteItem(note, filePath, vscode.TreeItemCollapsibleState.None, 'note');
+                        item.command = {
+                            command: 'noted.openNote',
+                            title: 'Open Note',
+                            arguments: [filePath]
+                        };
+                        return item;
+                    }));
+
+                    return items;
+                } catch (error) {
+                    console.error('[NOTED] Error reading folder:', element.filePath, error);
+                    return [];
+                }
+            }
+        }
+
+        return [];
+    }
+
+    private async getRecentNotes(notesPath: string): Promise<TreeItem[]> {
+        const allNotes: Array<{path: string, mtime: Date, name: string}> = [];
+
+        async function findNotes(dir: string) {
+            try {
+                const entries = await readDirectoryWithTypes(dir);
+                for (const entry of entries) {
+                    const fullPath = path.join(dir, entry.name);
+                    if (entry.isDirectory()) {
+                        await findNotes(fullPath);
+                    } else if (SUPPORTED_EXTENSIONS.some(ext => entry.name.endsWith(ext))) {
+                        try {
+                            const stat = await getFileStats(fullPath);
+                            allNotes.push({ path: fullPath, mtime: stat.mtime, name: entry.name });
+                        } catch (error) {
+                            console.error('[NOTED] Error stating file:', fullPath, error);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('[NOTED] Error reading directory:', dir, error);
+            }
+        }
+
+        await findNotes(notesPath);
+        allNotes.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
+
+        return allNotes.slice(0, DEFAULTS.RECENT_NOTES_LIMIT).map(note => {
+            const item = new NoteItem(note.name, note.path, vscode.TreeItemCollapsibleState.None, 'note');
+            item.command = {
+                command: 'noted.openNote',
+                title: 'Open Note',
+                arguments: [note.path]
+            };
+            item.contextValue = 'note';
+            return item;
+        });
+    }
+}
