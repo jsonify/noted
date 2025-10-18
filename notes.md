@@ -125,7 +125,17 @@ All templates automatically include a timestamp header with creation date and ti
 ## Architecture Notes
 
 - **Single-file implementation**: All code in `src/extension.ts`
-- **Synchronous file operations**: Direct use of Node.js `fs` module
-- **TreeDataProvider pattern**: Standard VS Code tree view implementation
+- **Asynchronous file operations**: All file I/O uses `fs.promises` API with async/await pattern
+- **Comprehensive error handling**: All file operations wrapped in try/catch with user-friendly error messages
+- **TreeDataProvider pattern**: Standard VS Code tree view implementation with async support
 - **Date formatting**: Uses locale-specific formatting (en-US)
 - **File name sanitization**: Automatic sanitization for note names from templates
+
+## Recent Updates
+
+### Async/Await Refactoring (Latest)
+- **Converted all file operations to async**: Replaced synchronous fs methods with `fs.promises` API
+- **Added comprehensive error handling**: Every file operation now has try/catch blocks with clear error messages
+- **Improved performance**: Async operations prevent UI freezing with large note collections
+- **Updated TreeDataProvider**: `getChildren()` and `handleDrop()` now fully async
+- **Better user experience**: Clear error notifications when operations fail
