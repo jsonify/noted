@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { promises as fsp } from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
@@ -38,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
     let openWithTemplate = vscode.commands.registerCommand('noted.openWithTemplate', async (templateType?: string) => {
         // If no template type provided, show picker
         if (!templateType) {
-            const customTemplates = getCustomTemplates();
+            const customTemplates = await getCustomTemplates();
             const builtInTemplates = [
                 { label: 'Problem/Solution', value: 'problem-solution', description: 'Document bugs and troubleshooting' },
                 { label: 'Meeting', value: 'meeting', description: 'Organize meeting notes and action items' },
@@ -120,9 +121,13 @@ export function activate(context: vscode.ExtensionContext) {
             'Cancel'
         );
         if (answer === 'Delete') {
-            fs.unlinkSync(item.filePath);
-            notesProvider.refresh();
-            vscode.window.showInformationMessage(`Deleted ${item.label}`);
+            try {
+                await fsp.unlink(item.filePath);
+                notesProvider.refresh();
+                vscode.window.showInformationMessage(`Deleted ${item.label}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to delete note: ${error instanceof Error ? error.message : String(error)}`);
+            }
         }
     });
 
@@ -133,11 +138,15 @@ export function activate(context: vscode.ExtensionContext) {
             value: item.label
         });
         if (newName && newName !== item.label) {
-            const dir = path.dirname(item.filePath);
-            const newPath = path.join(dir, newName);
-            fs.renameSync(item.filePath, newPath);
-            notesProvider.refresh();
-            vscode.window.showInformationMessage(`Renamed to ${newName}`);
+            try {
+                const dir = path.dirname(item.filePath);
+                const newPath = path.join(dir, newName);
+                await fsp.rename(item.filePath, newPath);
+                notesProvider.refresh();
+                vscode.window.showInformationMessage(`Renamed to ${newName}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to rename note: ${error instanceof Error ? error.message : String(error)}`);
+            }
         }
     });
 
@@ -207,16 +216,20 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command to duplicate note
     let duplicateNote = vscode.commands.registerCommand('noted.duplicateNote', async (item: NoteItem) => {
-        const content = fs.readFileSync(item.filePath, 'utf8');
-        const dir = path.dirname(item.filePath);
-        const ext = path.extname(item.label);
-        const base = path.basename(item.label, ext);
-        const newName = `${base}-copy${ext}`;
-        const newPath = path.join(dir, newName);
+        try {
+            const content = await fsp.readFile(item.filePath, 'utf8');
+            const dir = path.dirname(item.filePath);
+            const ext = path.extname(item.label);
+            const base = path.basename(item.label, ext);
+            const newName = `${base}-copy${ext}`;
+            const newPath = path.join(dir, newName);
 
-        fs.writeFileSync(newPath, content);
-        notesProvider.refresh();
-        vscode.window.showInformationMessage(`Duplicated as ${newName}`);
+            await fsp.writeFile(newPath, content);
+            notesProvider.refresh();
+            vscode.window.showInformationMessage(`Duplicated as ${newName}`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to duplicate note: ${error instanceof Error ? error.message : String(error)}`);
+        }
     });
 
     // Command to create custom folder
@@ -251,17 +264,20 @@ export function activate(context: vscode.ExtensionContext) {
         // Always create custom folders at root level
         const newFolderPath = path.join(notesPath, folderName);
 
-        if (fs.existsSync(newFolderPath)) {
+        try {
+            // Check if exists
+            await fsp.access(newFolderPath);
             vscode.window.showErrorMessage('Folder already exists');
             return;
-        }
-
-        try {
-            fs.mkdirSync(newFolderPath, { recursive: true });
-            notesProvider.refresh();
-            vscode.window.showInformationMessage(`Created folder: ${folderName}`);
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to create folder: ${error}`);
+        } catch {
+            // Folder doesn't exist, create it
+            try {
+                await fsp.mkdir(newFolderPath, { recursive: true });
+                notesProvider.refresh();
+                vscode.window.showInformationMessage(`Created folder: ${folderName}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create folder: ${error instanceof Error ? error.message : String(error)}`);
+            }
         }
     });
 
@@ -272,41 +288,43 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Get all available folders
-        const folders = await getAllFolders(notesPath);
-
-        if (folders.length === 0) {
-            vscode.window.showInformationMessage('No folders available');
-            return;
-        }
-
-        const items = folders.map(f => ({
-            label: f.name,
-            description: f.path,
-            folder: f
-        }));
-
-        const selected = await vscode.window.showQuickPick(items, {
-            placeHolder: 'Select destination folder'
-        });
-
-        if (!selected) {
-            return;
-        }
-
-        const newPath = path.join(selected.folder.path, path.basename(item.filePath));
-
-        if (fs.existsSync(newPath)) {
-            vscode.window.showErrorMessage('A file with this name already exists in the destination folder');
-            return;
-        }
-
         try {
-            fs.renameSync(item.filePath, newPath);
-            notesProvider.refresh();
-            vscode.window.showInformationMessage(`Moved to ${selected.folder.name}`);
+            // Get all available folders
+            const folders = await getAllFolders(notesPath);
+
+            if (folders.length === 0) {
+                vscode.window.showInformationMessage('No folders available');
+                return;
+            }
+
+            const items = folders.map(f => ({
+                label: f.name,
+                description: f.path,
+                folder: f
+            }));
+
+            const selected = await vscode.window.showQuickPick(items, {
+                placeHolder: 'Select destination folder'
+            });
+
+            if (!selected) {
+                return;
+            }
+
+            const newPath = path.join(selected.folder.path, path.basename(item.filePath));
+
+            try {
+                await fsp.access(newPath);
+                vscode.window.showErrorMessage('A file with this name already exists in the destination folder');
+                return;
+            } catch {
+                // File doesn't exist, proceed with move
+                await fsp.rename(item.filePath, newPath);
+                notesProvider.refresh();
+                vscode.window.showInformationMessage(`Moved to ${selected.folder.name}`);
+            }
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to move note: ${error}`);
+            vscode.window.showErrorMessage(`Failed to move note: ${error instanceof Error ? error.message : String(error)}`);
         }
     });
 
@@ -341,17 +359,19 @@ export function activate(context: vscode.ExtensionContext) {
         const parentDir = path.dirname(item.filePath);
         const newPath = path.join(parentDir, newName);
 
-        if (fs.existsSync(newPath)) {
+        try {
+            await fsp.access(newPath);
             vscode.window.showErrorMessage('A folder with this name already exists');
             return;
-        }
-
-        try {
-            fs.renameSync(item.filePath, newPath);
-            notesProvider.refresh();
-            vscode.window.showInformationMessage(`Renamed to ${newName}`);
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to rename folder: ${error}`);
+        } catch {
+            // Folder doesn't exist, proceed with rename
+            try {
+                await fsp.rename(item.filePath, newPath);
+                notesProvider.refresh();
+                vscode.window.showInformationMessage(`Renamed to ${newName}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to rename folder: ${error instanceof Error ? error.message : String(error)}`);
+            }
         }
     });
 
@@ -374,11 +394,11 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         try {
-            fs.rmSync(item.filePath, { recursive: true, force: true });
+            await fsp.rm(item.filePath, { recursive: true, force: true });
             notesProvider.refresh();
             vscode.window.showInformationMessage(`Deleted folder: ${item.label}`);
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to delete folder: ${error}`);
+            vscode.window.showErrorMessage(`Failed to delete folder: ${error instanceof Error ? error.message : String(error)}`);
         }
     });
 
@@ -394,49 +414,61 @@ export function activate(context: vscode.ExtensionContext) {
         const notesPath = getNotesPath();
         const isAbsolute = path.isAbsolute(notesFolder);
 
+        let exists = false;
+        if (notesPath) {
+            try {
+                await fsp.access(notesPath);
+                exists = true;
+            } catch {
+                exists = false;
+            }
+        }
+
         const message = `Notes Configuration:\n\n` +
             `Config value: ${notesFolder}\n` +
             `Is absolute: ${isAbsolute}\n` +
             `Resolved path: ${notesPath}\n` +
-            `Exists: ${notesPath && fs.existsSync(notesPath)}`;
+            `Exists: ${exists}`;
 
         vscode.window.showInformationMessage(message, { modal: true });
     });
 
     // Command to setup default folder
     let setupDefaultFolder = vscode.commands.registerCommand('noted.setupDefaultFolder', async () => {
-        // Create a default path in user's home directory if no workspace is available
-        let defaultNotesPath: string;
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        
-        if (workspaceFolders) {
-            // If workspace exists, use workspace/Notes
-            const rootPath = workspaceFolders[0].uri.fsPath;
-            defaultNotesPath = path.join(rootPath, 'Notes');
-        } else {
-            // No workspace, use ~/Notes as a sensible default
-            const homeDir = require('os').homedir();
-            defaultNotesPath = path.join(homeDir, 'Notes');
-        }
-        
-        // Check if the path already exists or create it
-        if (!fs.existsSync(defaultNotesPath)) {
-            try {
-                fs.mkdirSync(defaultNotesPath, { recursive: true });
-            } catch (error) {
-                vscode.window.showErrorMessage(`Failed to create default notes folder: ${error}`);
-                return;
-            }
-        }
+        try {
+            // Create a default path in user's home directory if no workspace is available
+            let defaultNotesPath: string;
+            const workspaceFolders = vscode.workspace.workspaceFolders;
 
-        const config = vscode.workspace.getConfiguration('noted');
-        
-        // Always save absolute path to global configuration so it works across all windows
-        await config.update('notesFolder', defaultNotesPath, vscode.ConfigurationTarget.Global);
-        
-        console.log('[NOTED DEBUG] Setup default folder:', defaultNotesPath);
-        vscode.window.showInformationMessage(`Notes folder created at: ${defaultNotesPath}`);
-        notesProvider.refresh();
+            if (workspaceFolders) {
+                // If workspace exists, use workspace/Notes
+                const rootPath = workspaceFolders[0].uri.fsPath;
+                defaultNotesPath = path.join(rootPath, 'Notes');
+            } else {
+                // No workspace, use ~/Notes as a sensible default
+                const homeDir = require('os').homedir();
+                defaultNotesPath = path.join(homeDir, 'Notes');
+            }
+
+            // Check if the path already exists or create it
+            try {
+                await fsp.access(defaultNotesPath);
+            } catch {
+                // Folder doesn't exist, create it
+                await fsp.mkdir(defaultNotesPath, { recursive: true });
+            }
+
+            const config = vscode.workspace.getConfiguration('noted');
+
+            // Always save absolute path to global configuration so it works across all windows
+            await config.update('notesFolder', defaultNotesPath, vscode.ConfigurationTarget.Global);
+
+            console.log('[NOTED DEBUG] Setup default folder:', defaultNotesPath);
+            vscode.window.showInformationMessage(`Notes folder created at: ${defaultNotesPath}`);
+            notesProvider.refresh();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to create default notes folder: ${error instanceof Error ? error.message : String(error)}`);
+        }
     });
 
     // Command to create custom template
@@ -448,8 +480,13 @@ export function activate(context: vscode.ExtensionContext) {
     // Command to open templates folder
     let openTemplatesFolder = vscode.commands.registerCommand('noted.openTemplatesFolder', async () => {
         const templatesPath = getTemplatesPath();
-        if (templatesPath && fs.existsSync(templatesPath)) {
-            await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(templatesPath));
+        if (templatesPath) {
+            try {
+                await fsp.access(templatesPath);
+                await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(templatesPath));
+            } catch {
+                vscode.window.showErrorMessage('Templates folder does not exist');
+            }
         } else {
             vscode.window.showErrorMessage('Templates folder does not exist');
         }
@@ -457,44 +494,46 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command to setup custom folder
     let setupCustomFolder = vscode.commands.registerCommand('noted.setupCustomFolder', async () => {
-        // Start from user's home directory as a sensible default
-        const homeDir = require('os').homedir();
-        const defaultUri = vscode.Uri.file(homeDir);
+        try {
+            // Start from user's home directory as a sensible default
+            const homeDir = require('os').homedir();
+            const defaultUri = vscode.Uri.file(homeDir);
 
-        const selectedUri = await vscode.window.showOpenDialog({
-            canSelectFiles: false,
-            canSelectFolders: true,
-            canSelectMany: false,
-            openLabel: 'Select Notes Folder',
-            defaultUri: defaultUri,
-            title: 'Choose where to store your notes'
-        });
+            const selectedUri = await vscode.window.showOpenDialog({
+                canSelectFiles: false,
+                canSelectFolders: true,
+                canSelectMany: false,
+                openLabel: 'Select Notes Folder',
+                defaultUri: defaultUri,
+                title: 'Choose where to store your notes'
+            });
 
-        if (selectedUri && selectedUri[0]) {
-            const selectedPath = selectedUri[0].fsPath;
-            
-            // Check if selected path is .vscode or inside it
-            if (selectedPath.includes('.vscode')) {
-                vscode.window.showErrorMessage('Cannot use .vscode directory for notes');
-                return;
-            }
+            if (selectedUri && selectedUri[0]) {
+                const selectedPath = selectedUri[0].fsPath;
 
-            if (!fs.existsSync(selectedPath)) {
-                try {
-                    fs.mkdirSync(selectedPath, { recursive: true });
-                } catch (error) {
-                    vscode.window.showErrorMessage(`Failed to create notes folder: ${error}`);
+                // Check if selected path is .vscode or inside it
+                if (selectedPath.includes('.vscode')) {
+                    vscode.window.showErrorMessage('Cannot use .vscode directory for notes');
                     return;
                 }
-            }
 
-            const config = vscode.workspace.getConfiguration('noted');
-            // Always save absolute path to global configuration
-            await config.update('notesFolder', selectedPath, vscode.ConfigurationTarget.Global);
-            
-            console.log('[NOTED DEBUG] Setup custom folder:', selectedPath);
-            vscode.window.showInformationMessage(`Notes folder set to: ${selectedPath}`);
-            notesProvider.refresh();
+                try {
+                    await fsp.access(selectedPath);
+                } catch {
+                    // Folder doesn't exist, create it
+                    await fsp.mkdir(selectedPath, { recursive: true });
+                }
+
+                const config = vscode.workspace.getConfiguration('noted');
+                // Always save absolute path to global configuration
+                await config.update('notesFolder', selectedPath, vscode.ConfigurationTarget.Global);
+
+                console.log('[NOTED DEBUG] Setup custom folder:', selectedPath);
+                vscode.window.showInformationMessage(`Notes folder set to: ${selectedPath}`);
+                notesProvider.refresh();
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to create notes folder: ${error instanceof Error ? error.message : String(error)}`);
         }
     });
 
@@ -531,14 +570,14 @@ async function showCalendarView(context: vscode.ExtensionContext) {
     const currentMonth = now.getMonth();
 
     // Set the initial HTML
-    panel.webview.html = getCalendarHtml(currentYear, currentMonth, notesPath);
+    panel.webview.html = await getCalendarHtml(currentYear, currentMonth, notesPath);
 
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
         async message => {
             switch (message.command) {
                 case 'dateClicked':
-                    const notes = getNotesForDate(notesPath, message.year, message.month, message.day);
+                    const notes = await getNotesForDate(notesPath, message.year, message.month, message.day);
                     panel.webview.postMessage({ command: 'showNotes', notes: notes, year: message.year, month: message.month, day: message.day });
                     break;
                 case 'openNote':
@@ -548,11 +587,11 @@ async function showCalendarView(context: vscode.ExtensionContext) {
                 case 'createNote':
                     await openNoteForDate(message.year, message.month, message.day);
                     // Refresh the notes list after creating
-                    const updatedNotes = getNotesForDate(notesPath, message.year, message.month, message.day);
+                    const updatedNotes = await getNotesForDate(notesPath, message.year, message.month, message.day);
                     panel.webview.postMessage({ command: 'showNotes', notes: updatedNotes, year: message.year, month: message.month, day: message.day });
                     break;
                 case 'changeMonth':
-                    panel.webview.html = getCalendarHtml(message.year, message.month, notesPath);
+                    panel.webview.html = await getCalendarHtml(message.year, message.month, notesPath);
                     break;
             }
         },
@@ -561,7 +600,7 @@ async function showCalendarView(context: vscode.ExtensionContext) {
     );
 }
 
-function getNotesForDate(notesPath: string, year: number, month: number, day: number): Array<{name: string, path: string}> {
+async function getNotesForDate(notesPath: string, year: number, month: number, day: number): Promise<Array<{name: string, path: string}>> {
     const monthStr = (month + 1).toString().padStart(2, '0');
     const monthName = new Date(year, month).toLocaleString('en-US', { month: 'long' });
     const dayStr = day.toString().padStart(2, '0');
@@ -570,23 +609,31 @@ function getNotesForDate(notesPath: string, year: number, month: number, day: nu
 
     const noteFolder = path.join(notesPath, year.toString(), folderName);
 
-    if (!fs.existsSync(noteFolder)) {
+    try {
+        await fsp.access(noteFolder);
+    } catch {
         return [];
     }
 
     const notes: Array<{name: string, path: string}> = [];
-    const entries = fs.readdirSync(noteFolder, { withFileTypes: true });
 
-    for (const entry of entries) {
-        if (!entry.isDirectory() && (entry.name.endsWith('.txt') || entry.name.endsWith('.md'))) {
-            // Check if the file starts with the date prefix (YYYY-MM-DD)
-            if (entry.name.startsWith(datePrefix)) {
-                notes.push({
-                    name: entry.name,
-                    path: path.join(noteFolder, entry.name)
-                });
+    try {
+        const entries = await fsp.readdir(noteFolder, { withFileTypes: true });
+
+        for (const entry of entries) {
+            if (!entry.isDirectory() && (entry.name.endsWith('.txt') || entry.name.endsWith('.md'))) {
+                // Check if the file starts with the date prefix (YYYY-MM-DD)
+                if (entry.name.startsWith(datePrefix)) {
+                    notes.push({
+                        name: entry.name,
+                        path: path.join(noteFolder, entry.name)
+                    });
+                }
             }
         }
+    } catch (error) {
+        console.error('[NOTED] Error reading notes for date:', error);
+        return [];
     }
 
     return notes.sort((a, b) => a.name.localeCompare(b.name));
@@ -599,37 +646,45 @@ async function openNoteForDate(year: number, month: number, day: number) {
         return;
     }
 
-    const config = vscode.workspace.getConfiguration('noted');
-    const fileFormat = config.get<string>('fileFormat', 'txt');
+    try {
+        const config = vscode.workspace.getConfiguration('noted');
+        const fileFormat = config.get<string>('fileFormat', 'txt');
 
-    // Format month and day with leading zeros
-    const monthStr = (month + 1).toString().padStart(2, '0');
-    const monthName = new Date(year, month).toLocaleString('en-US', { month: 'long' });
-    const dayStr = day.toString().padStart(2, '0');
-    const folderName = `${monthStr}-${monthName}`;
-    const fileName = `${year}-${monthStr}-${dayStr}.${fileFormat}`;
+        // Format month and day with leading zeros
+        const monthStr = (month + 1).toString().padStart(2, '0');
+        const monthName = new Date(year, month).toLocaleString('en-US', { month: 'long' });
+        const dayStr = day.toString().padStart(2, '0');
+        const folderName = `${monthStr}-${monthName}`;
+        const fileName = `${year}-${monthStr}-${dayStr}.${fileFormat}`;
 
-    const noteFolder = path.join(notesPath, year.toString(), folderName);
-    const filePath = path.join(noteFolder, fileName);
+        const noteFolder = path.join(notesPath, year.toString(), folderName);
+        const filePath = path.join(noteFolder, fileName);
 
-    // Create folder if it doesn't exist
-    if (!fs.existsSync(noteFolder)) {
-        fs.mkdirSync(noteFolder, { recursive: true });
+        // Create folder if it doesn't exist
+        try {
+            await fsp.access(noteFolder);
+        } catch {
+            await fsp.mkdir(noteFolder, { recursive: true });
+        }
+
+        // Create note if it doesn't exist
+        try {
+            await fsp.access(filePath);
+        } catch {
+            const noteDate = new Date(year, month, day);
+            const content = await generateTemplate(undefined, noteDate);
+            await fsp.writeFile(filePath, content);
+        }
+
+        // Open the note
+        const document = await vscode.workspace.openTextDocument(filePath);
+        await vscode.window.showTextDocument(document);
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to open note: ${error instanceof Error ? error.message : String(error)}`);
     }
-
-    // Create note if it doesn't exist
-    if (!fs.existsSync(filePath)) {
-        const noteDate = new Date(year, month, day);
-        const content = generateTemplate(undefined, noteDate);
-        fs.writeFileSync(filePath, content);
-    }
-
-    // Open the note
-    const document = await vscode.workspace.openTextDocument(filePath);
-    await vscode.window.showTextDocument(document);
 }
 
-function getCalendarHtml(year: number, month: number, notesPath: string): string {
+async function getCalendarHtml(year: number, month: number, notesPath: string): Promise<string> {
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
@@ -656,7 +711,7 @@ function getCalendarHtml(year: number, month: number, notesPath: string): string
             if (cellIndex < startingDayOfWeek || dayCounter > daysInMonth) {
                 calendarHtml += '<td class="empty"></td>';
             } else {
-                const hasNote = checkNoteExists(notesPath, year, month, dayCounter, fileFormat);
+                const hasNote = await checkNoteExists(notesPath, year, month, dayCounter, fileFormat);
                 const isToday = isTodayDate(year, month, dayCounter);
                 const classes = [];
                 if (hasNote) {classes.push('has-note');}
@@ -1009,7 +1064,7 @@ function getCalendarHtml(year: number, month: number, notesPath: string): string
     </html>`;
 }
 
-function checkNoteExists(notesPath: string, year: number, month: number, day: number, fileFormat: string): boolean {
+async function checkNoteExists(notesPath: string, year: number, month: number, day: number, fileFormat: string): Promise<boolean> {
     const monthStr = (month + 1).toString().padStart(2, '0');
     const monthName = new Date(year, month).toLocaleString('en-US', { month: 'long' });
     const dayStr = day.toString().padStart(2, '0');
@@ -1021,7 +1076,17 @@ function checkNoteExists(notesPath: string, year: number, month: number, day: nu
     const filePath1 = path.join(notesPath, year.toString(), folderName, fileName1);
     const filePath2 = path.join(notesPath, year.toString(), folderName, fileName2);
 
-    return fs.existsSync(filePath1) || fs.existsSync(filePath2);
+    try {
+        await fsp.access(filePath1);
+        return true;
+    } catch {
+        try {
+            await fsp.access(filePath2);
+            return true;
+        } catch {
+            return false;
+        }
+    }
 }
 
 function isTodayDate(year: number, month: number, day: number): boolean {
@@ -1076,22 +1141,26 @@ function isValidCustomFolderName(name: string): boolean {
 async function getAllFolders(rootPath: string): Promise<Array<{name: string, path: string}>> {
     const folders: Array<{name: string, path: string}> = [];
 
-    function scanDir(dir: string, relativePath: string = '') {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-            if (entry.isDirectory()) {
-                const fullPath = path.join(dir, entry.name);
-                const relPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
-                folders.push({
-                    name: relPath,
-                    path: fullPath
-                });
-                scanDir(fullPath, relPath);
+    async function scanDir(dir: string, relativePath: string = '') {
+        try {
+            const entries = await fsp.readdir(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    const fullPath = path.join(dir, entry.name);
+                    const relPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
+                    folders.push({
+                        name: relPath,
+                        path: fullPath
+                    });
+                    await scanDir(fullPath, relPath);
+                }
             }
+        } catch (error) {
+            console.error('[NOTED] Error scanning directory:', dir, error);
         }
     }
 
-    scanDir(rootPath);
+    await scanDir(rootPath);
     return folders;
 }
 
@@ -1133,15 +1202,21 @@ function getTemplatesPath(): string | null {
     return path.join(notesPath, '.noted-templates');
 }
 
-function getCustomTemplates(): string[] {
+async function getCustomTemplates(): Promise<string[]> {
     const templatesPath = getTemplatesPath();
-    if (!templatesPath || !fs.existsSync(templatesPath)) {
+    if (!templatesPath) {
         return [];
     }
 
-    return fs.readdirSync(templatesPath)
-        .filter(f => f.endsWith('.txt') || f.endsWith('.md'))
-        .map(f => path.basename(f, path.extname(f)));
+    try {
+        await fsp.access(templatesPath);
+        const files = await fsp.readdir(templatesPath);
+        return files
+            .filter(f => f.endsWith('.txt') || f.endsWith('.md'))
+            .map(f => path.basename(f, path.extname(f)));
+    } catch {
+        return [];
+    }
 }
 
 async function createNewCustomTemplate() {
@@ -1160,22 +1235,26 @@ async function createNewCustomTemplate() {
         return;
     }
 
-    // Create templates folder if it doesn't exist
-    if (!fs.existsSync(templatesPath)) {
-        fs.mkdirSync(templatesPath, { recursive: true });
-    }
+    try {
+        // Create templates folder if it doesn't exist
+        try {
+            await fsp.access(templatesPath);
+        } catch {
+            await fsp.mkdir(templatesPath, { recursive: true });
+        }
 
-    const config = vscode.workspace.getConfiguration('noted');
-    const fileFormat = config.get<string>('fileFormat', 'txt');
-    const templateFile = path.join(templatesPath, `${templateName}.${fileFormat}`);
+        const config = vscode.workspace.getConfiguration('noted');
+        const fileFormat = config.get<string>('fileFormat', 'txt');
+        const templateFile = path.join(templatesPath, `${templateName}.${fileFormat}`);
 
-    if (fs.existsSync(templateFile)) {
-        vscode.window.showErrorMessage('Template already exists');
-        return;
-    }
-
-    // Create a starter template
-    const starterContent = `File: {filename}
+        try {
+            await fsp.access(templateFile);
+            vscode.window.showErrorMessage('Template already exists');
+            return;
+        } catch {
+            // Template doesn't exist, create it
+            // Create a starter template
+            const starterContent = `File: {filename}
 Created: {date} at {time}
 ==================================================
 
@@ -1187,11 +1266,15 @@ Available placeholders:
 - {time}: The current time
 `;
 
-    fs.writeFileSync(templateFile, starterContent);
+            await fsp.writeFile(templateFile, starterContent);
 
-    const document = await vscode.workspace.openTextDocument(templateFile);
-    await vscode.window.showTextDocument(document);
-    vscode.window.showInformationMessage(`Template created: ${templateName}`);
+            const document = await vscode.workspace.openTextDocument(templateFile);
+            await vscode.window.showTextDocument(document);
+            vscode.window.showInformationMessage(`Template created: ${templateName}`);
+        }
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to create template: ${error instanceof Error ? error.message : String(error)}`);
+    }
 }
 
 async function moveNotesFolderLocation() {
@@ -1201,70 +1284,75 @@ async function moveNotesFolderLocation() {
         return;
     }
 
-    const config = vscode.workspace.getConfiguration('noted');
-    const currentFolder = config.get<string>('notesFolder', 'notes');
-    
-    // Handle both relative and absolute paths
-    const rootPath = workspaceFolders[0].uri.fsPath;
-    const currentPath = path.isAbsolute(currentFolder) 
-        ? currentFolder 
-        : path.join(rootPath, currentFolder);
-
-    if (!fs.existsSync(currentPath)) {
-        vscode.window.showErrorMessage('Current notes folder does not exist');
-        return;
-    }
-
-    const selectedUri = await vscode.window.showOpenDialog({
-        canSelectFiles: false,
-        canSelectFolders: true,
-        canSelectMany: false,
-        openLabel: 'Select New Notes Location',
-        defaultUri: vscode.Uri.file(path.dirname(currentPath)),
-        title: 'Choose new location for your notes'
-    });
-
-    if (!selectedUri || !selectedUri[0]) {
-        return;
-    }
-
-    const newPath = selectedUri[0].fsPath;
-
-    if (fs.existsSync(newPath) && fs.readdirSync(newPath).length > 0) {
-        vscode.window.showErrorMessage('Destination folder must be empty');
-        return;
-    }
-
     try {
-        if (!fs.existsSync(newPath)) {
-            fs.mkdirSync(newPath, { recursive: true });
+        const config = vscode.workspace.getConfiguration('noted');
+        const currentFolder = config.get<string>('notesFolder', 'notes');
+
+        // Handle both relative and absolute paths
+        const rootPath = workspaceFolders[0].uri.fsPath;
+        const currentPath = path.isAbsolute(currentFolder)
+            ? currentFolder
+            : path.join(rootPath, currentFolder);
+
+        try {
+            await fsp.access(currentPath);
+        } catch {
+            vscode.window.showErrorMessage('Current notes folder does not exist');
+            return;
         }
-        
+
+        const selectedUri = await vscode.window.showOpenDialog({
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+            openLabel: 'Select New Notes Location',
+            defaultUri: vscode.Uri.file(path.dirname(currentPath)),
+            title: 'Choose new location for your notes'
+        });
+
+        if (!selectedUri || !selectedUri[0]) {
+            return;
+        }
+
+        const newPath = selectedUri[0].fsPath;
+
+        try {
+            await fsp.access(newPath);
+            const entries = await fsp.readdir(newPath);
+            if (entries.length > 0) {
+                vscode.window.showErrorMessage('Destination folder must be empty');
+                return;
+            }
+        } catch {
+            // Folder doesn't exist, create it
+            await fsp.mkdir(newPath, { recursive: true });
+        }
+
         // Copy all files recursively
-        const copyRecursive = (src: string, dest: string) => {
-            const entries = fs.readdirSync(src, { withFileTypes: true });
+        const copyRecursive = async (src: string, dest: string) => {
+            const entries = await fsp.readdir(src, { withFileTypes: true });
             for (const entry of entries) {
                 const srcPath = path.join(src, entry.name);
                 const destPath = path.join(dest, entry.name);
                 if (entry.isDirectory()) {
-                    fs.mkdirSync(destPath, { recursive: true });
-                    copyRecursive(srcPath, destPath);
+                    await fsp.mkdir(destPath, { recursive: true });
+                    await copyRecursive(srcPath, destPath);
                 } else {
-                    fs.copyFileSync(srcPath, destPath);
+                    await fsp.copyFile(srcPath, destPath);
                 }
             }
         };
-        
-        copyRecursive(currentPath, newPath);
-        
+
+        await copyRecursive(currentPath, newPath);
+
         // Delete old folder
-        fs.rmSync(currentPath, { recursive: true });
-        
+        await fsp.rm(currentPath, { recursive: true });
+
         // Save to global configuration
         await config.update('notesFolder', newPath, vscode.ConfigurationTarget.Global);
         vscode.window.showInformationMessage(`Notes moved to: ${newPath}`);
     } catch (error) {
-        vscode.window.showErrorMessage(`Failed to move notes: ${error}`);
+        vscode.window.showErrorMessage(`Failed to move notes: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 
@@ -1275,36 +1363,44 @@ async function openDailyNote(templateType?: string) {
         return;
     }
 
-    const config = vscode.workspace.getConfiguration('noted');
-    const fileFormat = config.get<string>('fileFormat', 'txt');
+    try {
+        const config = vscode.workspace.getConfiguration('noted');
+        const fileFormat = config.get<string>('fileFormat', 'txt');
 
-    const now = new Date();
-    
-    const year = now.getFullYear().toString();
-    const month = now.toLocaleString('en-US', { month: '2-digit' });
-    const monthName = now.toLocaleString('en-US', { month: 'long' });
-    const folderName = `${month}-${monthName}`;
-    const day = now.toLocaleString('en-US', { day: '2-digit' });
-    const fileName = `${year}-${month}-${day}.${fileFormat}`;
-    
-    const noteFolder = path.join(notesPath, year, folderName);
-    const filePath = path.join(noteFolder, fileName);
+        const now = new Date();
 
-    if (!fs.existsSync(noteFolder)) {
-        fs.mkdirSync(noteFolder, { recursive: true });
+        const year = now.getFullYear().toString();
+        const month = now.toLocaleString('en-US', { month: '2-digit' });
+        const monthName = now.toLocaleString('en-US', { month: 'long' });
+        const folderName = `${month}-${monthName}`;
+        const day = now.toLocaleString('en-US', { day: '2-digit' });
+        const fileName = `${year}-${month}-${day}.${fileFormat}`;
+
+        const noteFolder = path.join(notesPath, year, folderName);
+        const filePath = path.join(noteFolder, fileName);
+
+        try {
+            await fsp.access(noteFolder);
+        } catch {
+            await fsp.mkdir(noteFolder, { recursive: true });
+        }
+
+        try {
+            await fsp.access(filePath);
+        } catch {
+            const content = await generateTemplate(templateType, now);
+            await fsp.writeFile(filePath, content);
+        }
+
+        const document = await vscode.workspace.openTextDocument(filePath);
+        const editor = await vscode.window.showTextDocument(document);
+
+        const lastLine = document.lineCount - 1;
+        const lastCharacter = document.lineAt(lastLine).text.length;
+        editor.selection = new vscode.Selection(lastLine, lastCharacter, lastLine, lastCharacter);
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to open daily note: ${error instanceof Error ? error.message : String(error)}`);
     }
-
-    if (!fs.existsSync(filePath)) {
-        const content = generateTemplate(templateType, now);
-        fs.writeFileSync(filePath, content);
-    }
-
-    const document = await vscode.workspace.openTextDocument(filePath);
-    const editor = await vscode.window.showTextDocument(document);
-    
-    const lastLine = document.lineCount - 1;
-    const lastCharacter = document.lineAt(lastLine).text.length;
-    editor.selection = new vscode.Selection(lastLine, lastCharacter, lastLine, lastCharacter);
 }
 
 async function createNoteFromTemplate(templateType: string) {
@@ -1314,63 +1410,71 @@ async function createNoteFromTemplate(templateType: string) {
         return;
     }
 
-    // Ask for note name
-    const noteName = await vscode.window.showInputBox({
-        prompt: 'Enter note name',
-        placeHolder: 'my-note'
-    });
+    try {
+        // Ask for note name
+        const noteName = await vscode.window.showInputBox({
+            prompt: 'Enter note name',
+            placeHolder: 'my-note'
+        });
 
-    if (!noteName) {
-        return;
+        if (!noteName) {
+            return;
+        }
+
+        // Sanitize filename: replace spaces with dashes, remove special chars
+        const sanitizedName = noteName
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-_]/g, '');
+
+        const config = vscode.workspace.getConfiguration('noted');
+        const fileFormat = config.get<string>('fileFormat', 'txt');
+
+        const now = new Date();
+
+        const year = now.getFullYear().toString();
+        const month = now.toLocaleString('en-US', { month: '2-digit' });
+        const monthName = now.toLocaleString('en-US', { month: 'long' });
+        const folderName = `${month}-${monthName}`;
+        const day = now.toLocaleString('en-US', { day: '2-digit' });
+        const time = now.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).replace(':', '');
+
+        const noteFolder = path.join(notesPath, year, folderName);
+        const fileName = `${year}-${month}-${day}-${time}-${sanitizedName}.${fileFormat}`;
+        const filePath = path.join(noteFolder, fileName);
+
+        try {
+            await fsp.access(noteFolder);
+        } catch {
+            await fsp.mkdir(noteFolder, { recursive: true });
+        }
+
+        try {
+            await fsp.access(filePath);
+            vscode.window.showWarningMessage('A note with this name already exists');
+            return;
+        } catch {
+            // File doesn't exist, create it
+            const content = await generateTemplate(templateType, now, fileName);
+            await fsp.writeFile(filePath, content);
+
+            const document = await vscode.workspace.openTextDocument(filePath);
+            const editor = await vscode.window.showTextDocument(document);
+
+            const lastLine = document.lineCount - 1;
+            const lastCharacter = document.lineAt(lastLine).text.length;
+            editor.selection = new vscode.Selection(lastLine, lastCharacter, lastLine, lastCharacter);
+        }
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to create note: ${error instanceof Error ? error.message : String(error)}`);
     }
-
-    // Sanitize filename: replace spaces with dashes, remove special chars
-    const sanitizedName = noteName
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-_]/g, '');
-
-    const config = vscode.workspace.getConfiguration('noted');
-    const fileFormat = config.get<string>('fileFormat', 'txt');
-
-    const now = new Date();
-
-    const year = now.getFullYear().toString();
-    const month = now.toLocaleString('en-US', { month: '2-digit' });
-    const monthName = now.toLocaleString('en-US', { month: 'long' });
-    const folderName = `${month}-${monthName}`;
-    const day = now.toLocaleString('en-US', { day: '2-digit' });
-    const time = now.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    }).replace(':', '');
-
-    const noteFolder = path.join(notesPath, year, folderName);
-    const fileName = `${year}-${month}-${day}-${time}-${sanitizedName}.${fileFormat}`;
-    const filePath = path.join(noteFolder, fileName);
-
-    if (!fs.existsSync(noteFolder)) {
-        fs.mkdirSync(noteFolder, { recursive: true });
-    }
-
-    if (fs.existsSync(filePath)) {
-        vscode.window.showWarningMessage('A note with this name already exists');
-        return;
-    }
-
-    const content = generateTemplate(templateType, now, fileName);
-    fs.writeFileSync(filePath, content);
-
-    const document = await vscode.workspace.openTextDocument(filePath);
-    const editor = await vscode.window.showTextDocument(document);
-    
-    const lastLine = document.lineCount - 1;
-    const lastCharacter = document.lineAt(lastLine).text.length;
-    editor.selection = new vscode.Selection(lastLine, lastCharacter, lastLine, lastCharacter);
 }
 
-function generateTemplate(templateType: string | undefined, date: Date, filename?: string): string {
+async function generateTemplate(templateType: string | undefined, date: Date, filename?: string): Promise<string> {
     const dateStr = date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -1390,20 +1494,27 @@ function generateTemplate(templateType: string | undefined, date: Date, filename
 
     // Check if it's a custom template
     const templatesPath = getTemplatesPath();
-    if (templatesPath && templateType && fs.existsSync(templatesPath)) {
-        const config = vscode.workspace.getConfiguration('noted');
-        const fileFormat = config.get<string>('fileFormat', 'txt');
-        const customTemplatePath = path.join(templatesPath, `${templateType}.${fileFormat}`);
+    if (templatesPath && templateType) {
+        try {
+            await fsp.access(templatesPath);
+            const config = vscode.workspace.getConfiguration('noted');
+            const fileFormat = config.get<string>('fileFormat', 'txt');
+            const customTemplatePath = path.join(templatesPath, `${templateType}.${fileFormat}`);
 
-        if (fs.existsSync(customTemplatePath)) {
-            let content = fs.readFileSync(customTemplatePath, 'utf8');
+            try {
+                const content = await fsp.readFile(customTemplatePath, 'utf8');
 
-            // Replace placeholders
-            content = content.replace(/{filename}/g, filename || '');
-            content = content.replace(/{date}/g, dateStr);
-            content = content.replace(/{time}/g, timeStr);
+                // Replace placeholders
+                let processedContent = content.replace(/{filename}/g, filename || '');
+                processedContent = processedContent.replace(/{date}/g, dateStr);
+                processedContent = processedContent.replace(/{time}/g, timeStr);
 
-            return content;
+                return processedContent;
+            } catch {
+                // Custom template doesn't exist, fall through to built-in templates
+            }
+        } catch {
+            // Templates folder doesn't exist, fall through to built-in templates
         }
     }
 
@@ -1461,34 +1572,44 @@ async function searchInNotes(query: string): Promise<Array<{file: string, previe
         return [];
     }
 
-    if (!fs.existsSync(notesPath)) {
+    try {
+        await fsp.access(notesPath);
+    } catch {
         return [];
     }
 
     const results: Array<{file: string, preview: string}> = [];
     const searchLower = query.toLowerCase();
 
-    function searchDir(dir: string) {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-            const fullPath = path.join(dir, entry.name);
-            if (entry.isDirectory()) {
-                searchDir(fullPath);
-            } else if (entry.name.endsWith('.txt') || entry.name.endsWith('.md')) {
-                const content = fs.readFileSync(fullPath, 'utf8');
-                if (content.toLowerCase().includes(searchLower)) {
-                    const lines = content.split('\n');
-                    const matchLine = lines.find(l => l.toLowerCase().includes(searchLower));
-                    results.push({
-                        file: fullPath,
-                        preview: matchLine?.trim().substring(0, 80) || ''
-                    });
+    async function searchDir(dir: string) {
+        try {
+            const entries = await fsp.readdir(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    await searchDir(fullPath);
+                } else if (entry.name.endsWith('.txt') || entry.name.endsWith('.md')) {
+                    try {
+                        const content = await fsp.readFile(fullPath, 'utf8');
+                        if (content.toLowerCase().includes(searchLower)) {
+                            const lines = content.split('\n');
+                            const matchLine = lines.find(l => l.toLowerCase().includes(searchLower));
+                            results.push({
+                                file: fullPath,
+                                preview: matchLine?.trim().substring(0, 80) || ''
+                            });
+                        }
+                    } catch (error) {
+                        console.error('[NOTED] Error reading file:', fullPath, error);
+                    }
                 }
             }
+        } catch (error) {
+            console.error('[NOTED] Error reading directory:', dir, error);
         }
     }
 
-    searchDir(notesPath);
+    await searchDir(notesPath);
     return results;
 }
 
@@ -1498,7 +1619,9 @@ async function getNoteStats(): Promise<{total: number, thisWeek: number, thisMon
         return { total: 0, thisWeek: 0, thisMonth: 0 };
     }
 
-    if (!fs.existsSync(notesPath)) {
+    try {
+        await fsp.access(notesPath);
+    } catch {
         return { total: 0, thisWeek: 0, thisMonth: 0 };
     }
 
@@ -1510,22 +1633,30 @@ async function getNoteStats(): Promise<{total: number, thisWeek: number, thisMon
     let thisWeek = 0;
     let thisMonth = 0;
 
-    function countFiles(dir: string) {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-            const fullPath = path.join(dir, entry.name);
-            if (entry.isDirectory()) {
-                countFiles(fullPath);
-            } else if (entry.name.endsWith('.txt') || entry.name.endsWith('.md')) {
-                total++;
-                const stat = fs.statSync(fullPath);
-                if (stat.mtime >= weekAgo) thisWeek++;
-                if (stat.mtime >= monthStart) thisMonth++;
+    async function countFiles(dir: string) {
+        try {
+            const entries = await fsp.readdir(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    await countFiles(fullPath);
+                } else if (entry.name.endsWith('.txt') || entry.name.endsWith('.md')) {
+                    total++;
+                    try {
+                        const stat = await fsp.stat(fullPath);
+                        if (stat.mtime >= weekAgo) {thisWeek++;}
+                        if (stat.mtime >= monthStart) {thisMonth++;}
+                    } catch (error) {
+                        console.error('[NOTED] Error stating file:', fullPath, error);
+                    }
+                }
             }
+        } catch (error) {
+            console.error('[NOTED] Error reading directory:', dir, error);
         }
     }
 
-    countFiles(notesPath);
+    await countFiles(notesPath);
     return { total, thisWeek, thisMonth };
 }
 
@@ -1536,7 +1667,9 @@ async function exportNotesToFile(range: string) {
         return;
     }
 
-    if (!fs.existsSync(notesPath)) {
+    try {
+        await fsp.access(notesPath);
+    } catch {
         vscode.window.showErrorMessage('No notes found');
         return;
     }
@@ -1560,30 +1693,42 @@ async function exportNotesToFile(range: string) {
 
     let combinedContent = `Exported Notes - ${range}\n${'='.repeat(50)}\n\n`;
 
-    function collectNotes(dir: string) {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-            const fullPath = path.join(dir, entry.name);
-            if (entry.isDirectory()) {
-                collectNotes(fullPath);
-            } else if (entry.name.endsWith('.txt') || entry.name.endsWith('.md')) {
-                const stat = fs.statSync(fullPath);
-                if (stat.mtime >= filterDate) {
-                    const content = fs.readFileSync(fullPath, 'utf8');
-                    combinedContent += `\n\n--- ${entry.name} ---\n\n${content}`;
+    async function collectNotes(dir: string) {
+        try {
+            const entries = await fsp.readdir(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    await collectNotes(fullPath);
+                } else if (entry.name.endsWith('.txt') || entry.name.endsWith('.md')) {
+                    try {
+                        const stat = await fsp.stat(fullPath);
+                        if (stat.mtime >= filterDate) {
+                            const content = await fsp.readFile(fullPath, 'utf8');
+                            combinedContent += `\n\n--- ${entry.name} ---\n\n${content}`;
+                        }
+                    } catch (error) {
+                        console.error('[NOTED] Error processing file:', fullPath, error);
+                    }
                 }
             }
+        } catch (error) {
+            console.error('[NOTED] Error reading directory:', dir, error);
         }
     }
 
-    collectNotes(notesPath);
+    try {
+        await collectNotes(notesPath);
 
-    const exportPath = path.join(rootPath, `notes-export-${Date.now()}.txt`);
-    fs.writeFileSync(exportPath, combinedContent);
-    
-    const document = await vscode.workspace.openTextDocument(exportPath);
-    await vscode.window.showTextDocument(document);
-    vscode.window.showInformationMessage(`Exported to ${path.basename(exportPath)}`);
+        const exportPath = path.join(rootPath, `notes-export-${Date.now()}.txt`);
+        await fsp.writeFile(exportPath, combinedContent);
+
+        const document = await vscode.workspace.openTextDocument(exportPath);
+        await vscode.window.showTextDocument(document);
+        vscode.window.showInformationMessage(`Exported to ${path.basename(exportPath)}`);
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to export notes: ${error instanceof Error ? error.message : String(error)}`);
+    }
 }
 
 class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
@@ -1682,16 +1827,17 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vscode.Tre
             }
 
             // Check if file already exists at destination
-            if (fs.existsSync(destinationPath)) {
+            try {
+                await fsp.access(destinationPath);
                 vscode.window.showErrorMessage(`A file named "${fileName}" already exists in the destination folder`);
                 continue;
-            }
-
-            try {
-                // Move the file
-                fs.renameSync(sourceFilePath, destinationPath);
-            } catch (error) {
-                vscode.window.showErrorMessage(`Failed to move note: ${error}`);
+            } catch {
+                // File doesn't exist, proceed with move
+                try {
+                    await fsp.rename(sourceFilePath, destinationPath);
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to move note: ${error instanceof Error ? error.message : String(error)}`);
+                }
             }
         }
 
@@ -1709,18 +1855,20 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vscode.Tre
         return element;
     }
 
-    getChildren(element?: TreeItem): Thenable<TreeItem[]> {
+    async getChildren(element?: TreeItem): Promise<TreeItem[]> {
         const notesPath = getNotesPath();
         console.log('[NOTED DEBUG] TreeProvider.getChildren() called:');
         console.log('[NOTED DEBUG] - notesPath:', notesPath);
         
         if (!notesPath) {
             console.log('[NOTED DEBUG] - showing welcome screen (no notesPath)');
-            return Promise.resolve([]);
+            return [];
         }
 
         // Auto-create the notes folder if it's configured but doesn't exist
-        if (!fs.existsSync(notesPath)) {
+        try {
+            await fsp.access(notesPath);
+        } catch {
             const config = vscode.workspace.getConfiguration('noted');
             const notesFolder = config.get<string>('notesFolder', 'Notes');
             console.log('[NOTED DEBUG] - notes folder does not exist, checking if should auto-create');
@@ -1731,17 +1879,17 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vscode.Tre
             if (path.isAbsolute(notesFolder)) {
                 console.log('[NOTED DEBUG] - auto-creating configured absolute path folder');
                 try {
-                    fs.mkdirSync(notesPath, { recursive: true });
+                    await fsp.mkdir(notesPath, { recursive: true });
                     console.log('[NOTED DEBUG] - successfully created notes folder');
                 } catch (error) {
                     console.error('[NOTED DEBUG] Failed to create notes folder:', error);
-                    vscode.window.showErrorMessage(`Failed to create notes folder: ${error}`);
-                    return Promise.resolve([]);
+                    vscode.window.showErrorMessage(`Failed to create notes folder: ${error instanceof Error ? error.message : String(error)}`);
+                    return [];
                 }
             } else {
                 console.log('[NOTED DEBUG] - relative path without workspace, showing welcome screen');
                 // Not properly configured yet, show welcome screen
-                return Promise.resolve([]);
+                return [];
             }
         }
 
@@ -1752,133 +1900,167 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vscode.Tre
             // Recent notes section
             items.push(new SectionItem('Recent Notes', 'recent'));
 
-            // Get all directories in notes path
-            const entries = fs.readdirSync(notesPath)
-                .filter(f => fs.statSync(path.join(notesPath, f)).isDirectory())
-                .sort()
-                .reverse();
+            try {
+                // Get all directories in notes path
+                const allEntries = await fsp.readdir(notesPath, { withFileTypes: true });
+                const entries = [];
 
-            // Separate years and custom folders
-            const years: string[] = [];
-            const customFolders: string[] = [];
-
-            entries.forEach(entry => {
-                if (isYearFolder(entry)) {
-                    years.push(entry);
-                } else {
-                    customFolders.push(entry);
+                for (const entry of allEntries) {
+                    if (entry.isDirectory()) {
+                        entries.push(entry.name);
+                    }
                 }
-            });
 
-            // Add custom folders first (sorted alphabetically)
-            customFolders.sort();
-            items.push(...customFolders.map(folder =>
-                new NoteItem(folder, path.join(notesPath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
-            ));
+                entries.sort().reverse();
 
-            // Then add years (already sorted in reverse)
-            items.push(...years.map(year =>
-                new NoteItem(year, path.join(notesPath, year), vscode.TreeItemCollapsibleState.Collapsed, 'year')
-            ));
+                // Separate years and custom folders
+                const years: string[] = [];
+                const customFolders: string[] = [];
 
-            return Promise.resolve(items);
+                entries.forEach(entry => {
+                    if (isYearFolder(entry)) {
+                        years.push(entry);
+                    } else {
+                        customFolders.push(entry);
+                    }
+                });
+
+                // Add custom folders first (sorted alphabetically)
+                customFolders.sort();
+                items.push(...customFolders.map(folder =>
+                    new NoteItem(folder, path.join(notesPath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
+                ));
+
+                // Then add years (already sorted in reverse)
+                items.push(...years.map(year =>
+                    new NoteItem(year, path.join(notesPath, year), vscode.TreeItemCollapsibleState.Collapsed, 'year')
+                ));
+            } catch (error) {
+                console.error('[NOTED] Error reading notes directory:', error);
+            }
+
+            return items;
         } else if (element instanceof SectionItem) {
             if (element.sectionType === 'recent') {
                 return this.getRecentNotes(notesPath);
             }
         } else if (element instanceof NoteItem) {
             if (element.type === 'year') {
-                const entries = fs.readdirSync(element.filePath)
-                    .filter(f => fs.statSync(path.join(element.filePath, f)).isDirectory())
-                    .sort()
-                    .reverse();
+                try {
+                    const allEntries = await fsp.readdir(element.filePath, { withFileTypes: true });
+                    const entries = [];
 
-                // In year folders, show months and custom folders
-                const months: string[] = [];
-                const customFolders: string[] = [];
-
-                entries.forEach(entry => {
-                    if (isMonthFolder(entry)) {
-                        months.push(entry);
-                    } else {
-                        customFolders.push(entry);
+                    for (const entry of allEntries) {
+                        if (entry.isDirectory()) {
+                            entries.push(entry.name);
+                        }
                     }
-                });
 
-                const items: NoteItem[] = [];
+                    entries.sort().reverse();
 
-                // Add custom folders first
-                customFolders.sort();
-                items.push(...customFolders.map(folder =>
-                    new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
-                ));
+                    // In year folders, show months and custom folders
+                    const months: string[] = [];
+                    const customFolders: string[] = [];
 
-                // Then add months
-                items.push(...months.map(month =>
-                    new NoteItem(month, path.join(element.filePath, month), vscode.TreeItemCollapsibleState.Collapsed, 'month')
-                ));
+                    entries.forEach(entry => {
+                        if (isMonthFolder(entry)) {
+                            months.push(entry);
+                        } else {
+                            customFolders.push(entry);
+                        }
+                    });
 
-                return Promise.resolve(items);
+                    const items: NoteItem[] = [];
+
+                    // Add custom folders first
+                    customFolders.sort();
+                    items.push(...customFolders.map(folder =>
+                        new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
+                    ));
+
+                    // Then add months
+                    items.push(...months.map(month =>
+                        new NoteItem(month, path.join(element.filePath, month), vscode.TreeItemCollapsibleState.Collapsed, 'month')
+                    ));
+
+                    return items;
+                } catch (error) {
+                    console.error('[NOTED] Error reading year folder:', element.filePath, error);
+                    return [];
+                }
             } else if (element.type === 'month' || element.type === 'custom-folder') {
                 // Both month and custom folders can contain notes and subfolders
-                const entries = fs.readdirSync(element.filePath, { withFileTypes: true });
-                const items: NoteItem[] = [];
+                try {
+                    const entries = await fsp.readdir(element.filePath, { withFileTypes: true });
+                    const items: NoteItem[] = [];
 
-                // Get subdirectories (custom folders only, no date folders allowed inside)
-                const subfolders = entries
-                    .filter(e => e.isDirectory())
-                    .map(e => e.name)
-                    .sort();
+                    // Get subdirectories (custom folders only, no date folders allowed inside)
+                    const subfolders = entries
+                        .filter(e => e.isDirectory())
+                        .map(e => e.name)
+                        .sort();
 
-                items.push(...subfolders.map(folder =>
-                    new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
-                ));
+                    items.push(...subfolders.map(folder =>
+                        new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
+                    ));
 
-                // Get notes
-                const notes = entries
-                    .filter(e => !e.isDirectory() && (e.name.endsWith('.txt') || e.name.endsWith('.md')))
-                    .map(e => e.name)
-                    .sort()
-                    .reverse();
+                    // Get notes
+                    const notes = entries
+                        .filter(e => !e.isDirectory() && (e.name.endsWith('.txt') || e.name.endsWith('.md')))
+                        .map(e => e.name)
+                        .sort()
+                        .reverse();
 
-                items.push(...notes.map(note => {
-                    const filePath = path.join(element.filePath, note);
-                    const item = new NoteItem(note, filePath, vscode.TreeItemCollapsibleState.None, 'note');
-                    item.command = {
-                        command: 'noted.openNote',
-                        title: 'Open Note',
-                        arguments: [filePath]
-                    };
-                    return item;
-                }));
+                    items.push(...notes.map(note => {
+                        const filePath = path.join(element.filePath, note);
+                        const item = new NoteItem(note, filePath, vscode.TreeItemCollapsibleState.None, 'note');
+                        item.command = {
+                            command: 'noted.openNote',
+                            title: 'Open Note',
+                            arguments: [filePath]
+                        };
+                        return item;
+                    }));
 
-                return Promise.resolve(items);
-            }
-        }
-
-        return Promise.resolve([]);
-    }
-
-    private getRecentNotes(notesPath: string): Thenable<TreeItem[]> {
-        const allNotes: Array<{path: string, mtime: Date, name: string}> = [];
-
-        function findNotes(dir: string) {
-            const entries = fs.readdirSync(dir, { withFileTypes: true });
-            for (const entry of entries) {
-                const fullPath = path.join(dir, entry.name);
-                if (entry.isDirectory()) {
-                    findNotes(fullPath);
-                } else if (entry.name.endsWith('.txt') || entry.name.endsWith('.md')) {
-                    const stat = fs.statSync(fullPath);
-                    allNotes.push({ path: fullPath, mtime: stat.mtime, name: entry.name });
+                    return items;
+                } catch (error) {
+                    console.error('[NOTED] Error reading folder:', element.filePath, error);
+                    return [];
                 }
             }
         }
 
-        findNotes(notesPath);
+        return [];
+    }
+
+    private async getRecentNotes(notesPath: string): Promise<TreeItem[]> {
+        const allNotes: Array<{path: string, mtime: Date, name: string}> = [];
+
+        async function findNotes(dir: string) {
+            try {
+                const entries = await fsp.readdir(dir, { withFileTypes: true });
+                for (const entry of entries) {
+                    const fullPath = path.join(dir, entry.name);
+                    if (entry.isDirectory()) {
+                        await findNotes(fullPath);
+                    } else if (entry.name.endsWith('.txt') || entry.name.endsWith('.md')) {
+                        try {
+                            const stat = await fsp.stat(fullPath);
+                            allNotes.push({ path: fullPath, mtime: stat.mtime, name: entry.name });
+                        } catch (error) {
+                            console.error('[NOTED] Error stating file:', fullPath, error);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('[NOTED] Error reading directory:', dir, error);
+            }
+        }
+
+        await findNotes(notesPath);
         allNotes.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
-        
-        return Promise.resolve(allNotes.slice(0, 10).map(note => {
+
+        return allNotes.slice(0, 10).map(note => {
             const item = new NoteItem(note.name, note.path, vscode.TreeItemCollapsibleState.None, 'note');
             item.command = {
                 command: 'noted.openNote',
@@ -1887,7 +2069,7 @@ class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vscode.Tre
             };
             item.contextValue = 'note';
             return item;
-        }));
+        });
     }
 }
 
