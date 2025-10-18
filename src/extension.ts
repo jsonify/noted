@@ -19,7 +19,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Create tree data provider for main notes view
     const notesProvider = new NotesTreeProvider();
-    vscode.window.registerTreeDataProvider('notedView', notesProvider);
+    const treeView = vscode.window.createTreeView('notedView', {
+        treeDataProvider: notesProvider,
+        dragAndDropController: notesProvider
+    });
 
     // Create tree data provider for templates view (empty, uses viewsWelcome)
     const templatesProvider = new TemplatesTreeProvider();
@@ -1601,12 +1604,105 @@ class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
     }
 }
 
-class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
+class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vscode.TreeDragAndDropController<TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
+    // Drag and drop support
+    dropMimeTypes = ['application/vnd.code.tree.notedView'];
+    dragMimeTypes = ['text/uri-list'];
+
     refresh(): void {
         this._onDidChangeTreeData.fire();
+    }
+
+    async handleDrag(source: readonly TreeItem[], dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Promise<void> {
+        // Only allow dragging notes, not folders or sections
+        const notes = source.filter(item => item instanceof NoteItem && item.type === 'note');
+        if (notes.length > 0) {
+            dataTransfer.set('application/vnd.code.tree.notedView', new vscode.DataTransferItem(notes));
+        }
+    }
+
+    async handleDrop(target: TreeItem | undefined, dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Promise<void> {
+        const transferItem = dataTransfer.get('application/vnd.code.tree.notedView');
+        if (!transferItem) {
+            return;
+        }
+
+        const draggedItems = transferItem.value as NoteItem[];
+        if (!draggedItems || draggedItems.length === 0) {
+            return;
+        }
+
+        // Determine the target folder
+        let targetFolderPath: string | null = null;
+
+        if (!target) {
+            // Dropped on root - not allowed
+            vscode.window.showErrorMessage('Cannot move notes to root level');
+            return;
+        }
+
+        if (target instanceof NoteItem) {
+            if (target.type === 'note') {
+                // Dropped on another note - move to its parent folder
+                targetFolderPath = path.dirname(target.filePath);
+            } else if (target.type === 'month' || target.type === 'custom-folder') {
+                // Dropped on a folder - use that folder
+                targetFolderPath = target.filePath;
+            } else if (target.type === 'year') {
+                // Dropped on a year - not allowed (no direct notes in year folders)
+                vscode.window.showErrorMessage('Cannot move notes directly into year folders. Please drop into a month folder.');
+                return;
+            }
+        } else if (target instanceof SectionItem) {
+            // Dropped on section - not allowed
+            vscode.window.showErrorMessage('Cannot move notes into sections');
+            return;
+        }
+
+        if (!targetFolderPath) {
+            return;
+        }
+
+        // Move each dragged note
+        for (const draggedItem of draggedItems) {
+            if (!(draggedItem instanceof NoteItem) || draggedItem.type !== 'note') {
+                continue;
+            }
+
+            const sourceFilePath = draggedItem.filePath;
+            const fileName = path.basename(sourceFilePath);
+            const destinationPath = path.join(targetFolderPath, fileName);
+
+            // Check if source and destination are the same
+            if (sourceFilePath === destinationPath) {
+                continue;
+            }
+
+            // Check if file already exists at destination
+            if (fs.existsSync(destinationPath)) {
+                vscode.window.showErrorMessage(`A file named "${fileName}" already exists in the destination folder`);
+                continue;
+            }
+
+            try {
+                // Move the file
+                fs.renameSync(sourceFilePath, destinationPath);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to move note: ${error}`);
+            }
+        }
+
+        // Refresh the tree view
+        this.refresh();
+
+        if (draggedItems.length === 1) {
+            vscode.window.showInformationMessage(`Moved note to ${path.basename(targetFolderPath)}`);
+        } else {
+            vscode.window.showInformationMessage(`Moved ${draggedItems.length} notes to ${path.basename(targetFolderPath)}`);
+        }
     }
 
     getTreeItem(element: TreeItem): vscode.TreeItem {

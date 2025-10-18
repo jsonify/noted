@@ -41,6 +41,11 @@
         }
       ]
     },
+    "capabilities": {
+      "untrustedWorkspaces": {
+        "supported": true
+      }
+    },
     "viewsWelcome": [
       {
         "view": "notedTemplatesView",

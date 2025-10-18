@@ -38,7 +38,7 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 
 #### UX Improvements
 - [ ] Keyboard shortcuts for more commands
-- [ ] Drag-and-drop to move notes between folders
+- [x] Drag-and-drop to move notes between folders
 - [ ] Bulk operations (move/delete multiple notes)
 - [ ] Undo functionality for destructive operations
 - [ ] Confirmation dialogs with preview

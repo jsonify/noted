@@ -29,6 +29,12 @@ All templates automatically include a timestamp header with creation date and ti
 
 ### Note Management
 - **Move Note**: Move notes between any folder (date or custom) with folder picker
+- **Drag-and-Drop** (NEW): Drag notes to move them between folders
+  - Drag notes from any location (Recent Notes, month folders, custom folders)
+  - Drop on month folders, custom folders, or other notes (moves to parent folder)
+  - Multi-select support: Drag multiple notes at once
+  - Smart restrictions: Cannot drop on year folders, sections, or root
+  - Conflict prevention: Shows error if file already exists at destination
 - **Rename Note**: Rename individual notes
 - **Duplicate Note**: Create a copy of any note
 - **Delete Note**: Delete notes with confirmation
