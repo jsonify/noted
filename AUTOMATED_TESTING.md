@@ -211,3 +211,29 @@ git push
 - Standard practice for all package managers (npm, yarn, pnpm)
 
 **Note**: The `pnpm-lock.yaml` file should **always** be committed to version control, never ignored.
+
+### "require() of ES Module ... chai/index.js ... not supported"
+
+**Cause**: Chai v6+ is an ES Module, but the tests are compiled to CommonJS
+
+**Solution**: Use Chai v4 (the last CommonJS-compatible version)
+
+```bash
+# Downgrade chai to v4
+pnpm remove chai @types/chai
+pnpm add -D chai@4 @types/chai@4
+
+# Regenerate lockfile
+pnpm install
+```
+
+**Why Chai 4?**
+- ✅ CommonJS compatible (works with TypeScript CommonJS output)
+- ✅ Stable and mature (used by millions of projects)
+- ✅ Same API as Chai 6 for our use cases
+- ✅ No breaking changes needed in tests
+
+**Note**: The project uses TypeScript with CommonJS modules. To use Chai 6+, you would need to:
+- Switch to ES Modules in tsconfig.json (set `"module": "ES2020"`)
+- Update all imports to use `import` syntax
+- Configure Mocha for ESM
