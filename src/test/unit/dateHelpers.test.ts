@@ -15,7 +15,8 @@ import {
 describe('Date Helpers', () => {
   describe('formatDateForNote', () => {
     it('should format date in long readable format', () => {
-      const date = new Date('2024-10-15T12:30:00');
+      // Use Date constructor with explicit values to avoid timezone issues
+      const date = new Date(2024, 9, 15, 12, 30, 0); // October 15, 2024
       const result = formatDateForNote(date);
       expect(result).to.include('2024');
       expect(result).to.include('October');
@@ -25,11 +26,12 @@ describe('Date Helpers', () => {
 
   describe('formatTimeForNote', () => {
     it('should format time in 12-hour format with AM/PM', () => {
-      const morningDate = new Date('2024-10-15T09:30:00');
+      // Use Date constructor with explicit values to avoid timezone issues
+      const morningDate = new Date(2024, 9, 15, 9, 30, 0);
       const morningResult = formatTimeForNote(morningDate);
       expect(morningResult).to.match(/09:30 AM|9:30 AM/);
 
-      const afternoonDate = new Date('2024-10-15T14:30:00');
+      const afternoonDate = new Date(2024, 9, 15, 14, 30, 0);
       const afternoonResult = formatTimeForNote(afternoonDate);
       expect(afternoonResult).to.match(/02:30 PM|2:30 PM/);
     });
@@ -44,7 +46,8 @@ describe('Date Helpers', () => {
 
   describe('getYear', () => {
     it('should return year as string', () => {
-      const date = new Date('2024-10-15');
+      // Use Date constructor with explicit values to avoid timezone issues
+      const date = new Date(2024, 9, 15); // October 15, 2024
       expect(getYear(date)).to.equal('2024');
     });
 
@@ -57,18 +60,20 @@ describe('Date Helpers', () => {
 
   describe('getMonth', () => {
     it('should return month with leading zero', () => {
-      expect(getMonth(new Date('2024-01-15'))).to.equal('01');
-      expect(getMonth(new Date('2024-09-15'))).to.equal('09');
-      expect(getMonth(new Date('2024-10-15'))).to.equal('10');
-      expect(getMonth(new Date('2024-12-15'))).to.equal('12');
+      // Use Date constructor with explicit values to avoid timezone issues
+      expect(getMonth(new Date(2024, 0, 15))).to.equal('01');
+      expect(getMonth(new Date(2024, 8, 15))).to.equal('09');
+      expect(getMonth(new Date(2024, 9, 15))).to.equal('10');
+      expect(getMonth(new Date(2024, 11, 15))).to.equal('12');
     });
   });
 
   describe('getMonthName', () => {
     it('should return full month name', () => {
-      expect(getMonthName(new Date('2024-01-15'))).to.equal('January');
-      expect(getMonthName(new Date('2024-06-15'))).to.equal('June');
-      expect(getMonthName(new Date('2024-12-15'))).to.equal('December');
+      // Use Date constructor with explicit values to avoid timezone issues
+      expect(getMonthName(new Date(2024, 0, 15))).to.equal('January');
+      expect(getMonthName(new Date(2024, 5, 15))).to.equal('June');
+      expect(getMonthName(new Date(2024, 11, 15))).to.equal('December');
     });
   });
 
@@ -83,9 +88,10 @@ describe('Date Helpers', () => {
 
   describe('getFolderName', () => {
     it('should return folder name in MM-MonthName format', () => {
-      expect(getFolderName(new Date('2024-01-15'))).to.equal('01-January');
-      expect(getFolderName(new Date('2024-06-15'))).to.equal('06-June');
-      expect(getFolderName(new Date('2024-12-15'))).to.equal('12-December');
+      // Use Date constructor with explicit values to avoid timezone issues
+      expect(getFolderName(new Date(2024, 0, 15))).to.equal('01-January');
+      expect(getFolderName(new Date(2024, 5, 15))).to.equal('06-June');
+      expect(getFolderName(new Date(2024, 11, 15))).to.equal('12-December');
     });
   });
 
