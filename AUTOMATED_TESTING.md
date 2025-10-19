@@ -181,3 +181,8 @@ If all these pass locally, they should pass in CI.
 - [ ] Add automated changelog generation
 - [ ] Deploy releases automatically
 - [ ] Add E2E tests in CI
+
+### "Multiple versions of pnpm specified"
+- Don't specify `version:` in the pnpm/action-setup step when `packageManager` is set in package.json
+- The action automatically reads the version from the `packageManager` field
+- Our workflows use pnpm@10.18.0 from package.json
