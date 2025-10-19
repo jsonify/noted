@@ -74,11 +74,9 @@ export function getFolderName(date: Date): string {
  * Get time string for filename (HHMM)
  */
 export function getTimeForFilename(date: Date): string {
-    return date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    }).replace(':', '');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}${minutes}`;
 }
 
 /**
