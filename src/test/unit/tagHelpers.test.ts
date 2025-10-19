@@ -9,25 +9,24 @@ import {
 
 describe('Tag Helpers', () => {
   describe('extractTagsFromContent', () => {
-    it('should extract tags from metadata section', () => {
-      const content = 'tags: #bug #urgent #project-alpha\n\nNote content here';
+    it('should extract tags from anywhere in content', () => {
+      const content = 'Working on #bug #urgent #project-alpha today\n\nNote content here';
       const tags = extractTagsFromContent(content);
       expect(tags).to.deep.equal(['bug', 'urgent', 'project-alpha']);
     });
 
     it('should extract tags with various spacing', () => {
-      const content = 'tags:#bug  #urgent   #feature\n\nContent';
+      const content = 'Tags: #bug  #urgent   #feature\n\nContent';
       const tags = extractTagsFromContent(content);
       expect(tags).to.deep.equal(['bug', 'urgent', 'feature']);
     });
 
-    it('should ignore tags outside metadata section (first 10 lines)', () => {
-      const content = 'tags: #bug\n\n' +
-        Array(10).fill('Line').join('\n') +
-        '\n#ignored-tag should not be extracted';
+    it('should extract tags from anywhere in note (inline support)', () => {
+      const content = 'First paragraph #tag1\n\n' +
+        'Middle section with #tag2 here\n\n' +
+        'End of note #tag3';
       const tags = extractTagsFromContent(content);
-      expect(tags).to.deep.equal(['bug']);
-      expect(tags).to.not.include('ignored-tag');
+      expect(tags).to.have.members(['tag1', 'tag2', 'tag3']);
     });
 
     it('should handle empty content', () => {
@@ -41,50 +40,50 @@ describe('Tag Helpers', () => {
       expect(tags).to.deep.equal([]);
     });
 
-    it('should handle content without tags line', () => {
-      const content = 'Some content\n#not-a-tag-line';
+    it('should extract inline tags from sentences', () => {
+      const content = 'Fixed the login bug #bugfix today';
       const tags = extractTagsFromContent(content);
-      expect(tags).to.deep.equal([]);
+      expect(tags).to.deep.equal(['bugfix']);
     });
 
     it('should convert tags to lowercase', () => {
-      const content = 'tags: #Bug #URGENT #Project-Alpha\n\nContent';
+      const content = 'Working on #Bug #URGENT #Project-Alpha\n\nContent';
       const tags = extractTagsFromContent(content);
       expect(tags).to.deep.equal(['bug', 'urgent', 'project-alpha']);
     });
 
     it('should handle duplicate tags (return unique set)', () => {
-      const content = 'tags: #bug #urgent #bug #feature #urgent\n\nContent';
+      const content = 'Working on #bug and #urgent stuff. Also #bug again and #feature with #urgent\n\nContent';
       const tags = extractTagsFromContent(content);
       expect(tags).to.deep.equal(['bug', 'urgent', 'feature']);
     });
 
-    it('should extract from multiple metadata lines', () => {
-      const content = 'tags: #bug #urgent\ntags: #feature\n\nContent';
+    it('should extract from multiple locations in note', () => {
+      const content = 'Started with #bug and #urgent\nThen worked on #feature\n\nMore content';
       const tags = extractTagsFromContent(content);
       expect(tags).to.deep.equal(['bug', 'urgent', 'feature']);
     });
 
-    it('should handle tags: line without tags', () => {
-      const content = 'tags:\n\nContent';
+    it('should handle content with no hashtags', () => {
+      const content = 'Just regular content\n\nNo tags here';
       const tags = extractTagsFromContent(content);
       expect(tags).to.deep.equal([]);
     });
 
     it('should handle malformed tags gracefully', () => {
-      const content = 'tags: #valid-tag #invalid! #another-valid\n\nContent';
+      const content = 'Working on #valid-tag and #invalid! plus #another-valid\n\nContent';
       const tags = extractTagsFromContent(content);
       expect(tags).to.deep.equal(['valid-tag', 'another-valid']);
     });
 
     it('should handle tags with numbers', () => {
-      const content = 'tags: #bug-123 #version-2 #test1\n\nContent';
+      const content = 'Tasks: #bug-123 #version-2 #test1\n\nContent';
       const tags = extractTagsFromContent(content);
       expect(tags).to.deep.equal(['bug-123', 'version-2', 'test1']);
     });
 
     it('should ignore tags with special characters', () => {
-      const content = 'tags: #valid #invalid! #test@tag #ok-tag\n\nContent';
+      const content = 'Tags found: #valid #invalid! #test@tag #ok-tag\n\nContent';
       const tags = extractTagsFromContent(content);
       expect(tags).to.deep.equal(['valid', 'ok-tag']);
     });
@@ -97,7 +96,7 @@ describe('Tag Helpers', () => {
 
     it('should handle very long tag lists', () => {
       const longTags = Array.from({ length: 50 }, (_, i) => `#tag${i}`).join(' ');
-      const content = `tags: ${longTags}\n\nContent`;
+      const content = `Working with many tags: ${longTags}\n\nContent`;
       const tags = extractTagsFromContent(content);
       expect(tags).to.have.lengthOf(50);
       expect(tags[0]).to.equal('tag0');

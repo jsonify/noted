@@ -30,16 +30,15 @@ As a long-term user, I want to rename or merge tags across all notes, so that I 
 
 ## Spec Scope
 
-1. **Tag Parsing and Metadata** - Parse hash-based tags (`#tag-name`) from a dedicated metadata section at the top of notes
+1. **Tag Parsing and Metadata** - Parse hash-based tags (`#tag-name`) from anywhere in note content (inline support)
 2. **Tags Tree View Section** - New collapsible "Tags" section in the sidebar showing all tags with usage counts
 3. **Tag Filtering** - Filter notes tree view by single or multiple tags via tree view UI and command palette
 4. **Enhanced Search** - Integrate tag-based search with existing full-text search using `tag:name` syntax
 5. **Tag Management Commands** - Commands for viewing all tags, renaming tags, merging tags, and deleting unused tags
-6. **Tag Autocomplete** - Suggest existing tags when typing in the metadata section
+6. **Tag Autocomplete** - Suggest existing tags when typing `#` anywhere in notes
 
 ## Out of Scope
 
-- Inline tags within note content (only metadata section supported in v1)
 - Tag hierarchies or nested tags (e.g., `#project/alpha`)
 - Tag colors or visual customization
 - Tag aliases or synonyms
@@ -48,12 +47,12 @@ As a long-term user, I want to rename or merge tags across all notes, so that I 
 
 ## Expected Deliverable
 
-1. Users can add tags to notes in a metadata section and see them parsed correctly
+1. Users can add tags anywhere in notes using `#tagname` syntax and see them parsed correctly
 2. Tags section appears in the tree view with all available tags and counts
 3. Clicking a tag filters the notes tree to show only tagged notes
 4. Search command supports `tag:name` syntax combined with text search
 5. Tag management commands (rename, merge, delete) work correctly across all notes
-6. Tag autocomplete suggests existing tags when typing `#` in metadata section
+6. Tag autocomplete suggests existing tags when typing `#` anywhere in notes
 
 ## Spec Documentation
 

@@ -9,11 +9,12 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 
 ### Tag Parsing and Storage
 
-- **Metadata Format**: Tags appear at the top of notes in format: `tags: #tag1 #tag2 #tag3`
+- **Tag Format**: Inline tags anywhere in note content using `#tagname` syntax (v1.4.0+)
 - **Tag Pattern**: Hash-based (`#`), followed by lowercase alphanumeric with hyphens: `/\#[a-z0-9-]+/g`
 - **Case Handling**: Tags are case-insensitive (convert to lowercase for storage/comparison)
-- **Tag Extraction**: Parse metadata section (first 10 lines) to extract tags using regex
+- **Tag Extraction**: Parse entire note content to extract all inline tags using regex
 - **Caching Strategy**: Cache tag index in memory, rebuild on file changes or command trigger
+- **Legacy Support**: Still supports metadata format `tags: #tag1 #tag2` for backward compatibility
 
 ### UI Components
 
@@ -48,9 +49,9 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 
 ### Autocomplete Provider
 
-- **Trigger Character**: `#` in metadata section
+- **Trigger Character**: `#` anywhere in note content
 - **Completion Items**: Return existing tags sorted by frequency
-- **Context Awareness**: Only trigger in first 10 lines (metadata section)
+- **Context Awareness**: Triggers throughout entire note for inline tag support
 - **VSCode API**: Implement `vscode.CompletionItemProvider` interface
 
 ## Approach Options

@@ -22,6 +22,7 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 
 #### Note Organization & Discovery
 - [x] Tag system for notes (completed - tag parsing, indexing, filtering, autocomplete)
+- [ ] Advanced tag management (rename, merge, delete, export tags) - implemented but not exposed yet
 - [ ] Note linking/backlinks (wiki-style links)
 - [ ] Pinned/favorite notes section
 - [ ] Archive functionality for old notes

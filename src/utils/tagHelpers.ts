@@ -19,12 +19,7 @@ const TAG_PATTERN = /^[a-z](?:[a-z0-9]|-(?=[a-z0-9]))*$/;
 const TAG_EXTRACT_PATTERN = /#([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/gi;
 
 /**
- * Number of lines to check for metadata section
- */
-const METADATA_LINE_LIMIT = 10;
-
-/**
- * Extract tags from note content, focusing on the metadata section
+ * Extract tags from note content (searches entire content for inline tags)
  * @param content The note content to parse
  * @returns Array of unique, normalized tag names (without # prefix)
  */
@@ -33,26 +28,12 @@ export function extractTagsFromContent(content: string): string[] {
     return [];
   }
 
-  const lines = content.split('\n');
-  const metadataLines = lines.slice(0, METADATA_LINE_LIMIT);
-  const metadataSection = metadataLines.join('\n');
-
-  // Find all lines that start with "tags:"
-  const tagLines = metadataLines.filter(line =>
-    line.trim().toLowerCase().startsWith('tags:')
-  );
-
-  if (tagLines.length === 0) {
-    return [];
-  }
-
-  // Extract all tags from the tag lines
+  // Extract all tags from the entire content
   const tags = new Set<string>();
-  const joinedTagLines = tagLines.join(' ');
 
   let match;
   TAG_EXTRACT_PATTERN.lastIndex = 0; // Reset regex state
-  while ((match = TAG_EXTRACT_PATTERN.exec(joinedTagLines)) !== null) {
+  while ((match = TAG_EXTRACT_PATTERN.exec(content)) !== null) {
     const tag = match[1].toLowerCase();
     if (isValidTag(tag)) {
       tags.add(tag);

@@ -13,6 +13,10 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 - **Flexible Format**: Default .txt files, easily switch to .md with a command
 - **Built-in Templates**: Choose from Problem/Solution, Meeting, Research, or Quick note templates
 - **Custom Templates**: Create and manage your own reusable note templates
+- **Tag System** ⭐ NEW: Organize notes with tags, filter by tags, and get autocomplete suggestions
+- **Calendar View**: Visual monthly calendar for navigating and creating daily notes
+- **Drag & Drop**: Move notes between folders with simple drag-and-drop
+- **Full-Text Search**: Search across all notes with instant preview
 
 ## Usage
 
@@ -27,6 +31,98 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 3. **Toggle Format**:
    - Command Palette: "Noted: Toggle File Format (txt/md)"
 
+4. **Use Tags** ⭐ NEW:
+   - Add tags anywhere in your notes using `#tagname` syntax
+   - View all tags in the dedicated Tags sidebar panel
+   - Click any tag to filter notes containing that tag
+   - Type `#` in a note to see autocomplete suggestions
+   - Sort tags alphabetically or by frequency
+   - Filter by multiple tags simultaneously
+
+## Tag System
+
+The tag system helps you organize and find your notes quickly:
+
+### Adding Tags to Notes
+
+Simply type `#` followed by your tag name anywhere in your note:
+
+```
+2025-10-19
+==================================================
+
+Working on the new authentication feature today #backend #auth
+
+Fixed bug in login form #bugfix #frontend
+
+Next steps:
+- Add tests #todo
+- Update documentation #docs
+```
+
+**Tag Format:**
+- Tags can contain letters, numbers, hyphens, and underscores
+- Valid examples: `#bug-fix`, `#work_notes`, `#project2024`
+- Tags are case-insensitive (`#Bug` and `#bug` are the same)
+
+### Finding Tagged Notes
+
+**Filter by Tag:**
+1. Open the "Tags" panel in the sidebar (third panel)
+2. Click any tag to filter notes
+3. Or use Command Palette: "Noted: Filter Notes by Tag"
+4. Select multiple tags to find notes with all selected tags
+
+**Tag Autocomplete:**
+- Type `#` in any note to see suggestions
+- Suggestions are sorted by frequency (most-used tags first)
+- Press Enter or Tab to accept a suggestion
+
+**Sort Tags:**
+- Click the sort buttons in the Tags panel toolbar
+- Sort alphabetically (A-Z)
+- Sort by frequency (most-used first)
+
+### Tag Management
+
+**Refresh Tags:**
+- Click the refresh button in Tags panel
+- Or use Command Palette: "Noted: Refresh Tags"
+- Automatically rebuilds the tag index from all notes
+
+**View Tag Statistics:**
+- Each tag shows its usage count in the Tags panel
+- See which tags you use most often at a glance
+
+### Common Tag Use Cases
+
+**Project Organization:**
+```
+Working on user authentication #project-alpha #backend
+Designing new dashboard #project-alpha #frontend #design
+```
+
+**Task Management:**
+```
+Need to refactor the database layer #todo #refactoring
+Bug in payment processing #bug #critical #backend
+Code review for PR #42 #review
+```
+
+**Topic Categorization:**
+```
+Learned about React hooks today #learning #react #frontend
+Performance optimization notes #performance #optimization
+Meeting notes with design team #meeting #design
+```
+
+**Status Tracking:**
+```
+Started implementation #in-progress
+Completed and tested #done
+Waiting for feedback #blocked
+```
+
 ## Configuration
 
 Access settings via VS Code Settings (search for "Noted"):
@@ -35,6 +131,7 @@ Access settings via VS Code Settings (search for "Noted"):
 - **File Format**: Choose between .txt or .md format (default: "txt")
 - **Use Template**: Enable custom templates for new notes
 - **Template**: Customize your note structure (supports {date}, {time}, and {filename} placeholders)
+- **Tag Autocomplete**: Enable/disable tag suggestions when typing `#` (default: enabled)
 
 ### Example Template for Problem Solving
 
@@ -94,7 +191,7 @@ pnpm run compile
 pnpm run test
 ```
 
-The project includes 66 unit tests covering utilities, services, and providers.
+The project includes 143 passing unit tests covering utilities, services, providers, and the tag system.
 
 ## Folder Structure
 
