@@ -23,15 +23,15 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 2.6 Add in-memory caching for tag index
   - [x] 2.7 Verify all tests pass
 
-- [ ] 3. Create tags tree view provider
-  - [ ] 3.1 Write tests for TagsTreeProvider
-  - [ ] 3.2 Create `src/providers/tagsTreeProvider.ts`
-  - [ ] 3.3 Implement `TreeDataProvider` interface for tag items
-  - [ ] 3.4 Create `TagItem` class in `src/providers/treeItems.ts`
-  - [ ] 3.5 Implement tree refresh on tag index changes
-  - [ ] 3.6 Add context menu support for tag items
-  - [ ] 3.7 Register tree view in package.json and extension.ts
-  - [ ] 3.8 Verify tags appear in sidebar with counts
+- [x] 3. Create tags tree view provider
+  - [x] 3.1 Write tests for TagsTreeProvider
+  - [x] 3.2 Create `src/providers/tagsTreeProvider.ts`
+  - [x] 3.3 Implement `TreeDataProvider` interface for tag items
+  - [x] 3.4 Create `TagItem` class in `src/providers/treeItems.ts`
+  - [x] 3.5 Implement tree refresh on tag index changes
+  - [x] 3.6 Add context menu support for tag items
+  - [x] 3.7 Register tree view in package.json and extension.ts
+  - [x] 3.8 Verify tags appear in sidebar with counts
 
 - [ ] 4. Implement tag filtering functionality
   - [ ] 4.1 Write tests for filter operations

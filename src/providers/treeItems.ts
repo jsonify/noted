@@ -50,3 +50,28 @@ export class NoteItem extends TreeItem {
         }
     }
 }
+
+/**
+ * Tag item representing a tag with usage count
+ */
+export class TagItem extends TreeItem {
+    constructor(
+        public readonly tagName: string,
+        public readonly count: number,
+        public readonly notePaths: string[]
+    ) {
+        super(`#${tagName} (${count})`, vscode.TreeItemCollapsibleState.None);
+
+        this.iconPath = new vscode.ThemeIcon('tag');
+        this.contextValue = 'tag';
+        this.tooltip = `Tag: #${tagName}\nUsed in ${count} note${count !== 1 ? 's' : ''}`;
+        this.description = `${count}`;
+
+        // Make tag clickable to filter notes
+        this.command = {
+            command: 'noted.filterByTag',
+            title: 'Filter by Tag',
+            arguments: [tagName]
+        };
+    }
+}
