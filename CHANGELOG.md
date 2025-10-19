@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.1](https://github.com/jsonify/noted/compare/v1.0.5...v1.3.1) (2025-10-19)
+
+
+### Features
+
+* add calendar view command and integrate with notes management ([4699418](https://github.com/jsonify/noted/commit/46994189a6c2022c4be619c0df9b9f4ea1976a41))
+* add command to reveal notes in system file explorer ([d35dde3](https://github.com/jsonify/noted/commit/d35dde372af001877781858529b75302ea2f4b51))
+* add command to show current notes folder configuration for debugging ([ad55982](https://github.com/jsonify/noted/commit/ad559822c7567fbf5275c47bb60284c91ed83d45))
+* add commands for creating custom templates and opening templates folder ([500b3d3](https://github.com/jsonify/noted/commit/500b3d30e2a46166e5a91b1d1fb929b971a4bcc8))
+* Add core functionality for notes management and templates ([6f5c53b](https://github.com/jsonify/noted/commit/6f5c53b07eb07a1817612aacbfa4a14886e9b074))
+* add custom folder management features including create, move, rename, and delete functionalities ([e990e8f](https://github.com/jsonify/noted/commit/e990e8f78692c8cc4a46e9e66457d1f37689fe5c))
+* add templates view and enhance welcome messages for better user guidance ([d69d0ef](https://github.com/jsonify/noted/commit/d69d0ef6ef66f66c2a6d313517ff98c4b6d828b5))
+* add unit tests for core functionality and implement CI/CD pipeline ([5b8c33d](https://github.com/jsonify/noted/commit/5b8c33d30fb19ec7a3eee3ac4ce6530b15171d4d))
+* always include timestamp in frontmatter for generated templates ([2bbe060](https://github.com/jsonify/noted/commit/2bbe0606d6c283ddd066ed1d53ad0beb13f41835))
+* enhance description in README for clarity on extension capabilities ([5ba60f8](https://github.com/jsonify/noted/commit/5ba60f880a7ee577d4ee1724c145016dcc2b78c7))
+* enhance note file naming convention with timestamp ([9409d9a](https://github.com/jsonify/noted/commit/9409d9a84d3d3fba351c41391efd1140199e7409))
+* enhance notes folder setup and logging for better user experience ([9a2a84b](https://github.com/jsonify/noted/commit/9a2a84bcd06ad7c242329e42d558b02a262e5e9a))
+* implement drag-and-drop functionality for moving notes between folders ([2fca0ed](https://github.com/jsonify/noted/commit/2fca0ed1f30b493d775f271a456a71e384c5fef0))
+* prepend date to note filenames for better organization ([3609c4c](https://github.com/jsonify/noted/commit/3609c4c33c8c16254f8e5df63baadb4cca3998f9))
+* refactor file operations to async with comprehensive error handling ([b3729fa](https://github.com/jsonify/noted/commit/b3729fa2d427ff2ddd8ad9f097c8f9fd2d782d50))
+* refactored the Noted extension to use asynchronous file operations with comprehensive error handling ([e9001ea](https://github.com/jsonify/noted/commit/e9001ea848e036610dfacb72c69d89df8c544de3))
+* replace conventional-changelog workflow with standard-version for reliable changelog generation ([90df5ea](https://github.com/jsonify/noted/commit/90df5ea9edfe17e67026d223c59c12b6f025c59c))
+* update changelog generation process and release scripts ([201370f](https://github.com/jsonify/noted/commit/201370ff053ec02424210bf14e7faad46884fa46))
+* update contribution guidelines to include code style and testing requirements ([9432392](https://github.com/jsonify/noted/commit/9432392a457542b00c087795b18d8ac161829794))
+* update release scripts to automatically commit changelog changes ([499bc24](https://github.com/jsonify/noted/commit/499bc24e7baee152bc9e6bf9fad0d213951bc25b))
+* update release scripts to commit changelog changes separately ([564004e](https://github.com/jsonify/noted/commit/564004e655b95407113d9759411b0a600a9f17c6))
+* update release scripts to include changelog generation ([5aaf465](https://github.com/jsonify/noted/commit/5aaf465cfb918fe7b9fefa892f84caae313b2f3b))
+
+
+### Bug Fixes
+
+* change duplicate note error message from error to warning for better UX ([309dfdd](https://github.com/jsonify/noted/commit/309dfdd2bacebbac41267e040c3b9866aee2366b))
+* correct version to 1.2.0 ([2d31dac](https://github.com/jsonify/noted/commit/2d31dac75aaaf8b48e025d4d2b638e220cbc513e))
+* downgrade chai to v4 for CommonJS compatibility ([f2f3fd9](https://github.com/jsonify/noted/commit/f2f3fd924fd7353b1b36a87c2857dc9bb95aca05))
+* improve custom template starter content with better placeholder documentation ([f127268](https://github.com/jsonify/noted/commit/f1272684393827b891e2c4592fac7ebd1e555048))
+* improve formatting and clarity in README sections ([fa625be](https://github.com/jsonify/noted/commit/fa625be2c641026a7cb5b5925dbc8786924113e5))
+* improve release scripts to conditionally commit changelog changes ([ea699b8](https://github.com/jsonify/noted/commit/ea699b856db3bd7df7ac522d7d6e86a2a3782f97))
+* optimize getTimeForFilename function for improved performance and readability ([809400f](https://github.com/jsonify/noted/commit/809400fba998af553aeb110b2b5ec2aa59c1ab9b))
+* reorder steps in GitHub Actions workflow for clarity ([d5853fb](https://github.com/jsonify/noted/commit/d5853fbdc505ee68fc088a4d259e8783e32adef6))
+* resolve VSIX packaging issues with pnpm ([fc5e7a9](https://github.com/jsonify/noted/commit/fc5e7a9799c16d4084c3198ba2bb3a2170eeea37))
+* update date constructor in dateHelpers tests to avoid timezone issues ([b6ebe09](https://github.com/jsonify/noted/commit/b6ebe094442e67ae9a81f20493e4cfbc9e2ac57a))
+* update date constructor in getTimeForFilename tests to avoid timezone issues ([1e96958](https://github.com/jsonify/noted/commit/1e96958318f3cc418e3da32a66f13e6aff77ee96))
+* update release scripts to generate changelog after versioning for proper commit inclusion ([465e21e](https://github.com/jsonify/noted/commit/465e21e627ff3751cecb4d5e2c2bb927297e553e))
+
 ## [1.3.0](https://github.com/jsonify/noted/compare/v1.2.6...v1.3.0) (2025-10-18)
 
 
