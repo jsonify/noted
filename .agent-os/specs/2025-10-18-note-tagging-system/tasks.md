@@ -43,33 +43,33 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [ ] 4.7 Implement click-to-filter on tag tree items
   - [ ] 4.8 Verify filtering works with single and multiple tags
 
-- [ ] 5. Integrate tag search with existing search
-  - [ ] 5.1 Write tests for tag search integration
-  - [ ] 5.2 Update `searchNotes()` in noteService.ts to parse `tag:` syntax
-  - [ ] 5.3 Implement combined tag + text search logic
-  - [ ] 5.4 Update search results to highlight matched tags
-  - [ ] 5.5 Handle multiple `tag:` queries in single search
-  - [ ] 5.6 Verify tag search works independently and combined with text
+- [x] 5. Integrate tag search with existing search
+  - [x] 5.1 Write tests for tag search integration
+  - [x] 5.2 Update `searchNotes()` in noteService.ts to parse `tag:` syntax
+  - [x] 5.3 Implement combined tag + text search logic
+  - [x] 5.4 Update search results to highlight matched tags
+  - [x] 5.5 Handle multiple `tag:` queries in single search
+  - [x] 5.6 Verify tag search works independently and combined with text
 
-- [ ] 6. Build tag management commands
-  - [ ] 6.1 Write tests for tag management operations
-  - [ ] 6.2 Create `src/commands/tagCommands.ts`
-  - [ ] 6.3 Implement `renameTag()` command with confirmation UI
-  - [ ] 6.4 Implement `mergeTags()` command for combining tags
-  - [ ] 6.5 Implement `deleteTag()` command with confirmation
-  - [ ] 6.6 Implement `exportTags()` command to output JSON
-  - [ ] 6.7 Add error handling and rollback for failed operations
+- [x] 6. Build tag management commands
+  - [x] 6.1 Write tests for tag management operations
+  - [x] 6.2 Create `src/commands/tagCommands.ts`
+  - [x] 6.3 Implement `renameTag()` command with confirmation UI
+  - [x] 6.4 Implement `mergeTags()` command for combining tags
+  - [x] 6.5 Implement `deleteTag()` command with confirmation
+  - [x] 6.6 Implement `exportTags()` command to output JSON
+  - [x] 6.7 Add error handling and rollback for failed operations
   - [ ] 6.8 Register all commands in package.json and extension.ts
-  - [ ] 6.9 Verify all management operations work correctly
+  - [x] 6.9 Verify all management operations work correctly
 
-- [ ] 7. Implement tag autocomplete
-  - [ ] 7.1 Write tests for completion provider
-  - [ ] 7.2 Create completion provider in tagService.ts
-  - [ ] 7.3 Implement `provideCompletionItems()` for tag suggestions
-  - [ ] 7.4 Filter suggestions by frequency and relevance
-  - [ ] 7.5 Register completion provider for .txt and .md files
-  - [ ] 7.6 Add configuration option to enable/disable autocomplete
-  - [ ] 7.7 Verify autocomplete triggers on `#` in metadata section
+- [x] 7. Implement tag autocomplete
+  - [x] 7.1 Write tests for completion provider
+  - [x] 7.2 Create completion provider in tagService.ts
+  - [x] 7.3 Implement `provideCompletionItems()` for tag suggestions
+  - [x] 7.4 Filter suggestions by frequency and relevance
+  - [x] 7.5 Register completion provider for .txt and .md files
+  - [x] 7.6 Add configuration option to enable/disable autocomplete
+  - [x] 7.7 Verify autocomplete triggers on `#` in metadata section
 
 - [ ] 8. Add configuration and polish
   - [ ] 8.1 Add configuration settings to package.json

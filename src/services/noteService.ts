@@ -5,6 +5,7 @@ import { getNotesPath, getFileFormat } from './configService';
 import { pathExists, createDirectory, writeFile, readFile, readDirectoryWithTypes, getFileStats } from './fileSystemService';
 import { generateTemplate } from './templateService';
 import { getYear, getMonth, getMonthName, getDay, getFolderName, getTimeForFilename } from '../utils/dateHelpers';
+import { TagService } from './tagService';
 
 /**
  * Open or create today's daily note
@@ -114,10 +115,41 @@ export async function createNoteFromTemplate(templateType: string): Promise<void
 }
 
 /**
- * Search for a query string in all notes
+ * Parse tag queries from search string
+ * Returns object with extracted tags and remaining text search query
  */
-export async function searchInNotes(query: string): Promise<Array<{file: string, preview: string}>> {
-    const notesPath = getNotesPath();
+function parseTagQueries(query: string): { tags: string[], textQuery: string } {
+    const tags: string[] = [];
+    let textQuery = query;
+
+    // Match all tag:tagname patterns (case-insensitive)
+    const tagPattern = /tag:\s*(\S+)/gi;
+    let match;
+
+    while ((match = tagPattern.exec(query)) !== null) {
+        const tagName = match[1].toLowerCase().trim();
+        if (tagName) {
+            tags.push(tagName);
+        }
+    }
+
+    // Remove all tag: queries from the search string
+    textQuery = query.replace(/tag:\s*\S+/gi, '').trim();
+
+    return { tags, textQuery };
+}
+
+/**
+ * Search for a query string in all notes
+ * Supports tag-based search with "tag:tagname" syntax
+ */
+export async function searchInNotes(
+    query: string,
+    tagService?: TagService,
+    customNotesPath?: string
+): Promise<Array<{file: string, preview: string}>> {
+    // Use custom path for testing, or get from config
+    const notesPath = customNotesPath || getNotesPath();
     if (!notesPath) {
         return [];
     }
@@ -126,8 +158,24 @@ export async function searchInNotes(query: string): Promise<Array<{file: string,
         return [];
     }
 
+    // Parse tag queries from search string
+    const { tags, textQuery } = parseTagQueries(query);
+
+    // If tag queries exist and TagService is available, filter by tags first
+    let tagFilteredFiles: Set<string> | null = null;
+    if (tags.length > 0 && tagService) {
+        const notesWithTags = tagService.getNotesWithTags(tags);
+        tagFilteredFiles = new Set(notesWithTags);
+
+        // If no notes match the tags, return empty results
+        if (tagFilteredFiles.size === 0) {
+            return [];
+        }
+    }
+
     const results: Array<{file: string, preview: string}> = [];
-    const searchLower = query.toLowerCase();
+    const searchLower = textQuery.toLowerCase();
+    const hasTextSearch = textQuery.length > 0;
 
     async function searchDir(dir: string) {
         try {
@@ -137,16 +185,37 @@ export async function searchInNotes(query: string): Promise<Array<{file: string,
                 if (entry.isDirectory()) {
                     await searchDir(fullPath);
                 } else if (SUPPORTED_EXTENSIONS.some(ext => entry.name.endsWith(ext))) {
+                    // Skip files not in tag filter if tag filtering is active
+                    if (tagFilteredFiles && !tagFilteredFiles.has(fullPath)) {
+                        continue;
+                    }
+
                     try {
                         const content = await readFile(fullPath);
-                        if (content.toLowerCase().includes(searchLower)) {
+
+                        // If there's text search, check content matches
+                        if (hasTextSearch && !content.toLowerCase().includes(searchLower)) {
+                            continue;
+                        }
+
+                        // Generate preview
+                        let preview = '';
+                        if (hasTextSearch) {
+                            // For text search, show the matching line
                             const lines = content.split('\n');
                             const matchLine = lines.find(l => l.toLowerCase().includes(searchLower));
-                            results.push({
-                                file: fullPath,
-                                preview: matchLine?.trim().substring(0, 80) || ''
-                            });
+                            preview = matchLine?.trim().substring(0, 80) || '';
+                        } else if (tags.length > 0) {
+                            // For tag-only search, show the tags line
+                            const lines = content.split('\n');
+                            const tagsLine = lines.find(l => l.toLowerCase().trim().startsWith('tags:'));
+                            preview = tagsLine?.trim().substring(0, 80) || '';
                         }
+
+                        results.push({
+                            file: fullPath,
+                            preview: preview
+                        });
                     } catch (error) {
                         console.error('[NOTED] Error reading file:', fullPath, error);
                     }

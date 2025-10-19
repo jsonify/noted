@@ -283,6 +283,11 @@
           "default": "{date}\n==================================================\n\nPROBLEM:\n\n\nSTEPS TAKEN:\n1. \n\nSOLUTION:\n\n\nNOTES:\n",
           "description": "Template for new notes. Use {date} and {time} as placeholders.",
           "editPresentation": "multilineText"
+        },
+        "noted.tagAutoComplete": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable tag autocomplete suggestions when typing # in metadata section"
         }
       }
     }
@@ -306,6 +311,7 @@
     "@types/chai": "4",
     "@types/mocha": "^10.0.10",
     "@types/node": "^18.0.0",
+    "@types/sinon": "^17.0.4",
     "@types/vscode": "^1.80.0",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.2.1",
@@ -313,6 +319,7 @@
     "conventional-changelog-cli": "^5.0.0",
     "glob": "^11.0.3",
     "mocha": "^11.7.4",
+    "sinon": "^21.0.0",
     "standard-version": "^9.5.0",
     "typescript": "^5.0.0"
   }

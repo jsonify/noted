@@ -3,6 +3,11 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { promises as fsp } from 'fs';
 import { showCalendarView } from './calendar/calendarView';
+import { TagService } from './services/tagService';
+import { formatTagForDisplay } from './utils/tagHelpers';
+import { NotesTreeProvider } from './providers/notesTreeProvider';
+import { TemplatesTreeProvider } from './providers/templatesTreeProvider';
+import { TreeItem, NoteItem, SectionItem } from './providers/treeItems';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
@@ -29,6 +34,17 @@ export function activate(context: vscode.ExtensionContext) {
     // Create tree data provider for templates view (empty, uses viewsWelcome)
     const templatesProvider = new TemplatesTreeProvider();
     vscode.window.registerTreeDataProvider('notedTemplatesView', templatesProvider);
+
+    // Initialize tag service for tag filtering
+    const notesPath = getNotesPath();
+    const tagService = new TagService(notesPath || '');
+
+    // Build tag index on activation (async, non-blocking)
+    if (notesPath) {
+        tagService.buildTagIndex().catch(err => {
+            console.error('[NOTED] Error building tag index:', err);
+        });
+    }
 
     // Command to open today's note
     let openTodayNote = vscode.commands.registerCommand('noted.openToday', async () => {
@@ -168,7 +184,7 @@ export function activate(context: vscode.ExtensionContext) {
             prompt: 'Search notes',
             placeHolder: 'Enter search term...'
         });
-        
+
         if (query) {
             const results = await searchInNotes(query);
             if (results.length === 0) {
@@ -188,6 +204,64 @@ export function activate(context: vscode.ExtensionContext) {
                 }
             }
         }
+    });
+
+    // Command to filter notes by tag
+    let filterByTag = vscode.commands.registerCommand('noted.filterByTag', async (tagName?: string) => {
+        // Rebuild tag index to ensure it's up to date
+        if (notesPath) {
+            await tagService.buildTagIndex();
+        }
+
+        let selectedTags: string[] = [];
+
+        if (tagName) {
+            // Tag name provided (e.g., clicked from tag tree)
+            selectedTags = [tagName];
+        } else {
+            // Show quick pick with all available tags
+            const allTags = tagService.getAllTags('frequency');
+
+            if (allTags.length === 0) {
+                vscode.window.showInformationMessage('No tags found in notes');
+                return;
+            }
+
+            const items = allTags.map(tag => ({
+                label: formatTagForDisplay(tag.name),
+                description: `${tag.count} note${tag.count !== 1 ? 's' : ''}`,
+                picked: notesProvider.getActiveFilters().includes(tag.name)
+            }));
+
+            const selected = await vscode.window.showQuickPick(items, {
+                placeHolder: 'Select tags to filter by (supports multiple selection)',
+                canPickMany: true
+            });
+
+            if (!selected || selected.length === 0) {
+                return;
+            }
+
+            selectedTags = selected.map(item => item.label.substring(1)); // Remove # prefix
+        }
+
+        // Apply filters
+        notesProvider.filterByTag(selectedTags, tagService);
+
+        // Show filter description
+        const filterDesc = notesProvider.getFilterDescription();
+        if (filterDesc) {
+            const noteCount = notesProvider.getFilteredNotePaths().length;
+            vscode.window.showInformationMessage(
+                `${filterDesc} - ${noteCount} note${noteCount !== 1 ? 's' : ''} found`
+            );
+        }
+    });
+
+    // Command to clear tag filters
+    let clearTagFilters = vscode.commands.registerCommand('noted.clearTagFilters', () => {
+        notesProvider.clearTagFilters();
+        vscode.window.showInformationMessage('Tag filters cleared');
     });
 
     // Command to show stats
@@ -541,7 +615,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         openTodayNote, openWithTemplate, insertTimestamp, changeFormat,
         refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
-        searchNotes, showStats, exportNotes, duplicateNote, moveNotesFolder,
+        searchNotes, filterByTag, clearTagFilters, showStats, exportNotes, duplicateNote, moveNotesFolder,
         setupDefaultFolder, setupCustomFolder, showNotesConfig,
         createCustomTemplate, openTemplatesFolder,
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar
@@ -1180,391 +1254,6 @@ async function exportNotesToFile(range: string) {
         vscode.window.showInformationMessage(`Exported to ${path.basename(exportPath)}`);
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to export notes: ${error instanceof Error ? error.message : String(error)}`);
-    }
-}
-
-class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
-    readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
-
-    refresh(): void {
-        this._onDidChangeTreeData.fire();
-    }
-
-    getTreeItem(element: TreeItem): vscode.TreeItem {
-        return element;
-    }
-
-    // Return empty array - templates are shown via viewsWelcome
-    getChildren(_element?: TreeItem): Thenable<TreeItem[]> {
-        return Promise.resolve([]);
-    }
-}
-
-class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vscode.TreeDragAndDropController<TreeItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
-    readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
-
-    // Drag and drop support
-    dropMimeTypes = ['application/vnd.code.tree.notedView'];
-    dragMimeTypes = ['text/uri-list'];
-
-    refresh(): void {
-        this._onDidChangeTreeData.fire();
-    }
-
-    async handleDrag(source: readonly TreeItem[], dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Promise<void> {
-        // Only allow dragging notes, not folders or sections
-        const notes = source.filter(item => item instanceof NoteItem && item.type === 'note');
-        if (notes.length > 0) {
-            dataTransfer.set('application/vnd.code.tree.notedView', new vscode.DataTransferItem(notes));
-        }
-    }
-
-    async handleDrop(target: TreeItem | undefined, dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Promise<void> {
-        const transferItem = dataTransfer.get('application/vnd.code.tree.notedView');
-        if (!transferItem) {
-            return;
-        }
-
-        const draggedItems = transferItem.value as NoteItem[];
-        if (!draggedItems || draggedItems.length === 0) {
-            return;
-        }
-
-        // Determine the target folder
-        let targetFolderPath: string | null = null;
-
-        if (!target) {
-            // Dropped on root - not allowed
-            vscode.window.showErrorMessage('Cannot move notes to root level');
-            return;
-        }
-
-        if (target instanceof NoteItem) {
-            if (target.type === 'note') {
-                // Dropped on another note - move to its parent folder
-                targetFolderPath = path.dirname(target.filePath);
-            } else if (target.type === 'month' || target.type === 'custom-folder') {
-                // Dropped on a folder - use that folder
-                targetFolderPath = target.filePath;
-            } else if (target.type === 'year') {
-                // Dropped on a year - not allowed (no direct notes in year folders)
-                vscode.window.showErrorMessage('Cannot move notes directly into year folders. Please drop into a month folder.');
-                return;
-            }
-        } else if (target instanceof SectionItem) {
-            // Dropped on section - not allowed
-            vscode.window.showErrorMessage('Cannot move notes into sections');
-            return;
-        }
-
-        if (!targetFolderPath) {
-            return;
-        }
-
-        // Move each dragged note
-        for (const draggedItem of draggedItems) {
-            if (!(draggedItem instanceof NoteItem) || draggedItem.type !== 'note') {
-                continue;
-            }
-
-            const sourceFilePath = draggedItem.filePath;
-            const fileName = path.basename(sourceFilePath);
-            const destinationPath = path.join(targetFolderPath, fileName);
-
-            // Check if source and destination are the same
-            if (sourceFilePath === destinationPath) {
-                continue;
-            }
-
-            // Check if file already exists at destination
-            try {
-                await fsp.access(destinationPath);
-                vscode.window.showErrorMessage(`A file named "${fileName}" already exists in the destination folder`);
-                continue;
-            } catch {
-                // File doesn't exist, proceed with move
-                try {
-                    await fsp.rename(sourceFilePath, destinationPath);
-                } catch (error) {
-                    vscode.window.showErrorMessage(`Failed to move note: ${error instanceof Error ? error.message : String(error)}`);
-                }
-            }
-        }
-
-        // Refresh the tree view
-        this.refresh();
-
-        if (draggedItems.length === 1) {
-            vscode.window.showInformationMessage(`Moved note to ${path.basename(targetFolderPath)}`);
-        } else {
-            vscode.window.showInformationMessage(`Moved ${draggedItems.length} notes to ${path.basename(targetFolderPath)}`);
-        }
-    }
-
-    getTreeItem(element: TreeItem): vscode.TreeItem {
-        return element;
-    }
-
-    async getChildren(element?: TreeItem): Promise<TreeItem[]> {
-        const notesPath = getNotesPath();
-        console.log('[NOTED DEBUG] TreeProvider.getChildren() called:');
-        console.log('[NOTED DEBUG] - notesPath:', notesPath);
-        
-        if (!notesPath) {
-            console.log('[NOTED DEBUG] - showing welcome screen (no notesPath)');
-            return [];
-        }
-
-        // Auto-create the notes folder if it's configured but doesn't exist
-        try {
-            await fsp.access(notesPath);
-        } catch {
-            const config = vscode.workspace.getConfiguration('noted');
-            const notesFolder = config.get<string>('notesFolder', 'Notes');
-            console.log('[NOTED DEBUG] - notes folder does not exist, checking if should auto-create');
-            console.log('[NOTED DEBUG] - notesFolder config:', notesFolder);
-            console.log('[NOTED DEBUG] - is absolute:', path.isAbsolute(notesFolder));
-
-            // Auto-create if it's an absolute path (user has configured it)
-            if (path.isAbsolute(notesFolder)) {
-                console.log('[NOTED DEBUG] - auto-creating configured absolute path folder');
-                try {
-                    await fsp.mkdir(notesPath, { recursive: true });
-                    console.log('[NOTED DEBUG] - successfully created notes folder');
-                } catch (error) {
-                    console.error('[NOTED DEBUG] Failed to create notes folder:', error);
-                    vscode.window.showErrorMessage(`Failed to create notes folder: ${error instanceof Error ? error.message : String(error)}`);
-                    return [];
-                }
-            } else {
-                console.log('[NOTED DEBUG] - relative path without workspace, showing welcome screen');
-                // Not properly configured yet, show welcome screen
-                return [];
-            }
-        }
-
-        if (!element) {
-            // Root level - show recent notes, years, and custom folders
-            const items: TreeItem[] = [];
-
-            // Recent notes section
-            items.push(new SectionItem('Recent Notes', 'recent'));
-
-            try {
-                // Get all directories in notes path
-                const allEntries = await fsp.readdir(notesPath, { withFileTypes: true });
-                const entries = [];
-
-                for (const entry of allEntries) {
-                    if (entry.isDirectory()) {
-                        entries.push(entry.name);
-                    }
-                }
-
-                entries.sort().reverse();
-
-                // Separate years and custom folders
-                const years: string[] = [];
-                const customFolders: string[] = [];
-
-                entries.forEach(entry => {
-                    if (isYearFolder(entry)) {
-                        years.push(entry);
-                    } else {
-                        customFolders.push(entry);
-                    }
-                });
-
-                // Add custom folders first (sorted alphabetically)
-                customFolders.sort();
-                items.push(...customFolders.map(folder =>
-                    new NoteItem(folder, path.join(notesPath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
-                ));
-
-                // Then add years (already sorted in reverse)
-                items.push(...years.map(year =>
-                    new NoteItem(year, path.join(notesPath, year), vscode.TreeItemCollapsibleState.Collapsed, 'year')
-                ));
-            } catch (error) {
-                console.error('[NOTED] Error reading notes directory:', error);
-            }
-
-            return items;
-        } else if (element instanceof SectionItem) {
-            if (element.sectionType === 'recent') {
-                return this.getRecentNotes(notesPath);
-            }
-        } else if (element instanceof NoteItem) {
-            if (element.type === 'year') {
-                try {
-                    const allEntries = await fsp.readdir(element.filePath, { withFileTypes: true });
-                    const entries = [];
-
-                    for (const entry of allEntries) {
-                        if (entry.isDirectory()) {
-                            entries.push(entry.name);
-                        }
-                    }
-
-                    entries.sort().reverse();
-
-                    // In year folders, show months and custom folders
-                    const months: string[] = [];
-                    const customFolders: string[] = [];
-
-                    entries.forEach(entry => {
-                        if (isMonthFolder(entry)) {
-                            months.push(entry);
-                        } else {
-                            customFolders.push(entry);
-                        }
-                    });
-
-                    const items: NoteItem[] = [];
-
-                    // Add custom folders first
-                    customFolders.sort();
-                    items.push(...customFolders.map(folder =>
-                        new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
-                    ));
-
-                    // Then add months
-                    items.push(...months.map(month =>
-                        new NoteItem(month, path.join(element.filePath, month), vscode.TreeItemCollapsibleState.Collapsed, 'month')
-                    ));
-
-                    return items;
-                } catch (error) {
-                    console.error('[NOTED] Error reading year folder:', element.filePath, error);
-                    return [];
-                }
-            } else if (element.type === 'month' || element.type === 'custom-folder') {
-                // Both month and custom folders can contain notes and subfolders
-                try {
-                    const entries = await fsp.readdir(element.filePath, { withFileTypes: true });
-                    const items: NoteItem[] = [];
-
-                    // Get subdirectories (custom folders only, no date folders allowed inside)
-                    const subfolders = entries
-                        .filter(e => e.isDirectory())
-                        .map(e => e.name)
-                        .sort();
-
-                    items.push(...subfolders.map(folder =>
-                        new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
-                    ));
-
-                    // Get notes
-                    const notes = entries
-                        .filter(e => !e.isDirectory() && (e.name.endsWith('.txt') || e.name.endsWith('.md')))
-                        .map(e => e.name)
-                        .sort()
-                        .reverse();
-
-                    items.push(...notes.map(note => {
-                        const filePath = path.join(element.filePath, note);
-                        const item = new NoteItem(note, filePath, vscode.TreeItemCollapsibleState.None, 'note');
-                        item.command = {
-                            command: 'noted.openNote',
-                            title: 'Open Note',
-                            arguments: [filePath]
-                        };
-                        return item;
-                    }));
-
-                    return items;
-                } catch (error) {
-                    console.error('[NOTED] Error reading folder:', element.filePath, error);
-                    return [];
-                }
-            }
-        }
-
-        return [];
-    }
-
-    private async getRecentNotes(notesPath: string): Promise<TreeItem[]> {
-        const allNotes: Array<{path: string, mtime: Date, name: string}> = [];
-
-        async function findNotes(dir: string) {
-            try {
-                const entries = await fsp.readdir(dir, { withFileTypes: true });
-                for (const entry of entries) {
-                    const fullPath = path.join(dir, entry.name);
-                    if (entry.isDirectory()) {
-                        await findNotes(fullPath);
-                    } else if (entry.name.endsWith('.txt') || entry.name.endsWith('.md')) {
-                        try {
-                            const stat = await fsp.stat(fullPath);
-                            allNotes.push({ path: fullPath, mtime: stat.mtime, name: entry.name });
-                        } catch (error) {
-                            console.error('[NOTED] Error stating file:', fullPath, error);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('[NOTED] Error reading directory:', dir, error);
-            }
-        }
-
-        await findNotes(notesPath);
-        allNotes.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
-
-        return allNotes.slice(0, 10).map(note => {
-            const item = new NoteItem(note.name, note.path, vscode.TreeItemCollapsibleState.None, 'note');
-            item.command = {
-                command: 'noted.openNote',
-                title: 'Open Note',
-                arguments: [note.path]
-            };
-            item.contextValue = 'note';
-            return item;
-        });
-    }
-}
-
-class TreeItem extends vscode.TreeItem {}
-
-
-class SectionItem extends TreeItem {
-    constructor(
-        public readonly label: string,
-        public readonly sectionType: string
-    ) {
-        super(label, vscode.TreeItemCollapsibleState.Collapsed);
-        this.iconPath = new vscode.ThemeIcon('history');
-    }
-}
-
-class NoteItem extends TreeItem {
-    public filePath: string;
-
-    constructor(
-        public readonly label: string,
-        filePath: string,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-        public readonly type: 'year' | 'month' | 'note' | 'custom-folder'
-    ) {
-        super(label, collapsibleState);
-
-        this.filePath = filePath;
-        this.resourceUri = vscode.Uri.file(filePath);
-
-        if (type === 'note') {
-            this.iconPath = new vscode.ThemeIcon('note');
-            this.contextValue = 'note';
-        } else if (type === 'month') {
-            this.iconPath = new vscode.ThemeIcon('calendar');
-            this.contextValue = 'month';
-        } else if (type === 'year') {
-            this.iconPath = new vscode.ThemeIcon('folder');
-            this.contextValue = 'year';
-        } else if (type === 'custom-folder') {
-            this.iconPath = new vscode.ThemeIcon('folder-opened');
-            this.contextValue = 'custom-folder';
-        }
     }
 }
 
