@@ -9,9 +9,9 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 - [x] Convert synchronous file operations to async for better performance (completed)
 - [x] Refactor to modular architecture (completed - 100%)
 - [x] Complete modular refactoring (completed)
-- [ ] Add unit tests for core functionality
+- [x] Add unit tests for core functionality (completed - 66 passing tests)
+- [x] Create CI/CD pipeline for automated testing (completed - GitHub Actions)
 - [ ] Add integration tests for VS Code commands
-- [ ] Create CI/CD pipeline for automated testing
 
 ### Planned Features
 

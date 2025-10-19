@@ -291,6 +291,9 @@
     "vscode:prepublish": "pnpm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "pretest": "pnpm run compile",
+    "test": "node ./out/test/runTest.js",
+    "test:unit": "mocha --require out/test/setup.js out/test/unit/**/*.test.js",
     "package": "vsce package",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "release:patch": "standard-version --release-as patch && pnpm run package",
@@ -300,9 +303,15 @@
   },
   "packageManager": "pnpm@10.18.0",
   "devDependencies": {
+    "@types/chai": "^5.2.2",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^18.0.0",
     "@types/vscode": "^1.80.0",
+    "@vscode/test-electron": "^2.5.2",
+    "chai": "^6.2.0",
     "conventional-changelog-cli": "^5.0.0",
+    "glob": "^11.0.3",
+    "mocha": "^11.7.4",
     "standard-version": "^9.5.0",
     "typescript": "^5.0.0"
   }

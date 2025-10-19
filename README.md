@@ -1,5 +1,8 @@
 # Noted Extension
 
+[![CI](https://github.com/jsonify/noted/actions/workflows/ci.yml/badge.svg)](https://github.com/jsonify/noted/actions/workflows/ci.yml)
+[![Tests](https://github.com/jsonify/noted/actions/workflows/test.yml/badge.svg)](https://github.com/jsonify/noted/actions/workflows/test.yml)
+
 A VS Code extension for quick daily note-taking, meeting notes, project ideas, and more - your digital scratch pad!
 
 ## Features
@@ -77,6 +80,21 @@ NOTES:
 3. Run `pnpm run compile` to build the extension
 4. Press F5 in VS Code to test the extension
 5. To package: `pnpm dlx @vscode/vsce package`
+
+### Testing
+
+```bash
+# Run unit tests
+pnpm run test:unit
+
+# Compile TypeScript
+pnpm run compile
+
+# Run all tests (requires VS Code)
+pnpm run test
+```
+
+The project includes 66 unit tests covering utilities, services, and providers.
 
 ## Folder Structure
 
