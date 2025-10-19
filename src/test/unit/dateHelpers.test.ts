@@ -91,13 +91,14 @@ describe('Date Helpers', () => {
 
   describe('getTimeForFilename', () => {
     it('should return time in 24-hour HHMM format without colon', () => {
-      const morning = new Date('2024-10-15T09:30:00');
+      // Use Date constructor with explicit values to avoid timezone issues
+      const morning = new Date(2024, 9, 15, 9, 30, 0);
       expect(getTimeForFilename(morning)).to.equal('0930');
 
-      const afternoon = new Date('2024-10-15T14:45:00');
+      const afternoon = new Date(2024, 9, 15, 14, 45, 0);
       expect(getTimeForFilename(afternoon)).to.equal('1445');
 
-      const midnight = new Date('2024-10-15T00:00:00');
+      const midnight = new Date(2024, 9, 15, 0, 0, 0);
       expect(getTimeForFilename(midnight)).to.equal('0000');
     });
   });
