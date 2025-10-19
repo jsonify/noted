@@ -14,14 +14,14 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 1.4 Implement `isValidTag()` and `formatTag*()` helpers
   - [x] 1.5 Verify all unit tests pass
 
-- [ ] 2. Build tag indexing service
-  - [ ] 2.1 Write tests for TagService class methods
-  - [ ] 2.2 Create `src/services/tagService.ts` with TagService class
-  - [ ] 2.3 Implement `buildTagIndex()` to scan notes and extract tags
-  - [ ] 2.4 Implement `getTagsForNote()` and `getNotesWithTag()` methods
-  - [ ] 2.5 Implement `getAllTags()` with sorting options
-  - [ ] 2.6 Add in-memory caching for tag index
-  - [ ] 2.7 Verify all tests pass
+- [x] 2. Build tag indexing service
+  - [x] 2.1 Write tests for TagService class methods
+  - [x] 2.2 Create `src/services/tagService.ts` with TagService class
+  - [x] 2.3 Implement `buildTagIndex()` to scan notes and extract tags
+  - [x] 2.4 Implement `getTagsForNote()` and `getNotesWithTag()` methods
+  - [x] 2.5 Implement `getAllTags()` with sorting options
+  - [x] 2.6 Add in-memory caching for tag index
+  - [x] 2.7 Verify all tests pass
 
 - [ ] 3. Create tags tree view provider
   - [ ] 3.1 Write tests for TagsTreeProvider
