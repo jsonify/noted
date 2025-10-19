@@ -38,6 +38,10 @@
         {
           "id": "notedView",
           "name": "My Notes"
+        },
+        {
+          "id": "notedTagsView",
+          "name": "Tags"
         }
       ]
     },
@@ -161,6 +165,26 @@
         "command": "noted.showCalendar",
         "title": "Noted: Show Calendar View",
         "icon": "$(calendar)"
+      },
+      {
+        "command": "noted.filterByTag",
+        "title": "Noted: Filter Notes by Tag",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "noted.sortTagsByName",
+        "title": "Noted: Sort Tags by Name",
+        "icon": "$(sort-precedence)"
+      },
+      {
+        "command": "noted.sortTagsByFrequency",
+        "title": "Noted: Sort Tags by Frequency",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "noted.refreshTags",
+        "title": "Noted: Refresh Tags",
+        "icon": "$(refresh)"
       }
     ],
     "menus": {
@@ -199,6 +223,26 @@
           "command": "noted.exportNotes",
           "when": "view == notedView",
           "group": "actions@2"
+        },
+        {
+          "command": "noted.filterByTag",
+          "when": "view == notedTagsView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "noted.sortTagsByName",
+          "when": "view == notedTagsView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "noted.sortTagsByFrequency",
+          "when": "view == notedTagsView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "noted.refreshTags",
+          "when": "view == notedTagsView",
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [
@@ -241,6 +285,11 @@
           "command": "noted.revealInExplorer",
           "when": "view == notedView && viewItem == note",
           "group": "clipboard@2"
+        },
+        {
+          "command": "noted.filterByTag",
+          "when": "view == notedTagsView && viewItem == tag",
+          "group": "navigation@1"
         }
       ]
     },

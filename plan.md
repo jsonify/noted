@@ -21,7 +21,7 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 - [ ] Template variables beyond {date} and {time}
 
 #### Note Organization & Discovery
-- [ ] Tag system for notes
+- [x] Tag system for notes (completed - tag parsing, indexing, filtering, autocomplete)
 - [ ] Note linking/backlinks (wiki-style links)
 - [ ] Pinned/favorite notes section
 - [ ] Archive functionality for old notes
@@ -36,7 +36,7 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 #### Editor Enhancements
 - [ ] Markdown preview for .md files
 - [ ] Syntax highlighting for note content
-- [ ] Auto-completion for tags or links
+- [x] Auto-completion for tags (completed - tag autocomplete with # trigger)
 
 #### UX Improvements
 - [ ] Keyboard shortcuts for more commands
@@ -47,7 +47,17 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 
 ## Completed Features
 
-See [notes.md](./notes.md) for a complete list of implemented features.
+### Note Tagging System (v1.4.0)
+- Tag parsing with `#tagname` syntax
+- Tag indexing service with async operations
+- Tags tree view with usage counts
+- Filter notes by tags (single or multiple)
+- Tag autocomplete when typing `#`
+- Sort tags alphabetically or by frequency
+- Comprehensive unit tests for all tag functionality
+- Tag completion provider with VS Code integration
+
+See [notes.md](./notes.md) for a complete list of all implemented features.
 
 ## Ideas for Future Consideration
 

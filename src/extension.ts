@@ -7,7 +7,9 @@ import { TagService } from './services/tagService';
 import { formatTagForDisplay } from './utils/tagHelpers';
 import { NotesTreeProvider } from './providers/notesTreeProvider';
 import { TemplatesTreeProvider } from './providers/templatesTreeProvider';
-import { TreeItem, NoteItem, SectionItem } from './providers/treeItems';
+import { TagsTreeProvider } from './providers/tagsTreeProvider';
+import { TreeItem, NoteItem, SectionItem, TagItem } from './providers/treeItems';
+import { TagCompletionProvider } from './services/tagCompletionProvider';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
@@ -44,6 +46,22 @@ export function activate(context: vscode.ExtensionContext) {
         tagService.buildTagIndex().catch(err => {
             console.error('[NOTED] Error building tag index:', err);
         });
+    }
+
+    // Create tree data provider for tags view
+    const tagsProvider = new TagsTreeProvider(tagService);
+    vscode.window.registerTreeDataProvider('notedTagsView', tagsProvider);
+
+    // Register tag completion provider
+    const tagAutoComplete = config.get<boolean>('tagAutoComplete', true);
+    if (tagAutoComplete) {
+        const tagCompletionProvider = new TagCompletionProvider(tagService);
+        const completionDisposable = vscode.languages.registerCompletionItemProvider(
+            [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+            tagCompletionProvider,
+            '#'
+        );
+        context.subscriptions.push(completionDisposable);
     }
 
     // Command to open today's note
@@ -262,6 +280,24 @@ export function activate(context: vscode.ExtensionContext) {
     let clearTagFilters = vscode.commands.registerCommand('noted.clearTagFilters', () => {
         notesProvider.clearTagFilters();
         vscode.window.showInformationMessage('Tag filters cleared');
+    });
+
+    // Command to sort tags by name
+    let sortTagsByName = vscode.commands.registerCommand('noted.sortTagsByName', () => {
+        tagsProvider.setSortOrder('alphabetical');
+        vscode.window.showInformationMessage('Tags sorted alphabetically');
+    });
+
+    // Command to sort tags by frequency
+    let sortTagsByFrequency = vscode.commands.registerCommand('noted.sortTagsByFrequency', () => {
+        tagsProvider.setSortOrder('frequency');
+        vscode.window.showInformationMessage('Tags sorted by frequency');
+    });
+
+    // Command to refresh tags
+    let refreshTags = vscode.commands.registerCommand('noted.refreshTags', async () => {
+        await tagsProvider.refresh();
+        vscode.window.showInformationMessage('Tags refreshed');
     });
 
     // Command to show stats
@@ -615,7 +651,8 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         openTodayNote, openWithTemplate, insertTimestamp, changeFormat,
         refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
-        searchNotes, filterByTag, clearTagFilters, showStats, exportNotes, duplicateNote, moveNotesFolder,
+        searchNotes, filterByTag, clearTagFilters, sortTagsByName, sortTagsByFrequency, refreshTags,
+        showStats, exportNotes, duplicateNote, moveNotesFolder,
         setupDefaultFolder, setupCustomFolder, showNotesConfig,
         createCustomTemplate, openTemplatesFolder,
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar

@@ -42,6 +42,16 @@ All templates automatically include a timestamp header with creation date and ti
 
 ## Search & Discovery
 
+### Tags (NEW)
+- **Tag Your Notes**: Add tags to notes using `#tagname` syntax in note content
+- **Tags View**: Dedicated sidebar showing all tags with usage counts
+- **Filter by Tag**: Click any tag to filter notes, or use the Filter command for multi-tag selection
+- **Tag Autocomplete**: Type `#` in notes to see autocomplete suggestions from existing tags
+- **Sort Tags**: Sort tags alphabetically or by frequency (usage count)
+- **Tag Statistics**: See how many notes use each tag at a glance
+- **Multi-Tag Filtering**: Filter notes by multiple tags simultaneously
+- **Tag Format**: Tags support alphanumeric characters, hyphens, and underscores (e.g., `#bug-fix`, `#work_notes`)
+
 ### Calendar View (NEW)
 - **Show Calendar View**: Visual monthly calendar for navigating daily notes
 - **Interactive Date Selection**: Click any date to see all notes created on that day
@@ -84,21 +94,26 @@ All templates automatically include a timestamp header with creation date and ti
 - `noted.fileFormat`: File format - "txt" or "md" (default: "txt")
 - `noted.useTemplate`: Enable custom template (not currently implemented)
 - `noted.template`: Custom template string (not currently implemented)
+- `noted.tagAutoComplete`: Enable tag autocomplete suggestions when typing # (default: true)
 
 ## Tree View
 
 ### Hierarchical Organization
-- **Recent Notes**: Quick access to recently modified notes
-- **Custom Folders**: User-created organizational folders (alphabetically sorted)
-- **Year Folders**: Automatic date-based organization (reverse chronological)
-  - **Month Folders**: Within each year, organized by month
-    - **Note Files**: Individual notes within months
+- **Templates**: Quick access to note templates
+- **My Notes**: Main notes organization
+  - **Recent Notes**: Quick access to recently modified notes
+  - **Custom Folders**: User-created organizational folders (alphabetically sorted)
+  - **Year Folders**: Automatic date-based organization (reverse chronological)
+    - **Month Folders**: Within each year, organized by month
+      - **Note Files**: Individual notes within months
+- **Tags**: All tags with usage counts, sortable and filterable
 
 ### Icons
 - Custom folders: Opened folder icon
 - Year folders: Standard folder icon
 - Month folders: Calendar icon
 - Notes: Note icon
+- Tags: Tag icon with count badge
 
 ## Context Menus
 
@@ -113,7 +128,12 @@ All templates automatically include a timestamp header with creation date and ti
 - Rename Folder
 - Delete Folder
 
+### On Tags
+- Filter by Tag
+
 ### Toolbar Actions
+
+**My Notes View:**
 - Open Today's Note
 - Create Folder
 - Search Notes
@@ -121,6 +141,12 @@ All templates automatically include a timestamp header with creation date and ti
 - Show Calendar View
 - Show Statistics
 - Export Notes
+
+**Tags View:**
+- Filter by Tag
+- Sort by Name
+- Sort by Frequency
+- Refresh Tags
 
 ## Architecture Notes
 
@@ -181,6 +207,16 @@ pnpm run test
 ```
 
 ## Recent Updates
+
+### Note Tagging System (Completed)
+- **Tag Parsing and Indexing**: Automatically parse and index tags from note content
+- **Tags Tree View**: Dedicated view showing all tags with usage counts
+- **Tag Filtering**: Filter notes by single or multiple tags
+- **Tag Autocomplete**: Intelligent autocomplete suggestions when typing `#`
+- **Tag Sorting**: Sort tags alphabetically or by frequency
+- **Comprehensive Testing**: Full unit test coverage for tag functionality
+- **Tag Service**: Efficient tag indexing with async operations
+- **Tag Commands**: Filter, sort, and refresh tag operations
 
 ### Modular Architecture Refactoring (Completed)
 - **Split 2119-line extension.ts into focused modules**: 100% complete
