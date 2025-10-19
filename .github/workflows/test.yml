@@ -44,11 +44,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run unit tests
-        run: pnpm run test:unit
-
       - name: Compile TypeScript
         run: pnpm run compile
+
+      - name: Run unit tests
+        run: pnpm run test:unit
 
       # Optional: Run VS Code extension tests on Ubuntu only (requires display)
       - name: Run integration tests (Linux)
