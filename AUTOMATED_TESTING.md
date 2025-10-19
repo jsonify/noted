@@ -186,3 +186,28 @@ If all these pass locally, they should pass in CI.
 - Don't specify `version:` in the pnpm/action-setup step when `packageManager` is set in package.json
 - The action automatically reads the version from the `packageManager` field
 - Our workflows use pnpm@10.18.0 from package.json
+
+### "Cannot install with frozen-lockfile because pnpm-lock.yaml is absent"
+
+**Cause**: The `pnpm-lock.yaml` file is missing from the repository (was in `.gitignore`)
+
+**Solution**:
+```bash
+# 1. Remove pnpm-lock.yaml from .gitignore (if present)
+# 2. Add the lockfile to git
+git add pnpm-lock.yaml
+
+# 3. Commit it
+git commit -m "chore: add pnpm-lock.yaml for reproducible builds"
+
+# 4. Push
+git push
+```
+
+**Why this is important**:
+- Ensures reproducible builds across all environments
+- Required for CI/CD with `--frozen-lockfile` flag
+- Prevents dependency drift and security issues
+- Standard practice for all package managers (npm, yarn, pnpm)
+
+**Note**: The `pnpm-lock.yaml` file should **always** be committed to version control, never ignored.
