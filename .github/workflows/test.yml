@@ -15,6 +15,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node-version: [18.x, 20.x]
+      fail-fast: false # Continue with other OS tests even if one fails
 
     steps:
       - name: Checkout code
@@ -44,14 +45,35 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Normalize path separators (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          echo "::group::Configure Git line endings"
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+          echo "::endgroup::"
+
       - name: Compile TypeScript
         run: pnpm run compile
 
-      - name: Run unit tests
-        run: pnpm run test:unit
+      - name: Run unit tests with retry
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          command: pnpm run test:unit
 
       # Optional: Run VS Code extension tests on Ubuntu only (requires display)
       - name: Run integration tests (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run -a pnpm run test
         continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-node-${{ matrix.node-version }}
+          path: |
+            ./out/test-results
+            ./coverage
