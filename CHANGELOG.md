@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/jsonify/noted/compare/v1.5.0...v1.6.0) (2025-10-20)
+
+
+### Features
+
+* Implement advanced search with regex, date filters, and tag filtering; add quick switcher for recent notes ([48f0295](https://github.com/jsonify/noted/commit/48f0295ae8de91f74da4c0ea6f53f32e42204dc1))
+
 ## [1.5.0](https://github.com/jsonify/noted/compare/v1.4.2...v1.5.0) (2025-10-20)
 
 ### [1.4.2](https://github.com/jsonify/noted/compare/v1.4.1...v1.4.2) (2025-10-20)
