@@ -69,7 +69,7 @@ jobs:
       - name: Publish to VS Code Marketplace
         run: |
           pnpm add -g @vscode/vsce
-          vsce publish --packagePath $(ls *.vsix) --pat ${{ secrets.VSCE_PAT }}
+          vsce publish --packagePath $(ls *.vsix) --no-dependencies
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
