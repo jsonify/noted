@@ -86,6 +86,10 @@ export const window = {
   })
 };
 
+export const commands = {
+  executeCommand: (command: string, ...args: any[]) => Promise.resolve()
+};
+
 // Export Event class which is used by VS Code API
 export class Event<T> {
   constructor(private listener: (e: T) => any) {}
