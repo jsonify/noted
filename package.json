@@ -199,6 +199,11 @@
         "icon": "$(tag)"
       },
       {
+        "command": "noted.clearTagFilters",
+        "title": "Noted: Clear Tag Filters",
+        "icon": "$(clear-all)"
+      },
+      {
         "command": "noted.sortTagsByName",
         "title": "Noted: Sort Tags by Name",
         "icon": "$(sort-precedence)"
@@ -290,6 +295,11 @@
           "command": "noted.showCalendar",
           "when": "view == notedView",
           "group": "navigation@5"
+        },
+        {
+          "command": "noted.clearTagFilters",
+          "when": "view == notedView && noted.hasActiveTagFilters",
+          "group": "navigation@6"
         },
         {
           "command": "noted.showStats",
