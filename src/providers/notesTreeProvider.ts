@@ -88,7 +88,7 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
         this.filteredNotePaths.clear();
 
         // Update context variable for conditional UI elements
-        vscode.commands.executeCommand('setContext', 'noted.hasActiveTagFilters', false);
+        vscode.commands.executeCommand('setContext', 'noted.hasActiveTagFilters', this.activeFilters.size > 0);
 
         this.refresh();
     }
