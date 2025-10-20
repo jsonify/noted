@@ -44,15 +44,17 @@ export class EventEmitter<T> {
     this.listeners.forEach(listener => listener(data as T));
   }
 
-  event(listener: (e: T) => any): { dispose: () => void } {
-    this.listeners.push(listener);
-    return {
-      dispose: () => {
-        const index = this.listeners.indexOf(listener);
-        if (index > -1) {
-          this.listeners.splice(index, 1);
+  get event(): (listener: (e: T) => any) => { dispose: () => void } {
+    return (listener: (e: T) => any) => {
+      this.listeners.push(listener);
+      return {
+        dispose: () => {
+          const index = this.listeners.indexOf(listener);
+          if (index > -1) {
+            this.listeners.splice(index, 1);
+          }
         }
-      }
+      };
     };
   }
 }
@@ -89,4 +91,100 @@ export class Event<T> {
   constructor(private listener: (e: T) => any) {}
 
   static None = new Event(() => undefined);
+}
+
+// Position class for text document positions
+export class Position {
+  constructor(public line: number, public character: number) {}
+}
+
+// Range class for text document ranges
+export class Range {
+  public start: Position;
+  public end: Position;
+
+  constructor(startLine: number, startCharacter: number, endLine: number, endCharacter: number);
+  constructor(start: Position, end: Position);
+  constructor(
+    startOrLine: Position | number,
+    endOrCharacter: Position | number,
+    endLine?: number,
+    endCharacter?: number
+  ) {
+    if (typeof startOrLine === 'number' && typeof endOrCharacter === 'number') {
+      this.start = new Position(startOrLine, endOrCharacter);
+      this.end = new Position(endLine!, endCharacter!);
+    } else {
+      this.start = startOrLine as Position;
+      this.end = endOrCharacter as Position;
+    }
+  }
+}
+
+// EndOfLine enum
+export enum EndOfLine {
+  LF = 1,
+  CRLF = 2
+}
+
+// CompletionItemKind enum
+export enum CompletionItemKind {
+  Text = 0,
+  Method = 1,
+  Function = 2,
+  Constructor = 3,
+  Field = 4,
+  Variable = 5,
+  Class = 6,
+  Interface = 7,
+  Module = 8,
+  Property = 9,
+  Unit = 10,
+  Value = 11,
+  Enum = 12,
+  Keyword = 13,
+  Snippet = 14,
+  Color = 15,
+  File = 16,
+  Reference = 17
+}
+
+// CompletionItem class
+export class CompletionItem {
+  label: string;
+  kind?: CompletionItemKind;
+  detail?: string;
+  documentation?: string | MarkdownString;
+  insertText?: string;
+
+  constructor(label: string, kind?: CompletionItemKind) {
+    this.label = label;
+    this.kind = kind;
+  }
+}
+
+// MarkdownString class for formatted text
+export class MarkdownString {
+  value: string;
+  isTrusted?: boolean;
+
+  constructor(value?: string, isTrusted?: boolean) {
+    this.value = value || '';
+    this.isTrusted = isTrusted;
+  }
+
+  appendText(value: string): MarkdownString {
+    this.value += value;
+    return this;
+  }
+
+  appendMarkdown(value: string): MarkdownString {
+    this.value += value;
+    return this;
+  }
+
+  appendCodeblock(value: string, language?: string): MarkdownString {
+    this.value += '```' + (language || '') + '\n' + value + '\n```\n';
+    return this;
+  }
 }

@@ -43,14 +43,15 @@ All templates automatically include a timestamp header with creation date and ti
 ## Search & Discovery
 
 ### Tags (NEW)
-- **Tag Your Notes**: Add tags to notes using `#tagname` syntax in note content
+- **Tag Your Notes**: Add tags anywhere in notes using `#tagname` syntax - works inline throughout your entire note
 - **Tags View**: Dedicated sidebar showing all tags with usage counts
-- **Filter by Tag**: Click any tag to filter notes, or use the Filter command for multi-tag selection
-- **Tag Autocomplete**: Type `#` in notes to see autocomplete suggestions from existing tags
+- **Filter by Tag**: Click any tag to instantly filter the My Notes view, or use the Filter command for multi-tag selection
+- **Tag Autocomplete**: Type `#` anywhere in notes to see autocomplete suggestions from existing tags
 - **Sort Tags**: Sort tags alphabetically or by frequency (usage count)
 - **Tag Statistics**: See how many notes use each tag at a glance
-- **Multi-Tag Filtering**: Filter notes by multiple tags simultaneously
+- **Multi-Tag Filtering**: Filter notes by multiple tags simultaneously (AND logic - shows notes with all selected tags)
 - **Tag Format**: Tags support alphanumeric characters, hyphens, and underscores (e.g., `#bug-fix`, `#work_notes`)
+- **Inline Support**: Tags can appear anywhere in your notes - in paragraphs, lists, headings, or anywhere else
 
 ### Calendar View (NEW)
 - **Show Calendar View**: Visual monthly calendar for navigating daily notes
@@ -208,15 +209,17 @@ pnpm run test
 
 ## Recent Updates
 
-### Note Tagging System (Completed)
-- **Tag Parsing and Indexing**: Automatically parse and index tags from note content
-- **Tags Tree View**: Dedicated view showing all tags with usage counts
-- **Tag Filtering**: Filter notes by single or multiple tags
-- **Tag Autocomplete**: Intelligent autocomplete suggestions when typing `#`
-- **Tag Sorting**: Sort tags alphabetically or by frequency
-- **Comprehensive Testing**: Full unit test coverage for tag functionality
-- **Tag Service**: Efficient tag indexing with async operations
-- **Tag Commands**: Filter, sort, and refresh tag operations
+### Note Tagging System (Completed - v1.4.0)
+- **Inline Tag Support**: Add tags anywhere in note content using `#tagname` syntax
+- **Tag Parsing and Indexing**: Automatically parse and index tags from entire note content
+- **Tags Tree View**: Dedicated sidebar panel showing all tags with usage counts
+- **Tag Filtering**: Click tags to filter notes instantly, or select multiple tags for AND filtering
+- **Tag Autocomplete**: Intelligent autocomplete suggestions when typing `#` anywhere in notes
+- **Tag Sorting**: Sort tags alphabetically or by frequency (most-used first)
+- **Comprehensive Testing**: Full unit test coverage for tag functionality (143 passing tests)
+- **Tag Service**: Efficient tag indexing with async operations and in-memory caching
+- **Tag Commands**: Filter, sort, refresh, and clear filter operations
+- **Real-time Updates**: Tags automatically detected and indexed as you type
 
 ### Modular Architecture Refactoring (Completed)
 - **Split 2119-line extension.ts into focused modules**: 100% complete

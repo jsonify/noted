@@ -21,14 +21,11 @@ const loadedModules = new Set<string>();
 
 // Add cleanup helper
 export function cleanupMocks() {
-  // Reset all loaded modules
-  loadedModules.forEach(id => {
-    delete require.cache[require.resolve(id)];
-  });
+  // Clear the loaded modules set
   loadedModules.clear();
 
-  // Restore original require
-  (Module.prototype as any).require = originalRequire;
+  // Note: We don't try to clear require.cache for 'vscode'
+  // since it's not a real module that can be resolved
 }
 
 // Initialize required VS Code namespaces
