@@ -64,9 +64,14 @@ If you need to publish manually without the CI/CD:
 # Install vsce globally
 pnpm add -g @vscode/vsce
 
-# Publish (requires VSCE_PAT environment variable)
-vsce publish -p YOUR_PERSONAL_ACCESS_TOKEN
+# Package the extension first
+pnpm run package
+
+# Publish the packaged .vsix file
+vsce publish --packagePath noted-*.vsix --pat YOUR_PERSONAL_ACCESS_TOKEN
 ```
+
+**Note**: Using `--packagePath` publishes the pre-built `.vsix` file and avoids dependency validation issues.
 
 ## Monitoring Releases
 
