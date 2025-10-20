@@ -91,6 +91,11 @@
         "icon": "$(search)"
       },
       {
+        "command": "noted.quickSwitcher",
+        "title": "Noted: Quick Switcher (Recent Notes)",
+        "icon": "$(list-ordered)"
+      },
+      {
         "command": "noted.showStats",
         "title": "Noted: Show Note Statistics",
         "icon": "$(graph)"
@@ -272,6 +277,11 @@
           "group": "navigation@3"
         },
         {
+          "command": "noted.quickSwitcher",
+          "when": "view == notedView",
+          "group": "navigation@3.5"
+        },
+        {
           "command": "noted.refresh",
           "when": "view == notedView",
           "group": "navigation@4"
@@ -410,6 +420,11 @@
         "command": "noted.insertTimestamp",
         "key": "ctrl+shift+t",
         "mac": "cmd+shift+t"
+      },
+      {
+        "command": "noted.quickSwitcher",
+        "key": "ctrl+shift+p",
+        "mac": "cmd+shift+p"
       }
     ],
     "configuration": {

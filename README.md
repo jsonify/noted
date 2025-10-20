@@ -21,7 +21,8 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 - **Archive** ⭐ NEW: Archive old or completed notes to keep your workspace clean
 - **Calendar View**: Visual monthly calendar for navigating and creating daily notes
 - **Drag & Drop**: Move notes between folders with simple drag-and-drop
-- **Full-Text Search**: Search across all notes with instant preview
+- **Advanced Search** ⭐ NEW: Powerful search with regex, date filters, and tag filtering
+- **Quick Switcher** ⭐ NEW: Instantly access your 20 most recent notes with `Cmd+Shift+P`
 
 ## Usage
 
@@ -36,7 +37,12 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 3. **Toggle Format**:
    - Command Palette: "Noted: Toggle File Format (txt/md)"
 
-4. **Use Tags** ⭐ NEW:
+4. **Quick Switcher** ⭐ NEW:
+   - Keyboard: `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
+   - Command Palette: "Noted: Quick Switcher (Recent Notes)"
+   - Instantly access your 20 most recently modified notes
+
+5. **Use Tags** ⭐ NEW:
    - Add tags anywhere in your notes using `#tagname` syntax
    - View all tags in the dedicated Tags sidebar panel
    - Click any tag to filter notes containing that tag
@@ -200,6 +206,76 @@ Keep your workspace clean by archiving completed work:
 - Right-click archived note and select "Unarchive Note"
 - Restores note to active notes
 - Safe with confirmation dialogs
+
+## Advanced Search & Discovery ⭐ NEW v1.6.0
+
+### Powerful Search with Filters
+
+Search across all your notes with advanced filtering capabilities:
+
+**Basic Search:**
+- Command Palette: "Noted: Search Notes"
+- Enter any text to search across all note content
+- View results with preview snippets and match counts
+
+**Advanced Filters:**
+
+Use special filter keywords in your search query:
+
+- `regex:` - Enable regular expression pattern matching
+  ```
+  regex: bug.*fix
+  ```
+
+- `case:` - Enable case-sensitive search
+  ```
+  case: TODO
+  ```
+
+- `tag:tagname` - Filter results by specific tags
+  ```
+  tag:backend tag:api
+  ```
+
+- `from:YYYY-MM-DD` - Show only notes modified after this date
+  ```
+  from:2025-01-01
+  ```
+
+- `to:YYYY-MM-DD` - Show only notes modified before this date
+  ```
+  to:2025-01-31
+  ```
+
+**Combine Multiple Filters:**
+```
+regex: tag:work from:2025-01-01 authentication.*error
+case: tag:bug tag:critical from:2025-10-01 BUG-
+```
+
+**Search Results:**
+- Shows match counts for each note
+- Displays tags associated with each note
+- Preview of matching content
+- Modification dates
+- Click any result to open the note
+
+### Quick Switcher
+
+Instantly access your most recent notes:
+
+**Features:**
+- Keyboard shortcut: `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
+- Shows 20 most recently modified notes
+- Displays tags, dates, and content preview
+- Searchable by filename, tags, or content
+- Fast navigation without leaving the keyboard
+
+**Use Cases:**
+- Quickly return to your active work notes
+- Jump between related notes in a project
+- Access recently tagged items
+- Navigate your daily notes chronologically
 
 ### Common Tag Use Cases
 
@@ -395,7 +471,7 @@ pnpm run compile
 pnpm run test
 ```
 
-The project includes 199 passing unit tests covering utilities, services, providers, templates, and the tag system.
+The project includes 184 passing unit tests covering utilities, services, providers, templates, tag system, and search functionality.
 
 ## Folder Structure
 

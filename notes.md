@@ -88,8 +88,18 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Month Navigation**: Previous/Next month buttons and "Today" quick jump
 - **Multi-note Support**: Handles multiple notes per day (daily notes + templated notes)
 
-### Search
+### Search (ENHANCED v1.6.0)
 - **Full-Text Search**: Search across all notes with preview of matching lines
+- **Regex Search**: Use `regex:` flag in search to enable regular expression pattern matching
+- **Advanced Filters**:
+  - `tag:tagname` - Filter results by specific tags
+  - `from:YYYY-MM-DD` - Show only notes modified after this date
+  - `to:YYYY-MM-DD` - Show only notes modified before this date
+  - `case:` - Enable case-sensitive search
+- **Combined Filters**: Use multiple filters together (e.g., "regex: tag:work from:2025-01-01 bug.*fix")
+- **Quick Switcher** (`Cmd+Shift+P`): Quickly access your 20 most recently modified notes
+- **Enhanced Results**: See match counts, tags, modification dates, and rich previews
+- **Smart Sorting**: Results sorted by modification date (newest first)
 - **Quick Pick**: Select from search results to open notes
 
 ### Recent Notes

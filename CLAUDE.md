@@ -35,6 +35,7 @@ The extension now uses a fully modular architecture with clear separation of con
   - `configService.ts`: Configuration management
   - `fileSystemService.ts`: Async file operation wrappers
   - `noteService.ts`: Note operations (search, stats, export)
+  - `searchService.ts`: Advanced search with regex and filters (v1.6.0)
   - `templateService.ts`: Template generation
 - **`src/providers/`**: VS Code tree view providers
   - `treeItems.ts`: Tree item classes
@@ -131,8 +132,11 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.previewTemplateVariables` - Show webview with all available template variables
 - `noted.openTemplatesFolder` - Open the templates folder in system file explorer
 
+**Search Commands** (enhanced v1.6.0):
+- `noted.searchNotes` - Advanced search with regex and filters (regex:, case:, tag:, from:, to:)
+- `noted.quickSwitcher` - Quick access to 20 most recent notes (Cmd+Shift+P)
+
 **Management Commands**:
-- `noted.searchNotes` - Full-text search across all notes with preview
 - `noted.showStats` - Shows total/weekly/monthly note counts
 - `noted.exportNotes` - Exports notes by date range to single file
 - `noted.deleteNote`, `renameNote`, `duplicateNote`, `copyPath` - File operations on notes
@@ -143,11 +147,15 @@ All commands are registered in `activate()` and defined in package.json contribu
 
 1. **File I/O is asynchronous**: All operations use `fs.promises` API with async/await pattern
 2. **Comprehensive error handling**: All file operations wrapped in try/catch with user-friendly messages
-3. **Search is recursive and async**: `searchInNotes()` in `noteService.ts` recursively reads all note files
-4. **Date formatting**: Uses `toLocaleString('en-US', ...)` for consistent formatting
-5. **Note names from templates**: Sanitized with `.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '')`
-6. **Tree view welcome**: Defined in package.json `viewsWelcome` with markdown buttons
-7. **Modular structure**: Code split across 13+ modules for maintainability and testability
+3. **Search functionality**:
+   - Legacy: `searchInNotes()` in `noteService.ts` for basic tag-filtered search
+   - Advanced (v1.6.0): `advancedSearch()` in `searchService.ts` with regex, date filters, and tag filtering
+   - Both are recursive and async for optimal performance
+4. **Search query parsing**: `parseSearchQuery()` extracts filters from query strings (regex:, case:, tag:, from:, to:)
+5. **Date formatting**: Uses `toLocaleString('en-US', ...)` for consistent formatting
+6. **Note names from templates**: Sanitized with `.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '')`
+7. **Tree view welcome**: Defined in package.json `viewsWelcome` with markdown buttons
+8. **Modular structure**: Code split across 14+ modules for maintainability and testability
 
 ## VS Code Extension Specifics
 

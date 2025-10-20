@@ -30,10 +30,10 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 - [x] Calendar view for daily notes
 
 #### Search & Navigation
-- [ ] Search with regex support
-- [ ] Advanced filters (by date range, tags, etc.)
-- [ ] Quick switcher for recent notes
-- [ ] Full-text search with better performance (async)
+- [x] Search with regex support (completed - supports regex: flag)
+- [x] Advanced filters (by date range, tags, etc.) (completed - from:, to:, tag:, case: filters)
+- [x] Quick switcher for recent notes (completed - Cmd+Shift+P shows 20 recent notes)
+- [x] Full-text search with better performance (async) (completed - async search with parallel processing)
 
 #### Editor Enhancements
 - [ ] Markdown preview for .md files
@@ -114,6 +114,16 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 - Unarchive notes back to active notes
 - Visual archive indicator (📦) on archived notes
 - Confirmation dialogs for safety
+
+### Search & Navigation Enhancements (v1.6.0)
+- Regex search support with `regex:` flag for pattern matching
+- Advanced date filtering with `from:YYYY-MM-DD` and `to:YYYY-MM-DD` syntax
+- Case-sensitive search with `case:` flag
+- Tag filtering in search with `tag:tagname` syntax
+- Quick switcher for recent notes (Cmd+Shift+P) showing 20 most recent notes
+- Enhanced search results with match counts and metadata
+- Async search with optimized performance for large note collections
+- Rich preview showing tags, dates, and match information
 
 See [notes.md](./notes.md) for a complete list of all implemented features.
 

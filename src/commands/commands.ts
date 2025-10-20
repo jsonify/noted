@@ -8,6 +8,7 @@ import * as path from 'path';
 import { NoteItem } from '../providers/treeItems';
 import { getNotesPath, getTemplatesPath, getFileFormat } from '../services/configService';
 import { openDailyNote, createNoteFromTemplate, searchInNotes, getNoteStats, exportNotesToFile } from '../services/noteService';
+import { advancedSearch, parseSearchQuery, getRecentNotes } from '../services/searchService';
 import { getCustomTemplates } from '../services/templateService';
 import { pathExists, createDirectory, deleteFile, renameFile, copyFile, deleteDirectory, readFile, writeFile, copyDirectoryRecursive } from '../services/fileSystemService';
 import { isValidCustomFolderName, isYearFolder, isMonthFolder } from '../utils/validators';
@@ -540,28 +541,80 @@ export function handleRefresh() {
 
 export async function handleSearchNotes() {
     const query = await vscode.window.showInputBox({
-        prompt: 'Search notes',
-        placeHolder: 'Enter search term...'
+        prompt: 'Search notes (supports: regex:, case:, tag:tagname, from:YYYY-MM-DD, to:YYYY-MM-DD)',
+        placeHolder: 'Enter search term with optional filters...'
     });
 
     if (query) {
-        const results = await searchInNotes(query);
-        if (results.length === 0) {
-            vscode.window.showInformationMessage('No results found');
-        } else {
-            const items = results.map(r => ({
-                label: path.basename(r.file),
-                description: r.preview,
-                detail: r.file
-            }));
-            const selected = await vscode.window.showQuickPick(items, {
-                placeHolder: `Found ${results.length} result(s)`
-            });
-            if (selected && selected.detail) {
-                const document = await vscode.workspace.openTextDocument(selected.detail);
-                await vscode.window.showTextDocument(document);
+        try {
+            const options = parseSearchQuery(query);
+            const results = await advancedSearch(options);
+
+            if (results.length === 0) {
+                vscode.window.showInformationMessage('No results found');
+            } else {
+                const items = results.map(r => {
+                    const fileName = path.basename(r.file);
+                    const matchInfo = r.matches > 0 ? ` (${r.matches} match${r.matches > 1 ? 'es' : ''})` : '';
+                    const tagInfo = r.tags.length > 0 ? ` [${r.tags.join(', ')}]` : '';
+
+                    return {
+                        label: `${fileName}${matchInfo}`,
+                        description: r.preview,
+                        detail: `${r.file}${tagInfo}`,
+                        filePath: r.file
+                    };
+                });
+
+                const selected = await vscode.window.showQuickPick(items, {
+                    placeHolder: `Found ${results.length} result(s) - Use filters: regex:, case:, tag:, from:, to:`
+                });
+
+                if (selected && selected.filePath) {
+                    const document = await vscode.workspace.openTextDocument(selected.filePath);
+                    await vscode.window.showTextDocument(document);
+                }
             }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Search error: ${error instanceof Error ? error.message : String(error)}`);
         }
+    }
+}
+
+export async function handleQuickSwitcher() {
+    try {
+        const results = await getRecentNotes(20);
+
+        if (results.length === 0) {
+            vscode.window.showInformationMessage('No recent notes found');
+            return;
+        }
+
+        const items = results.map(r => {
+            const fileName = path.basename(r.file);
+            const tagInfo = r.tags.length > 0 ? ` [${r.tags.join(', ')}]` : '';
+            const dateInfo = r.modified.toLocaleDateString();
+
+            return {
+                label: fileName,
+                description: `${dateInfo}${tagInfo}`,
+                detail: r.preview,
+                filePath: r.file
+            };
+        });
+
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select a recent note to open',
+            matchOnDescription: true,
+            matchOnDetail: true
+        });
+
+        if (selected && selected.filePath) {
+            const document = await vscode.workspace.openTextDocument(selected.filePath);
+            await vscode.window.showTextDocument(document);
+        }
+    } catch (error) {
+        vscode.window.showErrorMessage(`Quick switcher error: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 
