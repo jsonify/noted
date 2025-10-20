@@ -14,7 +14,10 @@ import {
 
 describe('Date Helpers', () => {
   describe('formatDateForNote', () => {
-    it('should format date in long readable format', () => {
+    it('should format date in long readable format', function() {
+      // Increase timeout for Windows where toLocaleString can be slow on first call
+      this.timeout(5000);
+
       // Use Date constructor with explicit values to avoid timezone issues
       const date = new Date(2024, 9, 15, 12, 30, 0); // October 15, 2024
       const result = formatDateForNote(date);
@@ -25,7 +28,10 @@ describe('Date Helpers', () => {
   });
 
   describe('formatTimeForNote', () => {
-    it('should format time in 12-hour format with AM/PM', () => {
+    it('should format time in 12-hour format with AM/PM', function() {
+      // Increase timeout for Windows where toLocaleString can be slow on first call
+      this.timeout(5000);
+
       // Use Date constructor with explicit values to avoid timezone issues
       const morningDate = new Date(2024, 9, 15, 9, 30, 0);
       const morningResult = formatTimeForNote(morningDate);
@@ -38,7 +44,10 @@ describe('Date Helpers', () => {
   });
 
   describe('formatTimestamp', () => {
-    it('should return current time in 12-hour format', () => {
+    it('should return current time in 12-hour format', function() {
+      // Increase timeout for Windows where toLocaleString can be slow on first call
+      this.timeout(5000);
+
       const result = formatTimestamp();
       expect(result).to.match(/\d{1,2}:\d{2} (AM|PM)/);
     });
