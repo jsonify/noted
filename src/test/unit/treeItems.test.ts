@@ -12,11 +12,32 @@ describe('Tree Items', () => {
       expect(section.collapsibleState).to.equal(vscode.TreeItemCollapsibleState.Collapsed);
     });
 
-    it('should have history icon', () => {
-      const section = new SectionItem('Test Section', 'test');
+    it('should have history icon for recent section', () => {
+      const section = new SectionItem('Recent Notes', 'recent');
 
       expect(section.iconPath).to.be.instanceOf(vscode.ThemeIcon);
       expect((section.iconPath as vscode.ThemeIcon).id).to.equal('history');
+    });
+
+    it('should have pin icon for pinned section', () => {
+      const section = new SectionItem('Pinned Notes', 'pinned');
+
+      expect(section.iconPath).to.be.instanceOf(vscode.ThemeIcon);
+      expect((section.iconPath as vscode.ThemeIcon).id).to.equal('pin');
+    });
+
+    it('should have archive icon for archive section', () => {
+      const section = new SectionItem('Archive', 'archive');
+
+      expect(section.iconPath).to.be.instanceOf(vscode.ThemeIcon);
+      expect((section.iconPath as vscode.ThemeIcon).id).to.equal('archive');
+    });
+
+    it('should have folder icon for unknown section type', () => {
+      const section = new SectionItem('Unknown Section', 'unknown');
+
+      expect(section.iconPath).to.be.instanceOf(vscode.ThemeIcon);
+      expect((section.iconPath as vscode.ThemeIcon).id).to.equal('folder');
     });
   });
 
@@ -137,6 +158,37 @@ describe('Tree Items', () => {
 
         expect(item.resourceUri).to.be.instanceOf(vscode.Uri);
         expect(item.resourceUri?.fsPath).to.equal(testPath);
+      });
+    });
+
+    describe('setPinned', () => {
+      it('should set isPinned to true and update icon', () => {
+        const item = new NoteItem('note.txt', '/path/to/note.txt', vscode.TreeItemCollapsibleState.None, 'note');
+
+        item.setPinned(true);
+
+        expect(item.isPinned).to.be.true;
+        expect(item.iconPath).to.be.instanceOf(vscode.ThemeIcon);
+        expect((item.iconPath as vscode.ThemeIcon).id).to.equal('pinned');
+        expect(item.description).to.equal('📌');
+      });
+
+      it('should set isPinned to false', () => {
+        const item = new NoteItem('note.txt', '/path/to/note.txt', vscode.TreeItemCollapsibleState.None, 'note');
+
+        item.setPinned(true);
+        item.setPinned(false);
+
+        expect(item.isPinned).to.be.false;
+      });
+
+      it('should not update icon for non-note types', () => {
+        const item = new NoteItem('2024', '/path/to/2024', vscode.TreeItemCollapsibleState.Collapsed, 'year');
+
+        item.setPinned(true);
+
+        expect(item.isPinned).to.be.true;
+        expect((item.iconPath as vscode.ThemeIcon).id).to.equal('folder');
       });
     });
   });
