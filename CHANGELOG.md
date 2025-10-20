@@ -2,6 +2,77 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 1.7.0 (2025-10-20)
+
+
+### Features
+
+* Add automated publishing workflow and documentation for VS Code Marketplace ([cba6312](https://github.com/jsonify/noted/commit/cba6312dcb5ca049f554a210eb6d8da0d8eca6dc))
+* add calendar view command and integrate with notes management ([4699418](https://github.com/jsonify/noted/commit/46994189a6c2022c4be619c0df9b9f4ea1976a41))
+* Add clear tag filters button to Notes view ([fddd38f](https://github.com/jsonify/noted/commit/fddd38f6200aac1e2b3c36dfd56384b29f3433dd))
+* Add comprehensive integration tests for note and tag management commands, enhancing test coverage and reliability ([0f7e1b6](https://github.com/jsonify/noted/commit/0f7e1b6b2a4f582d1a54c10faf1072b2abd1c266))
+* Add core functionality for notes management and templates ([6f5c53b](https://github.com/jsonify/noted/commit/6f5c53b07eb07a1817612aacbfa4a14886e9b074))
+* add custom folder management features including create, move, rename, and delete functionalities ([e990e8f](https://github.com/jsonify/noted/commit/e990e8f78692c8cc4a46e9e66457d1f37689fe5c))
+* add unit tests for core functionality and implement CI/CD pipeline ([5b8c33d](https://github.com/jsonify/noted/commit/5b8c33d30fb19ec7a3eee3ac4ce6530b15171d4d))
+* Add unit tests for NotesTreeProvider, tag commands, and tag completion ([01ed5f3](https://github.com/jsonify/noted/commit/01ed5f376c37b10d95ddc006f18fa9038991ed88))
+* Add wiki-style note linking, backlinks system, pinned notes, and archive functionality ([746b014](https://github.com/jsonify/noted/commit/746b014d71fddb81b542fdeaced4a5c273b23c1e))
+* always include timestamp in frontmatter for generated templates ([2bbe060](https://github.com/jsonify/noted/commit/2bbe0606d6c283ddd066ed1d53ad0beb13f41835))
+* Enhance tag system with inline support, autocomplete, and improved extraction ([84dd95f](https://github.com/jsonify/noted/commit/84dd95f2667efa0a208a668e63099c3cb6b0e5c6))
+* Enhance tagging system with inline support, improved filtering, and comprehensive updates ([3b75fb0](https://github.com/jsonify/noted/commit/3b75fb077e395929b309fd5d9e64ca9edab48f51))
+* Enhance test setup and improve tag command tests with mock configurations and cleanup ([91054f2](https://github.com/jsonify/noted/commit/91054f2da72534e251507c42fdee30af58c062c0))
+* Enhance Tree Items tests with icon verification for sections and add setPinned functionality for NoteItem ([2dda6dd](https://github.com/jsonify/noted/commit/2dda6dd7db55a9f282ae2af0860b6d954c6e64f9))
+* Implement advanced search with regex, date filters, and tag filtering; add quick switcher for recent notes ([48f0295](https://github.com/jsonify/noted/commit/48f0295ae8de91f74da4c0ea6f53f32e42204dc1))
+* Implement advanced tag management features including rename, merge, delete, and export functionalities ([1c47b7e](https://github.com/jsonify/noted/commit/1c47b7e2930d223a382a139dcd4284888eee1caf))
+* Implement custom template system with full management, dynamic placeholders, and enhanced template commands ([c06f560](https://github.com/jsonify/noted/commit/c06f560831594914eeb273ddfa179258247da0e0))
+* implement drag-and-drop functionality for moving notes between folders ([2fca0ed](https://github.com/jsonify/noted/commit/2fca0ed1f30b493d775f271a456a71e384c5fef0))
+* Implement note tagging system with parsing, filtering, and autocomplete features ([696c1cd](https://github.com/jsonify/noted/commit/696c1cd1d5f2e6924445b670238688b2cc17db3f))
+* implement note tagging system with parsing, filtering, and management features ([b8ee995](https://github.com/jsonify/noted/commit/b8ee9955b607ec9b8ae3d8999be6c41e9dbd9853))
+* implement tag indexing service with comprehensive tests ([3e293a6](https://github.com/jsonify/noted/commit/3e293a649deae36e28005ce51271fc2c84387272))
+* implement TagsTreeProvider with sorting and filtering capabilities ([805fbec](https://github.com/jsonify/noted/commit/805fbec385e08e289ed55502dad2e47ab9036357))
+* Increase timeout for date formatting tests to improve reliability on Windows ([5a9138e](https://github.com/jsonify/noted/commit/5a9138efa1b7618548be623887bbebc3cbf4969b))
+* Increase timeout for date formatting tests to improve reliability on Windows ([a3eed19](https://github.com/jsonify/noted/commit/a3eed19ad9ed7155204585338daeee33afd5e7ef))
+* refactor file operations to async with comprehensive error handling ([b3729fa](https://github.com/jsonify/noted/commit/b3729fa2d427ff2ddd8ad9f097c8f9fd2d782d50))
+* refactored the Noted extension to use asynchronous file operations with comprehensive error handling ([e9001ea](https://github.com/jsonify/noted/commit/e9001ea848e036610dfacb72c69d89df8c544de3))
+* replace conventional-changelog workflow with standard-version for reliable changelog generation ([90df5ea](https://github.com/jsonify/noted/commit/90df5ea9edfe17e67026d223c59c12b6f025c59c))
+
+
+### Bug Fixes
+
+* Add explicit type definitions to tsconfig ([23fa65f](https://github.com/jsonify/noted/commit/23fa65fdb653204106de3d8602e2411e631ce894))
+* change duplicate note error message from error to warning for better UX ([309dfdd](https://github.com/jsonify/noted/commit/309dfdd2bacebbac41267e040c3b9866aee2366b))
+* downgrade chai to v4 for CommonJS compatibility ([f2f3fd9](https://github.com/jsonify/noted/commit/f2f3fd924fd7353b1b36a87c2857dc9bb95aca05))
+* optimize getTimeForFilename function for improved performance and readability ([809400f](https://github.com/jsonify/noted/commit/809400fba998af553aeb110b2b5ec2aa59c1ab9b))
+* reorder steps in GitHub Actions workflow for clarity ([d5853fb](https://github.com/jsonify/noted/commit/d5853fbdc505ee68fc088a4d259e8783e32adef6))
+* resolve VSIX packaging issues with pnpm ([fc5e7a9](https://github.com/jsonify/noted/commit/fc5e7a9799c16d4084c3198ba2bb3a2170eeea37))
+* Specify package path for VS Code Marketplace publishing ([268b5e5](https://github.com/jsonify/noted/commit/268b5e5cc8039a0c343f14b324f68ed1c21baeaf))
+* update date constructor in dateHelpers tests to avoid timezone issues ([b6ebe09](https://github.com/jsonify/noted/commit/b6ebe094442e67ae9a81f20493e4cfbc9e2ac57a))
+* update date constructor in getTimeForFilename tests to avoid timezone issues ([1e96958](https://github.com/jsonify/noted/commit/1e96958318f3cc418e3da32a66f13e6aff77ee96))
+* update release scripts to generate changelog after versioning for proper commit inclusion ([465e21e](https://github.com/jsonify/noted/commit/465e21e627ff3751cecb4d5e2c2bb927297e553e))
+
+
+### Documentation
+
+* add 1.2.4 changelog entry ([4c8c890](https://github.com/jsonify/noted/commit/4c8c890e171ee9b22277b479b416b5d2a67579c0))
+
+
+### Chores
+
+* downgrade pnpm version in package manager specification ([bd2ba0d](https://github.com/jsonify/noted/commit/bd2ba0dbd1d79bd1ae9cf11f7359420ee4db03cc))
+* **release:** 1.2.6 ([155e0f6](https://github.com/jsonify/noted/commit/155e0f6c224321958615ddca02c1af9272d702fb))
+* **release:** 1.3.0 ([3665fad](https://github.com/jsonify/noted/commit/3665fade5d4b6bbe4c7417d45d8bafb9472badd7))
+* **release:** 1.3.1 ([15dc265](https://github.com/jsonify/noted/commit/15dc2653edf5a10be100707568055a2bb2b3b57b))
+* **release:** 1.4.0 ([450f651](https://github.com/jsonify/noted/commit/450f65192636a7f800a845c1b5f16a438728a9e2))
+* **release:** 1.4.1 ([7a1af00](https://github.com/jsonify/noted/commit/7a1af0038b68274bb0fa4067565d473377ae56b1))
+* **release:** 1.4.2 ([d5da157](https://github.com/jsonify/noted/commit/d5da1573d632e71db63a87f02fcf26dafe6ee556))
+* **release:** 1.5.0 ([4f63ece](https://github.com/jsonify/noted/commit/4f63ecea305c21d6828a17a9bc2ae148b59f22dc))
+* **release:** 1.6.0 ([5ee48a1](https://github.com/jsonify/noted/commit/5ee48a175da1f902deb09538fd87f6e501b95615))
+* remove pnpm version specification in CI workflows and update documentation ([e6b4717](https://github.com/jsonify/noted/commit/e6b47175342431bb49b2e0bd3f33a9ebf9d91c6b))
+
+
+### Tests
+
+* Add vscode.commands mock to fix unit tests ([cf8ef8d](https://github.com/jsonify/noted/commit/cf8ef8dccd4580a6db944bf105edbb9027fb16f4))
+
 ## [1.6.0](https://github.com/jsonify/noted/compare/v1.5.0...v1.6.0) (2025-10-20)
 
 
