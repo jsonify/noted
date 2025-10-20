@@ -4,12 +4,35 @@ This document explains how to publish new versions of the Noted extension to the
 
 ## Prerequisites
 
-### 1. Create a Visual Studio Marketplace Publisher Account
-If you haven't already:
-1. Go to https://marketplace.visualstudio.com/manage
+### 1. Link Publisher to Azure DevOps Organization
+
+**IMPORTANT**: Your publisher must be linked to your Azure DevOps organization for PAT authentication to work.
+
+**Step 1: Access Azure DevOps Organization**
+1. Go to https://dev.azure.com/jasonrueckert0375
 2. Sign in with your Microsoft account
-3. Create a publisher with name `jsonify` (should match `"publisher": "jsonify"` in package.json)
-4. This publisher will be linked to your Azure DevOps organization `jasonrueckert0375`
+
+**Step 2: Create/Link Publisher from Azure DevOps**
+1. In Azure DevOps, click on your organization name (`jasonrueckert0375`) in the top left
+2. Go to Organization Settings (bottom left corner, gear icon)
+3. Under "Extensions", click on "Visual Studio Marketplace"
+4. Click "Create publisher" or "Manage publishers"
+5. Either:
+   - **Create new**: Create a publisher with ID `jsonify`
+   - **Link existing**: If `jsonify` already exists, you need to link it to this organization
+
+**Step 3: Verify Publisher Link**
+1. Go to https://marketplace.visualstudio.com/manage/publishers/jsonify
+2. You should now see your organization `jasonrueckert0375` listed
+3. Your publisher ID will be something like: `ff551fa7-3d1c-6bce-b0a8-baeb6f8286bd`
+
+**Alternative Method: Create Publisher via Marketplace**
+1. Go to https://marketplace.visualstudio.com/manage
+2. Click "Create publisher"
+3. **Publisher ID**: `jsonify` (must match package.json)
+4. **Publisher name**: Your display name
+5. **CRITICAL**: When prompted, select `jasonrueckert0375` as the organization
+   - If you don't see this option, you may need to create the publisher from Azure DevOps instead
 
 ### 2. Generate a Personal Access Token (PAT)
 1. Go to https://dev.azure.com/jasonrueckert0375
@@ -116,12 +139,13 @@ This means your PAT is not authorized to publish under the `jsonify` publisher. 
    - **Scopes**: Must include "Marketplace" with both "Acquire" AND "Manage" checked
 4. If anything is wrong, create a new PAT with the correct settings
 
-**Step 4: Test PAT Permissions**
+**Step 4: Test Publisher Access**
 ```bash
-# Test if your PAT can access the publisher
-vsce show jsonify.noted --pat YOUR_PAT
+# First, ensure you're logged in with vsce
+npx @vscode/vsce login jsonify
 
-# If this fails with 401, the PAT doesn't have access to the publisher
+# This will prompt for your PAT and verify it works
+# If login fails, your publisher is not linked to the organization where the PAT was created
 ```
 
 **Step 5: Alternative Solutions**
