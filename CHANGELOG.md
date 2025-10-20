@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.2](https://github.com/jsonify/noted/compare/v1.4.1...v1.4.2) (2025-10-20)
+
+
+### Features
+
+* Add wiki-style note linking, backlinks system, pinned notes, and archive functionality ([746b014](https://github.com/jsonify/noted/commit/746b014d71fddb81b542fdeaced4a5c273b23c1e))
+* Enhance Tree Items tests with icon verification for sections and add setPinned functionality for NoteItem ([2dda6dd](https://github.com/jsonify/noted/commit/2dda6dd7db55a9f282ae2af0860b6d954c6e64f9))
+* Increase timeout for date formatting tests to improve reliability on Windows ([5a9138e](https://github.com/jsonify/noted/commit/5a9138efa1b7618548be623887bbebc3cbf4969b))
+* Increase timeout for date formatting tests to improve reliability on Windows ([a3eed19](https://github.com/jsonify/noted/commit/a3eed19ad9ed7155204585338daeee33afd5e7ef))
+
 ### [1.4.1](https://github.com/jsonify/noted/compare/v1.4.0...v1.4.1) (2025-10-20)
 
 
