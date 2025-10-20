@@ -1,8 +1,39 @@
 import * as path from 'path';
-import { BUILT_IN_TEMPLATES, TEMPLATE_PLACEHOLDERS, DEFAULTS } from '../constants';
+import * as vscode from 'vscode';
+import { BUILT_IN_TEMPLATES, TEMPLATE_PLACEHOLDERS, DEFAULTS, DAY_NAMES, MONTH_NAMES } from '../constants';
 import { getTemplatesPath, getFileFormat } from './configService';
 import { pathExists, readFile, readDirectory } from './fileSystemService';
 import { formatDateForNote, formatTimeForNote } from '../utils/dateHelpers';
+import * as os from 'os';
+
+/**
+ * Replace all template placeholders with their values
+ */
+function replacePlaceholders(content: string, date: Date, filename?: string): string {
+    const dateStr = formatDateForNote(date);
+    const timeStr = formatTimeForNote(date);
+    const year = date.getFullYear().toString();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const weekday = DAY_NAMES[date.getDay()];
+    const monthName = MONTH_NAMES[date.getMonth()];
+    const user = os.userInfo().username;
+    const workspace = vscode.workspace.workspaceFolders?.[0]?.name || 'workspace';
+
+    let result = content;
+    result = result.replace(TEMPLATE_PLACEHOLDERS.FILENAME, filename || '');
+    result = result.replace(TEMPLATE_PLACEHOLDERS.DATE, dateStr);
+    result = result.replace(TEMPLATE_PLACEHOLDERS.TIME, timeStr);
+    result = result.replace(TEMPLATE_PLACEHOLDERS.YEAR, year);
+    result = result.replace(TEMPLATE_PLACEHOLDERS.MONTH, month);
+    result = result.replace(TEMPLATE_PLACEHOLDERS.DAY, day);
+    result = result.replace(TEMPLATE_PLACEHOLDERS.WEEKDAY, weekday);
+    result = result.replace(TEMPLATE_PLACEHOLDERS.MONTH_NAME, monthName);
+    result = result.replace(TEMPLATE_PLACEHOLDERS.USER, user);
+    result = result.replace(TEMPLATE_PLACEHOLDERS.WORKSPACE, workspace);
+
+    return result;
+}
 
 /**
  * Generate template content for a note
@@ -28,9 +59,7 @@ export async function generateTemplate(templateType: string | undefined, date: D
                     const content = await readFile(customTemplatePath);
 
                     // Replace placeholders
-                    let processedContent = content.replace(TEMPLATE_PLACEHOLDERS.FILENAME, filename || '');
-                    processedContent = processedContent.replace(TEMPLATE_PLACEHOLDERS.DATE, dateStr);
-                    processedContent = processedContent.replace(TEMPLATE_PLACEHOLDERS.TIME, timeStr);
+                    const processedContent = replacePlaceholders(content, date, filename);
 
                     return processedContent;
                 } catch {
@@ -73,4 +102,43 @@ export async function getCustomTemplates(): Promise<string[]> {
     }
 
     return [];
+}
+
+/**
+ * Get the full path to a custom template file
+ */
+export function getCustomTemplatePath(templateName: string): string | null {
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        return null;
+    }
+
+    const fileFormat = getFileFormat();
+    return path.join(templatesPath, `${templateName}.${fileFormat}`);
+}
+
+/**
+ * Get a preview of template content with placeholders filled
+ */
+export function getTemplatePreview(content: string): string {
+    const previewDate = new Date();
+    return replacePlaceholders(content, previewDate, 'example-note');
+}
+
+/**
+ * Get list of available template variables
+ */
+export function getTemplateVariables(): Array<{ name: string; description: string }> {
+    return [
+        { name: '{filename}', description: 'The name of the note file' },
+        { name: '{date}', description: 'Current date (YYYY-MM-DD)' },
+        { name: '{time}', description: 'Current time (HH:MM AM/PM)' },
+        { name: '{year}', description: 'Current year (YYYY)' },
+        { name: '{month}', description: 'Current month (MM)' },
+        { name: '{day}', description: 'Current day (DD)' },
+        { name: '{weekday}', description: 'Day of week (Sun, Mon, etc.)' },
+        { name: '{month_name}', description: 'Month name (January, February, etc.)' },
+        { name: '{user}', description: 'System username' },
+        { name: '{workspace}', description: 'Workspace name' }
+    ];
 }

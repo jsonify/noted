@@ -73,13 +73,38 @@ Example: `Notes/2025/10-October/2025-10-02.txt`
 
 ### Template System
 
-Four built-in templates in `generateTemplate()`:
+**Built-in Templates** in `generateTemplate()`:
 - `problem-solution`: Problem/steps/solution/notes format
 - `meeting`: Meeting notes with attendees/agenda/action items
 - `research`: Research topic with questions/findings/sources
 - `quick`: Just date header
 
-Templates support `{date}` and `{time}` placeholders (though user-defined templates from config are not fully implemented - config template is defined but not used).
+**Custom Templates** (v1.4.0):
+- Users can create custom templates in `{notesPath}/.templates/` folder
+- Template files use the same format as notes (.txt or .md based on config)
+- Full CRUD operations: create, edit, delete, duplicate templates
+- Templates are automatically discovered and available in the template picker
+
+**Template Variables** (v1.4.0):
+Templates support 10 powerful placeholders via `replacePlaceholders()` function in `templateService.ts`:
+- `{filename}`: Note file name
+- `{date}`: Full date (Sunday, October 19, 2025)
+- `{time}`: 12-hour time with AM/PM
+- `{year}`: Year (2025)
+- `{month}`: Month with leading zero (10)
+- `{day}`: Day with leading zero (19)
+- `{weekday}`: Short day name (Sun, Mon, etc.)
+- `{month_name}`: Full month name (October)
+- `{user}`: System username from `os.userInfo()`
+- `{workspace}`: VS Code workspace name
+
+**Template Functions**:
+- `generateTemplate()`: Main template generation with placeholder replacement
+- `getCustomTemplates()`: Lists all custom template files
+- `getCustomTemplatePath()`: Returns full path to a template file
+- `getTemplatePreview()`: Previews template with sample data
+- `getTemplateVariables()`: Returns list of all available variables with descriptions
+- `replacePlaceholders()`: Core function that replaces all variables in template content
 
 ### Configuration
 
@@ -97,6 +122,14 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.openToday` - Opens today's note, creates if doesn't exist (Cmd+Shift+N)
 - `noted.insertTimestamp` - Inserts `[HH:MM AM/PM]` at cursor (Cmd+Shift+T)
 - `noted.openWithTemplate` - Prompts for note name and template type
+
+**Template Commands** (v1.4.0):
+- `noted.createCustomTemplate` - Create a new custom template with starter content
+- `noted.editCustomTemplate` - Open and edit an existing custom template
+- `noted.deleteCustomTemplate` - Delete a custom template with confirmation
+- `noted.duplicateCustomTemplate` - Duplicate a template as starting point for new one
+- `noted.previewTemplateVariables` - Show webview with all available template variables
+- `noted.openTemplatesFolder` - Open the templates folder in system file explorer
 
 **Management Commands**:
 - `noted.searchNotes` - Full-text search across all notes with preview

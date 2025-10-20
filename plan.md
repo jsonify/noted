@@ -17,9 +17,9 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 ### Planned Features
 
 #### Template System Enhancements
-- [ ] Implement custom template feature (config exists but isn't used - `noted.useTemplate` and `noted.template`)
-- [ ] Allow users to create and save their own templates
-- [ ] Template variables beyond {date} and {time}
+- [x] Implement custom template feature (completed v1.4.0)
+- [x] Allow users to create and save their own templates (completed v1.4.0)
+- [x] Template variables beyond {date} and {time} (completed v1.4.0 - 10 total variables)
 
 #### Note Organization & Discovery
 - [x] Tag system for notes (completed - tag parsing, indexing, filtering, autocomplete)
@@ -48,6 +48,19 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 - [ ] Confirmation dialogs with preview
 
 ## Completed Features
+
+### Template System Enhancements (v1.4.0)
+- Custom template creation with full management UI
+- Template editing, deletion, and duplication commands
+- Extended variable system with 10 placeholders:
+  - Basic: `{filename}`, `{date}`, `{time}`
+  - Date components: `{year}`, `{month}`, `{day}`, `{weekday}`, `{month_name}`
+  - Context: `{user}`, `{workspace}`
+- Template variables reference panel (webview)
+- Templates folder management
+- Enhanced starter template with all available variables
+- Comprehensive unit tests (199 passing)
+- Updated Templates view welcome screen with new commands
 
 ### Note Tagging System (v1.4.0)
 - Tag parsing with `#tagname` syntax

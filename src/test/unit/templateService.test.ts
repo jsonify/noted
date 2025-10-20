@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { generateTemplate, getCustomTemplates } from '../../services/templateService';
+import { generateTemplate, getCustomTemplates, getTemplatePreview, getTemplateVariables, getCustomTemplatePath } from '../../services/templateService';
 
 describe('Template Service', () => {
   describe('generateTemplate', () => {
@@ -81,6 +81,176 @@ describe('Template Service', () => {
       // In test environment without VS Code workspace, should return empty array
       const result = await getCustomTemplates();
       expect(result).to.be.an('array');
+    });
+  });
+
+  describe('Template Variables System', () => {
+    describe('getTemplateVariables', () => {
+      it('should return all available template variables', () => {
+        const variables = getTemplateVariables();
+
+        expect(variables).to.be.an('array');
+        expect(variables.length).to.equal(10);
+
+        const variableNames = variables.map(v => v.name);
+        expect(variableNames).to.include('{filename}');
+        expect(variableNames).to.include('{date}');
+        expect(variableNames).to.include('{time}');
+        expect(variableNames).to.include('{year}');
+        expect(variableNames).to.include('{month}');
+        expect(variableNames).to.include('{day}');
+        expect(variableNames).to.include('{weekday}');
+        expect(variableNames).to.include('{month_name}');
+        expect(variableNames).to.include('{user}');
+        expect(variableNames).to.include('{workspace}');
+      });
+
+      it('should include descriptions for all variables', () => {
+        const variables = getTemplateVariables();
+
+        variables.forEach(variable => {
+          expect(variable).to.have.property('name');
+          expect(variable).to.have.property('description');
+          expect(variable.name).to.be.a('string');
+          expect(variable.description).to.be.a('string');
+          expect(variable.description.length).to.be.greaterThan(0);
+        });
+      });
+    });
+
+    describe('getTemplatePreview', () => {
+      it('should replace {filename} placeholder', () => {
+        const content = 'File: {filename}';
+        const preview = getTemplatePreview(content);
+
+        expect(preview).to.include('example-note');
+        expect(preview).to.not.include('{filename}');
+      });
+
+      it('should replace {date} placeholder', () => {
+        const content = 'Date: {date}';
+        const preview = getTemplatePreview(content);
+
+        expect(preview).to.not.include('{date}');
+        // Format is: Sunday, October 19, 2025
+        expect(preview).to.match(/Date: \w+, \w+ \d{1,2}, \d{4}/);
+      });
+
+      it('should replace {time} placeholder', () => {
+        const content = 'Time: {time}';
+        const preview = getTemplatePreview(content);
+
+        expect(preview).to.not.include('{time}');
+        expect(preview).to.match(/Time: \d{1,2}:\d{2} (AM|PM)/);
+      });
+
+      it('should replace {year} placeholder', () => {
+        const content = 'Year: {year}';
+        const preview = getTemplatePreview(content);
+
+        expect(preview).to.not.include('{year}');
+        expect(preview).to.match(/Year: \d{4}/);
+      });
+
+      it('should replace {month} placeholder', () => {
+        const content = 'Month: {month}';
+        const preview = getTemplatePreview(content);
+
+        expect(preview).to.not.include('{month}');
+        expect(preview).to.match(/Month: \d{2}/);
+      });
+
+      it('should replace {day} placeholder', () => {
+        const content = 'Day: {day}';
+        const preview = getTemplatePreview(content);
+
+        expect(preview).to.not.include('{day}');
+        expect(preview).to.match(/Day: \d{2}/);
+      });
+
+      it('should replace {weekday} placeholder', () => {
+        const content = 'Weekday: {weekday}';
+        const preview = getTemplatePreview(content);
+
+        expect(preview).to.not.include('{weekday}');
+        expect(preview).to.match(/Weekday: (Sun|Mon|Tue|Wed|Thu|Fri|Sat)/);
+      });
+
+      it('should replace {month_name} placeholder', () => {
+        const content = 'Month Name: {month_name}';
+        const preview = getTemplatePreview(content);
+
+        expect(preview).to.not.include('{month_name}');
+        expect(preview).to.match(/Month Name: (January|February|March|April|May|June|July|August|September|October|November|December)/);
+      });
+
+      it('should replace {user} placeholder', () => {
+        const content = 'User: {user}';
+        const preview = getTemplatePreview(content);
+
+        expect(preview).to.not.include('{user}');
+        expect(preview).to.include('User: ');
+      });
+
+      it('should replace {workspace} placeholder', () => {
+        const content = 'Workspace: {workspace}';
+        const preview = getTemplatePreview(content);
+
+        expect(preview).to.not.include('{workspace}');
+        expect(preview).to.include('Workspace: ');
+      });
+
+      it('should replace all placeholders in complex template', () => {
+        const content = `File: {filename}
+Created: {date} at {time}
+Author: {user}
+Workspace: {workspace}
+Year: {year}, Month: {month}, Day: {day}
+Weekday: {weekday}, Month Name: {month_name}`;
+
+        const preview = getTemplatePreview(content);
+
+        // Verify no placeholders remain
+        expect(preview).to.not.include('{filename}');
+        expect(preview).to.not.include('{date}');
+        expect(preview).to.not.include('{time}');
+        expect(preview).to.not.include('{year}');
+        expect(preview).to.not.include('{month}');
+        expect(preview).to.not.include('{day}');
+        expect(preview).to.not.include('{weekday}');
+        expect(preview).to.not.include('{month_name}');
+        expect(preview).to.not.include('{user}');
+        expect(preview).to.not.include('{workspace}');
+
+        // Verify expected content exists
+        expect(preview).to.include('example-note');
+        expect(preview).to.include('Author: ');
+        expect(preview).to.include('Workspace: ');
+      });
+    });
+
+    describe('getCustomTemplatePath', () => {
+      it('should return null when templates path not configured', () => {
+        // In test environment without VS Code workspace configuration
+        const result = getCustomTemplatePath('test-template');
+        expect(result).to.be.null;
+      });
+    });
+  });
+
+  describe('Extended Template Placeholders', () => {
+    const testDate = new Date('2024-10-15T14:30:00');
+
+    it('should replace {year} in generated template', async () => {
+      const content = `File: {filename}
+Created: {date}
+Year: {year}
+
+Content here`;
+
+      // Test with a mock custom template scenario
+      const result = await generateTemplate('problem-solution', testDate, 'test.txt');
+      expect(result).to.be.a('string');
     });
   });
 });

@@ -85,7 +85,14 @@ export const DEFAULTS = {
 export const TEMPLATE_PLACEHOLDERS = {
     FILENAME: /{filename}/g,
     DATE: /{date}/g,
-    TIME: /{time}/g
+    TIME: /{time}/g,
+    YEAR: /{year}/g,
+    MONTH: /{month}/g,
+    DAY: /{day}/g,
+    WEEKDAY: /{weekday}/g,
+    MONTH_NAME: /{month_name}/g,
+    USER: /{user}/g,
+    WORKSPACE: /{workspace}/g
 };
 
 /**

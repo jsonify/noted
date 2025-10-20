@@ -588,6 +588,28 @@ export function activate(context: vscode.ExtensionContext) {
         templatesProvider.refresh();
     });
 
+    // Command to edit custom template
+    let editCustomTemplateCmd = vscode.commands.registerCommand('noted.editCustomTemplate', async () => {
+        await editCustomTemplate();
+    });
+
+    // Command to delete custom template
+    let deleteCustomTemplateCmd = vscode.commands.registerCommand('noted.deleteCustomTemplate', async () => {
+        await deleteCustomTemplate();
+        templatesProvider.refresh();
+    });
+
+    // Command to duplicate custom template
+    let duplicateCustomTemplateCmd = vscode.commands.registerCommand('noted.duplicateCustomTemplate', async () => {
+        await duplicateCustomTemplate();
+        templatesProvider.refresh();
+    });
+
+    // Command to preview template variables
+    let previewTemplateCmd = vscode.commands.registerCommand('noted.previewTemplateVariables', async () => {
+        await previewTemplate();
+    });
+
     // Command to open templates folder
     let openTemplatesFolder = vscode.commands.registerCommand('noted.openTemplatesFolder', async () => {
         const templatesPath = getTemplatesPath();
@@ -654,7 +676,8 @@ export function activate(context: vscode.ExtensionContext) {
         searchNotes, filterByTag, clearTagFilters, sortTagsByName, sortTagsByFrequency, refreshTags,
         showStats, exportNotes, duplicateNote, moveNotesFolder,
         setupDefaultFolder, setupCustomFolder, showNotesConfig,
-        createCustomTemplate, openTemplatesFolder,
+        createCustomTemplate, editCustomTemplateCmd, deleteCustomTemplateCmd,
+        duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar
     );
 }
@@ -816,17 +839,26 @@ async function createNewCustomTemplate() {
             return;
         } catch {
             // Template doesn't exist, create it
-            // Create a starter template
+            // Create a starter template with all available placeholders
             const starterContent = `File: {filename}
 Created: {date} at {time}
+Author: {user}
+Workspace: {workspace}
 ==================================================
 
 [Your template content here]
 
 Available placeholders:
 - {filename}: The name of the note file
-- {date}: The current date
-- {time}: The current time
+- {date}: Current date (YYYY-MM-DD)
+- {time}: Current time (HH:MM AM/PM)
+- {year}: Current year (YYYY)
+- {month}: Current month (MM)
+- {day}: Current day (DD)
+- {weekday}: Day of week (Sun, Mon, etc.)
+- {month_name}: Month name (January, February, etc.)
+- {user}: System username
+- {workspace}: Workspace name
 `;
 
             await fsp.writeFile(templateFile, starterContent);
@@ -1292,6 +1324,187 @@ async function exportNotesToFile(range: string) {
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to export notes: ${error instanceof Error ? error.message : String(error)}`);
     }
+}
+
+async function editCustomTemplate() {
+    const customTemplates = await getCustomTemplates();
+    if (customTemplates.length === 0) {
+        vscode.window.showInformationMessage('No custom templates found. Create one first!');
+        return;
+    }
+
+    const selected = await vscode.window.showQuickPick(customTemplates, {
+        placeHolder: 'Select template to edit'
+    });
+
+    if (!selected) {
+        return;
+    }
+
+    const { getCustomTemplatePath } = await import('./services/templateService');
+    const templatePath = getCustomTemplatePath(selected);
+    if (!templatePath) {
+        vscode.window.showErrorMessage('Template path not found');
+        return;
+    }
+
+    try {
+        const document = await vscode.workspace.openTextDocument(templatePath);
+        await vscode.window.showTextDocument(document);
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to open template: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+async function deleteCustomTemplate() {
+    const customTemplates = await getCustomTemplates();
+    if (customTemplates.length === 0) {
+        vscode.window.showInformationMessage('No custom templates found.');
+        return;
+    }
+
+    const selected = await vscode.window.showQuickPick(customTemplates, {
+        placeHolder: 'Select template to delete'
+    });
+
+    if (!selected) {
+        return;
+    }
+
+    const confirm = await vscode.window.showWarningMessage(
+        `Are you sure you want to delete the template "${selected}"?`,
+        { modal: true },
+        'Delete'
+    );
+
+    if (confirm !== 'Delete') {
+        return;
+    }
+
+    const { getCustomTemplatePath } = await import('./services/templateService');
+    const templatePath = getCustomTemplatePath(selected);
+    if (!templatePath) {
+        vscode.window.showErrorMessage('Template path not found');
+        return;
+    }
+
+    try {
+        await fsp.unlink(templatePath);
+        vscode.window.showInformationMessage(`Template "${selected}" deleted`);
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to delete template: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+async function duplicateCustomTemplate() {
+    const customTemplates = await getCustomTemplates();
+    if (customTemplates.length === 0) {
+        vscode.window.showInformationMessage('No custom templates found.');
+        return;
+    }
+
+    const selected = await vscode.window.showQuickPick(customTemplates, {
+        placeHolder: 'Select template to duplicate'
+    });
+
+    if (!selected) {
+        return;
+    }
+
+    const newName = await vscode.window.showInputBox({
+        prompt: 'Enter name for duplicated template',
+        placeHolder: `${selected}-copy`,
+        value: `${selected}-copy`
+    });
+
+    if (!newName) {
+        return;
+    }
+
+    const { getCustomTemplatePath } = await import('./services/templateService');
+    const sourcePath = getCustomTemplatePath(selected);
+    const targetPath = getCustomTemplatePath(newName);
+
+    if (!sourcePath || !targetPath) {
+        vscode.window.showErrorMessage('Template paths not found');
+        return;
+    }
+
+    try {
+        // Check if target already exists
+        try {
+            await fsp.access(targetPath);
+            vscode.window.showErrorMessage('A template with that name already exists');
+            return;
+        } catch {
+            // Target doesn't exist, proceed with copy
+        }
+
+        const content = await fsp.readFile(sourcePath, 'utf-8');
+        await fsp.writeFile(targetPath, content);
+        vscode.window.showInformationMessage(`Template duplicated as "${newName}"`);
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to duplicate template: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+async function previewTemplate() {
+    const { getTemplateVariables } = await import('./services/templateService');
+    const variables = getTemplateVariables();
+
+    const items = variables.map(v => `${v.name}: ${v.description}`).join('\n');
+
+    const panel = vscode.window.createWebviewPanel(
+        'templateHelp',
+        'Template Variables',
+        vscode.ViewColumn.Beside,
+        {}
+    );
+
+    panel.webview.html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: var(--vscode-font-family);
+                    padding: 20px;
+                    color: var(--vscode-foreground);
+                }
+                h1 {
+                    color: var(--vscode-textLink-foreground);
+                    font-size: 24px;
+                    margin-bottom: 20px;
+                }
+                .variable {
+                    margin-bottom: 15px;
+                    padding: 10px;
+                    background: var(--vscode-editor-background);
+                    border-left: 3px solid var(--vscode-textLink-foreground);
+                }
+                .variable-name {
+                    font-family: 'Courier New', monospace;
+                    font-weight: bold;
+                    color: var(--vscode-textLink-activeForeground);
+                }
+                .variable-desc {
+                    margin-top: 5px;
+                    color: var(--vscode-descriptionForeground);
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Template Variables Reference</h1>
+            <p>Use these variables in your custom templates. They will be replaced with actual values when creating notes.</p>
+            ${variables.map(v => `
+                <div class="variable">
+                    <div class="variable-name">${v.name}</div>
+                    <div class="variable-desc">${v.description}</div>
+                </div>
+            `).join('')}
+        </body>
+        </html>
+    `;
 }
 
 export function deactivate() {}

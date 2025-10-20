@@ -16,6 +16,28 @@ Four built-in note templates accessible from the Templates view:
 
 All templates automatically include a timestamp header with creation date and time.
 
+#### Custom Templates (NEW v1.4.0)
+- **Create Custom Template**: Create your own reusable note templates
+- **Edit Template**: Modify existing custom templates
+- **Delete Template**: Remove templates you no longer need
+- **Duplicate Template**: Copy templates as a starting point for new ones
+- **Templates Folder**: Access and organize all custom templates in one place
+
+#### Template Variables (NEW v1.4.0)
+Templates support powerful variable substitution with 10 built-in placeholders:
+- `{filename}`: The name of the note file
+- `{date}`: Current date (Sunday, October 19, 2025)
+- `{time}`: Current time (2:30 PM)
+- `{year}`: Current year (2025)
+- `{month}`: Current month (10)
+- `{day}`: Current day (19)
+- `{weekday}`: Day of week (Sun, Mon, etc.)
+- `{month_name}`: Month name (January, February, etc.)
+- `{user}`: System username
+- `{workspace}`: Workspace name
+
+**Template Variables Reference**: View all available variables with descriptions via the command palette or Templates view.
+
 ### Timestamps
 - **Insert Timestamp** (`Cmd+Shift+T`): Insert `[HH:MM AM/PM]` at cursor position
 

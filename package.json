@@ -53,7 +53,7 @@
     "viewsWelcome": [
       {
         "view": "notedTemplatesView",
-        "contents": "Create a new note from a template.\n\n[Choose Template...](command:noted.openWithTemplate)\n\n---\n\nQuick Access\n\n[Problem/Solution](command:noted.openWithTemplate?%5B%22problem-solution%22%5D) • [Meeting](command:noted.openWithTemplate?%5B%22meeting%22%5D) • [Research](command:noted.openWithTemplate?%5B%22research%22%5D) • [Quick](command:noted.openWithTemplate?%5B%22quick%22%5D)\n\n---\n\nManage Templates\n\n[Create New Template](command:noted.createCustomTemplate)\n\n[Open Templates Folder](command:noted.openTemplatesFolder)"
+        "contents": "Create a new note from a template.\n\n[Choose Template...](command:noted.openWithTemplate)\n\n---\n\nQuick Access\n\n[Problem/Solution](command:noted.openWithTemplate?%5B%22problem-solution%22%5D) • [Meeting](command:noted.openWithTemplate?%5B%22meeting%22%5D) • [Research](command:noted.openWithTemplate?%5B%22research%22%5D) • [Quick](command:noted.openWithTemplate?%5B%22quick%22%5D)\n\n---\n\nManage Templates\n\n[Create New Template](command:noted.createCustomTemplate)\n\n[Edit Template](command:noted.editCustomTemplate) • [Delete Template](command:noted.deleteCustomTemplate)\n\n[Duplicate Template](command:noted.duplicateCustomTemplate)\n\n[Template Variables Reference](command:noted.previewTemplateVariables)\n\n[Open Templates Folder](command:noted.openTemplatesFolder)"
       },
       {
         "view": "notedView",
@@ -134,11 +134,33 @@
       },
       {
         "command": "noted.createCustomTemplate",
-        "title": "Noted: Create Custom Template"
+        "title": "Noted: Create Custom Template",
+        "icon": "$(add)"
+      },
+      {
+        "command": "noted.editCustomTemplate",
+        "title": "Noted: Edit Custom Template",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "noted.deleteCustomTemplate",
+        "title": "Noted: Delete Custom Template",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "noted.duplicateCustomTemplate",
+        "title": "Noted: Duplicate Custom Template",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "noted.previewTemplateVariables",
+        "title": "Noted: Template Variables Reference",
+        "icon": "$(question)"
       },
       {
         "command": "noted.openTemplatesFolder",
-        "title": "Noted: Open Templates Folder"
+        "title": "Noted: Open Templates Folder",
+        "icon": "$(folder-opened)"
       },
       {
         "command": "noted.showConfig",

@@ -12,8 +12,9 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 - **Timestamps**: Press `Ctrl+Shift+T` (or `Cmd+Shift+T`) to insert a timestamp with custom note filenames
 - **Flexible Format**: Default .txt files, easily switch to .md with a command
 - **Built-in Templates**: Choose from Problem/Solution, Meeting, Research, or Quick note templates
-- **Custom Templates**: Create and manage your own reusable note templates
-- **Tag System** ⭐ NEW: Organize notes with tags, filter by tags, and get autocomplete suggestions
+- **Custom Templates** ⭐ NEW: Create, edit, and manage your own reusable templates with 10 powerful variables
+- **Template Variables** ⭐ NEW: Use dynamic placeholders like {date}, {user}, {workspace}, and more
+- **Tag System**: Organize notes with tags, filter by tags, and get autocomplete suggestions
 - **Calendar View**: Visual monthly calendar for navigating and creating daily notes
 - **Drag & Drop**: Move notes between folders with simple drag-and-drop
 - **Full-Text Search**: Search across all notes with instant preview
@@ -123,34 +124,131 @@ Completed and tested #done
 Waiting for feedback #blocked
 ```
 
+## Custom Templates
+
+Create personalized templates that match your workflow! Custom templates support 10 powerful variables that automatically fill in contextual information.
+
+### Creating a Custom Template
+
+1. Open the **Templates** panel in the sidebar (first panel)
+2. Click **"Create New Template"**
+3. Enter a name for your template
+4. Edit the template file with your structure
+5. Use any of the 10 template variables
+
+### Template Variables
+
+All templates (built-in and custom) support these dynamic placeholders:
+
+**Basic Information:**
+- `{filename}` - The name of the note file
+- `{date}` - Full date (e.g., "Sunday, October 19, 2025")
+- `{time}` - Current time in 12-hour format (e.g., "2:30 PM")
+
+**Date Components:**
+- `{year}` - Year (e.g., "2025")
+- `{month}` - Month with leading zero (e.g., "10")
+- `{day}` - Day with leading zero (e.g., "19")
+- `{weekday}` - Short day name (e.g., "Sun", "Mon")
+- `{month_name}` - Full month name (e.g., "October")
+
+**Context:**
+- `{user}` - Your system username
+- `{workspace}` - Current VS Code workspace name
+
+### Example Custom Templates
+
+**Daily Standup Template:**
+```
+File: {filename}
+Date: {date}
+Author: {user}
+==================================================
+
+## What I did yesterday:
+-
+
+## What I'm doing today:
+-
+
+## Blockers:
+- None
+
+#standup #team
+```
+
+**Project Notes Template:**
+```
+Project: {workspace}
+Created: {date} at {time}
+==================================================
+
+## Objective:
+
+
+## Progress ({weekday}, {month_name} {day}):
+
+
+## Next Steps:
+-
+
+#project #{workspace}
+```
+
+**Weekly Review Template:**
+```
+Weekly Review - Week of {month_name} {day}, {year}
+By: {user}
+==================================================
+
+## Accomplishments:
+-
+
+## Challenges:
+-
+
+## Goals for Next Week:
+-
+
+#weekly-review #reflection
+```
+
+### Managing Templates
+
+**Edit Template:**
+- Click "Edit Template" in the Templates panel
+- Select the template to modify
+- Make your changes and save
+
+**Delete Template:**
+- Click "Delete Template" in the Templates panel
+- Confirm deletion
+
+**Duplicate Template:**
+- Click "Duplicate Template" to copy an existing template
+- Rename it and customize as needed
+
+**View Variables Reference:**
+- Click "Template Variables Reference" to see all available placeholders
+- Opens a helpful reference panel with descriptions
+
+**Templates Folder:**
+- Click "Open Templates Folder" to access your templates in the file system
+- Templates are stored in `{notesPath}/.templates/`
+
 ## Configuration
 
 Access settings via VS Code Settings (search for "Noted"):
 
 - **Notes Folder**: Change where notes are stored (default: "Notes")
 - **File Format**: Choose between .txt or .md format (default: "txt")
-- **Use Template**: Enable custom templates for new notes
-- **Template**: Customize your note structure (supports {date}, {time}, and {filename} placeholders)
 - **Tag Autocomplete**: Enable/disable tag suggestions when typing `#` (default: enabled)
 
-### Example Template for Problem Solving
+### Template Variables in Settings
 
-```
-{date}
-==================================================
+The legacy `noted.useTemplate` and `noted.template` settings are superseded by the new Custom Templates feature. Use the Templates panel to create and manage templates instead of the settings.
 
-PROBLEM:
-
-
-STEPS TAKEN:
-1. 
-
-SOLUTION:
-
-
-NOTES:
-
-```
+All custom templates support the full set of 10 template variables: `{filename}`, `{date}`, `{time}`, `{year}`, `{month}`, `{day}`, `{weekday}`, `{month_name}`, `{user}`, and `{workspace}`.
 
 ## Installation
 
@@ -191,7 +289,7 @@ pnpm run compile
 pnpm run test
 ```
 
-The project includes 143 passing unit tests covering utilities, services, providers, and the tag system.
+The project includes 199 passing unit tests covering utilities, services, providers, templates, and the tag system.
 
 ## Folder Structure
 
