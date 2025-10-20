@@ -11,6 +11,11 @@ import { TemplatesTreeProvider } from './providers/templatesTreeProvider';
 import { TagsTreeProvider } from './providers/tagsTreeProvider';
 import { TreeItem, NoteItem, SectionItem, TagItem } from './providers/treeItems';
 import { TagCompletionProvider } from './services/tagCompletionProvider';
+import { LinkService } from './services/linkService';
+import { NoteLinkProvider } from './providers/noteLinkProvider';
+import { BacklinkHoverProvider } from './providers/backlinkHoverProvider';
+import { PinnedNotesService } from './services/pinnedNotesService';
+import { ArchiveService } from './services/archiveService';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
@@ -64,6 +69,40 @@ export function activate(context: vscode.ExtensionContext) {
         );
         context.subscriptions.push(completionDisposable);
     }
+
+    // Initialize link service for wiki-style links
+    const linkService = new LinkService(notesPath || '');
+
+    // Build backlinks index on activation (async, non-blocking)
+    if (notesPath) {
+        linkService.buildBacklinksIndex().catch(err => {
+            console.error('[NOTED] Error building backlinks index:', err);
+        });
+    }
+
+    // Register document link provider for clickable [[note-name]] links
+    const linkProvider = new NoteLinkProvider(linkService);
+    const linkProviderDisposable = vscode.languages.registerDocumentLinkProvider(
+        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        linkProvider
+    );
+    context.subscriptions.push(linkProviderDisposable);
+
+    // Register hover provider for backlinks
+    const backlinkHoverProvider = new BacklinkHoverProvider(linkService);
+    const hoverProviderDisposable = vscode.languages.registerHoverProvider(
+        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        backlinkHoverProvider
+    );
+    context.subscriptions.push(hoverProviderDisposable);
+
+    // Initialize pinned notes service
+    const pinnedNotesService = new PinnedNotesService(context);
+    notesProvider.setPinnedNotesService(pinnedNotesService);
+
+    // Initialize archive service
+    const archiveService = new ArchiveService(notesPath || '');
+    notesProvider.setArchiveService(archiveService);
 
     // Command to open today's note
     let openTodayNote = vscode.commands.registerCommand('noted.openToday', async () => {
@@ -195,6 +234,93 @@ export function activate(context: vscode.ExtensionContext) {
     // Command to reveal in file explorer
     let revealInExplorer = vscode.commands.registerCommand('noted.revealInExplorer', async (item: NoteItem) => {
         await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(item.filePath));
+    });
+
+    // Command to pin/unpin note
+    let togglePinNote = vscode.commands.registerCommand('noted.togglePinNote', async (item: NoteItem) => {
+        try {
+            const isPinned = await pinnedNotesService.togglePin(item.filePath);
+            const message = isPinned ? `Pinned ${item.label}` : `Unpinned ${item.label}`;
+            vscode.window.showInformationMessage(message);
+            notesProvider.refresh();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to toggle pin: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
+    // Command to archive note
+    let archiveNote = vscode.commands.registerCommand('noted.archiveNote', async (item: NoteItem) => {
+        const answer = await vscode.window.showWarningMessage(
+            `Archive ${item.label}?`,
+            'Archive',
+            'Cancel'
+        );
+        if (answer === 'Archive') {
+            try {
+                await archiveService.archiveNote(item.filePath);
+                notesProvider.refresh();
+                vscode.window.showInformationMessage(`Archived ${item.label}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to archive note: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        }
+    });
+
+    // Command to unarchive note
+    let unarchiveNote = vscode.commands.registerCommand('noted.unarchiveNote', async (item: NoteItem) => {
+        try {
+            await archiveService.unarchiveNote(item.filePath);
+            notesProvider.refresh();
+            vscode.window.showInformationMessage(`Unarchived ${item.label}`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to unarchive note: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
+    // Command to archive old notes
+    let archiveOldNotes = vscode.commands.registerCommand('noted.archiveOldNotes', async () => {
+        const daysInput = await vscode.window.showInputBox({
+            prompt: 'Archive notes older than how many days?',
+            placeHolder: '90',
+            validateInput: (value) => {
+                const num = parseInt(value);
+                if (isNaN(num) || num <= 0) {
+                    return 'Please enter a valid number greater than 0';
+                }
+                return null;
+            }
+        });
+
+        if (!daysInput) {
+            return;
+        }
+
+        const days = parseInt(daysInput);
+        const answer = await vscode.window.showWarningMessage(
+            `Archive all notes older than ${days} days?`,
+            'Archive',
+            'Cancel'
+        );
+
+        if (answer === 'Archive') {
+            try {
+                const count = await archiveService.archiveOldNotes(days);
+                notesProvider.refresh();
+                vscode.window.showInformationMessage(`Archived ${count} note${count !== 1 ? 's' : ''}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to archive old notes: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        }
+    });
+
+    // Command to rebuild backlinks index
+    let rebuildBacklinks = vscode.commands.registerCommand('noted.rebuildBacklinks', async () => {
+        try {
+            await linkService.buildBacklinksIndex();
+            vscode.window.showInformationMessage('Backlinks index rebuilt');
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to rebuild backlinks: ${error instanceof Error ? error.message : String(error)}`);
+        }
     });
 
     // Command to search notes
@@ -721,7 +847,8 @@ export function activate(context: vscode.ExtensionContext) {
         setupDefaultFolder, setupCustomFolder, showNotesConfig,
         createCustomTemplate, editCustomTemplateCmd, deleteCustomTemplateCmd,
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
-        createFolder, moveNote, renameFolder, deleteFolder, showCalendar
+        createFolder, moveNote, renameFolder, deleteFolder, showCalendar,
+        togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks
     );
 }
 

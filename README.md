@@ -16,6 +16,9 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 - **Template Variables** ⭐ NEW: Use dynamic placeholders like {date}, {user}, {workspace}, and more
 - **Tag System**: Organize notes with tags, filter by tags, and get autocomplete suggestions
 - **Advanced Tag Management** ⭐ NEW: Rename, merge, delete, and export tags across all notes
+- **Wiki-Style Links** ⭐ NEW: Link notes together with `[[note-name]]` syntax and see backlinks
+- **Pinned Notes** ⭐ NEW: Pin frequently accessed notes for quick access
+- **Archive** ⭐ NEW: Archive old or completed notes to keep your workspace clean
 - **Calendar View**: Visual monthly calendar for navigating and creating daily notes
 - **Drag & Drop**: Move notes between folders with simple drag-and-drop
 - **Full-Text Search**: Search across all notes with instant preview
@@ -120,6 +123,83 @@ Next steps:
 **View Tag Statistics:**
 - Each tag shows its usage count in the Tags panel
 - See which tags you use most often at a glance
+
+## Note Organization & Discovery ⭐ NEW
+
+### Wiki-Style Note Linking
+
+Connect your notes together to build a knowledge base:
+
+**Creating Links:**
+```
+Working on the authentication feature today.
+See also: [[user-authentication-spec]]
+Related: [[api-design]] and [[security-considerations]]
+```
+
+**Link Features:**
+- Use `[[note-name]]` syntax to link to any note
+- Links are clickable and navigate directly to the target note
+- Automatic link resolution with fuzzy matching
+- Works with partial note names for convenience
+
+**Viewing Backlinks:**
+- Hover over any note's header to see all notes that link to it
+- Each backlink shows the source note name and context
+- Click backlinks to navigate to linking notes
+- Automatically indexed for fast lookups
+
+**Managing Links:**
+- Use Command Palette: "Noted: Rebuild Backlinks Index"
+- Index rebuilds automatically when notes change
+- Works across all note formats (.txt and .md)
+
+### Pinned Notes
+
+Keep your most important notes at your fingertips:
+
+**Pinning Notes:**
+- Right-click any note and select "Pin/Unpin Note"
+- Or use Command Palette: "Noted: Pin/Unpin Note"
+- Pinned notes appear in a dedicated section at the top of the tree view
+
+**Pinned Notes Features:**
+- Visual pin indicator (📌) on pinned notes
+- Persistent across VS Code sessions
+- Quick access without scrolling
+- Automatically removed if note is deleted
+
+**Common Uses:**
+- Current project notes
+- Meeting agenda templates
+- Frequently referenced guides
+- Active task lists
+
+### Archive
+
+Keep your workspace clean by archiving completed work:
+
+**Archiving Notes:**
+- Right-click any note and select "Archive Note"
+- Or use Command Palette: "Noted: Archive Note"
+- Archived notes move to a hidden `.archive` folder
+
+**Archive Features:**
+- Dedicated "Archive" section in tree view
+- Visual archive indicator (📦) on archived notes
+- Archive old notes in bulk by age
+- Unarchive notes to restore them
+
+**Bulk Archive:**
+- Use Command Palette: "Noted: Archive Old Notes"
+- Specify how many days old (e.g., 90 days)
+- Confirmation dialog before archiving
+- Perfect for end-of-project cleanup
+
+**Unarchiving:**
+- Right-click archived note and select "Unarchive Note"
+- Restores note to active notes
+- Safe with confirmation dialogs
 
 ### Common Tag Use Cases
 

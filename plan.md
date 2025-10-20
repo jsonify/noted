@@ -24,9 +24,9 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 #### Note Organization & Discovery
 - [x] Tag system for notes (completed - tag parsing, indexing, filtering, autocomplete)
 - [x] Advanced tag management (rename, merge, delete, export tags) - completed v1.5.0
-- [ ] Note linking/backlinks (wiki-style links)
-- [ ] Pinned/favorite notes section
-- [ ] Archive functionality for old notes
+- [x] Note linking/backlinks (wiki-style links) - completed v1.5.0
+- [x] Pinned/favorite notes section - completed v1.5.0
+- [x] Archive functionality for old notes - completed v1.5.0
 - [x] Calendar view for daily notes
 
 #### Search & Navigation
@@ -81,6 +81,39 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 - Command palette entries for all operations
 - Automatic tag index refresh after operations
 - Rollback support for destructive operations
+
+### Note Organization & Discovery Features (v1.5.0)
+
+#### Wiki-Style Note Linking
+- `[[note-name]]` syntax for linking between notes
+- Clickable links that open target notes
+- Automatic link resolution with fuzzy matching
+- Link detection across all note files
+- Document link provider for VS Code integration
+
+#### Backlinks System
+- Automatic backlink detection and indexing
+- Hover over note header to see all backlinks
+- Display source note and context for each backlink
+- Clickable backlinks to navigate between notes
+- Async index building for performance
+
+#### Pinned/Favorite Notes
+- Pin frequently accessed notes for quick access
+- Dedicated "Pinned Notes" section in tree view
+- Visual pin indicator (📌) on pinned notes
+- Persistent pinned state across sessions
+- Right-click context menu to pin/unpin notes
+- Automatic cleanup of non-existent pinned notes
+
+#### Archive Functionality
+- Archive old or completed notes
+- Dedicated ".archive" folder (hidden from main view)
+- "Archive" section in tree view for archived notes
+- Bulk archive notes older than X days
+- Unarchive notes back to active notes
+- Visual archive indicator (📦) on archived notes
+- Confirmation dialogs for safety
 
 See [notes.md](./notes.md) for a complete list of all implemented features.
 

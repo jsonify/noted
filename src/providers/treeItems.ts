@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 export class TreeItem extends vscode.TreeItem {}
 
 /**
- * Section item for organizing tree view (e.g., "Recent Notes")
+ * Section item for organizing tree view (e.g., "Recent Notes", "Pinned Notes", "Archive")
  */
 export class SectionItem extends TreeItem {
     constructor(
@@ -14,7 +14,17 @@ export class SectionItem extends TreeItem {
         public readonly sectionType: string
     ) {
         super(label, vscode.TreeItemCollapsibleState.Collapsed);
-        this.iconPath = new vscode.ThemeIcon('history');
+
+        // Set appropriate icon based on section type
+        if (sectionType === 'recent') {
+            this.iconPath = new vscode.ThemeIcon('history');
+        } else if (sectionType === 'pinned') {
+            this.iconPath = new vscode.ThemeIcon('pin');
+        } else if (sectionType === 'archive') {
+            this.iconPath = new vscode.ThemeIcon('archive');
+        } else {
+            this.iconPath = new vscode.ThemeIcon('folder');
+        }
     }
 }
 
@@ -23,6 +33,7 @@ export class SectionItem extends TreeItem {
  */
 export class NoteItem extends TreeItem {
     public filePath: string;
+    public isPinned: boolean = false;
 
     constructor(
         public readonly label: string,
@@ -47,6 +58,17 @@ export class NoteItem extends TreeItem {
         } else if (type === 'custom-folder') {
             this.iconPath = new vscode.ThemeIcon('folder-opened');
             this.contextValue = 'custom-folder';
+        }
+    }
+
+    /**
+     * Mark this note as pinned and update its visual appearance
+     */
+    setPinned(pinned: boolean): void {
+        this.isPinned = pinned;
+        if (this.type === 'note' && pinned) {
+            this.iconPath = new vscode.ThemeIcon('pinned');
+            this.description = '📌';
         }
     }
 }

@@ -7,6 +7,8 @@ import { isYearFolder, isMonthFolder } from '../utils/validators';
 import { DEFAULTS, SUPPORTED_EXTENSIONS } from '../constants';
 import { TagService } from '../services/tagService';
 import { formatTagForDisplay } from '../utils/tagHelpers';
+import { PinnedNotesService } from '../services/pinnedNotesService';
+import { ArchiveService } from '../services/archiveService';
 
 /**
  * Tree data provider for the main notes view
@@ -23,6 +25,26 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
     // Tag filtering state
     private activeFilters: Set<string> = new Set();
     private filteredNotePaths: Set<string> = new Set();
+
+    // Optional services for pinned notes and archive
+    private pinnedNotesService?: PinnedNotesService;
+    private archiveService?: ArchiveService;
+
+    /**
+     * Set the pinned notes service
+     */
+    setPinnedNotesService(service: PinnedNotesService): void {
+        this.pinnedNotesService = service;
+        // Listen for changes and refresh tree
+        service.onDidChangePinnedNotes(() => this.refresh());
+    }
+
+    /**
+     * Set the archive service
+     */
+    setArchiveService(service: ArchiveService): void {
+        this.archiveService = service;
+    }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
@@ -247,11 +269,27 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
         }
 
         if (!element) {
-            // Root level - show recent notes, years, and custom folders
+            // Root level - show pinned notes, recent notes, archive, years, and custom folders
             const items: TreeItem[] = [];
+
+            // Pinned notes section (if service is available and has pinned notes)
+            if (this.pinnedNotesService) {
+                const pinnedNotes = await this.pinnedNotesService.getPinnedNotes();
+                if (pinnedNotes.length > 0) {
+                    items.push(new SectionItem('Pinned Notes', 'pinned'));
+                }
+            }
 
             // Recent notes section
             items.push(new SectionItem('Recent Notes', 'recent'));
+
+            // Archive section (if service is available)
+            if (this.archiveService) {
+                const archivedNotes = await this.archiveService.getArchivedNotes();
+                if (archivedNotes.length > 0) {
+                    items.push(new SectionItem('Archive', 'archive'));
+                }
+            }
 
             try {
                 // Get all directories in notes path
@@ -259,7 +297,7 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                 const entries = [];
 
                 for (const entry of allEntries) {
-                    if (entry.isDirectory()) {
+                    if (entry.isDirectory() && entry.name !== '.archive') {
                         entries.push(entry.name);
                     }
                 }
@@ -296,6 +334,10 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
         } else if (element instanceof SectionItem) {
             if (element.sectionType === 'recent') {
                 return this.getRecentNotes(notesPath);
+            } else if (element.sectionType === 'pinned') {
+                return this.getPinnedNotes();
+            } else if (element.sectionType === 'archive') {
+                return this.getArchivedNotes();
             }
         } else if (element instanceof NoteItem) {
             if (element.type === 'year') {
@@ -426,6 +468,72 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                     arguments: [note.path]
                 };
                 item.contextValue = 'note';
+
+                // Mark as pinned if applicable
+                if (this.pinnedNotesService && this.pinnedNotesService.isPinned(note.path)) {
+                    item.setPinned(true);
+                }
+
+                return item;
+            });
+    }
+
+    /**
+     * Get pinned notes
+     */
+    private async getPinnedNotes(): Promise<TreeItem[]> {
+        if (!this.pinnedNotesService) {
+            return [];
+        }
+
+        const pinnedPaths = await this.pinnedNotesService.getPinnedNotes();
+
+        return pinnedPaths
+            .filter(note => this.isNoteFiltered(note))
+            .map(notePath => {
+                const item = new NoteItem(
+                    path.basename(notePath),
+                    notePath,
+                    vscode.TreeItemCollapsibleState.None,
+                    'note'
+                );
+                item.command = {
+                    command: 'noted.openNote',
+                    title: 'Open Note',
+                    arguments: [notePath]
+                };
+                item.contextValue = 'note';
+                item.setPinned(true);
+                return item;
+            });
+    }
+
+    /**
+     * Get archived notes
+     */
+    private async getArchivedNotes(): Promise<TreeItem[]> {
+        if (!this.archiveService) {
+            return [];
+        }
+
+        const archivedPaths = await this.archiveService.getArchivedNotes();
+
+        return archivedPaths
+            .filter(note => this.isNoteFiltered(note))
+            .map(notePath => {
+                const item = new NoteItem(
+                    path.basename(notePath),
+                    notePath,
+                    vscode.TreeItemCollapsibleState.None,
+                    'note'
+                );
+                item.command = {
+                    command: 'noted.openNote',
+                    title: 'Open Note',
+                    arguments: [notePath]
+                };
+                item.contextValue = 'note';
+                item.description = '📦'; // Archive icon
                 return item;
             });
     }

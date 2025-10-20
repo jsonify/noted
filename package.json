@@ -227,6 +227,31 @@
         "command": "noted.exportTags",
         "title": "Noted: Export Tags to JSON",
         "icon": "$(export)"
+      },
+      {
+        "command": "noted.togglePinNote",
+        "title": "Noted: Pin/Unpin Note",
+        "icon": "$(pin)"
+      },
+      {
+        "command": "noted.archiveNote",
+        "title": "Noted: Archive Note",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "noted.unarchiveNote",
+        "title": "Noted: Unarchive Note",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "noted.archiveOldNotes",
+        "title": "Noted: Archive Old Notes",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "noted.rebuildBacklinks",
+        "title": "Noted: Rebuild Backlinks Index",
+        "icon": "$(references)"
       }
     ],
     "menus": {
@@ -347,6 +372,16 @@
           "command": "noted.revealInExplorer",
           "when": "view == notedView && viewItem == note",
           "group": "clipboard@2"
+        },
+        {
+          "command": "noted.togglePinNote",
+          "when": "view == notedView && viewItem == note",
+          "group": "organize@1"
+        },
+        {
+          "command": "noted.archiveNote",
+          "when": "view == notedView && viewItem == note",
+          "group": "organize@2"
         },
         {
           "command": "noted.filterByTag",

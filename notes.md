@@ -96,6 +96,38 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - Dedicated "Recent Notes" section showing 10 most recently modified notes
 - Quick access from tree view
 
+### Wiki-Style Note Linking (NEW v1.5.0)
+- **Link Syntax**: Create links between notes using `[[note-name]]` syntax
+- **Clickable Links**: Links are automatically detected and clickable in the editor
+- **Link Resolution**: Supports exact matches, partial matches, and fuzzy matching
+- **Cross-Navigation**: Click any link to open the target note
+- **Document Link Provider**: VS Code integration for seamless navigation
+
+### Backlinks System (NEW v1.5.0)
+- **Automatic Detection**: All links to current note are automatically tracked
+- **Hover Information**: Hover over note header to see all backlinks
+- **Context Display**: Each backlink shows the source note and surrounding context
+- **Navigation**: Click backlinks in hover to navigate to linking notes
+- **Async Indexing**: Background index building for optimal performance
+- **Rebuild Index**: Command to manually refresh the backlinks index
+
+### Pinned/Favorite Notes (NEW v1.5.0)
+- **Pin Notes**: Mark frequently accessed notes as favorites
+- **Dedicated Section**: "Pinned Notes" section at top of tree view
+- **Visual Indicators**: Pinned notes show pin icon (📌) and special styling
+- **Persistent Storage**: Pinned state saved across VS Code sessions
+- **Context Menu**: Right-click any note to pin or unpin
+- **Auto-Cleanup**: Automatically removes pins for deleted notes
+
+### Archive Functionality (NEW v1.5.0)
+- **Archive Notes**: Move old or completed notes to archive
+- **Hidden Storage**: Archived notes stored in `.archive` folder (excluded from main view)
+- **Archive Section**: Dedicated "Archive" section in tree view
+- **Visual Indicators**: Archived notes show archive icon (📦)
+- **Unarchive**: Restore archived notes to active notes
+- **Bulk Archive**: Archive all notes older than specified days
+- **Safe Operations**: Confirmation dialogs for all destructive operations
+
 ## Statistics & Export
 
 ### Statistics
@@ -124,7 +156,9 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 ### Hierarchical Organization
 - **Templates**: Quick access to note templates
 - **My Notes**: Main notes organization
+  - **Pinned Notes** (NEW v1.5.0): Quick access to favorited notes
   - **Recent Notes**: Quick access to recently modified notes
+  - **Archive** (NEW v1.5.0): Archived notes section
   - **Custom Folders**: User-created organizational folders (alphabetically sorted)
   - **Year Folders**: Automatic date-based organization (reverse chronological)
     - **Month Folders**: Within each year, organized by month
@@ -136,7 +170,12 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - Year folders: Standard folder icon
 - Month folders: Calendar icon
 - Notes: Note icon
+- **Pinned Notes** (NEW v1.5.0): Pin icon (📌)
+- **Archived Notes** (NEW v1.5.0): Archive icon (📦)
 - Tags: Tag icon with count badge
+- Pinned Notes section: Pin icon
+- Archive section: Archive icon
+- Recent Notes section: History icon
 
 ## Context Menus
 
@@ -146,6 +185,9 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - Rename Note
 - Duplicate Note
 - Copy Path
+- Show in System Explorer
+- **Pin/Unpin Note** (NEW v1.5.0)
+- **Archive Note** (NEW v1.5.0)
 
 ### On Custom Folders
 - Rename Folder
@@ -153,6 +195,8 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 
 ### On Tags
 - Filter by Tag
+- Rename Tag
+- Delete Tag
 
 ### Toolbar Actions
 
