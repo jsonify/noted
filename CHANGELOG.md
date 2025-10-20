@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.1](https://github.com/jsonify/noted/compare/v1.6.0...v1.7.1) (2025-10-20)
+
+
+### Features
+
+* Add automated publishing workflow and documentation for VS Code Marketplace ([cba6312](https://github.com/jsonify/noted/commit/cba6312dcb5ca049f554a210eb6d8da0d8eca6dc))
+* Add clear tag filters button to Notes view ([fddd38f](https://github.com/jsonify/noted/commit/fddd38f6200aac1e2b3c36dfd56384b29f3433dd))
+
+
+### Bug Fixes
+
+* Add explicit type definitions to tsconfig ([23fa65f](https://github.com/jsonify/noted/commit/23fa65fdb653204106de3d8602e2411e631ce894))
+* Specify package path for VS Code Marketplace publishing ([268b5e5](https://github.com/jsonify/noted/commit/268b5e5cc8039a0c343f14b324f68ed1c21baeaf))
+
+
+### Tests
+
+* Add vscode.commands mock to fix unit tests ([cf8ef8d](https://github.com/jsonify/noted/commit/cf8ef8dccd4580a6db944bf105edbb9027fb16f4))
+
+
+### Chores
+
+* **release:** 1.7.0 ([f391d6b](https://github.com/jsonify/noted/commit/f391d6b0f773188276d33cc4b00bc916e2922a5a))
+
 ## 1.7.0 (2025-10-20)
 
 
