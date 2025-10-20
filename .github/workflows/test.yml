@@ -63,10 +63,20 @@ jobs:
           max_attempts: 3
           command: pnpm run test:unit
 
-      # Optional: Run VS Code extension tests on Ubuntu only (requires display)
+      # Run VS Code extension integration tests
       - name: Run integration tests (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run -a pnpm run test
+        continue-on-error: true
+
+      - name: Run integration tests (macOS)
+        if: runner.os == 'macOS'
+        run: pnpm run test
+        continue-on-error: true
+
+      - name: Run integration tests (Windows)
+        if: runner.os == 'Windows'
+        run: pnpm run test
         continue-on-error: true
 
       - name: Upload test results

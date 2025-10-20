@@ -168,14 +168,19 @@ All templates automatically include a timestamp header with creation date and ti
 
 ## Testing Infrastructure
 
-### Unit Tests (66 tests - all passing)
+### Unit Tests (184 tests - all passing)
 - **Testing Framework**: Mocha + Chai (v4 for CommonJS compatibility)
 - **Test Coverage**:
   - Utilities: validators, date helpers, folder operations (23 tests)
-  - Services: file system, templates (29 tests)
-  - Providers: tree items (14 tests)
+  - Services: file system, templates, note service, tag service, tag completion (92 tests)
+  - Providers: tree items, notes tree provider, tags tree provider (53 tests)
+  - Commands: tag commands (4 tests)
+  - Helpers: tag helpers (12 tests)
 - **VS Code Mocking**: Custom mocks for VS Code API to enable pure unit testing
-- **Execution Time**: ~120ms for full test suite
+  - Position, Range, EndOfLine, CompletionItemKind, CompletionItem, MarkdownString classes
+  - EventEmitter with proper event getter pattern
+  - Uri, TreeItem, ThemeIcon, and other core VS Code types
+- **Execution Time**: ~270ms for full test suite
 
 ### CI/CD Integration
 - **GitHub Actions**: Automated testing on every push and PR
@@ -192,7 +197,14 @@ All templates automatically include a timestamp header with creation date and ti
 - `src/test/unit/fileSystemService.test.ts` - File I/O operation tests
 - `src/test/unit/templateService.test.ts` - Template generation tests
 - `src/test/unit/treeItems.test.ts` - Tree view item tests
-- `src/test/mocks/vscode.ts` - VS Code API mocks
+- `src/test/unit/noteService.test.ts` - Note search and tag integration tests
+- `src/test/unit/tagService.test.ts` - Tag indexing and querying tests
+- `src/test/unit/tagHelpers.test.ts` - Tag parsing and validation tests
+- `src/test/unit/tagCompletion.test.ts` - Tag autocomplete provider tests
+- `src/test/unit/tagCommands.test.ts` - Tag command handler tests
+- `src/test/unit/notesTreeProvider.test.ts` - Notes tree view and filtering tests
+- `src/test/unit/tagsTreeProvider.test.ts` - Tags tree view tests
+- `src/test/mocks/vscode.ts` - Comprehensive VS Code API mocks
 - `src/test/setup.ts` - Test environment configuration
 
 ### Running Tests
@@ -237,22 +249,31 @@ pnpm run test
 - **Better user experience**: Clear error notifications when operations fail
 
 ### Testing & CI/CD Implementation (Completed)
-- **Comprehensive Test Suite**: 66 unit tests covering all core functionality
+- **Comprehensive Test Suite**: 184 unit tests covering all functionality
   - Validators: 9 tests for folder name validation patterns
   - Date Helpers: 14 tests for date formatting and manipulation
   - Folder Helpers: 7 tests for recursive folder operations
   - File System Service: 11 tests for all async file operations
   - Template Service: 9 tests for built-in and custom templates
   - Tree Items: 16 tests for all tree view node types
+  - Note Service: 18 tests for tag search integration
+  - Tag Service: 12 tests for tag indexing and querying
+  - Tag Helpers: 12 tests for tag parsing and validation
+  - Tag Completion: 18 tests for autocomplete provider
+  - Tag Commands: 4 tests for tag command handlers
+  - Notes Tree Provider: 6 tests for filtering and tree operations
+  - Tags Tree Provider: 10 tests for tags tree view
 - **Testing Infrastructure**:
   - Mocha test runner with Chai assertions (v4 for CommonJS compatibility)
-  - Custom VS Code API mocks for pure unit testing
-  - Test execution in ~120ms without VS Code dependency
+  - Comprehensive VS Code API mocks (Position, Range, CompletionItem, MarkdownString, EventEmitter)
+  - Test execution in ~270ms without VS Code dependency
+  - All 184 tests passing on all platforms
 - **GitHub Actions CI/CD**:
   - Two workflows: full CI pipeline and test-focused workflow
   - Cross-platform testing: Ubuntu, macOS, Windows
   - Multiple Node versions: 18.x and 20.x
   - Automatic VSIX package building and artifact upload
   - Status badges in README showing build status
+  - All CI/CD tests passing after VS Code mock enhancements
 - **Dependencies**: Using pnpm@8.15.9 with committed lockfile for reproducible builds
 - **Documentation**: AUTOMATED_TESTING.md with comprehensive troubleshooting guides

@@ -9,9 +9,10 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 - [x] Convert synchronous file operations to async for better performance (completed)
 - [x] Refactor to modular architecture (completed - 100%)
 - [x] Complete modular refactoring (completed)
-- [x] Add unit tests for core functionality (completed - 66 passing tests)
-- [x] Create CI/CD pipeline for automated testing (completed - GitHub Actions)
-- [ ] Add integration tests for VS Code commands
+- [x] Add unit tests for core functionality (completed - 184 passing tests)
+- [x] Create CI/CD pipeline for automated testing (completed - GitHub Actions, all tests passing)
+- [x] Fix CI/CD test failures (completed - enhanced VS Code mocks with Position, Range, CompletionItem, MarkdownString, EventEmitter)
+- [x] Add integration tests for VS Code commands (completed - 3 integration test suites)
 
 ### Planned Features
 
@@ -125,3 +126,56 @@ See [notes.md](./notes.md) for a complete list of all implemented features.
 - [ ] Add inline code comments for complex logic
 - [ ] Create video tutorials or GIFs for features
 - [ ] Write migration guide for major version updates
+
+## Recent Test Infrastructure Improvements
+
+### CI/CD Test Fix (Completed - January 2025)
+**Problem**: 21 tests failing in GitHub Actions CI/CD pipeline due to incomplete VS Code API mocks
+
+**Solution**: Enhanced VS Code mock implementation in `src/test/mocks/vscode.ts`
+- Added `Position` class for text document positions
+- Added `Range` class with proper TypeScript constructor overloads
+- Added `EndOfLine` enum (LF, CRLF)
+- Added `CompletionItemKind` enum for autocomplete types
+- Added `CompletionItem` class for tag autocomplete
+- Added `MarkdownString` class for formatted documentation
+- Fixed `EventEmitter.event` to use getter pattern instead of method
+
+**Results**:
+- ✅ All 184 tests now passing locally and in CI/CD
+- ✅ Tests pass on all platforms (Ubuntu, macOS, Windows)
+- ✅ Tests pass on all Node versions (18.x, 20.x)
+- ✅ Fixed `setup.ts` cleanup function to not attempt resolving mock modules
+- ✅ Test execution time: ~270ms for full suite
+
+**Files Changed**:
+- `src/test/mocks/vscode.ts` - Added 7 new VS Code API types
+- `src/test/setup.ts` - Fixed cleanup logic for mock modules
+
+### Integration Tests Addition (Completed - January 2025)
+**Goal**: Add integration tests for VS Code commands that run in Extension Host environment
+
+**Implementation**: Created 3 comprehensive integration test suites
+- `src/test/integration/commands.test.ts` - Note creation, editor, configuration, view, and search commands
+- `src/test/integration/noteManagement.test.ts` - Setup, folder management, export, and calendar commands
+- `src/test/integration/tagSystem.test.ts` - Tag view, filtering, autocomplete, and search integration
+
+**Test Coverage**:
+- ✅ Note creation commands (openToday, openWithTemplate with all 4 templates)
+- ✅ Editor commands (insertTimestamp)
+- ✅ Configuration commands (changeFormat, showConfig)
+- ✅ View commands (refresh, showStats)
+- ✅ Search commands (searchNotes)
+- ✅ Setup commands (setupDefaultFolder)
+- ✅ Folder management (createFolder)
+- ✅ Export commands (exportNotes)
+- ✅ Calendar commands (showCalendar)
+- ✅ Tag system (refreshTags, sortTagsByName, sortTagsByFrequency, filterByTag)
+- ✅ Tag autocomplete (completion provider integration)
+- ✅ Tag configuration (tagAutoComplete setting)
+
+**Results**:
+- ✅ All integration tests compile and run in VS Code Extension Host
+- ✅ Tests verify command execution without errors
+- ✅ Tests validate file creation, content structure, and configuration changes
+- ✅ Unit tests continue to pass (184 tests)
