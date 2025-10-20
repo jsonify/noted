@@ -475,7 +475,8 @@
     "release:patch": "standard-version --release-as patch && pnpm run package",
     "release:minor": "standard-version --release-as minor && pnpm run package",
     "release:major": "standard-version --release-as major && pnpm run package",
-    "release": "standard-version && pnpm run package"
+    "release": "standard-version && pnpm run package",
+    "publish:release": "git push --follow-tags origin main"
   },
   "packageManager": "pnpm@8.15.9",
   "devDependencies": {

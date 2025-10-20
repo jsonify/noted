@@ -1,0 +1,19 @@
+{
+  "types": [
+    {"type": "feat", "section": "Features"},
+    {"type": "fix", "section": "Bug Fixes"},
+    {"type": "chore", "hidden": false, "section": "Chores"},
+    {"type": "docs", "hidden": false, "section": "Documentation"},
+    {"type": "style", "hidden": true},
+    {"type": "refactor", "section": "Code Refactoring"},
+    {"type": "perf", "section": "Performance Improvements"},
+    {"type": "test", "hidden": false, "section": "Tests"}
+  ],
+  "commitUrlFormat": "{{host}}/{{owner}}/{{repository}}/commit/{{hash}}",
+  "compareUrlFormat": "{{host}}/{{owner}}/{{repository}}/compare/{{previousTag}}...{{currentTag}}",
+  "issueUrlFormat": "{{host}}/{{owner}}/{{repository}}/issues/{{id}}",
+  "userUrlFormat": "{{host}}/{{user}}",
+  "releaseCommitMessageFormat": "chore(release): {{currentTag}}",
+  "issuePrefixes": ["#"],
+  "header": "# Changelog\n\nAll notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.\n"
+}

@@ -1,0 +1,101 @@
+name: Publish to Marketplace
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.6.0, v1.6.1, etc.
+  workflow_dispatch:  # Allow manual triggering from GitHub UI
+
+jobs:
+  # Run tests before publishing
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile TypeScript
+        run: pnpm run compile
+
+      - name: Run unit tests
+        run: pnpm run test:unit
+
+  # Build and publish to VS Code Marketplace
+  publish:
+    name: Publish Extension
+    runs-on: ubuntu-latest
+    needs: test  # Only publish if tests pass
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changelog
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile TypeScript
+        run: pnpm run compile
+
+      - name: Package extension
+        run: pnpm run package
+
+      - name: Publish to VS Code Marketplace
+        run: |
+          pnpm add -g @vscode/vsce
+          vsce publish -p ${{ secrets.VSCE_PAT }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: '*.vsix'
+          body: |
+            ## VS Code Extension Release ${{ steps.get_version.outputs.VERSION }}
+
+            🚀 Published to [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=jsonify.noted)
+
+            ### Installation
+            - Install directly from VS Code Extensions tab
+            - Or download the `.vsix` file below and install manually
+
+            ### Changes
+            See [CHANGELOG.md](https://github.com/jsonify/noted/blob/main/CHANGELOG.md) for details.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: noted-v${{ steps.get_version.outputs.VERSION }}.vsix
+          path: '*.vsix'
+          retention-days: 90
