@@ -93,11 +93,48 @@ vsce publish --packagePath noted-*.vsix --pat YOUR_PERSONAL_ACCESS_TOKEN
 
 ## Troubleshooting
 
+### 401 Error: "Failed request: (401)" During Publish
+This means your PAT is not authorized to publish under the `jsonify` publisher. Follow these steps:
+
+**Step 1: Verify Publisher Ownership**
+1. Go to https://marketplace.visualstudio.com/manage/publishers/jsonify
+2. Check if you're signed in with the correct Microsoft account
+3. Verify that `jsonify` publisher exists and you have access to it
+
+**Step 2: Check Publisher-Organization Link**
+1. On the publisher management page, look for "Organization" or "Linked organization"
+2. It should show `jasonrueckert0375` as the linked Azure DevOps organization
+3. If it shows a different organization or no organization:
+   - You may need to create the publisher under the correct organization
+   - Or transfer the publisher to `jasonrueckert0375`
+
+**Step 3: Verify PAT Configuration**
+1. Go to https://dev.azure.com/jasonrueckert0375/_usersSettings/tokens
+2. Find your `vscode-marketplace-publish` token
+3. Click "..." → "Edit" and verify:
+   - **Organization**: Must be set to `jasonrueckert0375` (or "All accessible organizations")
+   - **Scopes**: Must include "Marketplace" with both "Acquire" AND "Manage" checked
+4. If anything is wrong, create a new PAT with the correct settings
+
+**Step 4: Test PAT Permissions**
+```bash
+# Test if your PAT can access the publisher
+vsce show jsonify.noted --pat YOUR_PAT
+
+# If this fails with 401, the PAT doesn't have access to the publisher
+```
+
+**Step 5: Alternative Solutions**
+- **Option A**: If the publisher is under a different organization, create the PAT from that organization
+- **Option B**: Create a new publisher under `jasonrueckert0375` organization and update package.json
+- **Option C**: Add `jasonrueckert0375` organization as a contributor to the `jsonify` publisher
+
 ### Workflow Fails on "Publish to VS Code Marketplace"
 **Possible causes**:
 - Invalid or expired PAT → Regenerate and update GitHub secret
 - PAT missing "Marketplace Manage" scope → Create new PAT with correct scopes
 - Version already exists on marketplace → Bump version and try again
+- Publisher not linked to correct organization → See 401 Error troubleshooting above
 
 ### Tag Already Exists
 If you need to re-create a tag:
