@@ -23,7 +23,7 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 
 #### Note Organization & Discovery
 - [x] Tag system for notes (completed - tag parsing, indexing, filtering, autocomplete)
-- [ ] Advanced tag management (rename, merge, delete, export tags) - implemented but not exposed yet
+- [x] Advanced tag management (rename, merge, delete, export tags) - completed v1.5.0
 - [ ] Note linking/backlinks (wiki-style links)
 - [ ] Pinned/favorite notes section
 - [ ] Archive functionality for old notes
@@ -71,6 +71,16 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 - Sort tags alphabetically or by frequency
 - Comprehensive unit tests for all tag functionality
 - Tag completion provider with VS Code integration
+
+### Advanced Tag Management (v1.5.0)
+- Rename tags across all notes with validation
+- Merge two tags into one with duplicate removal
+- Delete tags from all notes with confirmation
+- Export tags to JSON format with metadata
+- Context menu integration in tags tree view
+- Command palette entries for all operations
+- Automatic tag index refresh after operations
+- Rollback support for destructive operations
 
 See [notes.md](./notes.md) for a complete list of all implemented features.
 

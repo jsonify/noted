@@ -207,6 +207,26 @@
         "command": "noted.refreshTags",
         "title": "Noted: Refresh Tags",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "noted.renameTag",
+        "title": "Noted: Rename Tag",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "noted.mergeTags",
+        "title": "Noted: Merge Tags",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "noted.deleteTag",
+        "title": "Noted: Delete Tag",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "noted.exportTags",
+        "title": "Noted: Export Tags to JSON",
+        "icon": "$(export)"
       }
     ],
     "menus": {
@@ -265,6 +285,26 @@
           "command": "noted.refreshTags",
           "when": "view == notedTagsView",
           "group": "navigation@4"
+        },
+        {
+          "command": "noted.renameTag",
+          "when": "view == notedTagsView",
+          "group": "actions@1"
+        },
+        {
+          "command": "noted.mergeTags",
+          "when": "view == notedTagsView",
+          "group": "actions@2"
+        },
+        {
+          "command": "noted.deleteTag",
+          "when": "view == notedTagsView",
+          "group": "actions@3"
+        },
+        {
+          "command": "noted.exportTags",
+          "when": "view == notedTagsView",
+          "group": "actions@4"
         }
       ],
       "view/item/context": [
@@ -312,6 +352,16 @@
           "command": "noted.filterByTag",
           "when": "view == notedTagsView && viewItem == tag",
           "group": "navigation@1"
+        },
+        {
+          "command": "noted.renameTag",
+          "when": "view == notedTagsView && viewItem == tag",
+          "group": "edit@1"
+        },
+        {
+          "command": "noted.deleteTag",
+          "when": "view == notedTagsView && viewItem == tag",
+          "group": "edit@2"
         }
       ]
     },

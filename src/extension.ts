@@ -5,6 +5,7 @@ import { promises as fsp } from 'fs';
 import { showCalendarView } from './calendar/calendarView';
 import { TagService } from './services/tagService';
 import { formatTagForDisplay } from './utils/tagHelpers';
+import { renameTag, mergeTags, deleteTag, exportTags } from './commands/tagCommands';
 import { NotesTreeProvider } from './providers/notesTreeProvider';
 import { TemplatesTreeProvider } from './providers/templatesTreeProvider';
 import { TagsTreeProvider } from './providers/tagsTreeProvider';
@@ -298,6 +299,47 @@ export function activate(context: vscode.ExtensionContext) {
     let refreshTags = vscode.commands.registerCommand('noted.refreshTags', async () => {
         await tagsProvider.refresh();
         vscode.window.showInformationMessage('Tags refreshed');
+    });
+
+    // Command to rename a tag
+    let renameTagCmd = vscode.commands.registerCommand('noted.renameTag', async () => {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            vscode.window.showErrorMessage('Notes folder not configured');
+            return;
+        }
+        await renameTag(tagService, notesPath);
+        await tagsProvider.refresh();
+        notesProvider.refresh();
+    });
+
+    // Command to merge tags
+    let mergeTagsCmd = vscode.commands.registerCommand('noted.mergeTags', async () => {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            vscode.window.showErrorMessage('Notes folder not configured');
+            return;
+        }
+        await mergeTags(tagService, notesPath);
+        await tagsProvider.refresh();
+        notesProvider.refresh();
+    });
+
+    // Command to delete a tag
+    let deleteTagCmd = vscode.commands.registerCommand('noted.deleteTag', async () => {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            vscode.window.showErrorMessage('Notes folder not configured');
+            return;
+        }
+        await deleteTag(tagService, notesPath);
+        await tagsProvider.refresh();
+        notesProvider.refresh();
+    });
+
+    // Command to export tags
+    let exportTagsCmd = vscode.commands.registerCommand('noted.exportTags', async () => {
+        await exportTags(tagService);
     });
 
     // Command to show stats
@@ -674,6 +716,7 @@ export function activate(context: vscode.ExtensionContext) {
         openTodayNote, openWithTemplate, insertTimestamp, changeFormat,
         refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, filterByTag, clearTagFilters, sortTagsByName, sortTagsByFrequency, refreshTags,
+        renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,
         showStats, exportNotes, duplicateNote, moveNotesFolder,
         setupDefaultFolder, setupCustomFolder, showNotesConfig,
         createCustomTemplate, editCustomTemplateCmd, deleteCustomTemplateCmd,

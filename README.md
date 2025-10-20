@@ -15,6 +15,7 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 - **Custom Templates** ⭐ NEW: Create, edit, and manage your own reusable templates with 10 powerful variables
 - **Template Variables** ⭐ NEW: Use dynamic placeholders like {date}, {user}, {workspace}, and more
 - **Tag System**: Organize notes with tags, filter by tags, and get autocomplete suggestions
+- **Advanced Tag Management** ⭐ NEW: Rename, merge, delete, and export tags across all notes
 - **Calendar View**: Visual monthly calendar for navigating and creating daily notes
 - **Drag & Drop**: Move notes between folders with simple drag-and-drop
 - **Full-Text Search**: Search across all notes with instant preview
@@ -39,6 +40,7 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
    - Type `#` in a note to see autocomplete suggestions
    - Sort tags alphabetically or by frequency
    - Filter by multiple tags simultaneously
+   - Manage tags: rename, merge, delete, or export them
 
 ## Tag System
 
@@ -84,7 +86,31 @@ Next steps:
 - Sort alphabetically (A-Z)
 - Sort by frequency (most-used first)
 
-### Tag Management
+### Tag Management ⭐ NEW
+
+**Rename Tags:**
+- Right-click a tag and select "Rename Tag"
+- Or use Command Palette: "Noted: Rename Tag"
+- Updates the tag across all notes automatically
+- Validates tag names and prevents duplicates
+
+**Merge Tags:**
+- Use Command Palette: "Noted: Merge Tags"
+- Select the tag to keep and the tag to merge
+- Automatically removes duplicates after merging
+- Updates all affected notes in one operation
+
+**Delete Tags:**
+- Right-click a tag and select "Delete Tag"
+- Or use Command Palette: "Noted: Delete Tag"
+- Removes the tag from all notes with confirmation
+- Includes rollback support if errors occur
+
+**Export Tags:**
+- Use Command Palette: "Noted: Export Tags to JSON"
+- Exports all tags with metadata (name, count, notes)
+- Includes export date and total tag count
+- Perfect for backup or external analysis
 
 **Refresh Tags:**
 - Click the refresh button in Tags panel
