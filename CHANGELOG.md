@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.1](https://github.com/jsonify/noted/compare/v1.4.0...v1.4.1) (2025-10-20)
+
+
+### Features
+
+* Implement advanced tag management features including rename, merge, delete, and export functionalities ([1c47b7e](https://github.com/jsonify/noted/commit/1c47b7e2930d223a382a139dcd4284888eee1caf))
+
 ## [1.4.0](https://github.com/jsonify/noted/compare/v1.3.1...v1.4.0) (2025-10-20)
 
 
