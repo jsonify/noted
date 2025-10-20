@@ -8,18 +8,21 @@ This document explains how to publish new versions of the Noted extension to the
 If you haven't already:
 1. Go to https://marketplace.visualstudio.com/manage
 2. Sign in with your Microsoft account
-3. Create a publisher (should match `"publisher": "jsonify"` in package.json)
+3. Create a publisher with name `jsonify` (should match `"publisher": "jsonify"` in package.json)
+4. This publisher will be linked to your Azure DevOps organization `jasonrueckert0375`
 
 ### 2. Generate a Personal Access Token (PAT)
-1. Go to https://dev.azure.com/
+1. Go to https://dev.azure.com/jasonrueckert0375
 2. Click on your profile icon → Personal Access Tokens
 3. Click "New Token"
 4. Configure the token:
    - **Name**: `vscode-marketplace-publish`
-   - **Organization**: All accessible organizations
+   - **Organization**: jasonrueckert0375 (your Azure DevOps organization)
    - **Expiration**: 1 year (or custom)
    - **Scopes**: Select "Marketplace" → Check "Acquire" and "Manage"
 5. Click "Create" and **copy the token immediately** (you won't see it again)
+
+**Important**: Your Azure DevOps Organization is `jasonrueckert0375`, but your publisher name (in package.json) remains `jsonify`. The PAT must be created under the organization where your publisher is registered.
 
 ### 3. Add PAT to GitHub Secrets
 1. Go to your GitHub repository: https://github.com/jsonify/noted
