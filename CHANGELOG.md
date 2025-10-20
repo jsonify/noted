@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/jsonify/noted/compare/v1.3.1...v1.4.0) (2025-10-20)
+
+
+### Features
+
+* Add comprehensive integration tests for note and tag management commands, enhancing test coverage and reliability ([0f7e1b6](https://github.com/jsonify/noted/commit/0f7e1b6b2a4f582d1a54c10faf1072b2abd1c266))
+* Add unit tests for NotesTreeProvider, tag commands, and tag completion ([01ed5f3](https://github.com/jsonify/noted/commit/01ed5f376c37b10d95ddc006f18fa9038991ed88))
+* Enhance tag system with inline support, autocomplete, and improved extraction ([84dd95f](https://github.com/jsonify/noted/commit/84dd95f2667efa0a208a668e63099c3cb6b0e5c6))
+* Enhance tagging system with inline support, improved filtering, and comprehensive updates ([3b75fb0](https://github.com/jsonify/noted/commit/3b75fb077e395929b309fd5d9e64ca9edab48f51))
+* Enhance test setup and improve tag command tests with mock configurations and cleanup ([91054f2](https://github.com/jsonify/noted/commit/91054f2da72534e251507c42fdee30af58c062c0))
+* Implement custom template system with full management, dynamic placeholders, and enhanced template commands ([c06f560](https://github.com/jsonify/noted/commit/c06f560831594914eeb273ddfa179258247da0e0))
+* Implement note tagging system with parsing, filtering, and autocomplete features ([696c1cd](https://github.com/jsonify/noted/commit/696c1cd1d5f2e6924445b670238688b2cc17db3f))
+* implement note tagging system with parsing, filtering, and management features ([b8ee995](https://github.com/jsonify/noted/commit/b8ee9955b607ec9b8ae3d8999be6c41e9dbd9853))
+* implement tag indexing service with comprehensive tests ([3e293a6](https://github.com/jsonify/noted/commit/3e293a649deae36e28005ce51271fc2c84387272))
+* implement TagsTreeProvider with sorting and filtering capabilities ([805fbec](https://github.com/jsonify/noted/commit/805fbec385e08e289ed55502dad2e47ab9036357))
+
 ### [1.3.1](https://github.com/jsonify/noted/compare/v1.0.5...v1.3.1) (2025-10-19)
 
 
