@@ -200,6 +200,8 @@ function getGraphHtml(graphData: any, stats: any): string {
             padding: 12px;
             font-size: 12px;
             max-width: 200px;
+            pointer-events: none;
+            z-index: 10;
         }
 
         #legend h3 {
@@ -252,6 +254,7 @@ function getGraphHtml(graphData: any, stats: any): string {
             max-width: 500px;
             text-align: center;
             z-index: 100;
+            pointer-events: auto;
         }
 
         #noLinksMessage h3 {
@@ -692,8 +695,15 @@ function getGraphHtml(graphData: any, stats: any): string {
             document.getElementById('tooltip').style.display = 'none';
         }
 
+        // Debug: Log ALL click events on the document
+        document.addEventListener('click', (e) => {
+            console.log('[Graph View] Click detected on:', e.target);
+            console.log('[Graph View] Click position:', e.clientX, e.clientY);
+        });
+
         // Event listeners
         document.getElementById('searchBox').addEventListener('input', (e) => {
+            console.log('[Graph View] Search input event fired');
             searchQuery = e.target.value;
             updateGraph();
         });
