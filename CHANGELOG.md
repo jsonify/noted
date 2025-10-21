@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.13.1](https://github.com/jsonify/noted/compare/v1.13.0...v1.13.1) (2025-10-21)
+
+
+### Bug Fixes
+
+* Increase timeout for locale-based date tests on slow CI environments ([8cee749](https://github.com/jsonify/noted/commit/8cee749c81686aa30005d98b0f214c14c3ade601))
+
 ## [1.13.0](https://github.com/jsonify/noted/compare/v1.12.0...v1.13.0) (2025-10-21)
 
 
