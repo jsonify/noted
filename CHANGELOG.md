@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.12.0](https://github.com/jsonify/noted/compare/v1.11.0...v1.12.0) (2025-10-21)
+
+
+### Features
+
+* Add markdown preview functionality ([b2cf094](https://github.com/jsonify/noted/commit/b2cf094a1b56751cc1c3e623e16b9497d5aacda6))
+
 ## [1.11.0](https://github.com/jsonify/noted/compare/v1.10.0...v1.11.0) (2025-10-21)
 
 
