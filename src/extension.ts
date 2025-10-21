@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { promises as fsp } from 'fs';
 import { showCalendarView } from './calendar/calendarView';
+import { MarkdownPreviewManager } from './preview/markdownPreview';
 import { TagService } from './services/tagService';
 import { formatTagForDisplay } from './utils/tagHelpers';
 import { renameTag, mergeTags, deleteTag, exportTags } from './commands/tagCommands';
@@ -117,6 +118,10 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize bulk operations service
     const bulkOperationsService = new BulkOperationsService();
     notesProvider.setBulkOperationsService(bulkOperationsService);
+
+    // Initialize markdown preview manager
+    const markdownPreviewManager = new MarkdownPreviewManager(context);
+    context.subscriptions.push(markdownPreviewManager);
 
     // Command to open today's note
     let openTodayNote = vscode.commands.registerCommand('noted.openToday', async () => {
@@ -948,6 +953,11 @@ export function activate(context: vscode.ExtensionContext) {
         notesProvider.refresh();
     });
 
+    // Command to toggle markdown preview
+    let toggleMarkdownPreview = vscode.commands.registerCommand('noted.toggleMarkdownPreview', async () => {
+        await markdownPreviewManager.togglePreview();
+    });
+
     context.subscriptions.push(
         openTodayNote, openWithTemplate, insertTimestamp, changeFormat,
         refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
@@ -959,7 +969,8 @@ export function activate(context: vscode.ExtensionContext) {
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks,
-        toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive
+        toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive,
+        toggleMarkdownPreview
     );
 }
 

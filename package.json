@@ -308,9 +308,21 @@
         "command": "noted.bulkArchive",
         "title": "Noted: Archive Selected Notes",
         "icon": "$(archive)"
+      },
+      {
+        "command": "noted.toggleMarkdownPreview",
+        "title": "Noted: Toggle Markdown Preview",
+        "icon": "$(open-preview)"
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "noted.toggleMarkdownPreview",
+          "when": "editorLangId == markdown || resourceExtname == .md",
+          "group": "navigation"
+        }
+      ],
       "view/title": [
         {
           "command": "noted.openToday",
@@ -546,6 +558,11 @@
         "command": "noted.filterByTag",
         "key": "ctrl+k ctrl+t",
         "mac": "cmd+k cmd+t"
+      },
+      {
+        "command": "noted.toggleMarkdownPreview",
+        "key": "ctrl+k ctrl+v",
+        "mac": "cmd+k cmd+v"
       }
     ],
     "configuration": {
