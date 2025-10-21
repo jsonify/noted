@@ -53,9 +53,17 @@ export interface GraphStats {
  */
 export class GraphService {
     private linkService: LinkService;
+    private graphData: GraphData | null = null;
 
     constructor(linkService: LinkService) {
         this.linkService = linkService;
+    }
+
+    /**
+     * Invalidate the cached graph data
+     */
+    invalidateCache(): void {
+        this.graphData = null;
     }
 
     /**
@@ -111,19 +119,23 @@ export class GraphService {
             }
         }
 
-        return {
+        // Cache the built graph data
+        this.graphData = {
             nodes,
             edges,
             orphanCount: orphanNotes.length,
             totalNotes: allNotes.length
         };
+
+        return this.graphData;
     }
 
     /**
      * Get statistics about the graph
      */
     async getGraphStats(): Promise<GraphStats> {
-        const graphData = await this.buildGraph();
+        // Use cached data if available, otherwise build the graph
+        const graphData = this.graphData ?? await this.buildGraph();
 
         let mostConnected: { path: string; connections: number } | null = null;
         let totalConnections = 0;
@@ -148,7 +160,8 @@ export class GraphService {
      * Search nodes by name
      */
     async searchNodes(query: string): Promise<string[]> {
-        const graphData = await this.buildGraph();
+        // Use cached data if available, otherwise build the graph
+        const graphData = this.graphData ?? await this.buildGraph();
         const normalizedQuery = query.toLowerCase().trim();
 
         return graphData.nodes
