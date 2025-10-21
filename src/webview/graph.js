@@ -49,7 +49,11 @@ function initGraph() {
     });
 
     network.on('stabilizationIterationsDone', function() {
-        network.setOptions({ physics: false });
+        // Keep physics enabled briefly to show repulsion, then disable
+        setTimeout(() => {
+            network.setOptions({ physics: false });
+        }, 1000);
+
         // Fit view after stabilization completes
         network.fit({
             animation: {
@@ -58,13 +62,6 @@ function initGraph() {
             }
         });
     });
-
-    // Also fit immediately for initial visibility
-    setTimeout(() => {
-        network.fit({
-            animation: false
-        });
-    }, 50);
 }
 
 function positionNodesCircularly(nodes) {
@@ -143,20 +140,22 @@ function getLayoutOptions(layout) {
             baseOptions.physics = {
                 enabled: true,
                 barnesHut: {
-                    gravitationalConstant: -8000,  // Increased repulsion
-                    centralGravity: 0.1,  // Reduced center attraction
-                    springLength: 200,  // Longer edges
-                    springConstant: 0.02,  // Reduced edge stiffness
-                    damping: 0.09,
-                    avoidOverlap: 0.8  // Increased overlap avoidance
+                    gravitationalConstant: -15000,  // Much stronger repulsion
+                    centralGravity: 0.05,  // Minimal center attraction
+                    springLength: 250,  // Longer edges for more space
+                    springConstant: 0.01,  // Very flexible edges
+                    damping: 0.15,  // Higher damping for smoother movement
+                    avoidOverlap: 1.0  // Maximum overlap avoidance
                 },
                 stabilization: {
                     enabled: true,
-                    iterations: 2000,  // More iterations for better stabilization
-                    updateInterval: 50,
+                    iterations: 1000,
+                    updateInterval: 10,  // Update visual every 10 iterations
                     fit: true
                 },
-                solver: 'barnesHut'
+                solver: 'barnesHut',
+                adaptiveTimestep: true,
+                timestep: 0.5  // Slower timestep for smoother, more visible physics
             };
         } else {
             // For orphan nodes without edges, use random layout without physics
