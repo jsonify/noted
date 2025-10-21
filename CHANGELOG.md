@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.8.1](https://github.com/jsonify/noted/compare/v1.8.0...v1.8.1) (2025-10-21)
+
+
+### Bug Fixes
+
+* remove broken test.yml badge from README ([d67e498](https://github.com/jsonify/noted/commit/d67e498a4a64861ad06e5b65a7b1e39e6729d304))
+
 ## [1.8.0](https://github.com/jsonify/noted/compare/v1.6.0...v1.8.0) (2025-10-21)
 
 
