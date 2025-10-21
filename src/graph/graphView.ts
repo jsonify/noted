@@ -413,6 +413,41 @@ function getGraphHtml(graphData: any, stats: any): string {
             console.log('[Graph View] Physics enabled:', options.physics.enabled);
             network = new vis.Network(container, data, options);
 
+            // Check if canvas was created
+            setTimeout(() => {
+                const canvas = container.querySelector('canvas');
+                if (canvas) {
+                    console.log('[Graph View] Canvas element found:', canvas);
+                    console.log('[Graph View] Canvas dimensions:', {
+                        width: canvas.width,
+                        height: canvas.height,
+                        styleWidth: canvas.style.width,
+                        styleHeight: canvas.style.height
+                    });
+                    console.log('[Graph View] Canvas position:', {
+                        offsetLeft: canvas.offsetLeft,
+                        offsetTop: canvas.offsetTop,
+                        position: window.getComputedStyle(canvas).position,
+                        zIndex: window.getComputedStyle(canvas).zIndex
+                    });
+                } else {
+                    console.error('[Graph View] ERROR: No canvas element found!');
+                }
+
+                // Count visible nodes
+                const nodeCount = network.body.nodes ? Object.keys(network.body.nodes).length : 0;
+                console.log('[Graph View] Network body has', nodeCount, 'nodes');
+
+                // Check if message is covering graph
+                const noLinksMsg = document.getElementById('noLinksMessage');
+                if (noLinksMsg) {
+                    const msgStyle = window.getComputedStyle(noLinksMsg);
+                    console.log('[Graph View] No Links Message display:', msgStyle.display);
+                    console.log('[Graph View] No Links Message class:', noLinksMsg.className);
+                }
+            }, 100);
+
+
             // Event listeners
             network.on('click', function(params) {
                 if (params.nodes.length > 0) {
