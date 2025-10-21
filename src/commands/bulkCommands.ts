@@ -222,7 +222,7 @@ export async function handleBulkMove(
         try {
             await fs.access(targetPath);
             // File exists, will skip
-        } catch {
+        } catch (err){
             // File doesn't exist, can proceed
             moves.push({ oldPath: notePath, newPath: targetPath });
         }
