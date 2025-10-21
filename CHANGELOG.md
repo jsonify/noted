@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.13.4](https://github.com/jsonify/noted/compare/v1.13.3...v1.13.4) (2025-10-21)
+
+
+### Code Refactoring
+
+* separate webview resources and optimize GraphService ([#10](https://github.com/jsonify/noted/issues/10)) ([09bd09f](https://github.com/jsonify/noted/commit/09bd09f59dba8f5c64cdf6d620f753921a018e91))
+
 ### [1.13.3](https://github.com/jsonify/noted/compare/v1.13.2...v1.13.3) (2025-10-21)
 
 ### [1.13.2](https://github.com/jsonify/noted/compare/v1.13.1...v1.13.2) (2025-10-21)
