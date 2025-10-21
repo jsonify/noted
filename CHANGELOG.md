@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.8.2](https://github.com/jsonify/noted/compare/v1.8.1...v1.8.2) (2025-10-21)
+
+
+### Bug Fixes
+
+* update release workflow to use PAT for triggering publish workflow ([a23959a](https://github.com/jsonify/noted/commit/a23959ad1d3a649847f761142a8f60fb68cd7364))
+
 ### [1.8.1](https://github.com/jsonify/noted/compare/v1.8.0...v1.8.1) (2025-10-21)
 
 
