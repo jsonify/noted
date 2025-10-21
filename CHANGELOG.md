@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.11.0](https://github.com/jsonify/noted/compare/v1.10.0...v1.11.0) (2025-10-21)
+
+
+### Features
+
+* implemented the Bulk Operations feature ([515915e](https://github.com/jsonify/noted/commit/515915e4280beb73fd414e135205cab52c999c18))
+
 ## [1.10.0](https://github.com/jsonify/noted/compare/v1.9.2...v1.10.0) (2025-10-21)
 
 
