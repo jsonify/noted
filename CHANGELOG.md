@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.13.0](https://github.com/jsonify/noted/compare/v1.12.0...v1.13.0) (2025-10-21)
+
+
+### Features
+
+* Add comprehensive undo/redo functionality for destructive operations ([9ba5b90](https://github.com/jsonify/noted/commit/9ba5b90cb3a41b726b1c42a68c2c07629b44ffc3))
+
 ## [1.12.0](https://github.com/jsonify/noted/compare/v1.11.0...v1.12.0) (2025-10-21)
 
 
