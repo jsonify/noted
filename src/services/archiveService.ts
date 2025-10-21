@@ -34,8 +34,9 @@ export class ArchiveService {
 
     /**
      * Archive a single note
+     * Returns the destination path for undo tracking
      */
-    async archiveNote(filePath: string): Promise<void> {
+    async archiveNote(filePath: string): Promise<string> {
         if (!(await pathExists(filePath))) {
             throw new Error('Note file does not exist');
         }
@@ -47,7 +48,7 @@ export class ArchiveService {
 
         const archivePath = await this.ensureArchiveFolder();
         const fileName = path.basename(filePath);
-        const destinationPath = path.join(archivePath, fileName);
+        let destinationPath = path.join(archivePath, fileName);
 
         // Check if file already exists in archive
         if (await pathExists(destinationPath)) {
@@ -56,17 +57,18 @@ export class ArchiveService {
             const base = path.basename(fileName, ext);
             const timestamp = Date.now();
             const newFileName = `${base}-${timestamp}${ext}`;
-            const newDestinationPath = path.join(archivePath, newFileName);
-            await renameFile(filePath, newDestinationPath);
-        } else {
-            await renameFile(filePath, destinationPath);
+            destinationPath = path.join(archivePath, newFileName);
         }
+
+        await renameFile(filePath, destinationPath);
+        return destinationPath;
     }
 
     /**
      * Unarchive a note (move back to notes)
+     * Returns the destination path for undo tracking
      */
-    async unarchiveNote(filePath: string): Promise<void> {
+    async unarchiveNote(filePath: string): Promise<string> {
         if (!(await pathExists(filePath))) {
             throw new Error('Archived note does not exist');
         }
@@ -88,6 +90,7 @@ export class ArchiveService {
         }
 
         await renameFile(filePath, destinationPath);
+        return destinationPath;
     }
 
     /**

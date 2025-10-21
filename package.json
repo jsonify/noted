@@ -313,6 +313,26 @@
         "command": "noted.toggleMarkdownPreview",
         "title": "Noted: Toggle Markdown Preview",
         "icon": "$(open-preview)"
+      },
+      {
+        "command": "noted.undo",
+        "title": "Noted: Undo Last Operation",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "noted.redo",
+        "title": "Noted: Redo Last Operation",
+        "icon": "$(redo)"
+      },
+      {
+        "command": "noted.showUndoHistory",
+        "title": "Noted: Show Undo History",
+        "icon": "$(history)"
+      },
+      {
+        "command": "noted.clearUndoHistory",
+        "title": "Noted: Clear Undo History",
+        "icon": "$(clear-all)"
       }
     ],
     "menus": {
@@ -563,6 +583,16 @@
         "command": "noted.toggleMarkdownPreview",
         "key": "ctrl+k ctrl+v",
         "mac": "cmd+k cmd+v"
+      },
+      {
+        "command": "noted.undo",
+        "key": "ctrl+alt+z",
+        "mac": "cmd+alt+z"
+      },
+      {
+        "command": "noted.redo",
+        "key": "ctrl+shift+alt+z",
+        "mac": "cmd+shift+alt+z"
       }
     ],
     "configuration": {
