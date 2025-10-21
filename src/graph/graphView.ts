@@ -371,8 +371,23 @@ function getGraphHtml(graphData: any, stats: any): string {
         });
         console.log('[Graph View] Sample nodes:', allNodes.slice(0, 3));
 
+        // Check if vis is loaded
+        if (typeof vis === 'undefined') {
+            console.error('[Graph View] ERROR: vis.js library not loaded!');
+        } else {
+            console.log('[Graph View] vis.js library loaded successfully');
+        }
+
         // Create the network
         const container = document.getElementById('graph');
+        console.log('[Graph View] Container element:', container);
+        console.log('[Graph View] Container dimensions:', {
+            width: container.offsetWidth,
+            height: container.offsetHeight,
+            clientWidth: container.clientWidth,
+            clientHeight: container.clientHeight
+        });
+
         let network = null;
         let currentLayout = 'force';
 
@@ -422,7 +437,27 @@ function getGraphHtml(graphData: any, stats: any): string {
 
             network.on('stabilizationIterationsDone', function() {
                 console.log('[Graph View] Stabilization complete');
+
+                // Log node positions
+                const positions = network.getPositions();
+                const posArray = Object.values(positions);
+                if (posArray.length > 0) {
+                    console.log('[Graph View] Sample node positions:', posArray.slice(0, 3));
+                    console.log('[Graph View] Position range:', {
+                        minX: Math.min(...posArray.map(p => p.x)),
+                        maxX: Math.max(...posArray.map(p => p.x)),
+                        minY: Math.min(...posArray.map(p => p.y)),
+                        maxY: Math.max(...posArray.map(p => p.y))
+                    });
+                }
+
+                // Get viewport info before fit
+                const scaleBefore = network.getScale();
+                const viewPosBefore = network.getViewPosition();
+                console.log('[Graph View] Before fit - scale:', scaleBefore, 'position:', viewPosBefore);
+
                 network.setOptions({ physics: false });
+
                 // Fit view after stabilization completes
                 network.fit({
                     animation: {
@@ -430,6 +465,14 @@ function getGraphHtml(graphData: any, stats: any): string {
                         easingFunction: 'easeInOutQuad'
                     }
                 });
+
+                // Check viewport after fit
+                setTimeout(() => {
+                    const scaleAfter = network.getScale();
+                    const viewPosAfter = network.getViewPosition();
+                    console.log('[Graph View] After fit - scale:', scaleAfter, 'position:', viewPosAfter);
+                }, 600);
+
                 console.log('[Graph View] Called fit() after stabilization');
             });
 
