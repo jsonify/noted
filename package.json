@@ -15,6 +15,18 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "notes",
+    "note-taking",
+    "daily notes",
+    "journal",
+    "productivity",
+    "markdown",
+    "templates",
+    "tags",
+    "wiki",
+    "knowledge base"
+  ],
   "activationEvents": [
     "onCommand:noted.openToday"
   ],
