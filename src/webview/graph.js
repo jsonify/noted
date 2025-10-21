@@ -67,6 +67,23 @@ function initGraph() {
     }, 50);
 }
 
+function positionNodesCircularly(nodes) {
+    const nodeCount = nodes.length;
+    if (nodeCount === 0) return;
+
+    // Calculate radius based on number of nodes to ensure good spacing
+    const radius = Math.max(200, nodeCount * 30);
+    const angleStep = (2 * Math.PI) / nodeCount;
+
+    // Position each node on the circle
+    nodes.forEach((node, index) => {
+        const angle = index * angleStep;
+        node.x = radius * Math.cos(angle);
+        node.y = radius * Math.sin(angle);
+        node.fixed = { x: false, y: false };  // Allow dragging but start in circular position
+    });
+}
+
 function getLayoutOptions(layout) {
     const { nodes, edges } = getFilteredData();
     const hasEdges = edges.length > 0;
@@ -126,16 +143,16 @@ function getLayoutOptions(layout) {
             baseOptions.physics = {
                 enabled: true,
                 barnesHut: {
-                    gravitationalConstant: -2000,
-                    centralGravity: 0.3,
-                    springLength: 150,
-                    springConstant: 0.04,
+                    gravitationalConstant: -8000,  // Increased repulsion
+                    centralGravity: 0.1,  // Reduced center attraction
+                    springLength: 200,  // Longer edges
+                    springConstant: 0.02,  // Reduced edge stiffness
                     damping: 0.09,
-                    avoidOverlap: 0.2
+                    avoidOverlap: 0.8  // Increased overlap avoidance
                 },
                 stabilization: {
                     enabled: true,
-                    iterations: 1000,
+                    iterations: 2000,  // More iterations for better stabilization
                     updateInterval: 50,
                     fit: true
                 },
@@ -164,23 +181,14 @@ function getLayoutOptions(layout) {
             enabled: false
         };
     } else if (layout === 'circular') {
+        // Manually position nodes in a circular layout
+        positionNodesCircularly(nodes);
+
         baseOptions.layout = {
             randomSeed: 42
         };
         baseOptions.physics = {
-            enabled: true,
-            stabilization: {
-                enabled: true,
-                iterations: 1000
-            },
-            barnesHut: {
-                gravitationalConstant: -8000,
-                centralGravity: 0.5,
-                springLength: 200,
-                springConstant: 0.01,
-                damping: 0.09,
-                avoidOverlap: 0.5
-            }
+            enabled: false  // Disable physics to keep circular positions
         };
     }
 
@@ -214,8 +222,10 @@ function getFilteredData() {
 
 function updateGraph() {
     const { nodes, edges } = getFilteredData();
-    network.setData({ nodes, edges });
-    network.fit();
+
+    // Destroy and recreate the network to properly reinitialize physics
+    network.destroy();
+    initGraph();
 
     // Update no links message visibility
     updateNoLinksMessage();
