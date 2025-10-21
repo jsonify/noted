@@ -493,3 +493,5 @@ MIT
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 Please ensure to follow the existing code style and include tests for new features.
+
+Also, keep in mind that I tend to make lots of updates, so please check for any breaking changes before submitting PRs.
