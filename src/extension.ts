@@ -304,11 +304,14 @@ export function activate(context: vscode.ExtensionContext) {
             try {
                 const destinationPath = await archiveService.archiveNote(item.filePath);
 
-                // Track operation for undo AFTER archiving (since we need the destination path)
-                await trackArchiveNote(undoService, item.filePath, destinationPath);
-
-                notesProvider.refresh();
-                vscode.window.showInformationMessage(`Archived ${item.label} (Undo available)`);
+                if (destinationPath) {
+                    // Track operation for undo AFTER archiving (since we need the destination path)
+                    await trackArchiveNote(undoService, item.filePath, destinationPath);
+                } else {
+                    console.error('[NOTED] archiveService.archiveNote failed to return a destination path for', item.filePath);
+                    vscode.window.showErrorMessage(`Failed to archive ${item.label}`);
+                    return;
+                }
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to archive note: ${error instanceof Error ? error.message : String(error)}`);
             }
