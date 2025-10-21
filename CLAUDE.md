@@ -45,6 +45,7 @@ The extension now uses a fully modular architecture with clear separation of con
   - `bulkOperationsService.ts`: Multi-select and bulk operations (v1.10.0)
   - `undoService.ts`: Undo/redo functionality (v1.13.0)
   - `undoHelpers.ts`: Undo operation helpers (v1.13.0)
+  - `graphService.ts`: Graph data preparation and analysis (v1.14.0)
 - **`src/providers/`**: VS Code tree view providers
   - `treeItems.ts`: Tree item classes
   - `templatesTreeProvider.ts`: Templates view
@@ -56,6 +57,8 @@ The extension now uses a fully modular architecture with clear separation of con
 - **`src/calendar/`**: Calendar view functionality
   - `calendarHelpers.ts`: Calendar date operations
   - `calendarView.ts`: Webview and HTML generation
+- **`src/graph/`**: Graph view visualization
+  - `graphView.ts`: Interactive graph webview with vis.js
 
 **File Operations**:
 - All file I/O uses `fs.promises` API with async/await pattern
@@ -84,6 +87,14 @@ The extension now uses a fully modular architecture with clear separation of con
   - Provides methods: `select()`, `deselect()`, `toggleSelection()`, `selectMultiple()`, `clearSelection()`
   - Fires `onDidChangeSelection` events to refresh tree view
   - Integrates with VS Code context variables for conditional UI (`noted.selectModeActive`, `noted.hasSelectedNotes`)
+
+- **GraphService** (v1.14.0): Builds and analyzes note connection graphs
+  - Leverages `LinkService` to extract wiki-style link data
+  - Builds graph with nodes (notes) and edges (links between notes)
+  - Provides graph statistics: total notes, total links, orphan notes, most connected note
+  - Supports node coloring based on connection count
+  - Calculates node sizes using logarithmic scaling for better visual distribution
+  - Identifies bidirectional links (notes that link to each other)
 
 ### File Organization Pattern
 
@@ -162,6 +173,7 @@ All commands are registered in `activate()` and defined in package.json contribu
 **Management Commands**:
 - `noted.showStats` - Shows total/weekly/monthly note counts (Cmd+Shift+S)
 - `noted.showCalendar` - Show calendar view for navigating daily notes (Cmd+Shift+C)
+- `noted.showGraph` - Show interactive graph view of note connections (Cmd+Shift+G)
 - `noted.exportNotes` - Exports notes by date range to single file (Cmd+Shift+E)
 - `noted.deleteNote`, `renameNote`, `duplicateNote`, `copyPath` - File operations on notes
 - `noted.moveNotesFolder` - Renames the notes folder location

@@ -206,6 +206,11 @@
         "icon": "$(calendar)"
       },
       {
+        "command": "noted.showGraph",
+        "title": "Noted: Show Graph View",
+        "icon": "$(graph)"
+      },
+      {
         "command": "noted.filterByTag",
         "title": "Noted: Filter Notes by Tag",
         "icon": "$(tag)"
@@ -375,14 +380,19 @@
           "group": "navigation@5"
         },
         {
+          "command": "noted.showGraph",
+          "when": "view == notedView",
+          "group": "navigation@6"
+        },
+        {
           "command": "noted.clearTagFilters",
           "when": "view == notedView && noted.hasActiveTagFilters",
-          "group": "navigation@6"
+          "group": "navigation@7"
         },
         {
           "command": "noted.toggleSelectMode",
           "when": "view == notedView",
-          "group": "navigation@7"
+          "group": "navigation@8"
         },
         {
           "command": "noted.bulkDelete",
@@ -553,6 +563,11 @@
         "command": "noted.showCalendar",
         "key": "ctrl+shift+c",
         "mac": "cmd+shift+c"
+      },
+      {
+        "command": "noted.showGraph",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g"
       },
       {
         "command": "noted.showStats",
