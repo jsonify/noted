@@ -103,6 +103,38 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Month Navigation**: Previous/Next month buttons and "Today" quick jump
 - **Multi-note Support**: Handles multiple notes per day (daily notes + templated notes)
 
+### Graph View (v1.14.0)
+- **Show Graph View** (`Cmd+Shift+G` or `Ctrl+Shift+G`): Interactive visualization of note connections via wiki-style links
+- **Interactive Graph Features**:
+  - **Click nodes** to open notes instantly
+  - **Drag nodes** to reposition and explore relationships
+  - **Zoom and pan** to navigate large graphs
+  - **Hover tooltips** showing connection counts (outgoing links and backlinks)
+- **Layout Options**:
+  - **Force-Directed** (default): Natural physics-based layout showing organic clusters
+  - **Hierarchical**: Top-down tree structure showing clear relationships
+  - **Circular**: Ring arrangement for alternative perspective
+- **Filters and Search**:
+  - **Search box**: Find specific notes by name (live filtering)
+  - **Filter by connection**: Show all notes, connected only, or orphans only
+  - **Orphan detection**: Quickly identify notes without any links
+- **Visual Encoding**:
+  - **Node size**: Larger nodes have more connections (logarithmic scaling)
+  - **Node color**:
+    - Gray: Orphan notes (no connections)
+    - Green: Lightly connected (1-2 links)
+    - Blue: Moderately connected (3-5 links)
+    - Orange: Well connected (6-10 links)
+    - Red: Highly connected hubs (10+ links)
+  - **Edge width**: Thicker edges for bidirectional links (notes linking to each other)
+- **Statistics Dashboard**: Real-time graph metrics
+  - Total notes count
+  - Total links count
+  - Orphan notes count
+  - Average connections per note
+- **Refresh button**: Rebuild graph after creating new links
+- **Fit View button**: Auto-zoom to show entire graph
+
 ### Search (ENHANCED v1.6.0)
 - **Full-Text Search** (`Cmd+Shift+F` or `Ctrl+Shift+F`): Search across all notes with preview of matching lines
 - **Regex Search**: Use `regex:` flag in search to enable regular expression pattern matching
@@ -192,6 +224,7 @@ All keyboard shortcuts support both Mac (`Cmd`) and Windows/Linux (`Ctrl`) modif
 ### Search & Navigation
 - **`Cmd+Shift+F` / `Ctrl+Shift+F`**: Search Notes
 - **`Cmd+Shift+C` / `Ctrl+Shift+C`**: Show Calendar View
+- **`Cmd+Shift+G` / `Ctrl+Shift+G`**: Show Graph View
 - **`Cmd+K Cmd+T` / `Ctrl+K Ctrl+T`**: Filter by Tag (chord shortcut)
 
 ### Actions & Management
@@ -280,6 +313,7 @@ All keyboard shortcuts support both Mac (`Cmd`) and Windows/Linux (`Ctrl`) modif
 - Quick Switcher
 - Refresh
 - Show Calendar View
+- Show Graph View
 - Clear Tag Filters (when active)
 - Toggle Select Mode
 - Bulk Delete (when notes selected)

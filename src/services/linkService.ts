@@ -155,7 +155,7 @@ export class LinkService {
     /**
      * Get all note files in the notes directory
      */
-    private async getAllNotes(): Promise<string[]> {
+    async getAllNotes(): Promise<string[]> {
         const notes: string[] = [];
 
         async function findNotes(dir: string) {
