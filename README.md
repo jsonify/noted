@@ -1,7 +1,6 @@
 # Noted Extension
 
 [![CI](https://github.com/jsonify/noted/actions/workflows/ci.yml/badge.svg)](https://github.com/jsonify/noted/actions/workflows/ci.yml)
-[![Tests](https://github.com/jsonify/noted/actions/workflows/test.yml/badge.svg)](https://github.com/jsonify/noted/actions/workflows/test.yml)
 
 A VS Code extension for quick daily note-taking, meeting notes, project ideas, and more - your digital scratch pad!
 
