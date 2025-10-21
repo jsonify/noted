@@ -9,6 +9,7 @@ import { TagService } from '../services/tagService';
 import { formatTagForDisplay } from '../utils/tagHelpers';
 import { PinnedNotesService } from '../services/pinnedNotesService';
 import { ArchiveService } from '../services/archiveService';
+import { BulkOperationsService } from '../services/bulkOperationsService';
 
 /**
  * Tree data provider for the main notes view
@@ -29,6 +30,7 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
     // Optional services for pinned notes and archive
     private pinnedNotesService?: PinnedNotesService;
     private archiveService?: ArchiveService;
+    private bulkOperationsService?: BulkOperationsService;
 
     /**
      * Set the pinned notes service
@@ -44,6 +46,15 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
      */
     setArchiveService(service: ArchiveService): void {
         this.archiveService = service;
+    }
+
+    /**
+     * Set the bulk operations service
+     */
+    setBulkOperationsService(service: BulkOperationsService): void {
+        this.bulkOperationsService = service;
+        // Listen for selection changes and refresh tree
+        service.onDidChangeSelection(() => this.refresh());
     }
 
     refresh(): void {
@@ -417,11 +428,25 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                         .map(note => {
                             const filePath = path.join(element.filePath, note);
                             const item = new NoteItem(note, filePath, vscode.TreeItemCollapsibleState.None, 'note');
-                            item.command = {
-                                command: 'noted.openNote',
-                                title: 'Open Note',
-                                arguments: [filePath]
-                            };
+
+                            // Set command based on whether select mode is active
+                            if (this.bulkOperationsService?.isSelectModeActive()) {
+                                item.command = {
+                                    command: 'noted.toggleNoteSelection',
+                                    title: 'Toggle Selection',
+                                    arguments: [item]
+                                };
+                            } else {
+                                item.command = {
+                                    command: 'noted.openNote',
+                                    title: 'Open Note',
+                                    arguments: [filePath]
+                                };
+                            }
+
+                            // Apply selection state if bulk operations is active
+                            this.applySelectionState(item);
+
                             return item;
                         })
                         .filter(item => this.isNoteFiltered(item.filePath)));
@@ -469,17 +494,31 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
             .filter(note => this.isNoteFiltered(note.path))
             .map(note => {
                 const item = new NoteItem(note.name, note.path, vscode.TreeItemCollapsibleState.None, 'note');
-                item.command = {
-                    command: 'noted.openNote',
-                    title: 'Open Note',
-                    arguments: [note.path]
-                };
+
+                // Set command based on whether select mode is active
+                if (this.bulkOperationsService?.isSelectModeActive()) {
+                    item.command = {
+                        command: 'noted.toggleNoteSelection',
+                        title: 'Toggle Selection',
+                        arguments: [item]
+                    };
+                } else {
+                    item.command = {
+                        command: 'noted.openNote',
+                        title: 'Open Note',
+                        arguments: [note.path]
+                    };
+                }
+
                 item.contextValue = 'note';
 
                 // Mark as pinned if applicable
                 if (this.pinnedNotesService && this.pinnedNotesService.isPinned(note.path)) {
                     item.setPinned(true);
                 }
+
+                // Apply selection state if bulk operations is active
+                this.applySelectionState(item);
 
                 return item;
             });
@@ -504,13 +543,28 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                     vscode.TreeItemCollapsibleState.None,
                     'note'
                 );
-                item.command = {
-                    command: 'noted.openNote',
-                    title: 'Open Note',
-                    arguments: [notePath]
-                };
+
+                // Set command based on whether select mode is active
+                if (this.bulkOperationsService?.isSelectModeActive()) {
+                    item.command = {
+                        command: 'noted.toggleNoteSelection',
+                        title: 'Toggle Selection',
+                        arguments: [item]
+                    };
+                } else {
+                    item.command = {
+                        command: 'noted.openNote',
+                        title: 'Open Note',
+                        arguments: [notePath]
+                    };
+                }
+
                 item.contextValue = 'note';
                 item.setPinned(true);
+
+                // Apply selection state if bulk operations is active
+                this.applySelectionState(item);
+
                 return item;
             });
     }
@@ -534,14 +588,46 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                     vscode.TreeItemCollapsibleState.None,
                     'note'
                 );
-                item.command = {
-                    command: 'noted.openNote',
-                    title: 'Open Note',
-                    arguments: [notePath]
-                };
+
+                // Set command based on whether select mode is active
+                if (this.bulkOperationsService?.isSelectModeActive()) {
+                    item.command = {
+                        command: 'noted.toggleNoteSelection',
+                        title: 'Toggle Selection',
+                        arguments: [item]
+                    };
+                } else {
+                    item.command = {
+                        command: 'noted.openNote',
+                        title: 'Open Note',
+                        arguments: [notePath]
+                    };
+                }
+
                 item.contextValue = 'note';
                 item.description = '📦'; // Archive icon
+
+                // Apply selection state if bulk operations is active
+                this.applySelectionState(item);
+
                 return item;
             });
+    }
+
+    /**
+     * Apply selection state to a note item
+     */
+    private applySelectionState(item: NoteItem): void {
+        if (this.bulkOperationsService && item.type === 'note') {
+            const isSelected = this.bulkOperationsService.isSelected(item.filePath);
+            item.setSelected(isSelected);
+        }
+    }
+
+    /**
+     * Get the bulk operations service (for commands)
+     */
+    getBulkOperationsService(): BulkOperationsService | undefined {
+        return this.bulkOperationsService;
     }
 }

@@ -274,6 +274,40 @@
         "command": "noted.rebuildBacklinks",
         "title": "Noted: Rebuild Backlinks Index",
         "icon": "$(references)"
+      },
+      {
+        "command": "noted.toggleSelectMode",
+        "title": "Noted: Toggle Select Mode",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "noted.toggleNoteSelection",
+        "title": "Noted: Toggle Note Selection"
+      },
+      {
+        "command": "noted.selectAllNotes",
+        "title": "Noted: Select All Notes",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "noted.clearSelection",
+        "title": "Noted: Clear Selection",
+        "icon": "$(close-all)"
+      },
+      {
+        "command": "noted.bulkDelete",
+        "title": "Noted: Delete Selected Notes",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "noted.bulkMove",
+        "title": "Noted: Move Selected Notes",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "noted.bulkArchive",
+        "title": "Noted: Archive Selected Notes",
+        "icon": "$(archive)"
       }
     ],
     "menus": {
@@ -312,6 +346,31 @@
           "command": "noted.clearTagFilters",
           "when": "view == notedView && noted.hasActiveTagFilters",
           "group": "navigation@6"
+        },
+        {
+          "command": "noted.toggleSelectMode",
+          "when": "view == notedView",
+          "group": "navigation@7"
+        },
+        {
+          "command": "noted.bulkDelete",
+          "when": "view == notedView && noted.selectModeActive && noted.hasSelectedNotes",
+          "group": "bulk@1"
+        },
+        {
+          "command": "noted.bulkMove",
+          "when": "view == notedView && noted.selectModeActive && noted.hasSelectedNotes",
+          "group": "bulk@2"
+        },
+        {
+          "command": "noted.bulkArchive",
+          "when": "view == notedView && noted.selectModeActive && noted.hasSelectedNotes",
+          "group": "bulk@3"
+        },
+        {
+          "command": "noted.clearSelection",
+          "when": "view == notedView && noted.selectModeActive && noted.hasSelectedNotes",
+          "group": "bulk@4"
         },
         {
           "command": "noted.showStats",
@@ -374,6 +433,11 @@
           "command": "noted.deleteFolder",
           "when": "view == notedView && viewItem == custom-folder",
           "group": "folder@3"
+        },
+        {
+          "command": "noted.toggleNoteSelection",
+          "when": "view == notedView && viewItem == note && noted.selectModeActive",
+          "group": "selection@1"
         },
         {
           "command": "noted.moveNote",

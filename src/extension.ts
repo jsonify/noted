@@ -16,6 +16,16 @@ import { NoteLinkProvider } from './providers/noteLinkProvider';
 import { BacklinkHoverProvider } from './providers/backlinkHoverProvider';
 import { PinnedNotesService } from './services/pinnedNotesService';
 import { ArchiveService } from './services/archiveService';
+import { BulkOperationsService } from './services/bulkOperationsService';
+import {
+    handleToggleSelectMode,
+    handleToggleNoteSelection,
+    handleSelectAllNotes,
+    handleClearSelection,
+    handleBulkDelete,
+    handleBulkMove,
+    handleBulkArchive
+} from './commands/bulkCommands';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
@@ -103,6 +113,10 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize archive service
     const archiveService = new ArchiveService(notesPath || '');
     notesProvider.setArchiveService(archiveService);
+
+    // Initialize bulk operations service
+    const bulkOperationsService = new BulkOperationsService();
+    notesProvider.setBulkOperationsService(bulkOperationsService);
 
     // Command to open today's note
     let openTodayNote = vscode.commands.registerCommand('noted.openToday', async () => {
@@ -895,6 +909,45 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // ============================================================================
+    // Bulk Operations Commands
+    // ============================================================================
+
+    let toggleSelectMode = vscode.commands.registerCommand('noted.toggleSelectMode', async () => {
+        await handleToggleSelectMode(bulkOperationsService);
+        notesProvider.refresh();
+    });
+
+    let toggleNoteSelection = vscode.commands.registerCommand('noted.toggleNoteSelection', async (item: NoteItem) => {
+        await handleToggleNoteSelection(item, bulkOperationsService);
+        notesProvider.refresh();
+    });
+
+    let selectAllNotes = vscode.commands.registerCommand('noted.selectAllNotes', async () => {
+        await handleSelectAllNotes(notesProvider, bulkOperationsService);
+        notesProvider.refresh();
+    });
+
+    let clearSelection = vscode.commands.registerCommand('noted.clearSelection', async () => {
+        await handleClearSelection(bulkOperationsService);
+        notesProvider.refresh();
+    });
+
+    let bulkDelete = vscode.commands.registerCommand('noted.bulkDelete', async () => {
+        await handleBulkDelete(bulkOperationsService);
+        notesProvider.refresh();
+    });
+
+    let bulkMove = vscode.commands.registerCommand('noted.bulkMove', async () => {
+        await handleBulkMove(bulkOperationsService);
+        notesProvider.refresh();
+    });
+
+    let bulkArchive = vscode.commands.registerCommand('noted.bulkArchive', async () => {
+        await handleBulkArchive(bulkOperationsService, archiveService);
+        notesProvider.refresh();
+    });
+
     context.subscriptions.push(
         openTodayNote, openWithTemplate, insertTimestamp, changeFormat,
         refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
@@ -905,7 +958,8 @@ export function activate(context: vscode.ExtensionContext) {
         createCustomTemplate, editCustomTemplateCmd, deleteCustomTemplateCmd,
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar,
-        togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks
+        togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks,
+        toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive
     );
 }
 

@@ -34,6 +34,7 @@ export class SectionItem extends TreeItem {
 export class NoteItem extends TreeItem {
     public filePath: string;
     public isPinned: boolean = false;
+    public isSelected: boolean = false;
 
     constructor(
         public readonly label: string,
@@ -69,6 +70,29 @@ export class NoteItem extends TreeItem {
         if (this.type === 'note' && pinned) {
             this.iconPath = new vscode.ThemeIcon('pinned');
             this.description = '📌';
+        }
+    }
+
+    /**
+     * Mark this note as selected and update its visual appearance
+     */
+    setSelected(selected: boolean): void {
+        this.isSelected = selected;
+        if (this.type === 'note') {
+            if (selected) {
+                // Add checkmark indicator for selected notes
+                this.iconPath = new vscode.ThemeIcon('check');
+                // Update context value to show selection-specific menu items
+                this.contextValue = 'note-selected';
+            } else {
+                // Restore original icon (unless pinned)
+                if (this.isPinned) {
+                    this.iconPath = new vscode.ThemeIcon('pinned');
+                } else {
+                    this.iconPath = new vscode.ThemeIcon('note');
+                }
+                this.contextValue = 'note';
+            }
         }
     }
 }

@@ -37,11 +37,15 @@ The extension now uses a fully modular architecture with clear separation of con
   - `noteService.ts`: Note operations (search, stats, export)
   - `searchService.ts`: Advanced search with regex and filters (v1.6.0)
   - `templateService.ts`: Template generation
+  - `bulkOperationsService.ts`: Multi-select and bulk operations (v1.10.0)
 - **`src/providers/`**: VS Code tree view providers
   - `treeItems.ts`: Tree item classes
   - `templatesTreeProvider.ts`: Templates view
   - `notesTreeProvider.ts`: Main notes tree with drag-and-drop
 - **`src/commands/`**: Command handlers
+  - `commands.ts`: Main command handlers
+  - `tagCommands.ts`: Tag management commands
+  - `bulkCommands.ts`: Bulk operation commands (v1.10.0)
 - **`src/calendar/`**: Calendar view functionality
   - `calendarHelpers.ts`: Calendar date operations
   - `calendarView.ts`: Webview and HTML generation
@@ -61,8 +65,18 @@ The extension now uses a fully modular architecture with clear separation of con
   - `TreeItem`: Base class extending `vscode.TreeItem`
   - `SectionItem`: Top-level sections (Templates, Recent Notes)
   - `TemplateItem`: Template options in the Templates section
-  - `NoteItem`: Represents years, months, or individual note files
+  - `NoteItem`: Represents years, months, or individual note files with selection support (v1.10.0)
+    - `isSelected` property tracks selection state
+    - `setSelected()` method updates visual appearance (checkmark icon when selected)
+    - `contextValue` changes to 'note-selected' when in select mode
   - `WelcomeItem`/`ActionItem`: For welcome screen (though currently unused as welcome is defined in package.json)
+
+- **BulkOperationsService** (v1.10.0): Manages multi-select state and bulk operations
+  - Tracks selected notes in a `Set<string>` for efficient operations
+  - Manages select mode state (on/off)
+  - Provides methods: `select()`, `deselect()`, `toggleSelection()`, `selectMultiple()`, `clearSelection()`
+  - Fires `onDidChangeSelection` events to refresh tree view
+  - Integrates with VS Code context variables for conditional UI (`noted.selectModeActive`, `noted.hasSelectedNotes`)
 
 ### File Organization Pattern
 
@@ -146,6 +160,15 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.moveNotesFolder` - Renames the notes folder location
 - `noted.setupDefaultFolder`, `setupCustomFolder` - Initial setup commands
 
+**Bulk Operations Commands** (v1.10.0):
+- `noted.toggleSelectMode` - Enter/exit select mode for multi-selecting notes
+- `noted.toggleNoteSelection` - Select/deselect individual note (appears in context menu when in select mode)
+- `noted.selectAllNotes` - Select all visible notes
+- `noted.clearSelection` - Deselect all notes and optionally exit select mode
+- `noted.bulkDelete` - Delete all selected notes with confirmation dialog
+- `noted.bulkMove` - Move all selected notes to a folder with picker
+- `noted.bulkArchive` - Archive all selected notes with confirmation
+
 ## Important Implementation Details
 
 1. **File I/O is asynchronous**: All operations use `fs.promises` API with async/await pattern
@@ -159,6 +182,12 @@ All commands are registered in `activate()` and defined in package.json contribu
 6. **Note names from templates**: Sanitized with `.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '')`
 7. **Tree view welcome**: Defined in package.json `viewsWelcome` with markdown buttons
 8. **Modular structure**: Code split across 14+ modules for maintainability and testability
+9. **Bulk operations** (v1.10.0):
+   - Selection state managed by `BulkOperationsService` using `Set<string>` for efficient lookups
+   - Visual feedback: selected notes show checkmark icon and `contextValue: 'note-selected'`
+   - Context variables control UI visibility: `noted.selectModeActive`, `noted.hasSelectedNotes`
+   - All bulk operations show confirmation dialogs with previews (up to 10 notes listed)
+   - Comprehensive testing: 51 unit tests in `bulkOperationsService.test.ts`
 
 ## VS Code Extension Specifics
 
@@ -167,7 +196,10 @@ All commands are registered in `activate()` and defined in package.json contribu
 - **Main entry**: `./out/extension.js` (compiled from TypeScript)
 - **Activity bar icon**: Uses codicon `$(notebook)`
 - **View ID**: `notedView` in container `notedExplorer`
-- **Context values**: Notes have `contextValue: 'note'` for context menu visibility
+- **Context values**:
+  - Notes have `contextValue: 'note'` for context menu visibility
+  - Selected notes have `contextValue: 'note-selected'` (v1.10.0)
+  - Context variables: `noted.selectModeActive`, `noted.hasSelectedNotes`, `noted.hasActiveTagFilters`
 
 ## TypeScript Configuration
 

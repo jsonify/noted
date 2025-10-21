@@ -43,11 +43,26 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 #### UX Improvements
 - [x] Keyboard shortcuts for more commands (completed - 7 new shortcuts added)
 - [x] Drag-and-drop to move notes between folders
-- [ ] Bulk operations (move/delete multiple notes)
+- [x] Bulk operations (move/delete multiple notes) - completed v1.10.0
 - [ ] Undo functionality for destructive operations
-- [ ] Confirmation dialogs with preview
+- [x] Confirmation dialogs with preview (completed for bulk operations)
 
 ## Completed Features
+
+### Bulk Operations (v1.10.0)
+- **Select Mode**: Toggle selection mode to select multiple notes at once
+- **Visual Selection**: Selected notes show checkmark icon for clear feedback
+- **Bulk Delete**: Delete multiple notes with confirmation dialog showing affected notes
+- **Bulk Move**: Move multiple notes to a folder with picker and preview
+- **Bulk Archive**: Archive multiple selected notes with confirmation
+- **Selection Management**:
+  - Toggle select mode with toolbar button
+  - Click notes to select/deselect in select mode
+  - Clear all selections with one click
+  - Selection count displayed in status
+- **Context-Aware UI**: Bulk operation buttons only appear when notes are selected
+- **Safety Features**: All destructive operations show confirmation dialogs with note previews
+- **Comprehensive Testing**: 51 unit tests covering all bulk operation scenarios
 
 ### Enhanced Keyboard Shortcuts (v1.10.0)
 - Added 7 new keyboard shortcuts for frequently used commands
