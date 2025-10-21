@@ -369,31 +369,8 @@ function getGraphHtml(graphData: any, stats: any): string {
         let currentFilter = 'all';
         let searchQuery = '';
 
-        // Debug logging
-        console.log('[Graph View] Loaded data:', {
-            totalNodes: allNodes.length,
-            totalEdges: allEdges.length,
-            orphanNodes: allNodes.filter(n => n.isOrphan).length
-        });
-        console.log('[Graph View] Sample nodes:', allNodes.slice(0, 3));
-
-        // Check if vis is loaded
-        if (typeof vis === 'undefined') {
-            console.error('[Graph View] ERROR: vis.js library not loaded!');
-        } else {
-            console.log('[Graph View] vis.js library loaded successfully');
-        }
-
         // Create the network
         const container = document.getElementById('graph');
-        console.log('[Graph View] Container element:', container);
-        console.log('[Graph View] Container dimensions:', {
-            width: container.offsetWidth,
-            height: container.offsetHeight,
-            clientWidth: container.clientWidth,
-            clientHeight: container.clientHeight
-        });
-
         let network = null;
         let currentLayout = 'force';
 
@@ -403,55 +380,13 @@ function getGraphHtml(graphData: any, stats: any): string {
         function initGraph() {
             const { nodes, edges } = getFilteredData();
 
-            console.log('[Graph View] Initializing graph with:', {
-                nodes: nodes.length,
-                edges: edges.length,
-                filter: currentFilter,
-                layout: currentLayout
-            });
-
             const data = {
                 nodes: nodes,
                 edges: edges
             };
 
             const options = getLayoutOptions(currentLayout);
-            console.log('[Graph View] Physics enabled:', options.physics.enabled);
             network = new vis.Network(container, data, options);
-
-            // Check if canvas was created
-            setTimeout(() => {
-                const canvas = container.querySelector('canvas');
-                if (canvas) {
-                    console.log('[Graph View] Canvas element found:', canvas);
-                    console.log('[Graph View] Canvas dimensions:', {
-                        width: canvas.width,
-                        height: canvas.height,
-                        styleWidth: canvas.style.width,
-                        styleHeight: canvas.style.height
-                    });
-                    console.log('[Graph View] Canvas position:', {
-                        offsetLeft: canvas.offsetLeft,
-                        offsetTop: canvas.offsetTop,
-                        position: window.getComputedStyle(canvas).position,
-                        zIndex: window.getComputedStyle(canvas).zIndex
-                    });
-                } else {
-                    console.error('[Graph View] ERROR: No canvas element found!');
-                }
-
-                // Count visible nodes
-                const nodeCount = network.body.nodes ? Object.keys(network.body.nodes).length : 0;
-                console.log('[Graph View] Network body has', nodeCount, 'nodes');
-
-                // Check if message is covering graph
-                const noLinksMsg = document.getElementById('noLinksMessage');
-                if (noLinksMsg) {
-                    const msgStyle = window.getComputedStyle(noLinksMsg);
-                    console.log('[Graph View] No Links Message display:', msgStyle.display);
-                    console.log('[Graph View] No Links Message class:', noLinksMsg.className);
-                }
-            }, 100);
 
 
             // Event listeners
@@ -477,28 +412,7 @@ function getGraphHtml(graphData: any, stats: any): string {
             });
 
             network.on('stabilizationIterationsDone', function() {
-                console.log('[Graph View] Stabilization complete');
-
-                // Log node positions
-                const positions = network.getPositions();
-                const posArray = Object.values(positions);
-                if (posArray.length > 0) {
-                    console.log('[Graph View] Sample node positions:', posArray.slice(0, 3));
-                    console.log('[Graph View] Position range:', {
-                        minX: Math.min(...posArray.map(p => p.x)),
-                        maxX: Math.max(...posArray.map(p => p.x)),
-                        minY: Math.min(...posArray.map(p => p.y)),
-                        maxY: Math.max(...posArray.map(p => p.y))
-                    });
-                }
-
-                // Get viewport info before fit
-                const scaleBefore = network.getScale();
-                const viewPosBefore = network.getViewPosition();
-                console.log('[Graph View] Before fit - scale:', scaleBefore, 'position:', viewPosBefore);
-
                 network.setOptions({ physics: false });
-
                 // Fit view after stabilization completes
                 network.fit({
                     animation: {
@@ -506,20 +420,10 @@ function getGraphHtml(graphData: any, stats: any): string {
                         easingFunction: 'easeInOutQuad'
                     }
                 });
-
-                // Check viewport after fit
-                setTimeout(() => {
-                    const scaleAfter = network.getScale();
-                    const viewPosAfter = network.getViewPosition();
-                    console.log('[Graph View] After fit - scale:', scaleAfter, 'position:', viewPosAfter);
-                }, 600);
-
-                console.log('[Graph View] Called fit() after stabilization');
             });
 
             // Also fit immediately for initial visibility
             setTimeout(() => {
-                console.log('[Graph View] Calling initial fit()');
                 network.fit({
                     animation: false
                 });
@@ -701,15 +605,8 @@ function getGraphHtml(graphData: any, stats: any): string {
             document.getElementById('tooltip').style.display = 'none';
         }
 
-        // Debug: Log ALL click events on the document
-        document.addEventListener('click', (e) => {
-            console.log('[Graph View] Click detected on:', e.target);
-            console.log('[Graph View] Click position:', e.clientX, e.clientY);
-        });
-
         // Event listeners
         document.getElementById('searchBox').addEventListener('input', (e) => {
-            console.log('[Graph View] Search input event fired');
             searchQuery = e.target.value;
             updateGraph();
         });
