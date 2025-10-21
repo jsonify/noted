@@ -37,7 +37,14 @@ The extension now uses a fully modular architecture with clear separation of con
   - `noteService.ts`: Note operations (search, stats, export)
   - `searchService.ts`: Advanced search with regex and filters (v1.6.0)
   - `templateService.ts`: Template generation
+  - `tagService.ts`: Tag indexing and querying
+  - `tagCompletionProvider.ts`: Tag autocomplete integration
+  - `pinnedNotesService.ts`: Pinned notes management (v1.5.0)
+  - `archiveService.ts`: Archive functionality (v1.5.0)
+  - `linkService.ts`: Wiki-style links and backlinks (v1.5.0)
   - `bulkOperationsService.ts`: Multi-select and bulk operations (v1.10.0)
+  - `undoService.ts`: Undo/redo functionality (v1.13.0)
+  - `undoHelpers.ts`: Undo operation helpers (v1.13.0)
 - **`src/providers/`**: VS Code tree view providers
   - `treeItems.ts`: Tree item classes
   - `templatesTreeProvider.ts`: Templates view
@@ -168,6 +175,15 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.bulkDelete` - Delete all selected notes with confirmation dialog
 - `noted.bulkMove` - Move all selected notes to a folder with picker
 - `noted.bulkArchive` - Archive all selected notes with confirmation
+
+**Markdown Preview Commands** (v1.12.0):
+- `noted.toggleMarkdownPreview` - Toggle markdown preview for .md files (Cmd+K Cmd+V)
+
+**Undo/Redo Commands** (v1.13.0):
+- `noted.undo` - Undo last destructive operation (Cmd+Alt+Z)
+- `noted.redo` - Redo last undone operation (Cmd+Shift+Alt+Z)
+- `noted.showUndoHistory` - Show complete undo history with operation details
+- `noted.clearUndoHistory` - Clear all stored undo history
 
 ## Important Implementation Details
 
