@@ -16,14 +16,14 @@ Four built-in note templates accessible from the Templates view:
 
 All templates automatically include a timestamp header with creation date and time.
 
-#### Custom Templates (NEW v1.4.0)
+#### Custom Templates (v1.4.0)
 - **Create Custom Template**: Create your own reusable note templates
 - **Edit Template**: Modify existing custom templates
 - **Delete Template**: Remove templates you no longer need
 - **Duplicate Template**: Copy templates as a starting point for new ones
 - **Templates Folder**: Access and organize all custom templates in one place
 
-#### Template Variables (NEW v1.4.0)
+#### Template Variables (v1.4.0)
 Templates support powerful variable substitution with 10 built-in placeholders:
 - `{filename}`: The name of the note file
 - `{date}`: Current date (Sunday, October 19, 2025)
@@ -43,7 +43,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 
 ## Organization Features
 
-### Custom Folders (NEW)
+### Custom Folders
 - **Create Folder**: Create custom organizational folders at root level
 - **Rename Folder**: Rename custom folders (date folders are protected)
 - **Delete Folder**: Delete custom folders with confirmation
@@ -51,7 +51,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 
 ### Note Management
 - **Move Note**: Move notes between any folder (date or custom) with folder picker
-- **Drag-and-Drop** (NEW): Drag notes to move them between folders
+- **Drag-and-Drop**: Drag notes to move them between folders
   - Drag notes from any location (Recent Notes, month folders, custom folders)
   - Drop on month folders, custom folders, or other notes (moves to parent folder)
   - Multi-select support: Drag multiple notes at once
@@ -62,9 +62,24 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Delete Note**: Delete notes with confirmation
 - **Copy Path**: Copy note file path to clipboard
 
+### Bulk Operations (v1.10.0-1.11.0)
+- **Select Mode**: Toggle selection mode to select multiple notes at once
+- **Visual Selection**: Selected notes show checkmark icon for clear feedback
+- **Multi-Select**: Click notes to select/deselect in select mode
+- **Bulk Delete**: Delete multiple notes with confirmation dialog showing affected notes
+- **Bulk Move**: Move multiple notes to a folder with picker and preview
+- **Bulk Archive**: Archive multiple selected notes with confirmation
+- **Selection Management**:
+  - Toggle select mode with toolbar button
+  - Select all notes with one click
+  - Clear all selections with one click
+  - Selection count displayed in status
+- **Context-Aware UI**: Bulk operation buttons only appear when notes are selected
+- **Safety Features**: All destructive operations show confirmation dialogs with note previews
+
 ## Search & Discovery
 
-### Tags (NEW)
+### Tags
 - **Tag Your Notes**: Add tags anywhere in notes using `#tagname` syntax - works inline throughout your entire note
 - **Tags View**: Dedicated sidebar showing all tags with usage counts
 - **Filter by Tag**: Click any tag to instantly filter the My Notes view, or use the Filter command for multi-tag selection
@@ -75,7 +90,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Tag Format**: Tags support alphanumeric characters, hyphens, and underscores (e.g., `#bug-fix`, `#work_notes`)
 - **Inline Support**: Tags can appear anywhere in your notes - in paragraphs, lists, headings, or anywhere else
 
-### Calendar View (NEW)
+### Calendar View
 - **Show Calendar View** (`Cmd+Shift+C` or `Ctrl+Shift+C`): Visual monthly calendar for navigating daily notes
 - **Interactive Date Selection**: Click any date to see all notes created on that day
 - **Notes List Display**: Shows all notes for selected date below calendar
@@ -107,14 +122,14 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - Dedicated "Recent Notes" section showing 10 most recently modified notes
 - Quick access from tree view
 
-### Wiki-Style Note Linking (NEW v1.5.0)
+### Wiki-Style Note Linking (v1.5.0)
 - **Link Syntax**: Create links between notes using `[[note-name]]` syntax
 - **Clickable Links**: Links are automatically detected and clickable in the editor
 - **Link Resolution**: Supports exact matches, partial matches, and fuzzy matching
 - **Cross-Navigation**: Click any link to open the target note
 - **Document Link Provider**: VS Code integration for seamless navigation
 
-### Backlinks System (NEW v1.5.0)
+### Backlinks System (v1.5.0)
 - **Automatic Detection**: All links to current note are automatically tracked
 - **Hover Information**: Hover over note header to see all backlinks
 - **Context Display**: Each backlink shows the source note and surrounding context
@@ -122,7 +137,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Async Indexing**: Background index building for optimal performance
 - **Rebuild Index**: Command to manually refresh the backlinks index
 
-### Pinned/Favorite Notes (NEW v1.5.0)
+### Pinned/Favorite Notes (v1.5.0)
 - **Pin Notes**: Mark frequently accessed notes as favorites
 - **Dedicated Section**: "Pinned Notes" section at top of tree view
 - **Visual Indicators**: Pinned notes show pin icon (📌) and special styling
@@ -130,7 +145,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Context Menu**: Right-click any note to pin or unpin
 - **Auto-Cleanup**: Automatically removes pins for deleted notes
 
-### Archive Functionality (NEW v1.5.0)
+### Archive Functionality (v1.5.0)
 - **Archive Notes**: Move old or completed notes to archive
 - **Hidden Storage**: Archived notes stored in `.archive` folder (excluded from main view)
 - **Archive Section**: Dedicated "Archive" section in tree view
@@ -138,6 +153,23 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Unarchive**: Restore archived notes to active notes
 - **Bulk Archive**: Archive all notes older than specified days
 - **Safe Operations**: Confirmation dialogs for all destructive operations
+
+## Editor Features
+
+### Markdown Preview (v1.12.0)
+- **Toggle Markdown Preview** (`Cmd+K Cmd+V` or `Ctrl+K Ctrl+V`): Preview markdown files with live rendering
+- **Editor Title Button**: Click preview icon in editor toolbar for .md files
+- **Side-by-Side View**: View source and preview simultaneously
+- **Auto-Update**: Preview updates automatically as you type
+
+### Undo/Redo System (v1.13.0)
+- **Undo Last Operation** (`Cmd+Alt+Z` or `Ctrl+Alt+Z`): Undo destructive operations
+- **Redo Last Operation** (`Cmd+Shift+Alt+Z` or `Ctrl+Shift+Alt+Z`): Redo previously undone operations
+- **Show Undo History**: View complete history of undoable operations
+- **Clear Undo History**: Clear all stored undo history
+- **Supported Operations**: Delete, rename, move, archive, bulk delete, bulk move, bulk archive
+- **Operation Details**: Each history entry shows operation type, affected files, and timestamp
+- **Smart Restore**: Automatically restores file contents and locations
 
 ## Statistics & Export
 
@@ -169,6 +201,11 @@ All keyboard shortcuts support both Mac (`Cmd`) and Windows/Linux (`Ctrl`) modif
 
 ### Advanced
 - **`Cmd+K Cmd+N` / `Ctrl+K Ctrl+N`**: Open with Template (chord shortcut)
+- **`Cmd+K Cmd+V` / `Ctrl+K Ctrl+V`**: Toggle Markdown Preview (chord shortcut)
+
+### Undo/Redo
+- **`Cmd+Alt+Z` / `Ctrl+Alt+Z`**: Undo Last Operation
+- **`Cmd+Shift+Alt+Z` / `Ctrl+Shift+Alt+Z`**: Redo Last Operation
 
 > **Note**: Chord shortcuts like `Cmd+K Cmd+T` require pressing the first combination (`Cmd+K`), releasing, then pressing the second (`Cmd+T`).
 
@@ -191,22 +228,22 @@ All keyboard shortcuts support both Mac (`Cmd`) and Windows/Linux (`Ctrl`) modif
 ### Hierarchical Organization
 - **Templates**: Quick access to note templates
 - **My Notes**: Main notes organization
-  - **Pinned Notes** (NEW v1.5.0): Quick access to favorited notes
+  - **Pinned Notes** (v1.5.0): Quick access to favorited notes
   - **Recent Notes**: Quick access to recently modified notes
-  - **Archive** (NEW v1.5.0): Archived notes section
+  - **Archive** (v1.5.0): Archived notes section
   - **Custom Folders**: User-created organizational folders (alphabetically sorted)
   - **Year Folders**: Automatic date-based organization (reverse chronological)
     - **Month Folders**: Within each year, organized by month
-      - **Note Files**: Individual notes within months
+      - **Note Files**: Individual notes within months (with selection support in bulk mode)
 - **Tags**: All tags with usage counts, sortable and filterable
 
 ### Icons
 - Custom folders: Opened folder icon
 - Year folders: Standard folder icon
 - Month folders: Calendar icon
-- Notes: Note icon
-- **Pinned Notes** (NEW v1.5.0): Pin icon (📌)
-- **Archived Notes** (NEW v1.5.0): Archive icon (📦)
+- Notes: Note icon (checkmark when selected in bulk mode)
+- **Pinned Notes** (v1.5.0): Pin icon (📌)
+- **Archived Notes** (v1.5.0): Archive icon (📦)
 - Tags: Tag icon with count badge
 - Pinned Notes section: Pin icon
 - Archive section: Archive icon
@@ -215,14 +252,15 @@ All keyboard shortcuts support both Mac (`Cmd`) and Windows/Linux (`Ctrl`) modif
 ## Context Menus
 
 ### On Notes
+- Toggle Note Selection (when in select mode)
 - Move Note to Folder
 - Delete Note
 - Rename Note
 - Duplicate Note
 - Copy Path
 - Show in System Explorer
-- **Pin/Unpin Note** (NEW v1.5.0)
-- **Archive Note** (NEW v1.5.0)
+- **Pin/Unpin Note** (v1.5.0)
+- **Archive Note** (v1.5.0)
 
 ### On Custom Folders
 - Rename Folder
@@ -239,8 +277,15 @@ All keyboard shortcuts support both Mac (`Cmd`) and Windows/Linux (`Ctrl`) modif
 - Open Today's Note
 - Create Folder
 - Search Notes
+- Quick Switcher
 - Refresh
 - Show Calendar View
+- Clear Tag Filters (when active)
+- Toggle Select Mode
+- Bulk Delete (when notes selected)
+- Bulk Move (when notes selected)
+- Bulk Archive (when notes selected)
+- Clear Selection (when notes selected)
 - Show Statistics
 - Export Notes
 
@@ -256,6 +301,12 @@ All keyboard shortcuts support both Mac (`Cmd`) and Windows/Linux (`Ctrl`) modif
   - `src/constants.ts` - Shared constants and templates
   - `src/utils/` - Validation and helper functions
   - `src/services/` - Business logic and file operations
+    - Core services: configService, fileSystemService, noteService, templateService
+    - Search: searchService
+    - Tags: tagService, tagCompletionProvider
+    - Organization: pinnedNotesService, archiveService
+    - Linking: linkService (wiki-style links and backlinks)
+    - Operations: bulkOperationsService, undoService, undoHelpers
   - `src/providers/` - VS Code tree view providers
   - `src/commands/` - Command handlers
   - `src/calendar/` - Calendar view functionality (helpers and webview)
@@ -321,6 +372,27 @@ pnpm run test
 ```
 
 ## Recent Updates
+
+### Undo/Redo System (v1.13.0)
+- **Comprehensive Undo/Redo**: Full undo/redo support for all destructive operations
+- **Operation Tracking**: Automatic tracking of delete, rename, move, archive, and bulk operations
+- **History Management**: View complete history with operation details and timestamps
+- **Smart Restore**: Intelligently restores files with original content and locations
+- **Keyboard Shortcuts**: Quick access via Cmd/Ctrl+Alt+Z (undo) and Cmd/Ctrl+Shift+Alt+Z (redo)
+- **Clear History**: Option to clear undo history when needed
+
+### Markdown Preview (v1.12.0)
+- **Live Preview**: Real-time markdown rendering for .md files
+- **Editor Integration**: Toggle preview from editor toolbar or keyboard shortcut
+- **Side-by-Side View**: View source and rendered markdown simultaneously
+- **Auto-Update**: Preview automatically updates as you type
+
+### Bulk Operations (v1.10.0-1.11.0)
+- **Multi-Select Mode**: Select multiple notes for batch operations
+- **Visual Feedback**: Selected notes show checkmark icon
+- **Bulk Actions**: Delete, move, or archive multiple notes at once
+- **Safety Confirmations**: All operations show confirmation dialogs with previews
+- **Comprehensive Testing**: 51 unit tests covering all bulk operation scenarios
 
 ### Note Tagging System (Completed - v1.4.0)
 - **Inline Tag Support**: Add tags anywhere in note content using `#tagname` syntax

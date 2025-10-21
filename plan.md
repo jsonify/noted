@@ -36,20 +36,41 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 - [x] Full-text search with better performance (async) (completed - async search with parallel processing)
 
 #### Editor Enhancements
-- [ ] Markdown preview for .md files
+- [x] Markdown preview for .md files - completed v1.12.0
 - [ ] Syntax highlighting for note content
 - [x] Auto-completion for tags (completed - tag autocomplete with # trigger)
 
 #### UX Improvements
 - [x] Keyboard shortcuts for more commands (completed - 7 new shortcuts added)
 - [x] Drag-and-drop to move notes between folders
-- [x] Bulk operations (move/delete multiple notes) - completed v1.10.0
-- [ ] Undo functionality for destructive operations
+- [x] Bulk operations (move/delete multiple notes) - completed v1.10.0-1.11.0
+- [x] Undo/redo functionality for destructive operations - completed v1.13.0
 - [x] Confirmation dialogs with preview (completed for bulk operations)
 
 ## Completed Features
 
-### Bulk Operations (v1.10.0)
+### Undo/Redo System (v1.13.0)
+- **Comprehensive Operation Tracking**: Automatically tracks all destructive operations
+- **Supported Operations**: Delete, rename, move, archive, bulk delete, bulk move, bulk archive
+- **Smart Restore**: Restores files with original content and location information
+- **History Management**: View complete history with operation details and timestamps
+- **Keyboard Shortcuts**:
+  - Undo: `Cmd+Alt+Z` / `Ctrl+Alt+Z`
+  - Redo: `Cmd+Shift+Alt+Z` / `Ctrl+Shift+Alt+Z`
+- **History Commands**: Show history and clear history options
+- **Persistent Storage**: Undo history persists across VS Code sessions
+- **Operation Details**: Each entry shows type, affected files, and timestamp
+- **Services Architecture**: Dedicated undoService.ts and undoHelpers.ts modules
+
+### Markdown Preview (v1.12.0)
+- **Live Preview**: Real-time markdown rendering for .md files
+- **Editor Integration**: Toggle button in editor title bar for markdown files
+- **Keyboard Shortcut**: `Cmd+K Cmd+V` / `Ctrl+K Ctrl+V`
+- **Side-by-Side View**: View source and preview simultaneously
+- **Auto-Update**: Preview automatically refreshes as you type
+- **VS Code Integration**: Uses native VS Code markdown preview capabilities
+
+### Bulk Operations (v1.10.0-1.11.0)
 - **Select Mode**: Toggle selection mode to select multiple notes at once
 - **Visual Selection**: Selected notes show checkmark icon for clear feedback
 - **Bulk Delete**: Delete multiple notes with confirmation dialog showing affected notes
@@ -186,17 +207,27 @@ See [notes.md](./notes.md) for a complete list of all implemented features.
   - validators.ts - Folder name validation
   - dateHelpers.ts - Date formatting utilities
   - folderHelpers.ts - Recursive folder operations
-- **src/services/** (4 files, ~400 lines)
+- **src/services/** (13 files, ~1400 lines)
   - configService.ts - Configuration management
   - fileSystemService.ts - File operation wrappers
   - noteService.ts - Note operations (search, stats, export)
   - templateService.ts - Template generation
+  - searchService.ts - Advanced search with regex and filters (v1.6.0)
+  - tagService.ts - Tag indexing and querying
+  - tagCompletionProvider.ts - Tag autocomplete integration
+  - pinnedNotesService.ts - Pinned notes management (v1.5.0)
+  - archiveService.ts - Archive functionality (v1.5.0)
+  - linkService.ts - Wiki-style links and backlinks (v1.5.0)
+  - bulkOperationsService.ts - Multi-select and bulk operations (v1.10.0)
+  - undoService.ts - Undo/redo functionality (v1.13.0)
+  - undoHelpers.ts - Undo operation helpers (v1.13.0)
 - **src/providers/** (3 files, ~350 lines)
   - treeItems.ts - Tree item classes
   - templatesTreeProvider.ts - Templates view
   - notesTreeProvider.ts - Main notes tree with drag-and-drop
-- **src/commands/** (1 file, ~700 lines)
-  - commands.ts - All command handlers
+- **src/commands/** (2 files, ~900 lines)
+  - commands.ts - Main command handlers
+  - bulkCommands.ts - Bulk operation commands (v1.10.0)
 - **src/calendar/** (2 files, ~560 lines)
   - calendarHelpers.ts - Calendar date operations
   - calendarView.ts - Calendar webview and HTML generation
