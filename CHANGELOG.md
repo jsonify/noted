@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.10.0](https://github.com/jsonify/noted/compare/v1.9.2...v1.10.0) (2025-10-21)
+
+
+### Features
+
+* Add Workflow Health Check documentation ([d40dab8](https://github.com/jsonify/noted/commit/d40dab872d3f873b0f2538c4e87371d9ce979473))
+
 ### [1.9.2](https://github.com/jsonify/noted/compare/v1.9.1...v1.9.2) (2025-10-21)
 
 
