@@ -27,6 +27,22 @@ import {
     handleBulkMove,
     handleBulkArchive
 } from './commands/bulkCommands';
+import { UndoService } from './services/undoService';
+import {
+    trackDeleteNote,
+    trackDeleteFolder,
+    trackRenameNote,
+    trackRenameFolder,
+    trackMoveNote,
+    trackArchiveNote,
+    trackTagOperation
+} from './services/undoHelpers';
+import {
+    handleUndo,
+    handleRedo,
+    handleShowUndoHistory,
+    handleClearUndoHistory
+} from './commands/undoCommands';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
@@ -118,6 +134,9 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize bulk operations service
     const bulkOperationsService = new BulkOperationsService();
     notesProvider.setBulkOperationsService(bulkOperationsService);
+
+    // Initialize undo service for tracking destructive operations
+    const undoService = new UndoService();
 
     // Initialize markdown preview manager
     const markdownPreviewManager = new MarkdownPreviewManager(context);
@@ -216,9 +235,12 @@ export function activate(context: vscode.ExtensionContext) {
         );
         if (answer === 'Delete') {
             try {
+                // Track operation for undo BEFORE deleting
+                await trackDeleteNote(undoService, item.filePath);
+
                 await fsp.unlink(item.filePath);
                 notesProvider.refresh();
-                vscode.window.showInformationMessage(`Deleted ${item.label}`);
+                vscode.window.showInformationMessage(`Deleted ${item.label} (Undo available)`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to delete note: ${error instanceof Error ? error.message : String(error)}`);
             }
@@ -235,9 +257,13 @@ export function activate(context: vscode.ExtensionContext) {
             try {
                 const dir = path.dirname(item.filePath);
                 const newPath = path.join(dir, newName);
+
+                // Track operation for undo BEFORE renaming
+                await trackRenameNote(undoService, item.filePath, newPath);
+
                 await fsp.rename(item.filePath, newPath);
                 notesProvider.refresh();
-                vscode.window.showInformationMessage(`Renamed to ${newName}`);
+                vscode.window.showInformationMessage(`Renamed to ${newName} (Undo available)`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to rename note: ${error instanceof Error ? error.message : String(error)}`);
             }
@@ -276,9 +302,16 @@ export function activate(context: vscode.ExtensionContext) {
         );
         if (answer === 'Archive') {
             try {
-                await archiveService.archiveNote(item.filePath);
-                notesProvider.refresh();
-                vscode.window.showInformationMessage(`Archived ${item.label}`);
+                const destinationPath = await archiveService.archiveNote(item.filePath);
+
+                if (destinationPath) {
+                    // Track operation for undo AFTER archiving (since we need the destination path)
+                    await trackArchiveNote(undoService, item.filePath, destinationPath);
+                } else {
+                    console.error('[NOTED] archiveService.archiveNote failed to return a destination path for', item.filePath);
+                    vscode.window.showErrorMessage(`Failed to archive ${item.label}`);
+                    return;
+                }
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to archive note: ${error instanceof Error ? error.message : String(error)}`);
             }
@@ -288,9 +321,13 @@ export function activate(context: vscode.ExtensionContext) {
     // Command to unarchive note
     let unarchiveNote = vscode.commands.registerCommand('noted.unarchiveNote', async (item: NoteItem) => {
         try {
-            await archiveService.unarchiveNote(item.filePath);
+            const destinationPath = await archiveService.unarchiveNote(item.filePath);
+
+            // Track operation for undo (unarchive is also undoable - it archives again)
+            await trackArchiveNote(undoService, destinationPath, item.filePath);
+
             notesProvider.refresh();
-            vscode.window.showInformationMessage(`Unarchived ${item.label}`);
+            vscode.window.showInformationMessage(`Unarchived ${item.label} (Undo available)`);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to unarchive note: ${error instanceof Error ? error.message : String(error)}`);
         }
@@ -674,9 +711,12 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             } catch {
                 // File doesn't exist, proceed with move
+                // Track operation for undo BEFORE moving
+                await trackMoveNote(undoService, item.filePath, newPath);
+
                 await fsp.rename(item.filePath, newPath);
                 notesProvider.refresh();
-                vscode.window.showInformationMessage(`Moved to ${selected.folder.name}`);
+                vscode.window.showInformationMessage(`Moved to ${selected.folder.name} (Undo available)`);
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to move note: ${error instanceof Error ? error.message : String(error)}`);
@@ -721,9 +761,12 @@ export function activate(context: vscode.ExtensionContext) {
         } catch {
             // Folder doesn't exist, proceed with rename
             try {
+                // Track operation for undo BEFORE renaming
+                await trackRenameFolder(undoService, item.filePath, newPath);
+
                 await fsp.rename(item.filePath, newPath);
                 notesProvider.refresh();
-                vscode.window.showInformationMessage(`Renamed to ${newName}`);
+                vscode.window.showInformationMessage(`Renamed to ${newName} (Undo available)`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to rename folder: ${error instanceof Error ? error.message : String(error)}`);
             }
@@ -749,9 +792,12 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         try {
+            // Track operation for undo BEFORE deleting
+            await trackDeleteFolder(undoService, item.filePath);
+
             await fsp.rm(item.filePath, { recursive: true, force: true });
             notesProvider.refresh();
-            vscode.window.showInformationMessage(`Deleted folder: ${item.label}`);
+            vscode.window.showInformationMessage(`Deleted folder: ${item.label} (Undo available)`);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to delete folder: ${error instanceof Error ? error.message : String(error)}`);
         }
@@ -939,23 +985,43 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     let bulkDelete = vscode.commands.registerCommand('noted.bulkDelete', async () => {
-        await handleBulkDelete(bulkOperationsService);
+        await handleBulkDelete(bulkOperationsService, undoService);
         notesProvider.refresh();
     });
 
     let bulkMove = vscode.commands.registerCommand('noted.bulkMove', async () => {
-        await handleBulkMove(bulkOperationsService);
+        await handleBulkMove(bulkOperationsService, undoService);
         notesProvider.refresh();
     });
 
     let bulkArchive = vscode.commands.registerCommand('noted.bulkArchive', async () => {
-        await handleBulkArchive(bulkOperationsService, archiveService);
+        await handleBulkArchive(bulkOperationsService, archiveService, undoService);
         notesProvider.refresh();
     });
 
     // Command to toggle markdown preview
     let toggleMarkdownPreview = vscode.commands.registerCommand('noted.toggleMarkdownPreview', async () => {
         await markdownPreviewManager.togglePreview();
+    });
+
+    // ============================================================================
+    // Undo/Redo Commands
+    // ============================================================================
+
+    let undoCommand = vscode.commands.registerCommand('noted.undo', async () => {
+        await handleUndo(undoService, () => notesProvider.refresh());
+    });
+
+    let redoCommand = vscode.commands.registerCommand('noted.redo', async () => {
+        await handleRedo(undoService, () => notesProvider.refresh());
+    });
+
+    let showUndoHistory = vscode.commands.registerCommand('noted.showUndoHistory', async () => {
+        await handleShowUndoHistory(undoService);
+    });
+
+    let clearUndoHistory = vscode.commands.registerCommand('noted.clearUndoHistory', async () => {
+        await handleClearUndoHistory(undoService);
     });
 
     context.subscriptions.push(
@@ -970,7 +1036,8 @@ export function activate(context: vscode.ExtensionContext) {
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive,
-        toggleMarkdownPreview
+        toggleMarkdownPreview,
+        undoCommand, redoCommand, showUndoHistory, clearUndoHistory
     );
 }
 

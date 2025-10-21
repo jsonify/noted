@@ -12,6 +12,12 @@ import { deleteFile } from '../services/fileSystemService';
 import { ArchiveService } from '../services/archiveService';
 import { getAllFolders } from '../utils/folderHelpers';
 import { getNotesPath } from '../services/configService';
+import { UndoService } from '../services/undoService';
+import {
+    trackBulkDelete,
+    trackBulkMove,
+    trackBulkArchive
+} from '../services/undoHelpers';
 
 /**
  * Toggle select mode on/off
@@ -86,7 +92,8 @@ export async function handleClearSelection(
  * Delete all selected notes with confirmation
  */
 export async function handleBulkDelete(
-    bulkService: BulkOperationsService
+    bulkService: BulkOperationsService,
+    undoService?: UndoService
 ) {
     const selectedNotes = bulkService.getSelectedNotes();
 
@@ -111,6 +118,11 @@ export async function handleBulkDelete(
         return;
     }
 
+    // Track operation for undo BEFORE deleting
+    if (undoService) {
+        await trackBulkDelete(undoService, selectedNotes);
+    }
+
     // Delete each note
     let successCount = 0;
     let errorCount = 0;
@@ -130,7 +142,8 @@ export async function handleBulkDelete(
     bulkService.exitSelectMode();
 
     if (errorCount === 0) {
-        vscode.window.showInformationMessage(`Deleted ${successCount} note${successCount > 1 ? 's' : ''}`);
+        const undoMsg = undoService ? ' (Undo available)' : '';
+        vscode.window.showInformationMessage(`Deleted ${successCount} note${successCount > 1 ? 's' : ''}${undoMsg}`);
     } else {
         vscode.window.showWarningMessage(`Deleted ${successCount} note${successCount > 1 ? 's' : ''}, ${errorCount} failed`);
     }
@@ -140,7 +153,8 @@ export async function handleBulkDelete(
  * Move all selected notes to a folder
  */
 export async function handleBulkMove(
-    bulkService: BulkOperationsService
+    bulkService: BulkOperationsService,
+    undoService?: UndoService
 ) {
     const selectedNotes = bulkService.getSelectedNotes();
 
@@ -196,10 +210,32 @@ export async function handleBulkMove(
         return;
     }
 
+    // Collect moves that will succeed for undo tracking
+    const moves: Array<{ oldPath: string; newPath: string }> = [];
+    const fs = require('fs').promises;
+
+    // Pre-check which files can be moved
+    for (const notePath of selectedNotes) {
+        const fileName = path.basename(notePath);
+        const targetPath = path.join(targetFolder, fileName);
+
+        try {
+            await fs.access(targetPath);
+            // File exists, will skip
+        } catch (err){
+            // File doesn't exist, can proceed
+            moves.push({ oldPath: notePath, newPath: targetPath });
+        }
+    }
+
+    // Track operation for undo BEFORE moving
+    if (undoService && moves.length > 0) {
+        await trackBulkMove(undoService, moves);
+    }
+
     // Move each note
     let successCount = 0;
     let errorCount = 0;
-    const fs = require('fs').promises;
 
     for (const notePath of selectedNotes) {
         try {
@@ -229,7 +265,8 @@ export async function handleBulkMove(
     bulkService.exitSelectMode();
 
     if (errorCount === 0) {
-        vscode.window.showInformationMessage(`Moved ${successCount} note${successCount > 1 ? 's' : ''} to ${selected.label}`);
+        const undoMsg = undoService ? ' (Undo available)' : '';
+        vscode.window.showInformationMessage(`Moved ${successCount} note${successCount > 1 ? 's' : ''}${undoMsg} to ${selected.label}`);
     } else {
         vscode.window.showWarningMessage(`Moved ${successCount} note${successCount > 1 ? 's' : ''}, ${errorCount} failed`);
     }
@@ -240,7 +277,8 @@ export async function handleBulkMove(
  */
 export async function handleBulkArchive(
     bulkService: BulkOperationsService,
-    archiveService: ArchiveService
+    archiveService: ArchiveService,
+    undoService?: UndoService
 ) {
     const selectedNotes = bulkService.getSelectedNotes();
 
@@ -265,13 +303,15 @@ export async function handleBulkArchive(
         return;
     }
 
-    // Archive each note
+    // Archive each note and collect for undo tracking
     let successCount = 0;
     let errorCount = 0;
+    const archives: Array<{ oldPath: string; newPath: string }> = [];
 
     for (const notePath of selectedNotes) {
         try {
-            await archiveService.archiveNote(notePath);
+            const destinationPath = await archiveService.archiveNote(notePath);
+            archives.push({ oldPath: notePath, newPath: destinationPath });
             successCount++;
         } catch (error) {
             console.error('[NOTED] Error archiving note:', notePath, error);
@@ -279,12 +319,18 @@ export async function handleBulkArchive(
         }
     }
 
+    // Track operation for undo AFTER archiving (since we need destination paths)
+    if (undoService && archives.length > 0) {
+        await trackBulkArchive(undoService, archives);
+    }
+
     // Clear selection and show result
     bulkService.clearSelection();
     bulkService.exitSelectMode();
 
     if (errorCount === 0) {
-        vscode.window.showInformationMessage(`Archived ${successCount} note${successCount > 1 ? 's' : ''}`);
+        const undoMsg = undoService ? ' (Undo available)' : '';
+        vscode.window.showInformationMessage(`Archived ${successCount} note${successCount > 1 ? 's' : ''}${undoMsg}`);
     } else {
         vscode.window.showWarningMessage(`Archived ${successCount} note${successCount > 1 ? 's' : ''}, ${errorCount} failed`);
     }
