@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline';">
+    <title>Note Graph</title>
+    <link rel="stylesheet" href="{{cssUri}}">
+    <script src="{{visNetworkUri}}"></script>
+</head>
+<body>
+    <div id="container">
+        <div id="toolbar">
+            <div id="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Notes:</span>
+                    <span id="noteCount">{{noteCount}}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Links:</span>
+                    <span id="linkCount">{{linkCount}}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Orphans:</span>
+                    <span id="orphanCount">{{orphanCount}}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Avg Connections:</span>
+                    <span id="avgConnections">{{avgConnections}}</span>
+                </div>
+            </div>
+
+            <div id="controls">
+                <input type="text" id="searchBox" placeholder="Search notes..." />
+
+                <select id="layoutSelect">
+                    <option value="force">Force-Directed</option>
+                    <option value="hierarchical">Hierarchical</option>
+                    <option value="circular">Circular</option>
+                </select>
+
+                <select id="filterSelect">
+                    <option value="all">All Notes</option>
+                    <option value="connected">Connected Only</option>
+                    <option value="orphans">Orphans Only</option>
+                </select>
+
+                <button id="refreshBtn">Refresh</button>
+                <button id="fitBtn">Fit View</button>
+            </div>
+        </div>
+
+        <div id="graph"></div>
+
+        <div id="noLinksMessage" class="{{noLinksClass}}">
+            <h3>No Links Found</h3>
+            <p>Your notes are not connected yet. To create connections, add wiki-style links to your notes.</p>
+            <p>Example: <code>[[note-name]]</code> or <code>[[2025-01-15]]</code></p>
+            <p>All {{totalNotes}} notes are currently shown as orphans. Click any node to open that note and start adding links!</p>
+        </div>
+
+        <div id="legend">
+            <h3>Node Colors</h3>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #cccccc;"></div>
+                <span class="legend-label">Orphan (no links)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #69db7c;"></div>
+                <span class="legend-label">1-2 connections</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #4dabf7;"></div>
+                <span class="legend-label">3-5 connections</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ffa500;"></div>
+                <span class="legend-label">6-10 connections</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ff6b6b;"></div>
+                <span class="legend-label">10+ connections</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="tooltip"></div>
+
+    <script>
+        // Inject graph data
+        window.graphData = {{graphDataJson}};
+    </script>
+    <script src="{{scriptUri}}"></script>
+</body>
+</html>

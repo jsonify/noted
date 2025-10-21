@@ -677,5 +677,8 @@
     "sinon": "^21.0.0",
     "standard-version": "^9.5.0",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "vis-network": "^10.0.2"
   }
 }
