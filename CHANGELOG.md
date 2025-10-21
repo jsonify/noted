@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.9.2](https://github.com/jsonify/noted/compare/v1.9.1...v1.9.2) (2025-10-21)
+
+
+### Bug Fixes
+
+* updated tag autocomplete description ([34e729b](https://github.com/jsonify/noted/commit/34e729b24238fc2b3374ed9ff512dbbc8b2669bd))
+
 ### [1.9.1](https://github.com/jsonify/noted/compare/v1.9.0...v1.9.1) (2025-10-21)
 
 
