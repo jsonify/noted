@@ -421,18 +421,25 @@ function getGraphHtml(graphData: any, stats: any): string {
             });
 
             network.on('stabilizationIterationsDone', function() {
+                console.log('[Graph View] Stabilization complete');
                 network.setOptions({ physics: false });
-            });
-
-            // Fit the view to show all nodes after initialization
-            setTimeout(() => {
+                // Fit view after stabilization completes
                 network.fit({
                     animation: {
                         duration: 500,
                         easingFunction: 'easeInOutQuad'
                     }
                 });
-            }, 100);
+                console.log('[Graph View] Called fit() after stabilization');
+            });
+
+            // Also fit immediately for initial visibility
+            setTimeout(() => {
+                console.log('[Graph View] Calling initial fit()');
+                network.fit({
+                    animation: false
+                });
+            }, 50);
         }
 
         function getLayoutOptions(layout) {
@@ -475,8 +482,10 @@ function getGraphHtml(graphData: any, stats: any): string {
                 physics: {
                     enabled: hasEdges,
                     stabilization: {
-                        iterations: 200,
-                        updateInterval: 25
+                        enabled: true,
+                        iterations: 1000,
+                        updateInterval: 50,
+                        fit: true
                     }
                 }
             };
@@ -491,15 +500,18 @@ function getGraphHtml(graphData: any, stats: any): string {
                         barnesHut: {
                             gravitationalConstant: -2000,
                             centralGravity: 0.3,
-                            springLength: 95,
+                            springLength: 150,
                             springConstant: 0.04,
                             damping: 0.09,
-                            avoidOverlap: 0.1
+                            avoidOverlap: 0.2
                         },
                         stabilization: {
-                            iterations: 200,
-                            updateInterval: 25
-                        }
+                            enabled: true,
+                            iterations: 1000,
+                            updateInterval: 50,
+                            fit: true
+                        },
+                        solver: 'barnesHut'
                     };
                 } else {
                     // For orphan nodes without edges, use random layout without physics
