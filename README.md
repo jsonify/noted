@@ -11,17 +11,17 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 - **Timestamps**: Press `Ctrl+Shift+T` (or `Cmd+Shift+T`) to insert a timestamp with custom note filenames
 - **Flexible Format**: Default .txt files, easily switch to .md with a command
 - **Built-in Templates**: Choose from Problem/Solution, Meeting, Research, or Quick note templates
-- **Custom Templates** ⭐ NEW: Create, edit, and manage your own reusable templates with 10 powerful variables
-- **Template Variables** ⭐ NEW: Use dynamic placeholders like {date}, {user}, {workspace}, and more
+- **Custom Templates** Create, edit, and manage your own reusable templates with 10 powerful variables
+- **Template Variables** Use dynamic placeholders like {date}, {user}, {workspace}, and more
 - **Tag System**: Organize notes with tags, filter by tags, and get autocomplete suggestions
-- **Advanced Tag Management** ⭐ NEW: Rename, merge, delete, and export tags across all notes
-- **Wiki-Style Links** ⭐ NEW: Link notes together with `[[note-name]]` syntax and see backlinks
-- **Pinned Notes** ⭐ NEW: Pin frequently accessed notes for quick access
-- **Archive** ⭐ NEW: Archive old or completed notes to keep your workspace clean
+- **Advanced Tag Management** Rename, merge, delete, and export tags across all notes
+- **Wiki-Style Links** Link notes together with `[[note-name]]` syntax and see backlinks
+- **Pinned Notes** Pin frequently accessed notes for quick access
+- **Archive** Archive old or completed notes to keep your workspace clean
 - **Calendar View**: Visual monthly calendar for navigating and creating daily notes
 - **Drag & Drop**: Move notes between folders with simple drag-and-drop
-- **Advanced Search** ⭐ NEW: Powerful search with regex, date filters, and tag filtering
-- **Quick Switcher** ⭐ NEW: Instantly access your 20 most recent notes with `Cmd+Shift+P`
+- **Advanced Search** Powerful search with regex, date filters, and tag filtering
+- **Quick Switcher** Instantly access your 20 most recent notes with `Cmd+Shift+P`
 
 ## Usage
 
