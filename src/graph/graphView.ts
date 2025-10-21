@@ -363,6 +363,14 @@ function getGraphHtml(graphData: any, stats: any): string {
         let currentFilter = 'all';
         let searchQuery = '';
 
+        // Debug logging
+        console.log('[Graph View] Loaded data:', {
+            totalNodes: allNodes.length,
+            totalEdges: allEdges.length,
+            orphanNodes: allNodes.filter(n => n.isOrphan).length
+        });
+        console.log('[Graph View] Sample nodes:', allNodes.slice(0, 3));
+
         // Create the network
         const container = document.getElementById('graph');
         let network = null;
@@ -374,12 +382,20 @@ function getGraphHtml(graphData: any, stats: any): string {
         function initGraph() {
             const { nodes, edges } = getFilteredData();
 
+            console.log('[Graph View] Initializing graph with:', {
+                nodes: nodes.length,
+                edges: edges.length,
+                filter: currentFilter,
+                layout: currentLayout
+            });
+
             const data = {
                 nodes: nodes,
                 edges: edges
             };
 
             const options = getLayoutOptions(currentLayout);
+            console.log('[Graph View] Physics enabled:', options.physics.enabled);
             network = new vis.Network(container, data, options);
 
             // Event listeners
