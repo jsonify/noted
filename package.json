@@ -447,6 +447,41 @@
         "command": "noted.quickSwitcher",
         "key": "ctrl+shift+p",
         "mac": "cmd+shift+p"
+      },
+      {
+        "command": "noted.searchNotes",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f"
+      },
+      {
+        "command": "noted.showCalendar",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c"
+      },
+      {
+        "command": "noted.showStats",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s"
+      },
+      {
+        "command": "noted.exportNotes",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e"
+      },
+      {
+        "command": "noted.refresh",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r"
+      },
+      {
+        "command": "noted.openWithTemplate",
+        "key": "ctrl+k ctrl+n",
+        "mac": "cmd+k cmd+n"
+      },
+      {
+        "command": "noted.filterByTag",
+        "key": "ctrl+k ctrl+t",
+        "mac": "cmd+k cmd+t"
       }
     ],
     "configuration": {

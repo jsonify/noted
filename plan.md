@@ -41,13 +41,26 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 - [x] Auto-completion for tags (completed - tag autocomplete with # trigger)
 
 #### UX Improvements
-- [ ] Keyboard shortcuts for more commands
+- [x] Keyboard shortcuts for more commands (completed - 7 new shortcuts added)
 - [x] Drag-and-drop to move notes between folders
 - [ ] Bulk operations (move/delete multiple notes)
 - [ ] Undo functionality for destructive operations
 - [ ] Confirmation dialogs with preview
 
 ## Completed Features
+
+### Enhanced Keyboard Shortcuts (v1.10.0)
+- Added 7 new keyboard shortcuts for frequently used commands
+- Search Notes: `Cmd+Shift+F` / `Ctrl+Shift+F`
+- Show Calendar: `Cmd+Shift+C` / `Ctrl+Shift+C`
+- Show Statistics: `Cmd+Shift+S` / `Ctrl+Shift+S`
+- Export Notes: `Cmd+Shift+E` / `Ctrl+Shift+E`
+- Refresh View: `Cmd+Shift+R` / `Ctrl+Shift+R`
+- Open with Template: `Cmd+K Cmd+N` / `Ctrl+K Ctrl+N` (chord shortcut)
+- Filter by Tag: `Cmd+K Cmd+T` / `Ctrl+K Ctrl+T` (chord shortcut)
+- All shortcuts support both Mac and Windows/Linux
+- Added dedicated Keyboard Shortcuts section to documentation
+- Updated all feature documentation with inline shortcut references
 
 ### Template System Enhancements (v1.4.0)
 - Custom template creation with full management UI

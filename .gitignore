@@ -12,6 +12,9 @@ node_modules/
 # Logs
 *.log
 
+# Internal files
+scripts/
+
 # OS files
 .DS_Store
 Thumbs.db

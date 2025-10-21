@@ -122,7 +122,8 @@ All commands are registered in `activate()` and defined in package.json contribu
 **Primary Commands**:
 - `noted.openToday` - Opens today's note, creates if doesn't exist (Cmd+Shift+N)
 - `noted.insertTimestamp` - Inserts `[HH:MM AM/PM]` at cursor (Cmd+Shift+T)
-- `noted.openWithTemplate` - Prompts for note name and template type
+- `noted.openWithTemplate` - Prompts for note name and template type (Cmd+K Cmd+N)
+- `noted.refresh` - Refresh the notes tree view (Cmd+Shift+R)
 
 **Template Commands** (v1.4.0):
 - `noted.createCustomTemplate` - Create a new custom template with starter content
@@ -133,12 +134,14 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.openTemplatesFolder` - Open the templates folder in system file explorer
 
 **Search Commands** (enhanced v1.6.0):
-- `noted.searchNotes` - Advanced search with regex and filters (regex:, case:, tag:, from:, to:)
+- `noted.searchNotes` - Advanced search with regex and filters (regex:, case:, tag:, from:, to:) (Cmd+Shift+F)
 - `noted.quickSwitcher` - Quick access to 20 most recent notes (Cmd+Shift+P)
+- `noted.filterByTag` - Filter notes by tag (Cmd+K Cmd+T)
 
 **Management Commands**:
-- `noted.showStats` - Shows total/weekly/monthly note counts
-- `noted.exportNotes` - Exports notes by date range to single file
+- `noted.showStats` - Shows total/weekly/monthly note counts (Cmd+Shift+S)
+- `noted.showCalendar` - Show calendar view for navigating daily notes (Cmd+Shift+C)
+- `noted.exportNotes` - Exports notes by date range to single file (Cmd+Shift+E)
 - `noted.deleteNote`, `renameNote`, `duplicateNote`, `copyPath` - File operations on notes
 - `noted.moveNotesFolder` - Renames the notes folder location
 - `noted.setupDefaultFolder`, `setupCustomFolder` - Initial setup commands
