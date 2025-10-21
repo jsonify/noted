@@ -16,7 +16,8 @@ describe('Date Helpers', () => {
   describe('formatDateForNote', () => {
     it('should format date in long readable format', function() {
       // Increase timeout for Windows where toLocaleString can be very slow
-      this.timeout(10000);
+      // Some CI environments need more time to load locale data
+      this.timeout(30000);
 
       // Use Date constructor with explicit values to avoid timezone issues
       const date = new Date(2024, 9, 15, 12, 30, 0); // October 15, 2024
@@ -35,7 +36,7 @@ describe('Date Helpers', () => {
   describe('formatTimeForNote', () => {
     it('should format time in 12-hour format with AM/PM', function() {
       // Increase timeout for Windows where toLocaleString can be very slow
-      this.timeout(10000);
+      this.timeout(30000);
 
       // Use Date constructor with explicit values to avoid timezone issues
       const morningDate = new Date(2024, 9, 15, 9, 30, 0);
@@ -51,7 +52,7 @@ describe('Date Helpers', () => {
   describe('formatTimestamp', () => {
     it('should return current time in 12-hour format', function() {
       // Increase timeout for Windows where toLocaleString can be very slow
-      this.timeout(10000);
+      this.timeout(30000);
 
       const result = formatTimestamp();
       expect(result).to.match(/\d{1,2}:\d{2} (AM|PM)/);
