@@ -188,6 +188,9 @@ function getGraphHtml(graphData: any, stats: any): string {
             flex: 1;
             border: 1px solid var(--vscode-panel-border);
             background-color: var(--vscode-editor-background);
+            position: relative;
+            overflow: hidden;
+            min-height: 400px;
         }
 
         #legend {
@@ -528,6 +531,9 @@ function getGraphHtml(graphData: any, stats: any): string {
             const hasEdges = edges.length > 0;
 
             const baseOptions = {
+                autoResize: true,
+                height: '100%',
+                width: '100%',
                 nodes: {
                     shape: 'dot',
                     font: {
