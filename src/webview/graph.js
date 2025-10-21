@@ -48,11 +48,12 @@ function initGraph() {
         hideTooltip();
     });
 
+    network.on('stabilizationProgress', function(params) {
+        console.log('Stabilization progress:', Math.round(params.iterations / params.total * 100) + '%');
+    });
+
     network.on('stabilizationIterationsDone', function() {
-        // Keep physics enabled briefly to show repulsion, then disable
-        setTimeout(() => {
-            network.setOptions({ physics: false });
-        }, 1000);
+        console.log('Stabilization complete, keeping physics enabled for 3 seconds');
 
         // Fit view after stabilization completes
         network.fit({
@@ -61,7 +62,18 @@ function initGraph() {
                 easingFunction: 'easeInOutQuad'
             }
         });
+
+        // Keep physics enabled for 3 seconds to show repulsion
+        setTimeout(() => {
+            console.log('Disabling physics');
+            network.setOptions({ physics: false });
+        }, 3000);
     });
+
+    // Fit immediately so the graph is visible
+    setTimeout(() => {
+        network.fit({ animation: false });
+    }, 100);
 }
 
 function positionNodesCircularly(nodes) {
@@ -149,13 +161,13 @@ function getLayoutOptions(layout) {
                 },
                 stabilization: {
                     enabled: true,
-                    iterations: 1000,
-                    updateInterval: 10,  // Update visual every 10 iterations
-                    fit: true
+                    iterations: 200,  // Fewer iterations, slower stabilization
+                    updateInterval: 1,  // Update visual every iteration for smooth animation
+                    fit: false  // Don't fit during stabilization so we can see it
                 },
                 solver: 'barnesHut',
                 adaptiveTimestep: true,
-                timestep: 0.5  // Slower timestep for smoother, more visible physics
+                timestep: 0.35  // Slower timestep for more visible physics
             };
         } else {
             // For orphan nodes without edges, use random layout without physics
