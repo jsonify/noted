@@ -239,6 +239,41 @@ function getGraphHtml(graphData: any, stats: any): string {
             z-index: 1000;
             white-space: pre-line;
         }
+
+        #noLinksMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--vscode-editorWidget-background);
+            border: 2px solid var(--vscode-inputValidation-infoBorder);
+            padding: 24px;
+            border-radius: 6px;
+            max-width: 500px;
+            text-align: center;
+            z-index: 100;
+        }
+
+        #noLinksMessage h3 {
+            margin: 0 0 12px 0;
+            color: var(--vscode-textLink-foreground);
+        }
+
+        #noLinksMessage p {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        #noLinksMessage code {
+            background-color: var(--vscode-textCodeBlock-background);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -284,6 +319,13 @@ function getGraphHtml(graphData: any, stats: any): string {
         </div>
 
         <div id="graph"></div>
+
+        <div id="noLinksMessage" class="${graphData.edges.length === 0 ? '' : 'hidden'}">
+            <h3>No Links Found</h3>
+            <p>Your notes are not connected yet. To create connections, add wiki-style links to your notes.</p>
+            <p>Example: <code>[[note-name]]</code> or <code>[[2025-01-15]]</code></p>
+            <p>All ${graphData.totalNotes} notes are currently shown as orphans. Click any node to open that note and start adding links!</p>
+        </div>
 
         <div id="legend">
             <h3>Node Colors</h3>
@@ -365,9 +407,22 @@ function getGraphHtml(graphData: any, stats: any): string {
             network.on('stabilizationIterationsDone', function() {
                 network.setOptions({ physics: false });
             });
+
+            // Fit the view to show all nodes after initialization
+            setTimeout(() => {
+                network.fit({
+                    animation: {
+                        duration: 500,
+                        easingFunction: 'easeInOutQuad'
+                    }
+                });
+            }, 100);
         }
 
         function getLayoutOptions(layout) {
+            const { nodes, edges } = getFilteredData();
+            const hasEdges = edges.length > 0;
+
             const baseOptions = {
                 nodes: {
                     shape: 'dot',
@@ -402,7 +457,7 @@ function getGraphHtml(graphData: any, stats: any): string {
                     dragView: true
                 },
                 physics: {
-                    enabled: true,
+                    enabled: hasEdges,
                     stabilization: {
                         iterations: 200,
                         updateInterval: 25
@@ -411,24 +466,35 @@ function getGraphHtml(graphData: any, stats: any): string {
             };
 
             if (layout === 'force') {
-                baseOptions.layout = {
-                    randomSeed: 42
-                };
-                baseOptions.physics = {
-                    enabled: true,
-                    barnesHut: {
-                        gravitationalConstant: -2000,
-                        centralGravity: 0.3,
-                        springLength: 95,
-                        springConstant: 0.04,
-                        damping: 0.09,
-                        avoidOverlap: 0.1
-                    },
-                    stabilization: {
-                        iterations: 200,
-                        updateInterval: 25
-                    }
-                };
+                if (hasEdges) {
+                    baseOptions.layout = {
+                        randomSeed: 42
+                    };
+                    baseOptions.physics = {
+                        enabled: true,
+                        barnesHut: {
+                            gravitationalConstant: -2000,
+                            centralGravity: 0.3,
+                            springLength: 95,
+                            springConstant: 0.04,
+                            damping: 0.09,
+                            avoidOverlap: 0.1
+                        },
+                        stabilization: {
+                            iterations: 200,
+                            updateInterval: 25
+                        }
+                    };
+                } else {
+                    // For orphan nodes without edges, use random layout without physics
+                    baseOptions.layout = {
+                        randomSeed: 42,
+                        improvedLayout: true
+                    };
+                    baseOptions.physics = {
+                        enabled: false
+                    };
+                }
             } else if (layout === 'hierarchical') {
                 baseOptions.layout = {
                     hierarchical: {
@@ -494,6 +560,18 @@ function getGraphHtml(graphData: any, stats: any): string {
             const { nodes, edges } = getFilteredData();
             network.setData({ nodes, edges });
             network.fit();
+
+            // Update no links message visibility
+            updateNoLinksMessage();
+        }
+
+        function updateNoLinksMessage() {
+            const message = document.getElementById('noLinksMessage');
+            if (allEdges.length === 0) {
+                message.classList.remove('hidden');
+            } else {
+                message.classList.add('hidden');
+            }
         }
 
         function showTooltip(event, text) {
