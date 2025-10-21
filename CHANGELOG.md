@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.0](https://github.com/jsonify/noted/compare/v1.8.2...v1.9.0) (2025-10-21)
+
+
+### Features
+
+* add keywords to package.json for better marketplace discoverability ([9993c3d](https://github.com/jsonify/noted/commit/9993c3d8a8bf3eb66589882d10e8624314b09f20))
+
 ### [1.8.2](https://github.com/jsonify/noted/compare/v1.8.1...v1.8.2) (2025-10-21)
 
 
