@@ -16,6 +16,7 @@ import { TagCompletionProvider } from './services/tagCompletionProvider';
 import { LinkService } from './services/linkService';
 import { NoteLinkProvider } from './providers/noteLinkProvider';
 import { BacklinkHoverProvider } from './providers/backlinkHoverProvider';
+import { NotePreviewHoverProvider } from './providers/notePreviewHoverProvider';
 import { LinkCompletionProvider } from './providers/linkCompletionProvider';
 import { LinkDiagnosticsProvider, LinkCodeActionProvider } from './providers/linkDiagnosticsProvider';
 import { PinnedNotesService } from './services/pinnedNotesService';
@@ -125,6 +126,14 @@ export function activate(context: vscode.ExtensionContext) {
         backlinkHoverProvider
     );
     context.subscriptions.push(hoverProviderDisposable);
+
+    // Register hover provider for note content previews
+    const notePreviewHoverProvider = new NotePreviewHoverProvider(linkService);
+    const notePreviewHoverDisposable = vscode.languages.registerHoverProvider(
+        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        notePreviewHoverProvider
+    );
+    context.subscriptions.push(notePreviewHoverDisposable);
 
     // Register completion provider for note links
     const linkCompletionProvider = new LinkCompletionProvider(linkService, notesPath || '');
@@ -277,6 +286,69 @@ export function activate(context: vscode.ExtensionContext) {
     let openNote = vscode.commands.registerCommand('noted.openNote', async (filePath: string) => {
         const document = await vscode.workspace.openTextDocument(filePath);
         await vscode.window.showTextDocument(document);
+    });
+
+    // Command to create a note from a link (used in hover preview for broken links)
+    let createNoteFromLink = vscode.commands.registerCommand('noted.createNoteFromLink', async (linkText: string) => {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            vscode.window.showErrorMessage('Notes folder not configured.');
+            return;
+        }
+
+        // Sanitize the link text for use as a filename
+        const sanitizedName = linkText.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+
+        // Use the configured file format
+        const config = vscode.workspace.getConfiguration('noted');
+        const fileFormat = config.get<string>('fileFormat', 'txt');
+
+        const now = new Date();
+        const year = now.getFullYear().toString();
+        const month = now.toLocaleString('en-US', { month: '2-digit' });
+        const monthName = now.toLocaleString('en-US', { month: 'long' });
+        const folderName = `${month}-${monthName}`;
+
+        // Create the note in today's folder
+        const noteFolder = path.join(notesPath, year, folderName);
+        const fileName = `${sanitizedName}.${fileFormat}`;
+        const filePath = path.join(noteFolder, fileName);
+
+        try {
+            // Ensure folder exists
+            try {
+                await fsp.access(noteFolder);
+            } catch {
+                await fsp.mkdir(noteFolder, { recursive: true });
+            }
+
+            // Check if file already exists
+            try {
+                await fsp.access(filePath);
+                vscode.window.showInformationMessage(`Note already exists: ${sanitizedName}`);
+                const document = await vscode.workspace.openTextDocument(filePath);
+                await vscode.window.showTextDocument(document);
+                return;
+            } catch {
+                // File doesn't exist, which is what we want
+            }
+
+            // Create the note with a simple template
+            const template = await generateTemplate('quick', now, fileName);
+            await fsp.writeFile(filePath, template, 'utf8');
+
+            // Open the new note
+            const document = await vscode.workspace.openTextDocument(filePath);
+            await vscode.window.showTextDocument(document);
+
+            // Refresh the tree view
+            notesProvider.refresh();
+
+            vscode.window.showInformationMessage(`Created note: ${sanitizedName}`);
+        } catch (error) {
+            console.error('[NOTED] Error creating note from link:', error);
+            vscode.window.showErrorMessage(`Failed to create note: ${error}`);
+        }
     });
 
     // Command to delete note

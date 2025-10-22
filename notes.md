@@ -154,7 +154,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - Dedicated "Recent Notes" section showing 10 most recently modified notes
 - Quick access from tree view
 
-### Wiki-Style Note Linking (v1.5.0, Enhanced v1.14.0-v1.14.1)
+### Wiki-Style Note Linking (v1.5.0, Enhanced v1.14.0-v1.15.0)
 - **Link Syntax**: Create links between notes using `[[note-name]]` syntax
 - **Link with Display Text** (v1.13.5): Use `[[note-name|Custom Display Text]]` syntax for readable link labels
 - **Path-Based Disambiguation** (v1.14.0): Use full or partial paths when multiple notes have the same name
@@ -162,6 +162,13 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - **Full path**: `[[2025/10-October/meeting]]` - disambiguates to specific note
   - **Partial path**: `[[work/meeting]]` - works with custom folders too
   - **Cross-platform**: Supports both forward slashes `/` and backslashes `\` in paths
+- **Hover Previews** (v1.15.0): See note content without opening files
+  - **Preview on Hover**: Hover over any `[[wiki-link]]` to see note content preview
+  - **First 10 Lines**: Shows the beginning of the note for quick context
+  - **Smart Truncation**: Long lines are automatically truncated for readability
+  - **Quick Actions**: Click "Open note →" to open the full note
+  - **Create from Broken Links**: Hover over non-existent notes shows "Create note →" link
+  - **Works with Display Text**: Previews work for `[[note|Display Text]]` syntax too
 - **Link Autocomplete** (v1.14.0): Type `[[` to get intelligent suggestions
   - Shows all available notes with their paths
   - Highlights duplicate names that need disambiguation

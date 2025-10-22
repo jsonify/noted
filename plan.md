@@ -34,7 +34,12 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 - [ ] **Embed with transclusion**: Live-updating embedded content when source changes
 
 ### Preview Enhancements (inspired by Markdown Memo)
-- [ ] **Hover previews**: Show note/link preview on hover without opening the file
+- [x] **Hover previews**: Show note/link preview on hover without opening the file (v1.15.0)
+  - Hover over wiki-style links to see note content preview
+  - Shows first 10 lines of note content
+  - Truncates long lines for better readability
+  - Includes clickable "Open note" link
+  - Shows "Create note" option for broken links
 - [ ] **Inline image previews**: Display images directly in editor when using markdown image syntax
 - [ ] **Embedded content rendering**: Render embedded notes/images in preview mode
 - [ ] **Link preview cards**: Rich previews showing note metadata (tags, created date, etc.)
