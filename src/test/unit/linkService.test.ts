@@ -372,4 +372,159 @@ Third link: [[note3]]`;
       expect(resolved).to.equal(notePath);
     });
   });
+
+  describe('updateLinksInFile - File Moves', () => {
+    it('should update simple links when file is moved to different folder', async () => {
+      // Create folder structure
+      await fs.mkdir(path.join(tempDir, 'old-folder'), { recursive: true });
+      await fs.mkdir(path.join(tempDir, 'new-folder'), { recursive: true });
+
+      const oldPath = path.join(tempDir, 'old-folder', 'meeting.txt');
+      const newPath = path.join(tempDir, 'new-folder', 'meeting.txt');
+      const sourceNote = path.join(tempDir, 'project.txt');
+
+      // Create notes
+      await fs.writeFile(oldPath, 'Meeting notes');
+      await fs.writeFile(sourceNote, 'See [[meeting]] for details');
+
+      // Update links to reflect the move
+      const count = await linkService.updateLinksInFile(sourceNote, oldPath, newPath);
+
+      // Should update the link to use path-based syntax or remain simple if unique
+      expect(count).to.equal(1);
+      const content = await fs.readFile(sourceNote, 'utf-8');
+      // After move, simple link [[meeting]] should still work if name is unique
+      expect(content).to.equal('See [[meeting]] for details');
+    });
+
+    it('should update path-based links when file is moved', async () => {
+      await fs.mkdir(path.join(tempDir, 'old-folder'), { recursive: true });
+      await fs.mkdir(path.join(tempDir, 'new-folder'), { recursive: true });
+
+      const oldPath = path.join(tempDir, 'old-folder', 'document.txt');
+      const newPath = path.join(tempDir, 'new-folder', 'document.txt');
+      const sourceNote = path.join(tempDir, 'index.txt');
+
+      await fs.writeFile(oldPath, 'Document content');
+      await fs.writeFile(sourceNote, 'Check [[old-folder/document]] for info');
+
+      const count = await linkService.updateLinksInFile(sourceNote, oldPath, newPath);
+
+      expect(count).to.equal(1);
+      const content = await fs.readFile(sourceNote, 'utf-8');
+      expect(content).to.equal('Check [[new-folder/document]] for info');
+    });
+
+    it('should convert simple link to path-based when move creates ambiguity', async () => {
+      await fs.mkdir(path.join(tempDir, 'folder1'), { recursive: true });
+      await fs.mkdir(path.join(tempDir, 'folder2'), { recursive: true });
+
+      const oldPath = path.join(tempDir, 'folder1', 'notes.txt');
+      const newPath = path.join(tempDir, 'folder2', 'notes.txt');
+      const conflictingNote = path.join(tempDir, 'notes.txt'); // Same basename in root
+      const sourceNote = path.join(tempDir, 'index.txt');
+
+      await fs.writeFile(oldPath, 'Original notes');
+      await fs.writeFile(conflictingNote, 'Conflicting notes');
+      await fs.writeFile(sourceNote, 'See [[notes]] for details');
+
+      const count = await linkService.updateLinksInFile(sourceNote, oldPath, newPath);
+
+      expect(count).to.equal(1);
+      const content = await fs.readFile(sourceNote, 'utf-8');
+      // Should use path-based link to avoid ambiguity
+      expect(content).to.equal('See [[folder2/notes]] for details');
+    });
+
+    it('should preserve display text when updating moved file links', async () => {
+      await fs.mkdir(path.join(tempDir, 'old-location'), { recursive: true });
+      await fs.mkdir(path.join(tempDir, 'new-location'), { recursive: true });
+
+      const oldPath = path.join(tempDir, 'old-location', 'guide.txt');
+      const newPath = path.join(tempDir, 'new-location', 'guide.txt');
+      const sourceNote = path.join(tempDir, 'readme.txt');
+
+      await fs.writeFile(oldPath, 'Guide content');
+      await fs.writeFile(sourceNote, 'Read the [[old-location/guide|User Guide]] first');
+
+      const count = await linkService.updateLinksInFile(sourceNote, oldPath, newPath);
+
+      expect(count).to.equal(1);
+      const content = await fs.readFile(sourceNote, 'utf-8');
+      expect(content).to.equal('Read the [[new-location/guide|User Guide]] first');
+    });
+
+    it('should handle nested folder moves correctly', async () => {
+      await fs.mkdir(path.join(tempDir, 'projects', 'alpha'), { recursive: true });
+      await fs.mkdir(path.join(tempDir, 'archive', 'completed'), { recursive: true });
+
+      const oldPath = path.join(tempDir, 'projects', 'alpha', 'spec.txt');
+      const newPath = path.join(tempDir, 'archive', 'completed', 'spec.txt');
+      const sourceNote = path.join(tempDir, 'overview.txt');
+
+      await fs.writeFile(oldPath, 'Spec document');
+      await fs.writeFile(sourceNote, 'Details in [[projects/alpha/spec]]');
+
+      const count = await linkService.updateLinksInFile(sourceNote, oldPath, newPath);
+
+      expect(count).to.equal(1);
+      const content = await fs.readFile(sourceNote, 'utf-8');
+      expect(content).to.equal('Details in [[archive/completed/spec]]');
+    });
+
+    it('should not update links that do not point to moved file', async () => {
+      await fs.mkdir(path.join(tempDir, 'folder1'), { recursive: true });
+      await fs.mkdir(path.join(tempDir, 'folder2'), { recursive: true });
+
+      const oldPath = path.join(tempDir, 'folder1', 'document.txt');
+      const newPath = path.join(tempDir, 'folder2', 'document.txt');
+      const otherNote = path.join(tempDir, 'other.txt');
+      const sourceNote = path.join(tempDir, 'source.txt');
+
+      await fs.writeFile(oldPath, 'Document to move');
+      await fs.writeFile(otherNote, 'Different document');
+      await fs.writeFile(sourceNote, 'See [[other]] for info');
+
+      const count = await linkService.updateLinksInFile(sourceNote, oldPath, newPath);
+
+      expect(count).to.equal(0);
+      const content = await fs.readFile(sourceNote, 'utf-8');
+      expect(content).to.equal('See [[other]] for info');
+    });
+
+    it('should handle file rename in same folder (basename change)', async () => {
+      await fs.mkdir(path.join(tempDir, 'docs'), { recursive: true });
+
+      const oldPath = path.join(tempDir, 'docs', 'draft.txt');
+      const newPath = path.join(tempDir, 'docs', 'final.txt');
+      const sourceNote = path.join(tempDir, 'index.txt');
+
+      await fs.writeFile(oldPath, 'Draft content');
+      await fs.writeFile(sourceNote, 'Current version: [[draft]]');
+
+      const count = await linkService.updateLinksInFile(sourceNote, oldPath, newPath);
+
+      expect(count).to.equal(1);
+      const content = await fs.readFile(sourceNote, 'utf-8');
+      expect(content).to.equal('Current version: [[final]]');
+    });
+
+    it('should handle both move and rename (path and basename change)', async () => {
+      await fs.mkdir(path.join(tempDir, 'drafts'), { recursive: true });
+      await fs.mkdir(path.join(tempDir, 'published'), { recursive: true });
+
+      const oldPath = path.join(tempDir, 'drafts', 'article-draft.txt');
+      const newPath = path.join(tempDir, 'published', 'article-final.txt');
+      const sourceNote = path.join(tempDir, 'tracking.txt');
+
+      await fs.writeFile(oldPath, 'Article content');
+      await fs.writeFile(sourceNote, 'WIP: [[drafts/article-draft]]');
+
+      const count = await linkService.updateLinksInFile(sourceNote, oldPath, newPath);
+
+      expect(count).to.equal(1);
+      const content = await fs.readFile(sourceNote, 'utf-8');
+      expect(content).to.equal('WIP: [[published/article-final]]');
+    });
+  });
 });
