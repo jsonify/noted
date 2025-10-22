@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.14.0](https://github.com/jsonify/noted/compare/v1.13.9...v1.14.0) (2025-10-22)
+
+
+### Features
+
+* add jekyll-relative-links plugin and custom head elements for improved SEO ([2c3006c](https://github.com/jsonify/noted/commit/2c3006c0435db0da80d0d4c2576a233481b18fd2))
+
 ### [1.13.9](https://github.com/jsonify/noted/compare/v1.13.8...v1.13.9) (2025-10-22)
 
 ### [1.13.8](https://github.com/jsonify/noted/compare/v1.13.7...v1.13.8) (2025-10-22)
