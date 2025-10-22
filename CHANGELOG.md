@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.16.0](https://github.com/jsonify/noted/compare/v1.15.0...v1.16.0) (2025-10-22)
+
+
+### Features
+
+* add Hover class for hover provider with contents and optional range ([9da9214](https://github.com/jsonify/noted/commit/9da921405c08157ff242820a2662672f3eb54aae))
+
 ## [1.15.0](https://github.com/jsonify/noted/compare/v1.14.1...v1.15.0) (2025-10-22)
 
 
