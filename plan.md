@@ -7,8 +7,8 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 ## Planned Features & Ideas
 
 ### Enhanced Link Features (inspired by Markdown Memo)
-- [ ] **Link labels/aliases**: Support `[[note-name|Custom Display Text]]` syntax for readable link text
-- [ ] **Automatic link synchronization on rename**: Update all `[[links]]` when a note is renamed or moved
+- [x] **Link labels/aliases**: Support `[[note-name|Custom Display Text]]` syntax for readable link text (v1.13.5)
+- [x] **Automatic link synchronization on rename**: Update all `[[links]]` when a note is renamed or moved (v1.13.5)
 - [ ] **Full-path links for disambiguation**: Handle cases where multiple notes have similar names (e.g., `[[folder/note]]`)
 - [ ] **Rename symbol command**: Refactor/rename links across all notes in workspace
 - [ ] **Extract selection to new note**: Select text and create a new linked note from it

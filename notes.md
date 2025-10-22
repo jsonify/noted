@@ -156,6 +156,8 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 
 ### Wiki-Style Note Linking (v1.5.0)
 - **Link Syntax**: Create links between notes using `[[note-name]]` syntax
+- **Link with Display Text** (v1.13.5): Use `[[note-name|Custom Display Text]]` syntax for readable link labels
+- **Automatic Link Synchronization** (v1.13.5): When renaming or moving notes, all `[[links]]` across your workspace are automatically updated
 - **Clickable Links**: Links are automatically detected and clickable in the editor
 - **Link Resolution**: Supports exact matches, partial matches, and fuzzy matching
 - **Cross-Navigation**: Click any link to open the target note

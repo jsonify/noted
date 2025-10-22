@@ -262,9 +262,18 @@ export function activate(context: vscode.ExtensionContext) {
                 // Track operation for undo BEFORE renaming
                 await trackRenameNote(undoService, item.filePath, newPath);
 
+                // Update all links to this note before renaming
+                const linkUpdateResult = await linkService.updateLinksOnRename(item.filePath, newPath);
+
                 await fsp.rename(item.filePath, newPath);
                 notesProvider.refresh();
-                vscode.window.showInformationMessage(`Renamed to ${newName} (Undo available)`);
+
+                // Show success message with link update info
+                let message = `Renamed to ${newName} (Undo available)`;
+                if (linkUpdateResult.linksUpdated > 0) {
+                    message += ` - Updated ${linkUpdateResult.linksUpdated} link(s) in ${linkUpdateResult.filesUpdated} file(s)`;
+                }
+                vscode.window.showInformationMessage(message);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to rename note: ${error instanceof Error ? error.message : String(error)}`);
             }
@@ -996,7 +1005,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     let bulkMove = vscode.commands.registerCommand('noted.bulkMove', async () => {
-        await handleBulkMove(bulkOperationsService, undoService);
+        await handleBulkMove(bulkOperationsService, linkService, undoService);
         notesProvider.refresh();
     });
 

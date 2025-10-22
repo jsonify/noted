@@ -265,4 +265,92 @@ export class LinkService {
         // Find notes without incoming links
         return allNotes.filter(note => !linkedNotes.has(note));
     }
+
+    /**
+     * Update all links in a file that point to oldTarget to point to newTarget
+     * Returns the number of links updated
+     */
+    async updateLinksInFile(
+        filePath: string,
+        oldTarget: string,
+        newTarget: string
+    ): Promise<number> {
+        try {
+            const content = await readFile(filePath);
+            const oldBasename = path.basename(oldTarget, path.extname(oldTarget));
+            const newBasename = path.basename(newTarget, path.extname(newTarget));
+
+            let updatedContent = content;
+            let updateCount = 0;
+
+            // Match both simple links [[oldTarget]] and links with display text [[oldTarget|Display]]
+            // We need to replace the link target but preserve display text if present
+            const linkRegex = new RegExp(
+                `\\[\\[${this.escapeRegExp(oldBasename)}(\\|[^\\]]+)?\\]\\]`,
+                'g'
+            );
+
+            updatedContent = updatedContent.replace(linkRegex, (match, displayPart) => {
+                updateCount++;
+                // Preserve display text if present, otherwise use new target
+                return displayPart ? `[[${newBasename}${displayPart}]]` : `[[${newBasename}]]`;
+            });
+
+            if (updateCount > 0) {
+                const { writeFile } = await import('./fileSystemService');
+                await writeFile(filePath, updatedContent);
+                console.log(`[NOTED] Updated ${updateCount} link(s) in ${filePath}`);
+            }
+
+            return updateCount;
+        } catch (error) {
+            console.error('[NOTED] Error updating links in file:', filePath, error);
+            return 0;
+        }
+    }
+
+    /**
+     * Escape special regex characters
+     */
+    private escapeRegExp(text: string): string {
+        return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    /**
+     * Update all links across the workspace when a note is renamed or moved
+     * Returns information about which files were updated
+     */
+    async updateLinksOnRename(
+        oldPath: string,
+        newPath: string
+    ): Promise<{ filesUpdated: number; linksUpdated: number }> {
+        // Get all backlinks to the old path
+        const backlinks = this.getBacklinks(oldPath);
+
+        if (backlinks.length === 0) {
+            return { filesUpdated: 0, linksUpdated: 0 };
+        }
+
+        let filesUpdated = 0;
+        let totalLinksUpdated = 0;
+
+        // Update each file that links to the renamed note
+        for (const backlink of backlinks) {
+            const count = await this.updateLinksInFile(
+                backlink.sourceFile,
+                oldPath,
+                newPath
+            );
+
+            if (count > 0) {
+                filesUpdated++;
+                totalLinksUpdated += count;
+            }
+        }
+
+        // Rebuild the index to reflect the changes
+        await this.buildBacklinksIndex();
+
+        return { filesUpdated, linksUpdated: totalLinksUpdated };
+    }
 }
