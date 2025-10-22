@@ -6,9 +6,9 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 
 ## Features
 
-- **Quick Access**: Press `Ctrl+Shift+N` (or `Cmd+Shift+N` on Mac) to instantly open today's note
+- **Quick Access**: Instantly open today's note via command palette
 - **Auto-Organization**: Notes are automatically organized in `Notes/YEAR/MM-MonthName/YYYY-MM-DD.txt`
-- **Timestamps**: Press `Ctrl+Shift+T` (or `Cmd+Shift+T`) to insert a timestamp with custom note filenames
+- **Timestamps**: Insert timestamps with custom note filenames
 - **Flexible Format**: Default .txt files, easily switch to .md with a command
 - **Built-in Templates**: Choose from Problem/Solution, Meeting, Research, or Quick note templates
 - **Custom Templates** Create, edit, and manage your own reusable templates with 10 powerful variables
@@ -21,27 +21,25 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 - **Calendar View**: Visual monthly calendar for navigating and creating daily notes
 - **Drag & Drop**: Move notes between folders with simple drag-and-drop
 - **Advanced Search** Powerful search with regex, date filters, and tag filtering
-- **Quick Switcher** Instantly access your 20 most recent notes with `Cmd+Shift+P`
+- **Quick Switcher** Instantly access your 20 most recent notes
 
 ## Usage
 
 1. **Open Today's Note**:
-   - Keyboard: `Ctrl+Shift+N` (Windows/Linux) or `Cmd+Shift+N` (Mac)
    - Command Palette: "Noted: Open Today's Note"
+   - Sidebar: Click the "+" icon in the Notes panel
 
 2. **Insert Timestamp**:
-   - Keyboard: `Ctrl+Shift+T` (Windows/Linux) or `Cmd+Shift+T` (Mac)
    - Command Palette: "Noted: Insert Timestamp"
 
 3. **Toggle Format**:
    - Command Palette: "Noted: Toggle File Format (txt/md)"
 
-4. **Quick Switcher** ⭐ NEW:
-   - Keyboard: `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
+4. **Quick Switcher**:
    - Command Palette: "Noted: Quick Switcher (Recent Notes)"
    - Instantly access your 20 most recently modified notes
 
-5. **Use Tags** ⭐ NEW:
+5. **Use Tags**:
    - Add tags anywhere in your notes using `#tagname` syntax
    - View all tags in the dedicated Tags sidebar panel
    - Click any tag to filter notes containing that tag
@@ -264,11 +262,11 @@ case: tag:bug tag:critical from:2025-10-01 BUG-
 Instantly access your most recent notes:
 
 **Features:**
-- Keyboard shortcut: `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
+- Command Palette: "Noted: Quick Switcher (Recent Notes)"
 - Shows 20 most recently modified notes
 - Displays tags, dates, and content preview
 - Searchable by filename, tags, or content
-- Fast navigation without leaving the keyboard
+- Fast navigation for easy access
 
 **Use Cases:**
 - Quickly return to your active work notes

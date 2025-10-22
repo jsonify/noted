@@ -3,7 +3,7 @@
 ## Core Note-Taking Features
 
 ### Daily Notes
-- **Open Today's Note** (`Cmd+Shift+N` or `Ctrl+Shift+N`): Quickly create or open today's note
+- **Open Today's Note**: Quickly create or open today's note
 - **Automatic Organization**: Notes are organized in `YYYY/MM-MonthName/YYYY-MM-DD.format` structure
 - **File Formats**: Support for both `.txt` and `.md` formats (configurable)
 
@@ -39,7 +39,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 **Template Variables Reference**: View all available variables with descriptions via the command palette or Templates view.
 
 ### Timestamps
-- **Insert Timestamp** (`Cmd+Shift+T` or `Ctrl+Shift+T`): Insert `[HH:MM AM/PM]` at cursor position
+- **Insert Timestamp**: Insert `[HH:MM AM/PM]` at cursor position
 
 ## Organization Features
 
@@ -91,7 +91,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Inline Support**: Tags can appear anywhere in your notes - in paragraphs, lists, headings, or anywhere else
 
 ### Calendar View
-- **Show Calendar View** (`Cmd+Shift+C` or `Ctrl+Shift+C`): Visual monthly calendar for navigating daily notes
+- **Show Calendar View**: Visual monthly calendar for navigating daily notes
 - **Interactive Date Selection**: Click any date to see all notes created on that day
 - **Notes List Display**: Shows all notes for selected date below calendar
   - Click on individual notes to open them
@@ -104,7 +104,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Multi-note Support**: Handles multiple notes per day (daily notes + templated notes)
 
 ### Graph View (v1.14.0)
-- **Show Graph View** (`Cmd+Shift+G` or `Ctrl+Shift+G`): Interactive visualization of note connections via wiki-style links
+- **Show Graph View**: Interactive visualization of note connections via wiki-style links
 - **Interactive Graph Features**:
   - **Click nodes** to open notes instantly
   - **Drag nodes** to reposition and explore relationships
@@ -136,7 +136,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Fit View button**: Auto-zoom to show entire graph
 
 ### Search (ENHANCED v1.6.0)
-- **Full-Text Search** (`Cmd+Shift+F` or `Ctrl+Shift+F`): Search across all notes with preview of matching lines
+- **Full-Text Search**: Search across all notes with preview of matching lines
 - **Regex Search**: Use `regex:` flag in search to enable regular expression pattern matching
 - **Advanced Filters**:
   - `tag:tagname` - Filter results by specific tags
@@ -144,8 +144,8 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - `to:YYYY-MM-DD` - Show only notes modified before this date
   - `case:` - Enable case-sensitive search
 - **Combined Filters**: Use multiple filters together (e.g., "regex: tag:work from:2025-01-01 bug.*fix")
-- **Quick Switcher** (`Cmd+Shift+P` or `Ctrl+Shift+P`): Quickly access your 20 most recently modified notes
-- **Filter by Tag** (`Cmd+K Cmd+T` or `Ctrl+K Ctrl+T`): Filter notes by specific tags
+- **Quick Switcher**: Quickly access your 20 most recently modified notes
+- **Filter by Tag**: Filter notes by specific tags
 - **Enhanced Results**: See match counts, tags, modification dates, and rich previews
 - **Smart Sorting**: Results sorted by modification date (newest first)
 - **Quick Pick**: Select from search results to open notes
@@ -189,14 +189,14 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 ## Editor Features
 
 ### Markdown Preview (v1.12.0)
-- **Toggle Markdown Preview** (`Cmd+K Cmd+V` or `Ctrl+K Ctrl+V`): Preview markdown files with live rendering
+- **Toggle Markdown Preview**: Preview markdown files with live rendering
 - **Editor Title Button**: Click preview icon in editor toolbar for .md files
 - **Side-by-Side View**: View source and preview simultaneously
 - **Auto-Update**: Preview updates automatically as you type
 
 ### Undo/Redo System (v1.13.0)
-- **Undo Last Operation** (`Cmd+Alt+Z` or `Ctrl+Alt+Z`): Undo destructive operations
-- **Redo Last Operation** (`Cmd+Shift+Alt+Z` or `Ctrl+Shift+Alt+Z`): Redo previously undone operations
+- **Undo Last Operation**: Undo destructive operations
+- **Redo Last Operation**: Redo previously undone operations
 - **Show Undo History**: View complete history of undoable operations
 - **Clear Undo History**: Clear all stored undo history
 - **Supported Operations**: Delete, rename, move, archive, bulk delete, bulk move, bulk archive
@@ -206,41 +206,19 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 ## Statistics & Export
 
 ### Statistics
-- **Note Statistics** (`Cmd+Shift+S` or `Ctrl+Shift+S`): View total notes, notes this week, and notes this month
+- **Note Statistics**: View total notes, notes this week, and notes this month
 
 ### Export
-- **Export Notes** (`Cmd+Shift+E` or `Ctrl+Shift+E`): Export notes by date range (This Week, This Month, All Notes)
+- **Export Notes**: Export notes by date range (This Week, This Month, All Notes)
 - Creates combined text file with all selected notes
 
-## Keyboard Shortcuts
+## Command Access
 
-All keyboard shortcuts support both Mac (`Cmd`) and Windows/Linux (`Ctrl`) modifiers:
-
-### Primary Shortcuts
-- **`Cmd+Shift+N` / `Ctrl+Shift+N`**: Open Today's Note
-- **`Cmd+Shift+T` / `Ctrl+Shift+T`**: Insert Timestamp
-- **`Cmd+Shift+P` / `Ctrl+Shift+P`**: Quick Switcher (Recent Notes)
-
-### Search & Navigation
-- **`Cmd+Shift+F` / `Ctrl+Shift+F`**: Search Notes
-- **`Cmd+Shift+C` / `Ctrl+Shift+C`**: Show Calendar View
-- **`Cmd+Shift+G` / `Ctrl+Shift+G`**: Show Graph View
-- **`Cmd+K Cmd+T` / `Ctrl+K Ctrl+T`**: Filter by Tag (chord shortcut)
-
-### Actions & Management
-- **`Cmd+Shift+S` / `Ctrl+Shift+S`**: Show Statistics
-- **`Cmd+Shift+E` / `Ctrl+Shift+E`**: Export Notes
-- **`Cmd+Shift+R` / `Ctrl+Shift+R`**: Refresh Notes View
-
-### Advanced
-- **`Cmd+K Cmd+N` / `Ctrl+K Ctrl+N`**: Open with Template (chord shortcut)
-- **`Cmd+K Cmd+V` / `Ctrl+K Ctrl+V`**: Toggle Markdown Preview (chord shortcut)
-
-### Undo/Redo
-- **`Cmd+Alt+Z` / `Ctrl+Alt+Z`**: Undo Last Operation
-- **`Cmd+Shift+Alt+Z` / `Ctrl+Shift+Alt+Z`**: Redo Last Operation
-
-> **Note**: Chord shortcuts like `Cmd+K Cmd+T` require pressing the first combination (`Cmd+K`), releasing, then pressing the second (`Cmd+T`).
+All commands are accessible via:
+- **Command Palette**: Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux) and search for "Noted"
+- **Sidebar Toolbar**: Icon buttons in the Notes, Templates, and Tags panels
+- **Context Menus**: Right-click on notes, folders, and tags for quick actions
+- **Keyboard Shortcuts**: Users can assign custom keyboard shortcuts in VS Code settings (File > Preferences > Keyboard Shortcuts)
 
 ## Configuration
 

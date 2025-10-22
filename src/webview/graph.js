@@ -236,9 +236,15 @@ function getFilteredData() {
 function updateGraph() {
     const { nodes, edges } = getFilteredData();
 
-    // Destroy and recreate the network to properly reinitialize physics
-    network.destroy();
-    initGraph();
+    // Update network data and options efficiently without destroying
+    const options = getLayoutOptions(currentLayout);
+    network.setOptions(options);
+    network.setData({ nodes, edges });
+
+    // Manually fit if physics is disabled, as stabilization events won't fire
+    if (options.physics && options.physics.enabled === false) {
+        network.fit();
+    }
 
     // Update no links message visibility
     updateNoLinksMessage();
