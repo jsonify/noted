@@ -112,3 +112,8 @@ export const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
  * File extensions supported for notes
  */
 export const SUPPORTED_EXTENSIONS = ['.txt', '.md'];
+
+/**
+ * Image file extensions supported for embedding
+ */
+export const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.ico'];

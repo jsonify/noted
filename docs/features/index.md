@@ -15,6 +15,9 @@ Quickly create or open today's note with automatic organization in a year/month/
 ### [Wiki-Style Links]({{ '/features/wiki-links' | relative_url }})
 Connect your notes together using `[[note-name]]` syntax to build a personal knowledge base.
 
+### [Note Embeds]({{ '/features/embeds' | relative_url }})
+Embed entire notes or specific sections inline with `![[note-name]]` and `![[note#section]]` syntax.
+
 ### [Tags System]({{ '/features/tags' | relative_url }})
 Organize notes with inline tags using `#tagname`. Filter, search, and manage tags across all notes.
 
@@ -63,6 +66,10 @@ Live markdown rendering with side-by-side editing and preview.
 - **Backlinks**: Automatic tracking of incoming links
 - **Extract to Note**: Create new linked notes from selected text
 - **Rename Symbol**: Refactor links across all notes
+- **Note Embeds**: Embed full notes with `![[note-name]]`
+- **Section Embeds**: Embed specific sections with `![[note#section]]`
+- **Embed Previews**: Hover to preview embedded content
+- **Visual Indicators**: Icons show embed status (📄 ⚠️ ❌)
 - **Tags**: Inline tags with `#tagname` syntax
 - **Tag Autocomplete**: Type `#` for tag suggestions
 - **Tag Management**: Rename, merge, delete, and export tags

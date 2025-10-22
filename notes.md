@@ -192,6 +192,27 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Cross-Navigation**: Click any link to open the target note
 - **Document Link Provider**: VS Code integration for seamless navigation
 
+### Note and Image Embedding (v1.16.0-v1.17.0)
+- **Embed Notes** (v1.16.0): Include entire notes or sections inline using `![[note-name]]` syntax
+  - **Full Note Embed**: `![[my-note]]` - embeds entire note content
+  - **Section Embed**: `![[my-note#Section]]` - embeds specific sections only
+  - **Display Text**: `![[my-note|Custom Display]]` - customize the embed label
+  - **Section Support**: Works with markdown headings (`# Heading`) and text-style headings (`HEADING:`)
+  - **Case-Insensitive**: Section matching ignores case for convenience
+  - **Hover Previews**: Hover to see embedded content with available sections listed
+  - **Inline Icons**: Shows 📄 icon next to note embeds for quick identification
+- **Embed Images** (v1.17.0): Display images inline using `![[image.png]]` syntax
+  - **Image Formats**: Supports PNG, JPG, JPEG, GIF, SVG, WEBP, BMP, ICO
+  - **Path Flexibility**:
+    - Absolute paths: `![[/Users/name/photos/image.png]]`
+    - Relative to note: `![[./images/photo.jpg]]` or `![[images/photo.jpg]]`
+    - Workspace-relative: `![[assets/logo.png]]`
+  - **Display Text**: `![[image.png|Photo Caption]]` - add captions to images
+  - **Hover Previews**: Hover to see full image with metadata
+  - **Image Metadata**: Shows file size and dimensions (when available)
+  - **Inline Icons**: Shows 🖼️ icon next to image embeds
+  - **Smart Resolution**: Automatically searches document folder, then workspace folders
+
 ### Backlinks System (v1.5.0)
 - **Automatic Detection**: All links to current note are automatically tracked
 - **Hover Information**: Hover over note header to see all backlinks
@@ -348,8 +369,9 @@ All commands are accessible via:
     - Search: searchService
     - Tags: tagService, tagCompletionProvider
     - Organization: pinnedNotesService, archiveService
-    - Linking: linkService (wiki-style links and backlinks)
+    - Linking: linkService (wiki-style links and backlinks), embedService (note and image embeds)
     - Operations: bulkOperationsService, undoService, undoHelpers
+    - Graph: graphService (connection analysis and visualization)
   - `src/providers/` - VS Code tree view providers
   - `src/commands/` - Command handlers
   - `src/calendar/` - Calendar view functionality (helpers and webview)
@@ -363,11 +385,11 @@ All commands are accessible via:
 
 ## Testing Infrastructure
 
-### Unit Tests (184 tests - all passing)
+### Unit Tests (296 tests - all passing)
 - **Testing Framework**: Mocha + Chai (v4 for CommonJS compatibility)
 - **Test Coverage**:
   - Utilities: validators, date helpers, folder operations (23 tests)
-  - Services: file system, templates, note service, tag service, tag completion (92 tests)
+  - Services: file system, templates, note service, tag service, tag completion, embed service with image support (103 tests)
   - Providers: tree items, notes tree provider, tags tree provider (53 tests)
   - Commands: tag commands (4 tests)
   - Helpers: tag helpers (12 tests)

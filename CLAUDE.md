@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **[notes.md](./notes.md)**: Complete list of implemented features and current capabilities
 - **[plan.md](./plan.md)**: Development roadmap, planned features, and todo list
+- **[docs/](./docs/)**: Always update the website documentation when new features are added
 
 ## Project Overview
 

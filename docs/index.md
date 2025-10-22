@@ -33,6 +33,11 @@ Noted is a powerful VS Code extension designed for developers who need quick acc
 </div>
 
 <div class="feature-card">
+<h3>📄 Note Embeds</h3>
+<p>Embed entire notes or specific sections inline with <code>![[note#section]]</code> syntax. Perfect for reusable content.</p>
+</div>
+
+<div class="feature-card">
 <h3>🏷️ Tag System</h3>
 <p>Organize with inline tags using <code>#tagname</code>. Filter, search, and autocomplete your tags.</p>
 </div>
@@ -96,7 +101,7 @@ Use templates with dynamic variables to quickly create standardized daily standu
 Tag your bugs with `#bug #critical` and use advanced search to filter by tag, date range, or regex patterns.
 
 ### Knowledge Management
-Link related notes together with wiki-style links. Build a personal knowledge base that grows with your projects.
+Link related notes together with wiki-style links. Embed reusable sections across notes. Build a personal knowledge base that grows with your projects.
 
 ### Meeting Minutes
 Create structured meeting notes with the built-in template, then link to related notes and tag with project names.
@@ -109,8 +114,11 @@ Create structured meeting notes with the built-in template, then link to related
 
 ## What's New
 
-### Latest Release: v1.13.8
+### Latest Release: v1.17.0
 
+- **Note Embeds**: Embed entire notes with `![[note-name]]` syntax
+- **Section Embeds**: Embed specific sections with `![[note#section]]` syntax
+- **Embed Previews**: Hover to preview embedded content with visual indicators
 - **Enhanced Link Features**: Full-path links for disambiguation, autocomplete, and diagnostics
 - **Extract to Note**: Create new linked notes from selected text
 - **Rename Symbol**: Refactor links across all notes

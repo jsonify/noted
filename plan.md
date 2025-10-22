@@ -28,9 +28,22 @@ For a complete list of implemented features, see [notes.md](./notes.md).
   - Automatically rebuilds backlinks index after rename
 
 ### Embedding Capabilities (inspired by Markdown Memo)
-- [ ] **Embed notes**: Support `![[note-name]]` syntax to embed entire note content inline
-- [ ] **Embed images**: Support `![[image.png]]` to display images within notes
-- [ ] **Embed specific sections**: Support `![[note-name#section]]` to embed portions of notes
+- [x] **Embed notes**: Support `![[note-name]]` syntax to embed entire note content inline
+- [x] **Embed images**: Support `![[image.png]]` to display images within notes (v1.17.0)
+  - Full image embed syntax: `![[image.png]]`, `![[./images/photo.jpg]]`, `![[image.png|Caption]]`
+  - Supports PNG, JPG, JPEG, GIF, SVG, WEBP, BMP, ICO formats
+  - Hover previews show inline image with metadata (file size, dimensions)
+  - Inline decorations show 🖼️ icon for image embeds
+  - Smart path resolution: absolute paths, relative to document, workspace-relative
+  - Image metadata extraction (file size, with dimensions support ready for future enhancement)
+  - Comprehensive test coverage with 11 new tests (296 total passing)
+- [x] **Embed specific sections**: Support `![[note-name#section]]` to embed portions of notes (v1.17.0)
+  - Full embed syntax: `![[note-name]]`, `![[note-name#section]]`, `![[note-name#section|Display Text]]`
+  - Section extraction for both markdown headings (`# Heading`, `## Heading`) and text-style headings (`Heading:`)
+  - Hover previews show embedded content with available sections
+  - Inline decorations render embedded content with icons
+  - Case-insensitive section matching
+  - Comprehensive test coverage with 14 new tests
 - [ ] **Embed with transclusion**: Live-updating embedded content when source changes
 
 ### Preview Enhancements (inspired by Markdown Memo)

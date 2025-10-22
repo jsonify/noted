@@ -184,6 +184,7 @@ Location: `docs/features/`
 
 Each major feature gets its own page:
 - `wiki-links.md` - Wiki-style linking
+- `embeds.md` - Note embeds and section embeds
 - `tags.md` - Tag system
 - `templates.md` - Templates
 - `search.md` - Search and discovery
