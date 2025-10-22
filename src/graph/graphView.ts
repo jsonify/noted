@@ -29,8 +29,7 @@ export async function showGraphView(context: vscode.ExtensionContext, linkServic
             enableScripts: true,
             retainContextWhenHidden: true,
             localResourceRoots: [
-                vscode.Uri.file(path.join(context.extensionPath, 'src', 'webview')),
-                vscode.Uri.file(path.join(context.extensionPath, 'node_modules'))
+                vscode.Uri.file(path.join(context.extensionPath, 'src', 'webview'))
             ]
         }
     );
@@ -99,12 +98,10 @@ async function getGraphHtml(
     const cssPath = path.join(webviewPath, 'graph.css');
     const jsPath = path.join(webviewPath, 'graph.js');
 
-    // Find vis-network library
+    // Find vis-network library (bundled with extension)
     const visNetworkPath = path.join(
-        context.extensionPath,
-        'node_modules',
-        'vis-network',
-        'dist',
+        webviewPath,
+        'lib',
         'vis-network.min.js'
     );
 

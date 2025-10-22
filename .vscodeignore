@@ -4,7 +4,6 @@ tsconfig.json
 src/**
 !src/webview/**
 node_modules/**
-!node_modules/vis-network/dist/**
 *.vsix
 pnpm-lock.yaml
 .DS_Store
