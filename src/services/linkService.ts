@@ -397,39 +397,7 @@ export class LinkService {
     }
 
     /**
-     * Check if a link text could resolve to a specific target path
-     * This is used to identify links that need updating during renames/moves
-     * Works by checking if the link would resolve to the target, considering:
-     * - Exact basename matches
-     * - Path-based links that match the target's relative path
-     * - Fuzzy matches for simple links
-     */
-    private async couldLinkResolveToTarget(linkText: string, targetPath: string): Promise<boolean> {
-        const targetBasename = path.basename(targetPath, path.extname(targetPath));
-        const normalizedLinkText = linkText.toLowerCase().trim();
-        const targetRelativePath = path.relative(this.notesPath, targetPath);
-        const targetPathWithoutExt = targetRelativePath.replace(/\.(txt|md)$/i, '');
-
-        // Check if link contains path separators (path-based link)
-        const hasPathSeparator = linkText.includes('/') || linkText.includes('\\');
-
-        if (hasPathSeparator) {
-            // For path-based links, check if the target path matches
-            const normalizedTargetPath = targetPathWithoutExt.toLowerCase().replace(/\\/g, '/');
-            const normalizedLinkPath = linkText.toLowerCase().replace(/\\/g, '/');
-
-            // Check if target path ends with the link path
-            return normalizedTargetPath.endsWith(normalizedLinkPath);
-        } else {
-            // For simple links, check basename match
-            return targetBasename.toLowerCase() === normalizedLinkText;
-        }
-    }
-
-    /**
      * Update all links in a file that point to oldTarget to point to newTarget
-     * This correctly handles both renames (basename change) and moves (path change)
-     * by checking each link to see if it could resolve to the old target
      * Returns the number of links updated
      */
     async updateLinksInFile(
@@ -439,78 +407,25 @@ export class LinkService {
     ): Promise<number> {
         try {
             const content = await readFile(filePath);
+            const oldBasename = path.basename(oldTarget, path.extname(oldTarget));
             const newBasename = path.basename(newTarget, path.extname(newTarget));
-
-            // Get relative path from notes root for the new target (for path-based links)
-            const newRelativePath = path.relative(this.notesPath, newTarget);
-            const newPathWithoutExt = newRelativePath.replace(/\.(txt|md)$/i, '');
 
             let updatedContent = content;
             let updateCount = 0;
 
-            // Extract all links from the file
-            const links = await this.extractLinksFromFile(filePath);
+            // Match both simple links [[oldTarget]] and links with display text [[oldTarget|Display]]
+            // We need to replace the link target but preserve display text if present
+            const linkRegex = new RegExp(
+                `\\[\\[${this.escapeRegExp(oldBasename)}(\\|[^\\]]+)?\\]\\]`,
+                'g'
+            );
 
-            // For each link, check if it could resolve to oldTarget
-            for (const link of links) {
-                const couldResolve = await this.couldLinkResolveToTarget(link.linkText, oldTarget);
+            updatedContent = updatedContent.replace(linkRegex, (match, displayPart) => {
+                updateCount++;
+                // Preserve display text if present, otherwise use new target
+                return displayPart ? `[[${newBasename}${displayPart}]]` : `[[${newBasename}]]`;
+            });
 
-                // If this link points to the file we're renaming/moving
-                if (couldResolve) {
-                    const oldLinkText = link.linkText;
-                    let newLinkText: string;
-
-                    // Determine the best link text for the new location
-                    // If the old link was path-based, keep it path-based
-                    // If the new basename is unique, use simple link
-                    // Otherwise, use path-based link for disambiguation
-                    if (oldLinkText.includes('/') || oldLinkText.includes('\\')) {
-                        // Old link was path-based, use path-based for new link
-                        newLinkText = newPathWithoutExt.replace(/\\/g, '/');
-                    } else {
-                        // Old link was simple, check if new basename is unique
-                        // Get all notes except the one being moved (simulate post-move state)
-                        const allNotes = await this.getAllNotes();
-                        const otherNotes = allNotes.filter(n => n !== oldTarget && n !== newTarget);
-
-                        // Check if any other note has the same basename as the new target
-                        const hasConflict = otherNotes.some(notePath => {
-                            const basename = path.basename(notePath, path.extname(notePath));
-                            return basename.toLowerCase() === newBasename.toLowerCase();
-                        });
-
-                        if (hasConflict) {
-                            // New basename is ambiguous, use path-based link
-                            newLinkText = newPathWithoutExt.replace(/\\/g, '/');
-                        } else {
-                            // New basename is unique, use simple link
-                            newLinkText = newBasename;
-                        }
-                    }
-
-                    // Build the replacement string
-                    const escapedOldLinkText = this.escapeRegExp(oldLinkText);
-                    const linkPattern = new RegExp(
-                        `\\[\\[${escapedOldLinkText}(\\|[^\\]]+)?\\]\\]`,
-                        'g'
-                    );
-
-                    // Replace this specific link
-                    const beforeReplace = updatedContent;
-                    updatedContent = updatedContent.replace(linkPattern, (match, displayPart) => {
-                        updateCount++;
-                        // Preserve display text if present
-                        return displayPart ? `[[${newLinkText}${displayPart}]]` : `[[${newLinkText}]]`;
-                    });
-
-                    // Debug logging
-                    if (beforeReplace !== updatedContent) {
-                        console.log(`[NOTED] Replacing [[${oldLinkText}]] with [[${newLinkText}]] in ${filePath}`);
-                    }
-                }
-            }
-
-            // Write updated content if changes were made
             if (updateCount > 0) {
                 const { writeFile } = await import('./fileSystemService');
                 await writeFile(filePath, updatedContent);
