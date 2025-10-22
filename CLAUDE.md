@@ -236,3 +236,4 @@ All commands are registered in `activate()` and defined in package.json contribu
 - Strict mode enabled
 - Output directory: `out/`
 - Source maps enabled
+- always update the website documentation ( @docs/ )  when new features are added

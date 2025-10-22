@@ -14,9 +14,12 @@ import { TagsTreeProvider } from './providers/tagsTreeProvider';
 import { TreeItem, NoteItem, SectionItem, TagItem } from './providers/treeItems';
 import { TagCompletionProvider } from './services/tagCompletionProvider';
 import { LinkService } from './services/linkService';
+import { EmbedService } from './services/embedService';
 import { NoteLinkProvider } from './providers/noteLinkProvider';
 import { BacklinkHoverProvider } from './providers/backlinkHoverProvider';
 import { NotePreviewHoverProvider } from './providers/notePreviewHoverProvider';
+import { EmbedHoverProvider } from './providers/embedHoverProvider';
+import { EmbedDecoratorProvider } from './providers/embedDecoratorProvider';
 import { LinkCompletionProvider } from './providers/linkCompletionProvider';
 import { LinkDiagnosticsProvider, LinkCodeActionProvider } from './providers/linkDiagnosticsProvider';
 import { PinnedNotesService } from './services/pinnedNotesService';
@@ -134,6 +137,56 @@ export function activate(context: vscode.ExtensionContext) {
         notePreviewHoverProvider
     );
     context.subscriptions.push(notePreviewHoverDisposable);
+
+    // Initialize embed service for note embeds with section support
+    const embedService = new EmbedService(linkService);
+
+    // Register hover provider for embeds
+    const embedHoverProvider = new EmbedHoverProvider(embedService);
+    const embedHoverDisposable = vscode.languages.registerHoverProvider(
+        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        embedHoverProvider
+    );
+    context.subscriptions.push(embedHoverDisposable);
+
+    // Register embed decorator provider for inline rendering
+    const embedDecoratorProvider = new EmbedDecoratorProvider(embedService);
+    context.subscriptions.push(embedDecoratorProvider);
+
+    // Update embed decorations when editor changes
+    const updateEmbedDecorations = (editor: vscode.TextEditor | undefined) => {
+        if (editor && (editor.document.languageId === 'plaintext' || editor.document.languageId === 'markdown')) {
+            embedDecoratorProvider.updateDecorations(editor).catch(err => {
+                console.error('[NOTED] Error updating embed decorations:', err);
+            });
+        }
+    };
+
+    // Update decorations for active editor
+    updateEmbedDecorations(vscode.window.activeTextEditor);
+
+    // Update decorations when active editor changes
+    context.subscriptions.push(
+        vscode.window.onDidChangeActiveTextEditor(updateEmbedDecorations)
+    );
+
+    // Update decorations when document is edited
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeTextDocument(event => {
+            if (vscode.window.activeTextEditor && event.document === vscode.window.activeTextEditor.document) {
+                updateEmbedDecorations(vscode.window.activeTextEditor);
+            }
+        })
+    );
+
+    // Update decorations when document is saved
+    context.subscriptions.push(
+        vscode.workspace.onDidSaveTextDocument(document => {
+            if (vscode.window.activeTextEditor && document === vscode.window.activeTextEditor.document) {
+                updateEmbedDecorations(vscode.window.activeTextEditor);
+            }
+        })
+    );
 
     // Register completion provider for note links
     const linkCompletionProvider = new LinkCompletionProvider(linkService, notesPath || '');

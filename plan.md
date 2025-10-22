@@ -28,9 +28,15 @@ For a complete list of implemented features, see [notes.md](./notes.md).
   - Automatically rebuilds backlinks index after rename
 
 ### Embedding Capabilities (inspired by Markdown Memo)
-- [ ] **Embed notes**: Support `![[note-name]]` syntax to embed entire note content inline
+- [x] **Embed notes**: Support `![[note-name]]` syntax to embed entire note content inline
 - [ ] **Embed images**: Support `![[image.png]]` to display images within notes
-- [ ] **Embed specific sections**: Support `![[note-name#section]]` to embed portions of notes
+- [x] **Embed specific sections**: Support `![[note-name#section]]` to embed portions of notes (v1.17.0)
+  - Full embed syntax: `![[note-name]]`, `![[note-name#section]]`, `![[note-name#section|Display Text]]`
+  - Section extraction for both markdown headings (`# Heading`, `## Heading`) and text-style headings (`Heading:`)
+  - Hover previews show embedded content with available sections
+  - Inline decorations render embedded content with icons
+  - Case-insensitive section matching
+  - Comprehensive test coverage with 14 new tests
 - [ ] **Embed with transclusion**: Live-updating embedded content when source changes
 
 ### Preview Enhancements (inspired by Markdown Memo)
