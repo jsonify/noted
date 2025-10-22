@@ -51,7 +51,7 @@ export class EmbedDecoratorProvider {
         const decorations: vscode.DecorationOptions[] = [];
 
         for (const embed of embeds) {
-            const decoration = await this.createEmbedDecoration(embed);
+            const decoration = await this.createEmbedDecoration(embed, document.uri.fsPath);
             if (decoration) {
                 decorations.push(decoration);
             }
@@ -64,17 +64,24 @@ export class EmbedDecoratorProvider {
      * Create a decoration for a single embed
      */
     private async createEmbedDecoration(
-        embed: NoteEmbed
+        embed: NoteEmbed,
+        documentPath?: string
     ): Promise<vscode.DecorationOptions | undefined> {
         try {
             // Resolve the embed to get the target file path
-            const targetPath = await this.embedService.resolveEmbed(embed);
+            const targetPath = await this.embedService.resolveEmbed(embed, documentPath);
 
             if (!targetPath) {
                 // File not found - show error decoration
                 return this.createNotFoundDecoration(embed);
             }
 
+            // Handle image embeds
+            if (embed.type === 'image') {
+                return this.createImageDecoration(embed, targetPath);
+            }
+
+            // Handle note embeds
             // Get the content to embed
             const content = await this.embedService.getEmbedContent(targetPath, embed.section);
 
@@ -89,6 +96,49 @@ export class EmbedDecoratorProvider {
             console.error('[NOTED] Error creating embed decoration:', error);
             return this.createErrorDecoration(embed);
         }
+    }
+
+    /**
+     * Create a decoration for an image embed
+     */
+    private async createImageDecoration(
+        embed: NoteEmbed,
+        targetPath: string
+    ): Promise<vscode.DecorationOptions> {
+        const filename = path.basename(targetPath);
+        const metadata = await this.embedService.getImageMetadata(targetPath);
+
+        // Create a markdown string for the decoration hover
+        const markdownContent = new vscode.MarkdownString();
+        markdownContent.isTrusted = true;
+        markdownContent.supportHtml = true;
+
+        // Show image in hover
+        const imageUri = vscode.Uri.file(targetPath);
+        markdownContent.appendMarkdown(`**🖼️ Image: ${filename}**\n\n`);
+        markdownContent.appendMarkdown(`![${filename}](${imageUri.toString()})\n\n`);
+
+        // Show metadata
+        if (metadata) {
+            markdownContent.appendMarkdown(`---\n\n`);
+            const sizeKB = (metadata.size / 1024).toFixed(2);
+            markdownContent.appendMarkdown(`Size: ${sizeKB} KB`);
+            if (metadata.width && metadata.height) {
+                markdownContent.appendMarkdown(` | ${metadata.width} × ${metadata.height}`);
+            }
+        }
+
+        return {
+            range: embed.range,
+            hoverMessage: markdownContent,
+            renderOptions: {
+                after: {
+                    contentText: ` 🖼️`,
+                    color: new vscode.ThemeColor('textLink.foreground'),
+                    margin: '0 0 0 0.5em',
+                }
+            }
+        };
     }
 
     /**

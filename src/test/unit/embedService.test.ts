@@ -221,4 +221,197 @@ describe('EmbedService', () => {
             expect(result).to.be.undefined;
         });
     });
+
+    describe('Image embedding support', () => {
+        describe('isImageFile', () => {
+            it('should identify PNG files as images', () => {
+                expect(embedService.isImageFile('photo.png')).to.be.true;
+                expect(embedService.isImageFile('photo.PNG')).to.be.true;
+            });
+
+            it('should identify JPG/JPEG files as images', () => {
+                expect(embedService.isImageFile('photo.jpg')).to.be.true;
+                expect(embedService.isImageFile('photo.jpeg')).to.be.true;
+                expect(embedService.isImageFile('photo.JPG')).to.be.true;
+            });
+
+            it('should identify various image formats', () => {
+                expect(embedService.isImageFile('icon.svg')).to.be.true;
+                expect(embedService.isImageFile('animation.gif')).to.be.true;
+                expect(embedService.isImageFile('image.webp')).to.be.true;
+                expect(embedService.isImageFile('bitmap.bmp')).to.be.true;
+            });
+
+            it('should not identify non-image files as images', () => {
+                expect(embedService.isImageFile('note.txt')).to.be.false;
+                expect(embedService.isImageFile('note.md')).to.be.false;
+                expect(embedService.isImageFile('document.pdf')).to.be.false;
+            });
+        });
+
+        describe('extractEmbeds - image type detection', () => {
+            it('should detect image embeds and set type to image', () => {
+                const document = {
+                    getText: () => 'This is ![[photo.png]] an image embed',
+                    positionAt: (offset: number) => new vscode.Position(0, offset)
+                } as any;
+
+                const embeds = embedService.extractEmbeds(document);
+
+                expect(embeds.length).to.equal(1);
+                expect(embeds[0].noteName).to.equal('photo.png');
+                expect(embeds[0].type).to.equal('image');
+            });
+
+            it('should detect note embeds and set type to note', () => {
+                const document = {
+                    getText: () => 'This is ![[my-note]] a note embed',
+                    positionAt: (offset: number) => new vscode.Position(0, offset)
+                } as any;
+
+                const embeds = embedService.extractEmbeds(document);
+
+                expect(embeds.length).to.equal(1);
+                expect(embeds[0].noteName).to.equal('my-note');
+                expect(embeds[0].type).to.equal('note');
+            });
+
+            it('should handle mixed image and note embeds', () => {
+                const document = {
+                    getText: () => 'Here is ![[photo.jpg]] and ![[my-note]] mixed',
+                    positionAt: (offset: number) => new vscode.Position(0, offset)
+                } as any;
+
+                const embeds = embedService.extractEmbeds(document);
+
+                expect(embeds.length).to.equal(2);
+                expect(embeds[0].noteName).to.equal('photo.jpg');
+                expect(embeds[0].type).to.equal('image');
+                expect(embeds[1].noteName).to.equal('my-note');
+                expect(embeds[1].type).to.equal('note');
+            });
+
+            it('should detect image embeds with display text', () => {
+                const document = {
+                    getText: () => '![[image.png|My Photo]]',
+                    positionAt: (offset: number) => new vscode.Position(0, offset)
+                } as any;
+
+                const embeds = embedService.extractEmbeds(document);
+
+                expect(embeds.length).to.equal(1);
+                expect(embeds[0].noteName).to.equal('image.png');
+                expect(embeds[0].displayText).to.equal('My Photo');
+                expect(embeds[0].type).to.equal('image');
+            });
+
+            it('should detect image embeds with paths', () => {
+                const document = {
+                    getText: () => '![[./images/photo.png]]',
+                    positionAt: (offset: number) => new vscode.Position(0, offset)
+                } as any;
+
+                const embeds = embedService.extractEmbeds(document);
+
+                expect(embeds.length).to.equal(1);
+                expect(embeds[0].noteName).to.equal('./images/photo.png');
+                expect(embeds[0].type).to.equal('image');
+            });
+        });
+
+        describe('resolveImagePath', () => {
+            it('should resolve absolute image paths', async () => {
+                const imagePath = path.join(tempDir, 'image.png');
+                await fs.writeFile(imagePath, 'fake image data');
+
+                const resolved = await embedService.resolveImagePath(imagePath);
+
+                expect(resolved).to.equal(imagePath);
+            });
+
+            it('should resolve relative image paths from document', async () => {
+                const imagesDir = path.join(tempDir, 'images');
+                await fs.mkdir(imagesDir);
+                const imagePath = path.join(imagesDir, 'photo.png');
+                await fs.writeFile(imagePath, 'fake image data');
+
+                const documentPath = path.join(tempDir, 'note.md');
+                const resolved = await embedService.resolveImagePath('images/photo.png', documentPath);
+
+                expect(resolved).to.equal(imagePath);
+            });
+
+            it('should resolve dot-slash relative paths', async () => {
+                const imagesDir = path.join(tempDir, 'images');
+                await fs.mkdir(imagesDir);
+                const imagePath = path.join(imagesDir, 'photo.png');
+                await fs.writeFile(imagePath, 'fake image data');
+
+                const documentPath = path.join(tempDir, 'note.md');
+                const resolved = await embedService.resolveImagePath('./images/photo.png', documentPath);
+
+                expect(resolved).to.equal(imagePath);
+            });
+
+            it('should return undefined for non-existent images', async () => {
+                const resolved = await embedService.resolveImagePath('non-existent.png');
+
+                expect(resolved).to.be.undefined;
+            });
+        });
+
+        describe('getImageMetadata', () => {
+            it('should return file size for existing images', async () => {
+                const imagePath = path.join(tempDir, 'test.png');
+                const fakeImageData = 'fake image data content';
+                await fs.writeFile(imagePath, fakeImageData);
+
+                const metadata = await embedService.getImageMetadata(imagePath);
+
+                expect(metadata).to.not.be.undefined;
+                expect(metadata!.size).to.be.greaterThan(0);
+                expect(metadata!.size).to.equal(fakeImageData.length);
+            });
+
+            it('should return undefined for non-existent images', async () => {
+                const metadata = await embedService.getImageMetadata('/non/existent/image.png');
+
+                expect(metadata).to.be.undefined;
+            });
+        });
+
+        describe('getEmbedAtPosition - image detection', () => {
+            it('should detect image embed at cursor position', () => {
+                const line = {
+                    text: 'This is ![[photo.png]] an embed'
+                };
+                const document = {
+                    lineAt: () => line
+                } as any;
+                const position = new vscode.Position(0, 10);
+
+                const embed = embedService.getEmbedAtPosition(document, position);
+
+                expect(embed).to.not.be.undefined;
+                expect(embed!.noteName).to.equal('photo.png');
+                expect(embed!.type).to.equal('image');
+            });
+
+            it('should detect note embed at cursor position', () => {
+                const line = {
+                    text: 'This is ![[my-note]] an embed'
+                };
+                const document = {
+                    lineAt: () => line
+                } as any;
+                const position = new vscode.Position(0, 10);
+
+                const embed = embedService.getEmbedAtPosition(document, position);
+
+                expect(embed).to.not.be.undefined;
+                expect(embed!.noteName).to.equal('my-note');
+                expect(embed!.type).to.equal('note');
+            });
+        });
+    });
 });

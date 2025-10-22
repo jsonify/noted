@@ -29,7 +29,14 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 
 ### Embedding Capabilities (inspired by Markdown Memo)
 - [x] **Embed notes**: Support `![[note-name]]` syntax to embed entire note content inline
-- [ ] **Embed images**: Support `![[image.png]]` to display images within notes
+- [x] **Embed images**: Support `![[image.png]]` to display images within notes (v1.17.0)
+  - Full image embed syntax: `![[image.png]]`, `![[./images/photo.jpg]]`, `![[image.png|Caption]]`
+  - Supports PNG, JPG, JPEG, GIF, SVG, WEBP, BMP, ICO formats
+  - Hover previews show inline image with metadata (file size, dimensions)
+  - Inline decorations show 🖼️ icon for image embeds
+  - Smart path resolution: absolute paths, relative to document, workspace-relative
+  - Image metadata extraction (file size, with dimensions support ready for future enhancement)
+  - Comprehensive test coverage with 11 new tests (296 total passing)
 - [x] **Embed specific sections**: Support `![[note-name#section]]` to embed portions of notes (v1.17.0)
   - Full embed syntax: `![[note-name]]`, `![[note-name#section]]`, `![[note-name#section|Display Text]]`
   - Section extraction for both markdown headings (`# Heading`, `## Heading`) and text-style headings (`Heading:`)

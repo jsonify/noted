@@ -27,13 +27,18 @@ export class EmbedHoverProvider implements vscode.HoverProvider {
         }
 
         // Resolve the embed to get the target file path
-        const targetPath = await this.embedService.resolveEmbed(embed);
+        const targetPath = await this.embedService.resolveEmbed(embed, document.uri.fsPath);
         if (!targetPath) {
             // Embed doesn't resolve to a file
             return this.createNotFoundHover(embed);
         }
 
-        // Get the content to embed
+        // Handle image embeds
+        if (embed.type === 'image') {
+            return this.createImagePreviewHover(embed, targetPath);
+        }
+
+        // Handle note embeds
         try {
             const content = await this.embedService.getEmbedContent(targetPath, embed.section);
 
@@ -52,6 +57,44 @@ export class EmbedHoverProvider implements vscode.HoverProvider {
             console.error('[NOTED] Error reading file for embed preview:', targetPath, error);
             return this.createErrorHover(embed);
         }
+    }
+
+    /**
+     * Create a hover with image preview
+     */
+    private async createImagePreviewHover(
+        embed: { noteName: string; section?: string; displayText?: string; range: vscode.Range },
+        targetPath: string
+    ): Promise<vscode.Hover> {
+        const markdownContent = new vscode.MarkdownString();
+        markdownContent.isTrusted = true;
+        markdownContent.supportHtml = true;
+
+        // Show the image name as header
+        const filename = path.basename(targetPath);
+        markdownContent.appendMarkdown(`**🖼️ Image: ${filename}**\n\n`);
+
+        // Get image metadata
+        const metadata = await this.embedService.getImageMetadata(targetPath);
+
+        // Display the image using file:// protocol
+        // VS Code will render the image inline in the hover
+        const imageUri = vscode.Uri.file(targetPath);
+        markdownContent.appendMarkdown(`![${filename}](${imageUri.toString()})\n\n`);
+
+        // Show metadata
+        if (metadata) {
+            markdownContent.appendMarkdown('---\n\n');
+            markdownContent.appendMarkdown('**File info:**\n');
+            markdownContent.appendMarkdown(`- Path: \`${targetPath}\`\n`);
+            const sizeKB = (metadata.size / 1024).toFixed(2);
+            markdownContent.appendMarkdown(`- Size: ${sizeKB} KB\n`);
+            if (metadata.width && metadata.height) {
+                markdownContent.appendMarkdown(`- Dimensions: ${metadata.width} × ${metadata.height}\n`);
+            }
+        }
+
+        return new vscode.Hover(markdownContent, embed.range);
     }
 
     /**

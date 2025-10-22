@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs/promises';
 import { readFile } from './fileSystemService';
 import { LinkService } from './linkService';
+import { IMAGE_EXTENSIONS } from '../constants';
 
 /**
  * Regular expression to match embed syntax: ![[note-name]] or ![[note-name#section]]
@@ -23,6 +25,8 @@ export interface NoteEmbed {
     range: vscode.Range;
     /** The resolved file path if found */
     targetPath?: string;
+    /** Type of embed: 'note' or 'image' */
+    type?: 'note' | 'image';
 }
 
 /**
@@ -33,6 +37,79 @@ export class EmbedService {
 
     constructor(linkService: LinkService) {
         this.linkService = linkService;
+    }
+
+    /**
+     * Check if a file path is an image based on extension
+     */
+    isImageFile(filePath: string): boolean {
+        const ext = path.extname(filePath).toLowerCase();
+        return IMAGE_EXTENSIONS.includes(ext);
+    }
+
+    /**
+     * Resolve an image path relative to the current document or workspace
+     * Supports:
+     * - Relative paths: ./images/photo.png or images/photo.png
+     * - Absolute paths: /Users/name/photos/image.png
+     * - Workspace-relative paths: images/photo.png (searches workspace)
+     */
+    async resolveImagePath(imagePath: string, currentDocumentPath?: string): Promise<string | undefined> {
+        // If it's an absolute path and exists, return it
+        if (path.isAbsolute(imagePath)) {
+            try {
+                await fs.access(imagePath);
+                return imagePath;
+            } catch {
+                return undefined;
+            }
+        }
+
+        // Try relative to current document
+        if (currentDocumentPath) {
+            const documentDir = path.dirname(currentDocumentPath);
+            const relativePath = path.resolve(documentDir, imagePath);
+            try {
+                await fs.access(relativePath);
+                return relativePath;
+            } catch {
+                // Continue to try other methods
+            }
+        }
+
+        // Try relative to workspace folders
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders) {
+            for (const folder of workspaceFolders) {
+                const workspacePath = path.join(folder.uri.fsPath, imagePath);
+                try {
+                    await fs.access(workspacePath);
+                    return workspacePath;
+                } catch {
+                    // Continue to next workspace folder
+                }
+            }
+        }
+
+        return undefined;
+    }
+
+    /**
+     * Get image metadata (dimensions, file size)
+     */
+    async getImageMetadata(imagePath: string): Promise<{ width?: number; height?: number; size: number } | undefined> {
+        try {
+            const stats = await fs.stat(imagePath);
+
+            // For now, just return file size
+            // Image dimensions would require image decoding library
+            return {
+                size: stats.size
+            };
+        } catch (error) {
+            console.error('[NOTED] Error getting image metadata:', imagePath, error);
+            return undefined;
+        }
     }
 
     /**
@@ -54,11 +131,15 @@ export class EmbedService {
             const endPos = document.positionAt(match.index + match[0].length);
             const range = new vscode.Range(startPos, endPos);
 
+            // Determine if this is an image or note embed based on file extension
+            const type = this.isImageFile(noteName) ? 'image' : 'note';
+
             embeds.push({
                 noteName,
                 section,
                 displayText,
-                range
+                range,
+                type
             });
         }
 
@@ -85,6 +166,9 @@ export class EmbedService {
                     const startCol = match.index;
                     const endCol = match.index + match[0].length;
 
+                    // Determine if this is an image or note embed
+                    const type = this.isImageFile(noteName) ? 'image' : 'note';
+
                     embeds.push({
                         noteName,
                         section,
@@ -92,7 +176,8 @@ export class EmbedService {
                         range: new vscode.Range(
                             new vscode.Position(lineIndex, startCol),
                             new vscode.Position(lineIndex, endCol)
-                        )
+                        ),
+                        type
                     });
                 }
             });
@@ -106,8 +191,16 @@ export class EmbedService {
 
     /**
      * Resolve an embed to get the target file path
+     * For images, uses image path resolution
+     * For notes, uses link service resolution
      */
-    async resolveEmbed(embed: NoteEmbed): Promise<string | undefined> {
+    async resolveEmbed(embed: NoteEmbed, currentDocumentPath?: string): Promise<string | undefined> {
+        // For image embeds, use image path resolution
+        if (embed.type === 'image') {
+            return await this.resolveImagePath(embed.noteName, currentDocumentPath);
+        }
+
+        // For note embeds, use the link service
         return await this.linkService.resolveLink(embed.noteName);
     }
 
@@ -263,7 +356,11 @@ export class EmbedService {
                     position.line,
                     endCol
                 );
-                return { noteName, section, displayText, range };
+
+                // Determine if this is an image or note embed
+                const type = this.isImageFile(noteName) ? 'image' : 'note';
+
+                return { noteName, section, displayText, range, type };
             }
         }
 

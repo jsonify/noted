@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **[notes.md](./notes.md)**: Complete list of implemented features and current capabilities
 - **[plan.md](./plan.md)**: Development roadmap, planned features, and todo list
+- **[docs/](./docs/)**: Always update the website documentation when new features are added
 
 ## Project Overview
 
@@ -236,4 +237,3 @@ All commands are registered in `activate()` and defined in package.json contribu
 - Strict mode enabled
 - Output directory: `out/`
 - Source maps enabled
-- always update the website documentation ( @docs/ )  when new features are added
