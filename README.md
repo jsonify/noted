@@ -129,7 +129,7 @@ Next steps:
 
 ## Note Organization & Discovery ⭐ NEW
 
-### Wiki-Style Note Linking
+### Wiki-Style Note Linking ⭐ ENHANCED
 
 Connect your notes together to build a knowledge base:
 
@@ -138,13 +138,30 @@ Connect your notes together to build a knowledge base:
 Working on the authentication feature today.
 See also: [[user-authentication-spec]]
 Related: [[api-design]] and [[security-considerations]]
+
+# New in v1.14.0: Disambiguate with paths when you have duplicate names
+Meeting today: [[work/meeting]]
+Yesterday's meeting: [[2025/10-October/meeting]]
 ```
 
 **Link Features:**
 - Use `[[note-name]]` syntax to link to any note
+- Use `[[note-name|Custom Text]]` to display custom link text (v1.13.5)
+- Use `[[folder/note-name]]` for disambiguation when multiple notes share the same name (v1.14.0)
 - Links are clickable and navigate directly to the target note
 - Automatic link resolution with fuzzy matching
 - Works with partial note names for convenience
+- **NEW:** Autocomplete shows all available notes while typing `[[`
+- **NEW:** Warnings for ambiguous or broken links with quick fixes
+
+**Path-Based Disambiguation (v1.14.0):**
+When you have multiple notes with the same name in different folders:
+- `[[meeting]]` - links to first match
+- `[[work/meeting]]` - links to specific note in work folder
+- `[[2025/10-October/meeting]]` - links to note in specific month
+- Works with both `/` and `\` path separators
+- Get autocomplete suggestions showing all matches with their paths
+- Yellow warnings on ambiguous links with quick fixes to convert to full paths
 
 **Viewing Backlinks:**
 - Hover over any note's header to see all notes that link to it
@@ -153,6 +170,7 @@ Related: [[api-design]] and [[security-considerations]]
 - Automatically indexed for fast lookups
 
 **Managing Links:**
+- Links automatically update when you rename or move notes (v1.13.5)
 - Use Command Palette: "Noted: Rebuild Backlinks Index"
 - Index rebuilds automatically when notes change
 - Works across all note formats (.txt and .md)

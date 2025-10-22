@@ -249,4 +249,127 @@ Third link: [[note3]]`;
       expect(links[2].displayText).to.be.undefined;
     });
   });
+
+  describe('Path-based link disambiguation', () => {
+    beforeEach(async () => {
+      // Create a directory structure with duplicate note names
+      await fs.mkdir(path.join(tempDir, '2025', '10-October'), { recursive: true });
+      await fs.mkdir(path.join(tempDir, '2025', '11-November'), { recursive: true });
+      await fs.mkdir(path.join(tempDir, 'work'), { recursive: true });
+      await fs.mkdir(path.join(tempDir, 'personal'), { recursive: true });
+    });
+
+    it('should resolve simple note name links', async () => {
+      const notePath = path.join(tempDir, '2025', '10-October', 'meeting.txt');
+      await fs.writeFile(notePath, 'Meeting notes');
+
+      const resolved = await linkService.resolveLink('meeting');
+      expect(resolved).to.equal(notePath);
+    });
+
+    it('should resolve path-based links with full path', async () => {
+      const notePath = path.join(tempDir, '2025', '10-October', 'meeting.txt');
+      await fs.writeFile(notePath, 'Meeting notes');
+
+      const resolved = await linkService.resolveLink('2025/10-October/meeting');
+      expect(resolved).to.equal(notePath);
+    });
+
+    it('should resolve path-based links with partial path', async () => {
+      const notePath = path.join(tempDir, 'work', 'meeting.txt');
+      await fs.writeFile(notePath, 'Work meeting');
+
+      const resolved = await linkService.resolveLink('work/meeting');
+      expect(resolved).to.equal(notePath);
+    });
+
+    it('should disambiguate between notes with same name in different folders', async () => {
+      const workMeeting = path.join(tempDir, 'work', 'meeting.txt');
+      const personalMeeting = path.join(tempDir, 'personal', 'meeting.txt');
+
+      await fs.writeFile(workMeeting, 'Work meeting');
+      await fs.writeFile(personalMeeting, 'Personal meeting');
+
+      // Simple name resolves to first match
+      const simpleResolved = await linkService.resolveLink('meeting');
+      expect(simpleResolved).to.be.oneOf([workMeeting, personalMeeting]);
+
+      // Path-based links resolve to specific notes
+      const workResolved = await linkService.resolveLink('work/meeting');
+      expect(workResolved).to.equal(workMeeting);
+
+      const personalResolved = await linkService.resolveLink('personal/meeting');
+      expect(personalResolved).to.equal(personalMeeting);
+    });
+
+    it('should find all matching notes for ambiguous links', async () => {
+      const meeting1 = path.join(tempDir, '2025', '10-October', 'meeting.txt');
+      const meeting2 = path.join(tempDir, '2025', '11-November', 'meeting.txt');
+      const meeting3 = path.join(tempDir, 'work', 'meeting.txt');
+
+      await fs.writeFile(meeting1, 'October meeting');
+      await fs.writeFile(meeting2, 'November meeting');
+      await fs.writeFile(meeting3, 'Work meeting');
+
+      const matches = await linkService.findAllMatchingNotes('meeting');
+      expect(matches).to.have.lengthOf(3);
+      expect(matches).to.include.members([meeting1, meeting2, meeting3]);
+    });
+
+    it('should detect ambiguous links', async () => {
+      const note1 = path.join(tempDir, '2025', '10-October', 'project.txt');
+      const note2 = path.join(tempDir, 'work', 'project.txt');
+
+      await fs.writeFile(note1, 'Project 1');
+      await fs.writeFile(note2, 'Project 2');
+
+      const isAmbiguous = await linkService.isAmbiguousLink('project');
+      expect(isAmbiguous).to.be.true;
+    });
+
+    it('should not consider path-based links as ambiguous', async () => {
+      const note1 = path.join(tempDir, '2025', '10-October', 'project.txt');
+      const note2 = path.join(tempDir, 'work', 'project.txt');
+
+      await fs.writeFile(note1, 'Project 1');
+      await fs.writeFile(note2, 'Project 2');
+
+      const isAmbiguous = await linkService.isAmbiguousLink('work/project');
+      expect(isAmbiguous).to.be.false;
+    });
+
+    it('should handle links with backslashes (Windows-style paths)', async () => {
+      const notePath = path.join(tempDir, 'work', 'project.txt');
+      await fs.writeFile(notePath, 'Work project');
+
+      const resolved = await linkService.resolveLink('work\\project');
+      expect(resolved).to.equal(notePath);
+    });
+
+    it('should resolve links with multiple path components', async () => {
+      const notePath = path.join(tempDir, '2025', '10-October', 'meeting.txt');
+      await fs.writeFile(notePath, 'October meeting');
+
+      const resolved = await linkService.resolveLink('2025/10-October/meeting');
+      expect(resolved).to.equal(notePath);
+    });
+
+    it('should handle non-existent path-based links', async () => {
+      const resolved = await linkService.resolveLink('nonexistent/folder/note');
+      expect(resolved).to.be.undefined;
+    });
+
+    it('should return empty array for non-matching findAllMatchingNotes', async () => {
+      const matches = await linkService.findAllMatchingNotes('nonexistent-note');
+      expect(matches).to.have.lengthOf(0);
+    });
+
+    it('should handle markdown files in path resolution', async () => {
+      const notePath = path.join(tempDir, 'work', 'notes.md');
+      await fs.writeFile(notePath, '# Work Notes');
+
+      const resolved = await linkService.resolveLink('work/notes');
+      expect(resolved).to.equal(notePath);
+    });
+  });
 });

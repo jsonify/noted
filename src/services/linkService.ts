@@ -118,11 +118,32 @@ export class LinkService {
 
     /**
      * Resolve a link text to a file path
-     * Searches for files matching the link text in the notes directory
+     * Supports both simple names and path-based disambiguation
+     * Examples:
+     *   - [[meeting]] - searches for any note named "meeting"
+     *   - [[2025/10-October/meeting]] - looks for specific path
+     *   - [[work/meeting]] - looks for meeting in work folder
      */
     async resolveLink(linkText: string): Promise<string | undefined> {
         const normalizedLinkText = linkText.toLowerCase().trim();
 
+        // Check if link contains path separators (/, \)
+        const hasPathSeparator = linkText.includes('/') || linkText.includes('\\');
+
+        if (hasPathSeparator) {
+            // Path-based link: try to resolve relative to notes root
+            return await this.resolvePathBasedLink(linkText);
+        } else {
+            // Simple name link: use existing resolution logic
+            return await this.resolveSimpleLink(normalizedLinkText, linkText);
+        }
+    }
+
+    /**
+     * Resolve a simple link (no path separators)
+     * Returns the first match or undefined
+     */
+    private async resolveSimpleLink(normalizedLinkText: string, linkText: string): Promise<string | undefined> {
         // Try exact filename match first (with extensions)
         for (const ext of SUPPORTED_EXTENSIONS) {
             const exactPath = await this.findNoteByName(`${linkText}${ext}`);
@@ -151,6 +172,115 @@ export class LinkService {
         }
 
         return undefined;
+    }
+
+    /**
+     * Resolve a path-based link (contains / or \)
+     * Example: [[2025/10-October/meeting]] or [[work/ideas/project]]
+     */
+    private async resolvePathBasedLink(linkText: string): Promise<string | undefined> {
+        // Normalize path separators to system separator
+        const normalizedPath = linkText.replace(/\\/g, '/');
+        const allNotes = await this.getAllNotes();
+
+        // Try exact path match first (with each supported extension)
+        for (const ext of SUPPORTED_EXTENSIONS) {
+            const fullPath = path.join(this.notesPath, normalizedPath + ext);
+            if (allNotes.includes(fullPath)) {
+                return fullPath;
+            }
+        }
+
+        // Try matching by relative path ending
+        const linkParts = normalizedPath.toLowerCase().split('/');
+
+        for (const notePath of allNotes) {
+            // Get relative path from notes root
+            const relativePath = path.relative(this.notesPath, notePath);
+            const relativePathNormalized = relativePath.toLowerCase().replace(/\\/g, '/');
+
+            // Remove extension for comparison
+            const relativePathNoExt = relativePathNormalized.replace(/\.(txt|md)$/i, '');
+
+            // Check if the note path ends with the link path
+            if (relativePathNoExt.endsWith(normalizedPath.toLowerCase())) {
+                return notePath;
+            }
+
+            // Also try partial matching (all link path components present in order)
+            const noteParts = relativePathNoExt.split('/');
+            if (this.pathPartsMatch(linkParts, noteParts)) {
+                return notePath;
+            }
+        }
+
+        return undefined;
+    }
+
+    /**
+     * Check if all link path parts are present in note path parts in order
+     * Example: ['work', 'meeting'] matches ['Notes', 'work', 'projects', 'meeting']
+     */
+    private pathPartsMatch(linkParts: string[], noteParts: string[]): boolean {
+        if (linkParts.length > noteParts.length) {
+            return false;
+        }
+
+        let noteIndex = 0;
+        for (const linkPart of linkParts) {
+            // Find this link part in remaining note parts
+            let found = false;
+            while (noteIndex < noteParts.length) {
+                if (noteParts[noteIndex].toLowerCase() === linkPart.toLowerCase()) {
+                    found = true;
+                    noteIndex++;
+                    break;
+                }
+                noteIndex++;
+            }
+            if (!found) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Find all notes that match a link text
+     * Useful for detecting ambiguous links (multiple matches)
+     */
+    async findAllMatchingNotes(linkText: string): Promise<string[]> {
+        const normalizedLinkText = linkText.toLowerCase().trim();
+        const matches: string[] = [];
+        const allNotes = await this.getAllNotes();
+
+        // Check if link contains path separators
+        const hasPathSeparator = linkText.includes('/') || linkText.includes('\\');
+
+        if (hasPathSeparator) {
+            // For path-based links, only return exact matches
+            const resolved = await this.resolvePathBasedLink(linkText);
+            return resolved ? [resolved] : [];
+        }
+
+        // For simple links, find all matching notes
+        for (const notePath of allNotes) {
+            const basename = path.basename(notePath, path.extname(notePath));
+            if (basename.toLowerCase() === normalizedLinkText) {
+                matches.push(notePath);
+            }
+        }
+
+        return matches;
+    }
+
+    /**
+     * Check if a link is ambiguous (matches multiple notes)
+     */
+    async isAmbiguousLink(linkText: string): Promise<boolean> {
+        const matches = await this.findAllMatchingNotes(linkText);
+        return matches.length > 1;
     }
 
     /**

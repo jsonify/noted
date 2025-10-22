@@ -16,6 +16,8 @@ import { TagCompletionProvider } from './services/tagCompletionProvider';
 import { LinkService } from './services/linkService';
 import { NoteLinkProvider } from './providers/noteLinkProvider';
 import { BacklinkHoverProvider } from './providers/backlinkHoverProvider';
+import { LinkCompletionProvider } from './providers/linkCompletionProvider';
+import { LinkDiagnosticsProvider, LinkCodeActionProvider } from './providers/linkDiagnosticsProvider';
 import { PinnedNotesService } from './services/pinnedNotesService';
 import { ArchiveService } from './services/archiveService';
 import { BulkOperationsService } from './services/bulkOperationsService';
@@ -123,6 +125,50 @@ export function activate(context: vscode.ExtensionContext) {
         backlinkHoverProvider
     );
     context.subscriptions.push(hoverProviderDisposable);
+
+    // Register completion provider for note links
+    const linkCompletionProvider = new LinkCompletionProvider(linkService, notesPath || '');
+    const linkCompletionDisposable = vscode.languages.registerCompletionItemProvider(
+        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        linkCompletionProvider,
+        '[', '/' // Trigger on [[ and / for path completion
+    );
+    context.subscriptions.push(linkCompletionDisposable);
+
+    // Register diagnostics provider for links (ambiguous/broken link warnings)
+    const linkDiagnosticsProvider = new LinkDiagnosticsProvider(linkService, notesPath || '');
+    context.subscriptions.push(linkDiagnosticsProvider);
+
+    // Update diagnostics when document is opened or changed
+    const updateDiagnostics = (document: vscode.TextDocument) => {
+        linkDiagnosticsProvider.updateDiagnostics(document).catch(err => {
+            console.error('[NOTED] Error updating link diagnostics:', err);
+        });
+    };
+
+    // Update diagnostics for all open documents
+    vscode.workspace.textDocuments.forEach(updateDiagnostics);
+
+    // Update diagnostics when document is opened
+    context.subscriptions.push(
+        vscode.workspace.onDidOpenTextDocument(updateDiagnostics)
+    );
+
+    // Update diagnostics when document is saved
+    context.subscriptions.push(
+        vscode.workspace.onDidSaveTextDocument(updateDiagnostics)
+    );
+
+    // Register code action provider for quick fixes
+    const linkCodeActionProvider = new LinkCodeActionProvider(linkService, notesPath || '');
+    const codeActionDisposable = vscode.languages.registerCodeActionsProvider(
+        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        linkCodeActionProvider,
+        {
+            providedCodeActionKinds: [vscode.CodeActionKind.QuickFix]
+        }
+    );
+    context.subscriptions.push(codeActionDisposable);
 
     // Initialize pinned notes service
     const pinnedNotesService = new PinnedNotesService(context);

@@ -9,7 +9,11 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 ### Enhanced Link Features (inspired by Markdown Memo)
 - [x] **Link labels/aliases**: Support `[[note-name|Custom Display Text]]` syntax for readable link text (v1.13.5)
 - [x] **Automatic link synchronization on rename**: Update all `[[links]]` when a note is renamed or moved (v1.13.5)
-- [ ] **Full-path links for disambiguation**: Handle cases where multiple notes have similar names (e.g., `[[folder/note]]`)
+- [x] **Full-path links for disambiguation**: Handle cases where multiple notes have similar names (e.g., `[[folder/note]]`) (v1.14.0)
+  - Path-based link syntax: `[[2025/10-October/meeting]]`, `[[work/project]]`
+  - Smart resolution: supports both simple names and full/partial paths
+  - Link completion: autocomplete suggests paths while typing `[[`
+  - Diagnostics: warns about ambiguous links with quick fixes
 - [ ] **Rename symbol command**: Refactor/rename links across all notes in workspace
 - [ ] **Extract selection to new note**: Select text and create a new linked note from it
 
