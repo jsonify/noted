@@ -4,16 +4,19 @@ import { readFile, pathExists, readDirectoryWithTypes } from './fileSystemServic
 import { SUPPORTED_EXTENSIONS } from '../constants';
 
 /**
- * Regular expression to match wiki-style links: [[note-name]]
+ * Regular expression to match wiki-style links: [[note-name]] or [[note-name|Display Text]]
+ * Captures: [1] = link target, [2] = optional display text (after pipe)
  */
-export const LINK_PATTERN = /\[\[([^\]]+)\]\]/g;
+export const LINK_PATTERN = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
 
 /**
  * Represents a link found in a note
  */
 export interface NoteLink {
-    /** The text between [[ and ]] */
+    /** The text between [[ and ]] (the link target) */
     linkText: string;
+    /** Optional display text (when using [[target|display]] syntax) */
+    displayText?: string;
     /** The range in the document where the link appears */
     range: vscode.Range;
     /** The resolved file path if found */
@@ -30,6 +33,8 @@ export interface Backlink {
     line: number;
     /** Context around the link */
     context: string;
+    /** Optional display text used in the link (from [[target|display]] syntax) */
+    displayText?: string;
 }
 
 /**
@@ -59,12 +64,14 @@ export class LinkService {
 
         while ((match = LINK_PATTERN.exec(text)) !== null) {
             const linkText = match[1].trim();
+            const displayText = match[2] ? match[2].trim() : undefined;
             const startPos = document.positionAt(match.index);
             const endPos = document.positionAt(match.index + match[0].length);
             const range = new vscode.Range(startPos, endPos);
 
             links.push({
                 linkText,
+                displayText,
                 range
             });
         }
@@ -87,11 +94,13 @@ export class LinkService {
 
                 while ((match = LINK_PATTERN.exec(line)) !== null) {
                     const linkText = match[1].trim();
+                    const displayText = match[2] ? match[2].trim() : undefined;
                     const startCol = match.index;
                     const endCol = match.index + match[0].length;
 
                     links.push({
                         linkText,
+                        displayText,
                         range: new vscode.Range(
                             new vscode.Position(lineIndex, startCol),
                             new vscode.Position(lineIndex, endCol)
@@ -213,7 +222,8 @@ export class LinkService {
                     this.backlinksCache.get(targetPath)!.push({
                         sourceFile,
                         line: lineNumber,
-                        context
+                        context,
+                        displayText: link.displayText
                     });
                 }
             }

@@ -37,7 +37,12 @@ export class BacklinkHoverProvider implements vscode.HoverProvider {
             const uri = vscode.Uri.file(backlink.sourceFile);
             const command = `command:noted.openNote?${encodeURIComponent(JSON.stringify([backlink.sourceFile]))}`;
 
-            markdownContent.appendMarkdown(`- [${filename}](${command})\n`);
+            // Show display text if available
+            const linkLabel = backlink.displayText
+                ? `${filename} (as "${backlink.displayText}")`
+                : filename;
+
+            markdownContent.appendMarkdown(`- [${linkLabel}](${command})\n`);
             if (backlink.context) {
                 markdownContent.appendMarkdown(`  _${backlink.context}_\n`);
             }
