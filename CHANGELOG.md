@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.20.0](https://github.com/jsonify/noted/compare/v1.19.0...v1.20.0) (2025-10-22)
+
+
+### Features
+
+* add time-based filtering to graph view ([7af5ae0](https://github.com/jsonify/noted/commit/7af5ae073b137286d35f4b504de3d93868f79bab))
+
 ## [1.19.0](https://github.com/jsonify/noted/compare/v1.17.0...v1.19.0) (2025-10-22)
 
 
