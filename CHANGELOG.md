@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.15.0](https://github.com/jsonify/noted/compare/v1.14.1...v1.15.0) (2025-10-22)
+
+
+### Features
+
+* add hover previews for wiki-style links and implement related commands ([7fda8ae](https://github.com/jsonify/noted/commit/7fda8ae3789b224c200a434f3d912a9a83d6f966))
+
 ### [1.14.1](https://github.com/jsonify/noted/compare/v1.14.0...v1.14.1) (2025-10-22)
 
 
