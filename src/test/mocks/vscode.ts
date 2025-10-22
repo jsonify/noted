@@ -192,3 +192,14 @@ export class MarkdownString {
     return this;
   }
 }
+
+// Hover class for hover provider
+export class Hover {
+  contents: MarkdownString[];
+  range?: Range;
+
+  constructor(contents: MarkdownString | MarkdownString[], range?: Range) {
+    this.contents = Array.isArray(contents) ? contents : [contents];
+    this.range = range;
+  }
+}
