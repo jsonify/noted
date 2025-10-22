@@ -241,15 +241,21 @@ export function activate(context: vscode.ExtensionContext) {
     let insertTimestamp = vscode.commands.registerCommand('noted.insertTimestamp', async () => {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
-            const timestamp = new Date().toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
+            const timestamp = new Date().toLocaleTimeString('en-US', {
+                hour: '2-digit',
                 minute: '2-digit',
-                hour12: true 
+                hour12: true
             });
             editor.edit(editBuilder => {
                 editBuilder.insert(editor.selection.active, `[${timestamp}] `);
             });
         }
+    });
+
+    // Command to extract selection to new note
+    let extractSelectionToNote = vscode.commands.registerCommand('noted.extractSelectionToNote', async () => {
+        const { handleExtractSelectionToNote } = await import('./commands/commands');
+        await handleExtractSelectionToNote();
     });
 
     // Command to change file format
@@ -1086,7 +1092,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(
-        openTodayNote, openWithTemplate, insertTimestamp, changeFormat,
+        openTodayNote, openWithTemplate, insertTimestamp, extractSelectionToNote, changeFormat,
         refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, quickSwitcher, filterByTag, clearTagFilters, sortTagsByName, sortTagsByFrequency, refreshTags,
         renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,

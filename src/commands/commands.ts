@@ -526,6 +526,110 @@ export async function handleInsertTimestamp() {
     }
 }
 
+export async function handleExtractSelectionToNote() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showErrorMessage('No active editor');
+        return;
+    }
+
+    const selection = editor.selection;
+    if (selection.isEmpty) {
+        vscode.window.showErrorMessage('Please select some text to extract');
+        return;
+    }
+
+    const selectedText = editor.document.getText(selection);
+    if (!selectedText.trim()) {
+        vscode.window.showErrorMessage('Selected text is empty');
+        return;
+    }
+
+    const notesPath = getNotesPath();
+    if (!notesPath) {
+        vscode.window.showErrorMessage('Please configure a notes folder first');
+        return;
+    }
+
+    try {
+        // Ask for note name
+        const noteName = await vscode.window.showInputBox({
+            prompt: 'Enter name for the new note',
+            placeHolder: 'my-note',
+            validateInput: (value) => {
+                if (!value || !value.trim()) {
+                    return 'Note name cannot be empty';
+                }
+                return null;
+            }
+        });
+
+        if (!noteName) {
+            return;
+        }
+
+        // Sanitize filename: replace spaces with dashes, remove special chars
+        const sanitizedName = noteName
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-_]/g, '');
+
+        const fileFormat = getFileFormat();
+        const now = new Date();
+
+        // Get date components for folder structure
+        const { getYear, getMonth, getFolderName, getDay, getTimeForFilename } = await import('../utils/dateHelpers');
+        const year = getYear(now);
+        const month = getMonth(now);
+        const folderName = getFolderName(now);
+        const day = getDay(now);
+        const time = getTimeForFilename(now);
+
+        const noteFolder = path.join(notesPath, year, folderName);
+        const fileName = `${year}-${month}-${day}-${time}-${sanitizedName}.${fileFormat}`;
+        const filePath = path.join(noteFolder, fileName);
+
+        // Create folder if it doesn't exist
+        if (!(await pathExists(noteFolder))) {
+            await createDirectory(noteFolder);
+        }
+
+        // Check if file already exists
+        if (await pathExists(filePath)) {
+            vscode.window.showWarningMessage('A note with this name already exists');
+            return;
+        }
+
+        // Create the new note with the selected text
+        const noteContent = `# ${noteName}\n\nExtracted from: ${path.basename(editor.document.fileName)}\nDate: ${now.toLocaleString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        })}\n\n${'='.repeat(DEFAULTS.SEPARATOR_LENGTH)}\n\n${selectedText}`;
+
+        await writeFile(filePath, noteContent);
+
+        // Replace selection with wiki-style link
+        const linkText = `[[${sanitizedName}]]`;
+        await editor.edit(editBuilder => {
+            editBuilder.replace(selection, linkText);
+        });
+
+        // Open the new note
+        const document = await vscode.workspace.openTextDocument(filePath);
+        await vscode.window.showTextDocument(document, vscode.ViewColumn.Beside);
+
+        vscode.window.showInformationMessage(`Created note: ${sanitizedName}`);
+        refresh();
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to extract selection: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
 export async function handleChangeFormat() {
     const config = vscode.workspace.getConfiguration('noted');
     const currentFormat = config.get<string>('fileFormat', 'txt');

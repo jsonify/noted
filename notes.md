@@ -154,7 +154,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - Dedicated "Recent Notes" section showing 10 most recently modified notes
 - Quick access from tree view
 
-### Wiki-Style Note Linking (v1.5.0, Enhanced v1.14.0)
+### Wiki-Style Note Linking (v1.5.0, Enhanced v1.14.0-v1.14.1)
 - **Link Syntax**: Create links between notes using `[[note-name]]` syntax
 - **Link with Display Text** (v1.13.5): Use `[[note-name|Custom Display Text]]` syntax for readable link labels
 - **Path-Based Disambiguation** (v1.14.0): Use full or partial paths when multiple notes have the same name
@@ -172,6 +172,13 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - **Broken link errors**: Highlights links to non-existent notes
   - **Quick fixes**: Click to automatically convert to full-path links
   - **Related information**: Shows all matching notes for ambiguous links
+- **Extract Selection to Note** (v1.14.1): Create new notes from selected text
+  - **Select & Extract**: Right-click selected text and choose "Extract Selection to New Note"
+  - **Automatic Link**: Selection is replaced with `[[note-name]]` link to the new note
+  - **Side-by-Side**: New note opens in split view for easy reference
+  - **Rich Metadata**: Extracted note includes source file and extraction timestamp
+  - **Smart Naming**: Prompted for note name with automatic sanitization
+  - **Context Menu**: Available when any text is selected in the editor
 - **Automatic Link Synchronization** (v1.13.5): When renaming or moving notes, all `[[links]]` across your workspace are automatically updated
 - **Clickable Links**: Links are automatically detected and clickable in the editor
 - **Link Resolution**: Supports exact matches, partial matches, and fuzzy matching

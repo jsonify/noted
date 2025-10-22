@@ -14,8 +14,13 @@ For a complete list of implemented features, see [notes.md](./notes.md).
   - Smart resolution: supports both simple names and full/partial paths
   - Link completion: autocomplete suggests paths while typing `[[`
   - Diagnostics: warns about ambiguous links with quick fixes
+- [x] **Extract selection to new note**: Select text and create a new linked note from it (v1.14.1)
+  - Select text in any editor and extract to a new note
+  - Automatically replaces selection with wiki-style link `[[note-name]]`
+  - Opens extracted note in side-by-side view
+  - Includes metadata: source file, extraction date
+  - Available via context menu when text is selected
 - [ ] **Rename symbol command**: Refactor/rename links across all notes in workspace
-- [ ] **Extract selection to new note**: Select text and create a new linked note from it
 
 ### Embedding Capabilities (inspired by Markdown Memo)
 - [ ] **Embed notes**: Support `![[note-name]]` syntax to embed entire note content inline
