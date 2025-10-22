@@ -483,4 +483,99 @@ export class LinkService {
 
         return { filesUpdated, linksUpdated: totalLinksUpdated };
     }
+
+    /**
+     * Rename/refactor a link symbol across all notes in workspace
+     * This finds all occurrences of oldLinkName and replaces them with newLinkName
+     * Returns information about which files were affected
+     */
+    async renameSymbol(
+        oldLinkName: string,
+        newLinkName: string
+    ): Promise<{ filesUpdated: number; linksUpdated: number; affectedFiles: string[] }> {
+        const affectedFiles: string[] = [];
+        let filesUpdated = 0;
+        let totalLinksUpdated = 0;
+
+        // Get all notes in the workspace
+        const allNotes = await this.getAllNotes();
+
+        // Process each note file
+        for (const notePath of allNotes) {
+            try {
+                const content = await readFile(notePath);
+                let updatedContent = content;
+                let updateCount = 0;
+
+                // Match all variations of the old link name:
+                // [[oldLinkName]], [[oldLinkName|Display Text]], [[path/to/oldLinkName]]
+                // We need to be careful to only replace the link target, not display text
+
+                // Escape special regex characters in the old link name
+                const escapedOldName = this.escapeRegExp(oldLinkName);
+
+                // Pattern to match [[oldLinkName]] or [[oldLinkName|anything]]
+                // Captures optional display text after pipe
+                const linkRegex = new RegExp(
+                    `\\[\\[${escapedOldName}(\\|[^\\]]+)?\\]\\]`,
+                    'g'
+                );
+
+                updatedContent = updatedContent.replace(linkRegex, (match, displayPart) => {
+                    updateCount++;
+                    // Preserve display text if present, otherwise use new link name
+                    return displayPart ? `[[${newLinkName}${displayPart}]]` : `[[${newLinkName}]]`;
+                });
+
+                // If we found and updated links, write the file
+                if (updateCount > 0) {
+                    const { writeFile } = await import('./fileSystemService');
+                    await writeFile(notePath, updatedContent);
+                    affectedFiles.push(notePath);
+                    filesUpdated++;
+                    totalLinksUpdated += updateCount;
+                    console.log(`[NOTED] Renamed ${updateCount} link(s) in ${notePath}`);
+                }
+            } catch (error) {
+                console.error('[NOTED] Error renaming links in file:', notePath, error);
+            }
+        }
+
+        // Rebuild the backlinks index to reflect changes
+        if (filesUpdated > 0) {
+            await this.buildBacklinksIndex();
+        }
+
+        return { filesUpdated, linksUpdated: totalLinksUpdated, affectedFiles };
+    }
+
+    /**
+     * Find all files that contain a specific link
+     * Useful for previewing what would be affected by a rename operation
+     */
+    async findFilesContainingLink(linkName: string): Promise<Array<{ file: string; count: number }>> {
+        const results: Array<{ file: string; count: number }> = [];
+        const allNotes = await this.getAllNotes();
+
+        const escapedLinkName = this.escapeRegExp(linkName);
+        const linkRegex = new RegExp(`\\[\\[${escapedLinkName}(?:\\|[^\\]]+)?\\]\\]`, 'g');
+
+        for (const notePath of allNotes) {
+            try {
+                const content = await readFile(notePath);
+                const matches = content.match(linkRegex);
+
+                if (matches && matches.length > 0) {
+                    results.push({
+                        file: notePath,
+                        count: matches.length
+                    });
+                }
+            } catch (error) {
+                console.error('[NOTED] Error reading file:', notePath, error);
+            }
+        }
+
+        return results;
+    }
 }

@@ -20,7 +20,12 @@ For a complete list of implemented features, see [notes.md](./notes.md).
   - Opens extracted note in side-by-side view
   - Includes metadata: source file, extraction date
   - Available via context menu when text is selected
-- [ ] **Rename symbol command**: Refactor/rename links across all notes in workspace
+- [x] **Rename symbol command**: Refactor/rename links across all notes in workspace (v1.14.2)
+  - Rename/refactor all occurrences of a link across the workspace
+  - Preview affected files before renaming
+  - Preserves display text when using `[[link|Display]]` syntax
+  - Shows progress notification during rename operation
+  - Automatically rebuilds backlinks index after rename
 
 ### Embedding Capabilities (inspired by Markdown Memo)
 - [ ] **Embed notes**: Support `![[note-name]]` syntax to embed entire note content inline

@@ -1091,6 +1091,12 @@ export function activate(context: vscode.ExtensionContext) {
         await handleClearUndoHistory(undoService);
     });
 
+    // Command to rename symbol (refactor links)
+    let renameSymbol = vscode.commands.registerCommand('noted.renameSymbol', async () => {
+        const { handleRenameSymbol } = await import('./commands/commands');
+        await handleRenameSymbol(linkService);
+    });
+
     context.subscriptions.push(
         openTodayNote, openWithTemplate, insertTimestamp, extractSelectionToNote, changeFormat,
         refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
@@ -1104,7 +1110,8 @@ export function activate(context: vscode.ExtensionContext) {
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive,
         toggleMarkdownPreview,
-        undoCommand, redoCommand, showUndoHistory, clearUndoHistory
+        undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
+        renameSymbol
     );
 }
 

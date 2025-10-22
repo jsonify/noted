@@ -758,3 +758,116 @@ export async function handleShowConfig() {
 
     vscode.window.showInformationMessage(message, { modal: true });
 }
+
+// ============================================================================
+// Link Commands
+// ============================================================================
+
+export async function handleRenameSymbol(linkService: any) {
+    try {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            vscode.window.showErrorMessage('Please configure a notes folder first');
+            return;
+        }
+
+        // Prompt for the old link name
+        const oldLinkName = await vscode.window.showInputBox({
+            prompt: 'Enter the link name to rename (without [[ ]])',
+            placeHolder: 'old-note-name',
+            validateInput: (value) => {
+                if (!value || !value.trim()) {
+                    return 'Link name cannot be empty';
+                }
+                if (value.includes('[[') || value.includes(']]')) {
+                    return 'Enter only the link name, without [[ ]] brackets';
+                }
+                return null;
+            }
+        });
+
+        if (!oldLinkName) {
+            return;
+        }
+
+        const trimmedOldName = oldLinkName.trim();
+
+        // Find all files containing this link for preview
+        const affectedFiles = await linkService.findFilesContainingLink(trimmedOldName);
+
+        if (affectedFiles.length === 0) {
+            vscode.window.showInformationMessage(`No links found for "[[${trimmedOldName}]]"`);
+            return;
+        }
+
+        // Show preview of affected files
+        const totalOccurrences = affectedFiles.reduce((sum: number, f: { file: string; count: number }) => sum + f.count, 0);
+        const fileList = affectedFiles
+            .slice(0, 10)
+            .map((f: { file: string; count: number }) => `  • ${path.basename(f.file)} (${f.count} occurrence${f.count > 1 ? 's' : ''})`)
+            .join('\n');
+        const moreFiles = affectedFiles.length > 10 ? `\n  ... and ${affectedFiles.length - 10} more file(s)` : '';
+
+        const previewMessage = `Found ${totalOccurrences} occurrence(s) of "[[${trimmedOldName}]]" in ${affectedFiles.length} file(s):\n\n${fileList}${moreFiles}\n\nContinue with rename?`;
+
+        const proceed = await vscode.window.showInformationMessage(
+            previewMessage,
+            { modal: true },
+            'Continue',
+            'Cancel'
+        );
+
+        if (proceed !== 'Continue') {
+            return;
+        }
+
+        // Prompt for the new link name
+        const newLinkName = await vscode.window.showInputBox({
+            prompt: 'Enter the new link name (without [[ ]])',
+            placeHolder: 'new-note-name',
+            value: trimmedOldName,
+            validateInput: (value) => {
+                if (!value || !value.trim()) {
+                    return 'Link name cannot be empty';
+                }
+                if (value.includes('[[') || value.includes(']]')) {
+                    return 'Enter only the link name, without [[ ]] brackets';
+                }
+                if (value.trim() === trimmedOldName) {
+                    return 'New link name must be different from old name';
+                }
+                return null;
+            }
+        });
+
+        if (!newLinkName) {
+            return;
+        }
+
+        const trimmedNewName = newLinkName.trim();
+
+        // Show progress notification
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: `Renaming links from "[[${trimmedOldName}]]" to "[[${trimmedNewName}]]"...`,
+                cancellable: false
+            },
+            async () => {
+                // Perform the rename operation
+                const result = await linkService.renameSymbol(trimmedOldName, trimmedNewName);
+
+                // Show success message
+                const successMessage = `Successfully renamed ${result.linksUpdated} link(s) in ${result.filesUpdated} file(s)`;
+                vscode.window.showInformationMessage(successMessage);
+
+                // Refresh the tree view
+                refresh();
+            }
+        );
+    } catch (error) {
+        vscode.window.showErrorMessage(
+            `Error renaming link: ${error instanceof Error ? error.message : String(error)}`
+        );
+    }
+}

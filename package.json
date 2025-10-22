@@ -343,6 +343,11 @@
         "command": "noted.clearUndoHistory",
         "title": "Noted: Clear Undo History",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "noted.renameSymbol",
+        "title": "Noted: Rename Symbol (Refactor Links)",
+        "icon": "$(symbol-keyword)"
       }
     ],
     "menus": {
