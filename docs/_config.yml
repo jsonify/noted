@@ -1,0 +1,57 @@
+# Jekyll configuration for Noted documentation
+title: Noted
+description: A VS Code extension for organized workspace notes with templates, search, and daily tracking
+baseurl: ""
+url: "https://jsonify.github.io/noted"
+
+# Theme configuration
+remote_theme: pages-themes/cayman@v0.2.0
+plugins:
+  - jekyll-remote-theme
+  - jekyll-relative-links
+
+# Navigation structure
+navigation:
+  - title: Home
+    url: /
+  - title: Features
+    url: /features/
+  - title: User Guide
+    url: /user/
+  - title: Development
+    url: /dev/
+
+# Markdown settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Include/Exclude
+include:
+  - _pages
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - README.md
+  - AUTOMATED_TESTING.md
+  - brief.md
+  - DEVELOPMENT_SCRIPTS_GUIDE.md
+  - LOCKFILE_NOTE.md
+  - PAT_SETUP.md
+  - PUBLISHING.md
+  - QUICK_REFERENCE.md
+  - test-summary.md
+  - TESTING.md
+  - VERIFICATION_RESULTS.md
+  - WORKFLOW_HEALTH_CHECK.md
+  - WORKFLOWS.md
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
