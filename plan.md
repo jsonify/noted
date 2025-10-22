@@ -90,7 +90,11 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 - [ ] **Orphans explorer panel**: Dedicated tree view showing all orphaned notes
 - [ ] **Placeholders explorer panel**: Show all placeholder links with source note context
 - [ ] **Visual indicators**: Highlight orphans and placeholders in graph and tree views
-- [ ] **Auto-create from placeholder**: Create new note directly from placeholder link
+- [x] **Auto-create from placeholder**: Create new note directly from placeholder link (v1.17.1)
+  - Click broken `[[links]]` to create missing notes
+  - Prompts for confirmation before creating
+  - Creates in current month's folder
+  - Opens automatically for editing
 
 ### Advanced Template System (inspired by Foam)
 - [ ] **JavaScript templates**: Support templates with logic, functions, and conditionals

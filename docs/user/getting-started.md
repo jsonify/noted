@@ -58,8 +58,10 @@ When you first use Noted, you'll choose where to store your notes.
 
 Your note is automatically created at:
 ```
-Notes/2025/10-October/2025-10-21.txt
+Notes/2025/10-October/2025-10-21.md
 ```
+
+> **Note:** New notes are created as Markdown (`.md`) files by default. You can change this in settings to use `.txt` if preferred.
 
 ### Add Some Content
 
@@ -187,7 +189,7 @@ Create a custom template for your daily workflow:
 1. Open Settings (`Cmd+,`)
 2. Search for "Noted"
 3. Configure:
-   - File format (`.txt` or `.md`)
+   - File format (`.txt` or `.md`, default: `.md`)
    - Tag autocomplete
    - Notes folder location
 

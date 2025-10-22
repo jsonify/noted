@@ -91,6 +91,14 @@ Red error when link target doesn't exist:
 [[non-existent-note]]  ❌ Link target not found
 ```
 
+**Quick fix:** Click broken links to create the missing note
+
+When you click on a broken link:
+1. A prompt asks if you want to create the note
+2. The note is created in the current month's folder
+3. Opens automatically for editing
+4. Backlinks index updates to include the new note
+
 ### Related Information
 
 Hover over ambiguous links to see all matching notes with their paths.

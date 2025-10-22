@@ -5,7 +5,7 @@
 ### Daily Notes
 - **Open Today's Note**: Quickly create or open today's note
 - **Automatic Organization**: Notes are organized in `YYYY/MM-MonthName/YYYY-MM-DD.format` structure
-- **File Formats**: Support for both `.txt` and `.md` formats (configurable)
+- **File Formats**: Support for both `.txt` and `.md` formats (configurable, default: `.md`)
 
 ### Templates
 Four built-in note templates accessible from the Templates view:
@@ -188,9 +188,15 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - **Context Menu**: Available when any text is selected in the editor
 - **Automatic Link Synchronization** (v1.13.5): When renaming or moving notes, all `[[links]]` across your workspace are automatically updated
 - **Clickable Links**: Links are automatically detected and clickable in the editor
+- **Create Missing Notes from Links** (v1.17.1): Click broken links to create missing notes
+  - Clicking a `[[non-existent-note]]` prompts to create it
+  - New note created in current month's folder
+  - Opens automatically for editing
+  - Backlinks index updates to include the new note
 - **Link Resolution**: Supports exact matches, partial matches, and fuzzy matching
 - **Cross-Navigation**: Click any link to open the target note
 - **Document Link Provider**: VS Code integration for seamless navigation
+- **Auto-Activation** (v1.17.1): Extension activates automatically on startup for immediate link functionality
 
 ### Note and Image Embedding (v1.16.0-v1.17.0)
 - **Embed Notes** (v1.16.0): Include entire notes or sections inline using `![[note-name]]` syntax
@@ -281,7 +287,7 @@ All commands are accessible via:
 
 ### Settings
 - `noted.notesFolder`: Location of notes folder (absolute path recommended)
-- `noted.fileFormat`: File format - "txt" or "md" (default: "txt")
+- `noted.fileFormat`: File format - "txt" or "md" (default: "md")
 - `noted.useTemplate`: Enable custom template (not currently implemented)
 - `noted.template`: Custom template string (not currently implemented)
 - `noted.tagAutoComplete`: Enable tag autocomplete suggestions when typing # (default: true)

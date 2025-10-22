@@ -74,7 +74,7 @@ export const FOLDER_PATTERNS = {
  */
 export const DEFAULTS = {
     NOTES_FOLDER: 'Notes',
-    FILE_FORMAT: 'txt',
+    FILE_FORMAT: 'md',
     RECENT_NOTES_LIMIT: 10,
     SEPARATOR_LENGTH: 50
 };

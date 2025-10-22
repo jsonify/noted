@@ -42,9 +42,10 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
                     : `Open ${linkText}`;
                 links.push(documentLink);
             } else {
-                // Create a link that will show an error when clicked
-                const documentLink = new vscode.DocumentLink(range, undefined);
-                documentLink.tooltip = `Note not found: ${linkText}`;
+                // Create a link with custom URI that will prompt to create the note
+                const createUri = vscode.Uri.parse(`command:noted.createNoteFromLink?${encodeURIComponent(JSON.stringify([linkText]))}`);
+                const documentLink = new vscode.DocumentLink(range, createUri);
+                documentLink.tooltip = `Note not found: ${linkText} (click to create)`;
                 links.push(documentLink);
             }
         }

@@ -28,7 +28,7 @@
     "knowledge base"
   ],
   "activationEvents": [
-    "onCommand:noted.openToday"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -569,7 +569,7 @@
             "txt",
             "md"
           ],
-          "default": "txt",
+          "default": "md",
           "description": "File format for notes"
         },
         "noted.useTemplate": {
