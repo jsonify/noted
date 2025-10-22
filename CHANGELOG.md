@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.18.0](https://github.com/jsonify/noted/compare/v1.17.0...v1.18.0) (2025-10-22)
+
+
+### Features
+
+* enhance note creation and linking functionality ([e68704b](https://github.com/jsonify/noted/commit/e68704b94cc90e3eebf9a9fd0796fcbf57f35520))
+
 ## [1.17.0](https://github.com/jsonify/noted/compare/v1.16.1...v1.17.0) (2025-10-22)
 
 
