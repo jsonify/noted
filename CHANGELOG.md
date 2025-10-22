@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.14.1](https://github.com/jsonify/noted/compare/v1.14.0...v1.14.1) (2025-10-22)
+
+
+### Bug Fixes
+
+* correct baseurl for GitHub Pages subdirectory ([9c3d776](https://github.com/jsonify/noted/commit/9c3d776a0adceeec21f72e7d64ea00d5df7dd58d))
+
 ## [1.14.0](https://github.com/jsonify/noted/compare/v1.13.9...v1.14.0) (2025-10-22)
 
 
