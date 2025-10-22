@@ -48,23 +48,46 @@ function initGraph() {
         hideTooltip();
     });
 
+    network.on('stabilizationProgress', function(params) {
+        console.log('Stabilization progress:', Math.round(params.iterations / params.total * 100) + '%');
+    });
+
     network.on('stabilizationIterationsDone', function() {
-        network.setOptions({ physics: false });
+        console.log('Stabilization complete, physics will stay enabled for interactive movement');
+
         // Fit view after stabilization completes
         network.fit({
             animation: {
-                duration: 500,
+                duration: 1000,
                 easingFunction: 'easeInOutQuad'
             }
         });
+
+        // Keep physics enabled permanently for continuous interactive movement
+        // Physics will continue to run when nodes are dragged or the graph is modified
     });
 
-    // Also fit immediately for initial visibility
+    // Fit immediately so the graph is visible
     setTimeout(() => {
-        network.fit({
-            animation: false
-        });
-    }, 50);
+        network.fit({ animation: false });
+    }, 100);
+}
+
+function positionNodesCircularly(nodes) {
+    const nodeCount = nodes.length;
+    if (nodeCount === 0) return;
+
+    // Calculate radius based on number of nodes to ensure good spacing
+    const radius = Math.max(200, nodeCount * 30);
+    const angleStep = (2 * Math.PI) / nodeCount;
+
+    // Position each node on the circle
+    nodes.forEach((node, index) => {
+        const angle = index * angleStep;
+        node.x = radius * Math.cos(angle);
+        node.y = radius * Math.sin(angle);
+        node.fixed = { x: false, y: false };  // Allow dragging but start in circular position
+    });
 }
 
 function getLayoutOptions(layout) {
@@ -126,20 +149,22 @@ function getLayoutOptions(layout) {
             baseOptions.physics = {
                 enabled: true,
                 barnesHut: {
-                    gravitationalConstant: -2000,
-                    centralGravity: 0.3,
-                    springLength: 150,
-                    springConstant: 0.04,
-                    damping: 0.09,
-                    avoidOverlap: 0.2
+                    gravitationalConstant: -30000,  // Strong repulsion but not excessive
+                    centralGravity: 0.3,  // Moderate center attraction to keep nodes from spreading too far
+                    springLength: 200,  // Moderate edge length for good spacing
+                    springConstant: 0.04,  // Moderate spring stiffness for responsive movement
+                    damping: 0.2,  // Moderate damping for smooth but visible movement
+                    avoidOverlap: 0.5  // Moderate overlap avoidance
                 },
                 stabilization: {
                     enabled: true,
-                    iterations: 1000,
-                    updateInterval: 50,
-                    fit: true
+                    iterations: 300,  // Moderate iterations for visible animation
+                    updateInterval: 1,  // Update visual every iteration for smooth animation
+                    fit: false  // Don't fit during stabilization so we can see it
                 },
-                solver: 'barnesHut'
+                solver: 'barnesHut',
+                adaptiveTimestep: true,
+                timestep: 0.5  // Slower timestep for more visible physics
             };
         } else {
             // For orphan nodes without edges, use random layout without physics
@@ -154,33 +179,29 @@ function getLayoutOptions(layout) {
     } else if (layout === 'hierarchical') {
         baseOptions.layout = {
             hierarchical: {
-                direction: 'UD',
-                sortMethod: 'directed',
-                nodeSpacing: 150,
-                levelSeparation: 150
+                direction: 'UD',  // Up-down for more compact vertical layout
+                sortMethod: 'hubsize',  // Sort by number of connections instead of directed
+                nodeSpacing: 150,  // Horizontal spacing between nodes
+                levelSeparation: 150,  // Vertical separation between levels
+                treeSpacing: 150,  // Spacing between separate trees
+                blockShifting: true,  // Allow shifting blocks to reduce whitespace
+                edgeMinimization: true,  // Minimize edge crossings
+                parentCentralization: true,  // Center parent nodes over children
+                shakeTowards: 'leaves'  // Compact layout towards leaf nodes
             }
         };
         baseOptions.physics = {
             enabled: false
         };
     } else if (layout === 'circular') {
+        // Manually position nodes in a circular layout
+        positionNodesCircularly(nodes);
+
         baseOptions.layout = {
             randomSeed: 42
         };
         baseOptions.physics = {
-            enabled: true,
-            stabilization: {
-                enabled: true,
-                iterations: 1000
-            },
-            barnesHut: {
-                gravitationalConstant: -8000,
-                centralGravity: 0.5,
-                springLength: 200,
-                springConstant: 0.01,
-                damping: 0.09,
-                avoidOverlap: 0.5
-            }
+            enabled: false  // Disable physics to keep circular positions
         };
     }
 
@@ -214,8 +235,16 @@ function getFilteredData() {
 
 function updateGraph() {
     const { nodes, edges } = getFilteredData();
+
+    // Update network data and options efficiently without destroying
+    const options = getLayoutOptions(currentLayout);
+    network.setOptions(options);
     network.setData({ nodes, edges });
-    network.fit();
+
+    // Manually fit if physics is disabled, as stabilization events won't fire
+    if (options.physics && options.physics.enabled === false) {
+        network.fit();
+    }
 
     // Update no links message visibility
     updateNoLinksMessage();
