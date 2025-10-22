@@ -88,6 +88,11 @@
         "icon": "$(watch)"
       },
       {
+        "command": "noted.extractSelectionToNote",
+        "title": "Noted: Extract Selection to New Note",
+        "icon": "$(arrow-both)"
+      },
+      {
         "command": "noted.changeFormat",
         "title": "Noted: Toggle File Format (txt/md)",
         "icon": "$(gear)"
@@ -338,6 +343,11 @@
         "command": "noted.clearUndoHistory",
         "title": "Noted: Clear Undo History",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "noted.renameSymbol",
+        "title": "Noted: Rename Symbol (Refactor Links)",
+        "icon": "$(symbol-keyword)"
       }
     ],
     "menus": {
@@ -346,6 +356,13 @@
           "command": "noted.toggleMarkdownPreview",
           "when": "editorLangId == markdown || resourceExtname == .md",
           "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "noted.extractSelectionToNote",
+          "when": "editorHasSelection",
+          "group": "noted@1"
         }
       ],
       "view/title": [

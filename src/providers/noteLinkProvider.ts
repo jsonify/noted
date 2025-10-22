@@ -24,6 +24,7 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
 
         while ((match = LINK_PATTERN.exec(text)) !== null) {
             const linkText = match[1].trim();
+            const displayText = match[2] ? match[2].trim() : undefined;
             const startPos = document.positionAt(match.index);
             const endPos = document.positionAt(match.index + match[0].length);
             const range = new vscode.Range(startPos, endPos);
@@ -35,7 +36,10 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
                     range,
                     vscode.Uri.file(targetPath)
                 );
-                documentLink.tooltip = `Open ${linkText}`;
+                // Show the target if display text is used, otherwise just show the link text
+                documentLink.tooltip = displayText
+                    ? `Open ${linkText} (displayed as: "${displayText}")`
+                    : `Open ${linkText}`;
                 links.push(documentLink);
             } else {
                 // Create a link that will show an error when clicked

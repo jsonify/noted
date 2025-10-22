@@ -16,6 +16,8 @@ import { TagCompletionProvider } from './services/tagCompletionProvider';
 import { LinkService } from './services/linkService';
 import { NoteLinkProvider } from './providers/noteLinkProvider';
 import { BacklinkHoverProvider } from './providers/backlinkHoverProvider';
+import { LinkCompletionProvider } from './providers/linkCompletionProvider';
+import { LinkDiagnosticsProvider, LinkCodeActionProvider } from './providers/linkDiagnosticsProvider';
 import { PinnedNotesService } from './services/pinnedNotesService';
 import { ArchiveService } from './services/archiveService';
 import { BulkOperationsService } from './services/bulkOperationsService';
@@ -124,6 +126,50 @@ export function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(hoverProviderDisposable);
 
+    // Register completion provider for note links
+    const linkCompletionProvider = new LinkCompletionProvider(linkService, notesPath || '');
+    const linkCompletionDisposable = vscode.languages.registerCompletionItemProvider(
+        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        linkCompletionProvider,
+        '[', '/' // Trigger on [[ and / for path completion
+    );
+    context.subscriptions.push(linkCompletionDisposable);
+
+    // Register diagnostics provider for links (ambiguous/broken link warnings)
+    const linkDiagnosticsProvider = new LinkDiagnosticsProvider(linkService, notesPath || '');
+    context.subscriptions.push(linkDiagnosticsProvider);
+
+    // Update diagnostics when document is opened or changed
+    const updateDiagnostics = (document: vscode.TextDocument) => {
+        linkDiagnosticsProvider.updateDiagnostics(document).catch(err => {
+            console.error('[NOTED] Error updating link diagnostics:', err);
+        });
+    };
+
+    // Update diagnostics for all open documents
+    vscode.workspace.textDocuments.forEach(updateDiagnostics);
+
+    // Update diagnostics when document is opened
+    context.subscriptions.push(
+        vscode.workspace.onDidOpenTextDocument(updateDiagnostics)
+    );
+
+    // Update diagnostics when document is saved
+    context.subscriptions.push(
+        vscode.workspace.onDidSaveTextDocument(updateDiagnostics)
+    );
+
+    // Register code action provider for quick fixes
+    const linkCodeActionProvider = new LinkCodeActionProvider(linkService, notesPath || '');
+    const codeActionDisposable = vscode.languages.registerCodeActionsProvider(
+        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        linkCodeActionProvider,
+        {
+            providedCodeActionKinds: [vscode.CodeActionKind.QuickFix]
+        }
+    );
+    context.subscriptions.push(codeActionDisposable);
+
     // Initialize pinned notes service
     const pinnedNotesService = new PinnedNotesService(context);
     notesProvider.setPinnedNotesService(pinnedNotesService);
@@ -195,15 +241,21 @@ export function activate(context: vscode.ExtensionContext) {
     let insertTimestamp = vscode.commands.registerCommand('noted.insertTimestamp', async () => {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
-            const timestamp = new Date().toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
+            const timestamp = new Date().toLocaleTimeString('en-US', {
+                hour: '2-digit',
                 minute: '2-digit',
-                hour12: true 
+                hour12: true
             });
             editor.edit(editBuilder => {
                 editBuilder.insert(editor.selection.active, `[${timestamp}] `);
             });
         }
+    });
+
+    // Command to extract selection to new note
+    let extractSelectionToNote = vscode.commands.registerCommand('noted.extractSelectionToNote', async () => {
+        const { handleExtractSelectionToNote } = await import('./commands/commands');
+        await handleExtractSelectionToNote();
     });
 
     // Command to change file format
@@ -262,9 +314,18 @@ export function activate(context: vscode.ExtensionContext) {
                 // Track operation for undo BEFORE renaming
                 await trackRenameNote(undoService, item.filePath, newPath);
 
+                // Update all links to this note before renaming
+                const linkUpdateResult = await linkService.updateLinksOnRename(item.filePath, newPath);
+
                 await fsp.rename(item.filePath, newPath);
                 notesProvider.refresh();
-                vscode.window.showInformationMessage(`Renamed to ${newName} (Undo available)`);
+
+                // Show success message with link update info
+                let message = `Renamed to ${newName} (Undo available)`;
+                if (linkUpdateResult.linksUpdated > 0) {
+                    message += ` - Updated ${linkUpdateResult.linksUpdated} link(s) in ${linkUpdateResult.filesUpdated} file(s)`;
+                }
+                vscode.window.showInformationMessage(message);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to rename note: ${error instanceof Error ? error.message : String(error)}`);
             }
@@ -996,7 +1057,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     let bulkMove = vscode.commands.registerCommand('noted.bulkMove', async () => {
-        await handleBulkMove(bulkOperationsService, undoService);
+        await handleBulkMove(bulkOperationsService, linkService, undoService);
         notesProvider.refresh();
     });
 
@@ -1030,8 +1091,14 @@ export function activate(context: vscode.ExtensionContext) {
         await handleClearUndoHistory(undoService);
     });
 
+    // Command to rename symbol (refactor links)
+    let renameSymbol = vscode.commands.registerCommand('noted.renameSymbol', async () => {
+        const { handleRenameSymbol } = await import('./commands/commands');
+        await handleRenameSymbol(linkService);
+    });
+
     context.subscriptions.push(
-        openTodayNote, openWithTemplate, insertTimestamp, changeFormat,
+        openTodayNote, openWithTemplate, insertTimestamp, extractSelectionToNote, changeFormat,
         refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, quickSwitcher, filterByTag, clearTagFilters, sortTagsByName, sortTagsByFrequency, refreshTags,
         renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,
@@ -1043,7 +1110,8 @@ export function activate(context: vscode.ExtensionContext) {
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive,
         toggleMarkdownPreview,
-        undoCommand, redoCommand, showUndoHistory, clearUndoHistory
+        undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
+        renameSymbol
     );
 }
 

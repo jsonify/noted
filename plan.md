@@ -2,182 +2,130 @@
 
 This document tracks planned features, improvements, and ideas for the Noted VS Code extension.
 
-## Current Priorities
+For a complete list of implemented features, see [notes.md](./notes.md).
 
-### Code Quality & Reliability
-- [x] Add error handling around file operations (completed)
-- [x] Convert synchronous file operations to async for better performance (completed)
-- [x] Refactor to modular architecture (completed - 100%)
-- [x] Complete modular refactoring (completed)
-- [x] Add unit tests for core functionality (completed - 184 passing tests)
-- [x] Create CI/CD pipeline for automated testing (completed - GitHub Actions, all tests passing)
-- [x] Fix CI/CD test failures (completed - enhanced VS Code mocks with Position, Range, CompletionItem, MarkdownString, EventEmitter)
-- [x] Add integration tests for VS Code commands (completed - 3 integration test suites)
+## Planned Features & Ideas
 
-### Planned Features
+### Enhanced Link Features (inspired by Markdown Memo)
+- [x] **Link labels/aliases**: Support `[[note-name|Custom Display Text]]` syntax for readable link text (v1.13.5)
+- [x] **Automatic link synchronization on rename**: Update all `[[links]]` when a note is renamed or moved (v1.13.5)
+- [x] **Full-path links for disambiguation**: Handle cases where multiple notes have similar names (e.g., `[[folder/note]]`) (v1.14.0)
+  - Path-based link syntax: `[[2025/10-October/meeting]]`, `[[work/project]]`
+  - Smart resolution: supports both simple names and full/partial paths
+  - Link completion: autocomplete suggests paths while typing `[[`
+  - Diagnostics: warns about ambiguous links with quick fixes
+- [x] **Extract selection to new note**: Select text and create a new linked note from it (v1.14.1)
+  - Select text in any editor and extract to a new note
+  - Automatically replaces selection with wiki-style link `[[note-name]]`
+  - Opens extracted note in side-by-side view
+  - Includes metadata: source file, extraction date
+  - Available via context menu when text is selected
+- [x] **Rename symbol command**: Refactor/rename links across all notes in workspace (v1.14.2)
+  - Rename/refactor all occurrences of a link across the workspace
+  - Preview affected files before renaming
+  - Preserves display text when using `[[link|Display]]` syntax
+  - Shows progress notification during rename operation
+  - Automatically rebuilds backlinks index after rename
 
-#### Template System Enhancements
-- [x] Implement custom template feature (completed v1.4.0)
-- [x] Allow users to create and save their own templates (completed v1.4.0)
-- [x] Template variables beyond {date} and {time} (completed v1.4.0 - 10 total variables)
+### Embedding Capabilities (inspired by Markdown Memo)
+- [ ] **Embed notes**: Support `![[note-name]]` syntax to embed entire note content inline
+- [ ] **Embed images**: Support `![[image.png]]` to display images within notes
+- [ ] **Embed specific sections**: Support `![[note-name#section]]` to embed portions of notes
+- [ ] **Embed with transclusion**: Live-updating embedded content when source changes
 
-#### Note Organization & Discovery
-- [x] Tag system for notes (completed - tag parsing, indexing, filtering, autocomplete)
-- [x] Advanced tag management (rename, merge, delete, export tags) - completed v1.5.0
-- [x] Note linking/backlinks (wiki-style links) - completed v1.5.0
-- [x] Pinned/favorite notes section - completed v1.5.0
-- [x] Archive functionality for old notes - completed v1.5.0
-- [x] Calendar view for daily notes
+### Preview Enhancements (inspired by Markdown Memo)
+- [ ] **Hover previews**: Show note/link preview on hover without opening the file
+- [ ] **Inline image previews**: Display images directly in editor when using markdown image syntax
+- [ ] **Embedded content rendering**: Render embedded notes/images in preview mode
+- [ ] **Link preview cards**: Rich previews showing note metadata (tags, created date, etc.)
 
-#### Search & Navigation
-- [x] Search with regex support (completed - supports regex: flag)
-- [x] Advanced filters (by date range, tags, etc.) (completed - from:, to:, tag:, case: filters)
-- [x] Quick switcher for recent notes (completed - Cmd+Shift+P shows 20 recent notes)
-- [x] Full-text search with better performance (async) (completed - async search with parallel processing)
+### Navigation Features (inspired by Markdown Memo)
+- [ ] **Random note**: Open a random note for serendipitous discovery and review
+- [ ] **Open link to the side**: Automatically open linked notes in split view with keyboard shortcut
+- [ ] **Breadcrumb navigation**: Show note hierarchy/connection path in editor
+- [ ] **Forward/back navigation**: Navigate through note history like a browser
 
-#### Editor Enhancements
-- [x] Markdown preview for .md files - completed v1.12.0
-- [ ] Syntax highlighting for note content
-- [x] Auto-completion for tags (completed - tag autocomplete with # trigger)
+### Web Integration (inspired by Markdown Memo)
+- [ ] **Paste HTML as Markdown**: Convert copied web content to markdown format
+- [ ] **Web clipper functionality**: Save web content directly as notes with metadata
+- [ ] **URL unfurling**: Automatically fetch and display metadata for pasted URLs
 
-#### UX Improvements
-- [x] Keyboard shortcuts for more commands (completed - 7 new shortcuts added)
-- [x] Drag-and-drop to move notes between folders
-- [x] Bulk operations (move/delete multiple notes) - completed v1.10.0-1.11.0
-- [x] Undo/redo functionality for destructive operations - completed v1.13.0
-- [x] Confirmation dialogs with preview (completed for bulk operations)
+### Note Refactoring (inspired by Markdown Memo)
+- [ ] **Extract range to new note**: Select text and create a linked note from selection
+- [ ] **Merge notes**: Combine multiple notes with automatic link preservation and updates
+- [ ] **Split note**: Break large notes into smaller linked notes with intelligent splitting
 
-## Completed Features
+### Reference Panel Enhancements (inspired by Markdown Memo)
+- [ ] **Dedicated backlinks sidebar panel**: Always-visible panel showing all incoming references
+- [ ] **Context preview in backlinks**: Show surrounding text/paragraph for each backlink
+- [ ] **Backlinks grouping**: Group backlinks by source note, date, or section
+- [ ] **Unlinked mentions**: Find notes that mention current note's title without explicit links
 
-### Undo/Redo System (v1.13.0)
-- **Comprehensive Operation Tracking**: Automatically tracks all destructive operations
-- **Supported Operations**: Delete, rename, move, archive, bulk delete, bulk move, bulk archive
-- **Smart Restore**: Restores files with original content and location information
-- **History Management**: View complete history with operation details and timestamps
-- **Keyboard Shortcuts**:
-  - Undo: `Cmd+Alt+Z` / `Ctrl+Alt+Z`
-  - Redo: `Cmd+Shift+Alt+Z` / `Ctrl+Shift+Alt+Z`
-- **History Commands**: Show history and clear history options
-- **Persistent Storage**: Undo history persists across VS Code sessions
-- **Operation Details**: Each entry shows type, affected files, and timestamp
-- **Services Architecture**: Dedicated undoService.ts and undoHelpers.ts modules
+### Orphan & Placeholder Detection (inspired by Foam)
+- [ ] **Orphan notes detection**: Identify notes with no incoming or outgoing links
+- [ ] **Placeholder tracking**: Track `[[links]]` to notes that don't exist yet (dangling references)
+- [ ] **Orphans explorer panel**: Dedicated tree view showing all orphaned notes
+- [ ] **Placeholders explorer panel**: Show all placeholder links with source note context
+- [ ] **Visual indicators**: Highlight orphans and placeholders in graph and tree views
+- [ ] **Auto-create from placeholder**: Create new note directly from placeholder link
 
-### Markdown Preview (v1.12.0)
-- **Live Preview**: Real-time markdown rendering for .md files
-- **Editor Integration**: Toggle button in editor title bar for markdown files
-- **Keyboard Shortcut**: `Cmd+K Cmd+V` / `Ctrl+K Ctrl+V`
-- **Side-by-Side View**: View source and preview simultaneously
-- **Auto-Update**: Preview automatically refreshes as you type
-- **VS Code Integration**: Uses native VS Code markdown preview capabilities
+### Advanced Template System (inspired by Foam)
+- [ ] **JavaScript templates**: Support templates with logic, functions, and conditionals
+- [ ] **Enhanced template variables**: Add `FOAM_SLUG` (URL-friendly title), more date format options
+- [ ] **Template selection on creation**: Choose template when creating note from placeholder link
+- [ ] **Note creation from selection**: Select text in editor and create new linked note with it
+- [ ] **Per-folder templates**: Different default templates for different note folders
+- [ ] **Template inheritance**: Templates that extend/override base templates
 
-### Bulk Operations (v1.10.0-1.11.0)
-- **Select Mode**: Toggle selection mode to select multiple notes at once
-- **Visual Selection**: Selected notes show checkmark icon for clear feedback
-- **Bulk Delete**: Delete multiple notes with confirmation dialog showing affected notes
-- **Bulk Move**: Move multiple notes to a folder with picker and preview
-- **Bulk Archive**: Archive multiple selected notes with confirmation
-- **Selection Management**:
-  - Toggle select mode with toolbar button
-  - Click notes to select/deselect in select mode
-  - Clear all selections with one click
-  - Selection count displayed in status
-- **Context-Aware UI**: Bulk operation buttons only appear when notes are selected
-- **Safety Features**: All destructive operations show confirmation dialogs with note previews
-- **Comprehensive Testing**: 51 unit tests covering all bulk operation scenarios
+### Section References (inspired by Foam)
+- [ ] **Link to sections**: Support `[[note#Section Title]]` syntax for linking to specific sections
+- [ ] **Section autocomplete**: Suggest available sections when typing `#` in wikilink
+- [ ] **Section navigation**: Jump to specific section when clicking section link
+- [ ] **Section backlinks**: Show which notes link to specific sections
 
-### Enhanced Keyboard Shortcuts (v1.10.0)
-- Added 7 new keyboard shortcuts for frequently used commands
-- Search Notes: `Cmd+Shift+F` / `Ctrl+Shift+F`
-- Show Calendar: `Cmd+Shift+C` / `Ctrl+Shift+C`
-- Show Statistics: `Cmd+Shift+S` / `Ctrl+Shift+S`
-- Export Notes: `Cmd+Shift+E` / `Ctrl+Shift+E`
-- Refresh View: `Cmd+Shift+R` / `Ctrl+Shift+R`
-- Open with Template: `Cmd+K Cmd+N` / `Ctrl+K Ctrl+N` (chord shortcut)
-- Filter by Tag: `Cmd+K Cmd+T` / `Ctrl+K Ctrl+T` (chord shortcut)
-- All shortcuts support both Mac and Windows/Linux
-- Added dedicated Keyboard Shortcuts section to documentation
-- Updated all feature documentation with inline shortcut references
+### Hierarchical Tags (inspired by Foam)
+- [ ] **Nested tag syntax**: Support `#parent/child/grandchild` hierarchical tag structure
+- [ ] **Tag explorer panel**: Tree view showing tag hierarchy with expand/collapse
+- [ ] **Tag hierarchy navigation**: Click nested tags to filter by entire hierarchy or specific level
+- [ ] **Tag inheritance**: Child tags automatically include parent tag matches in filters
+- [ ] **Tag breadcrumbs**: Show full tag path when hovering over nested tags
 
-### Template System Enhancements (v1.4.0)
-- Custom template creation with full management UI
-- Template editing, deletion, and duplication commands
-- Extended variable system with 10 placeholders:
-  - Basic: `{filename}`, `{date}`, `{time}`
-  - Date components: `{year}`, `{month}`, `{day}`, `{weekday}`, `{month_name}`
-  - Context: `{user}`, `{workspace}`
-- Template variables reference panel (webview)
-- Templates folder management
-- Enhanced starter template with all available variables
-- Comprehensive unit tests (199 passing)
-- Updated Templates view welcome screen with new commands
+### Enhanced Graph Features (inspired by Foam)
+- [ ] **Graph filtering**: Show/hide specific notes, tags, or connection types in graph
+- [ ] **Graph customization**: Adjust node colors, sizes, edge styles, and layout algorithms
+- [ ] **Orphan highlighting**: Visual indicator for orphaned notes in graph (different color/shape)
+- [ ] **Export graph**: Save graph visualization as PNG/SVG image
+- [ ] **Graph focus mode**: Focus on single note and its immediate connections
+- [ ] **Connection strength**: Edge thickness based on number of links between notes
+- [ ] **Time-based filtering**: Show notes created/modified in specific time periods
 
-### Note Tagging System (v1.4.0)
-- Tag parsing with `#tagname` syntax
-- Tag indexing service with async operations
-- Tags tree view with usage counts
-- Filter notes by tags (single or multiple)
-- Tag autocomplete when typing `#`
-- Sort tags alphabetically or by frequency
-- Comprehensive unit tests for all tag functionality
-- Tag completion provider with VS Code integration
+### Attachment Support (inspired by Foam)
+- [ ] **PDF support**: Link to PDFs with `[[document.pdf]]`, preview in hover
+- [ ] **Image gallery**: Dedicated view for all images used across notes
+- [ ] **Attachment folder**: Auto-organize attachments in dedicated folder structure
+- [ ] **Drag-and-drop attachments**: Drop files into notes to create links and copy to attachments folder
+- [ ] **Attachment preview**: Hover preview for PDFs, images, and other file types
+- [ ] **Broken attachment detection**: Warn about missing or moved attachments
 
-### Advanced Tag Management (v1.5.0)
-- Rename tags across all notes with validation
-- Merge two tags into one with duplicate removal
-- Delete tags from all notes with confirmation
-- Export tags to JSON format with metadata
-- Context menu integration in tags tree view
-- Command palette entries for all operations
-- Automatic tag index refresh after operations
-- Rollback support for destructive operations
+### Advanced Wikilink Features (inspired by Foam)
+- [ ] **Link diagnostics**: Real-time warnings for ambiguous, broken, or circular links
+- [ ] **Quick fixes**: Automated suggestions to fix link issues (create note, rename, etc.)
+- [ ] **Unique identifiers**: Disambiguate notes with same name using file paths or IDs
+- [ ] **Link validation**: Check all links in workspace and report issues
+- [ ] **Case-sensitive link matching**: Option for strict vs. fuzzy link matching
 
-### Note Organization & Discovery Features (v1.5.0)
+### Connections Panel (inspired by Foam)
+- [ ] **Dedicated connections sidebar**: Always-visible panel showing all related notes
+- [ ] **Bidirectional view**: Display both incoming (backlinks) and outgoing links together
+- [ ] **Context snippets**: Show surrounding text for each connection with highlighting
+- [ ] **Grouped connections**: Group by connection type (direct links, tags, mentions)
+- [ ] **Connection strength indicators**: Show how many times notes reference each other
+- [ ] **Quick navigation**: Click connection to jump to linked note or specific mention
 
-#### Wiki-Style Note Linking
-- `[[note-name]]` syntax for linking between notes
-- Clickable links that open target notes
-- Automatic link resolution with fuzzy matching
-- Link detection across all note files
-- Document link provider for VS Code integration
+### Editor Enhancements
+- [ ] **Syntax highlighting for note content**: Custom syntax highlighting for note-specific patterns
 
-#### Backlinks System
-- Automatic backlink detection and indexing
-- Hover over note header to see all backlinks
-- Display source note and context for each backlink
-- Clickable backlinks to navigate between notes
-- Async index building for performance
-
-#### Pinned/Favorite Notes
-- Pin frequently accessed notes for quick access
-- Dedicated "Pinned Notes" section in tree view
-- Visual pin indicator (📌) on pinned notes
-- Persistent pinned state across sessions
-- Right-click context menu to pin/unpin notes
-- Automatic cleanup of non-existent pinned notes
-
-#### Archive Functionality
-- Archive old or completed notes
-- Dedicated ".archive" folder (hidden from main view)
-- "Archive" section in tree view for archived notes
-- Bulk archive notes older than X days
-- Unarchive notes back to active notes
-- Visual archive indicator (📦) on archived notes
-- Confirmation dialogs for safety
-
-### Search & Navigation Enhancements (v1.6.0)
-- Regex search support with `regex:` flag for pattern matching
-- Advanced date filtering with `from:YYYY-MM-DD` and `to:YYYY-MM-DD` syntax
-- Case-sensitive search with `case:` flag
-- Tag filtering in search with `tag:tagname` syntax
-- Quick switcher for recent notes (Cmd+Shift+P) showing 20 most recent notes
-- Enhanced search results with match counts and metadata
-- Async search with optimized performance for large note collections
-- Rich preview showing tags, dates, and match information
-
-See [notes.md](./notes.md) for a complete list of all implemented features.
-
-## Ideas for Future Consideration
-
+### Other Ideas
 - Export to different formats (PDF, HTML)
 - Note encryption for sensitive information
 - Collaboration features (shared notes)
@@ -185,29 +133,36 @@ See [notes.md](./notes.md) for a complete list of all implemented features.
 - Mobile companion app
 - Daily note reminders/notifications
 - Note templates with form fields
-- Graph view of note connections
 - Statistics dashboard with charts
 - Integration with other VS Code extensions
 
 ## Technical Debt
 
-- [x] Refactor single-file architecture into modules (completed - see Modular Refactoring Status below)
 - [ ] Improve TypeScript types (reduce use of `any`)
 - [ ] Add JSDoc comments for public APIs
 - [ ] Performance optimization for large note collections
-- [x] Better error messages for users (completed with async refactoring)
 
-## Modular Refactoring Status
+## Documentation Needs
+
+- [ ] Add contributing guidelines
+- [ ] Create user documentation/wiki
+- [ ] Add inline code comments for complex logic
+- [ ] Create video tutorials or GIFs for features
+- [ ] Write migration guide for major version updates
+
+## Architecture Status
+
+### Modular Refactoring (Completed)
 
 **Goal**: Split 2119-line extension.ts into maintainable, focused modules
 
-### ✅ Completed Modules (100%)
-- **src/constants.ts** (93 lines) - All constants, templates, patterns
-- **src/utils/** (3 files, ~150 lines)
+#### Completed Modules (100%)
+- [ ] **src/constants.ts** (93 lines) - All constants, templates, patterns
+- [ ] **src/utils/** (3 files, ~150 lines)
   - validators.ts - Folder name validation
   - dateHelpers.ts - Date formatting utilities
   - folderHelpers.ts - Recursive folder operations
-- **src/services/** (13 files, ~1400 lines)
+- [ ] **src/services/** (13 files, ~1400 lines)
   - configService.ts - Configuration management
   - fileSystemService.ts - File operation wrappers
   - noteService.ts - Note operations (search, stats, export)
@@ -221,22 +176,25 @@ See [notes.md](./notes.md) for a complete list of all implemented features.
   - bulkOperationsService.ts - Multi-select and bulk operations (v1.10.0)
   - undoService.ts - Undo/redo functionality (v1.13.0)
   - undoHelpers.ts - Undo operation helpers (v1.13.0)
-- **src/providers/** (3 files, ~350 lines)
+  - graphService.ts - Graph data preparation and analysis (v1.14.0)
+- [ ] **src/providers/** (3 files, ~350 lines)
   - treeItems.ts - Tree item classes
   - templatesTreeProvider.ts - Templates view
   - notesTreeProvider.ts - Main notes tree with drag-and-drop
-- **src/commands/** (2 files, ~900 lines)
+- [ ] **src/commands/** (2 files, ~900 lines)
   - commands.ts - Main command handlers
   - bulkCommands.ts - Bulk operation commands (v1.10.0)
-- **src/calendar/** (2 files, ~560 lines)
+- [ ] **src/calendar/** (2 files, ~560 lines)
   - calendarHelpers.ts - Calendar date operations
   - calendarView.ts - Calendar webview and HTML generation
-- **src/extension.ts** (1570 lines, down from 2119)
+- [ ] **src/graph/** (1 file)
+  - graphView.ts - Interactive graph webview with vis.js
+- [ ] **src/extension.ts** (1570 lines, down from 2119)
   - Entry point and command registration
 
 **Status**: ✅ Completed - All modules created, compiles successfully
 
-### Benefits Achieved
+#### Benefits Achieved
 - Clear separation of concerns
 - Each module <700 lines (down from 2119)
 - Better testability
@@ -244,63 +202,18 @@ See [notes.md](./notes.md) for a complete list of all implemented features.
 - Reusable components
 - 26% reduction in extension.ts size (2119 → 1570 lines)
 
-## Documentation Needs
+### Test Infrastructure (Completed)
 
-- [ ] Add contributing guidelines
-- [ ] Create user documentation/wiki
-- [ ] Add inline code comments for complex logic
-- [ ] Create video tutorials or GIFs for features
-- [ ] Write migration guide for major version updates
-
-## Recent Test Infrastructure Improvements
-
-### CI/CD Test Fix (Completed - January 2025)
-**Problem**: 21 tests failing in GitHub Actions CI/CD pipeline due to incomplete VS Code API mocks
-
-**Solution**: Enhanced VS Code mock implementation in `src/test/mocks/vscode.ts`
-- Added `Position` class for text document positions
-- Added `Range` class with proper TypeScript constructor overloads
-- Added `EndOfLine` enum (LF, CRLF)
-- Added `CompletionItemKind` enum for autocomplete types
-- Added `CompletionItem` class for tag autocomplete
-- Added `MarkdownString` class for formatted documentation
-- Fixed `EventEmitter.event` to use getter pattern instead of method
-
-**Results**:
-- ✅ All 184 tests now passing locally and in CI/CD
+#### CI/CD Pipeline (January 2025)
+- ✅ All 184 tests passing locally and in CI/CD
 - ✅ Tests pass on all platforms (Ubuntu, macOS, Windows)
 - ✅ Tests pass on all Node versions (18.x, 20.x)
-- ✅ Fixed `setup.ts` cleanup function to not attempt resolving mock modules
+- ✅ Enhanced VS Code mocks (Position, Range, CompletionItem, MarkdownString, EventEmitter)
 - ✅ Test execution time: ~270ms for full suite
 
-**Files Changed**:
-- `src/test/mocks/vscode.ts` - Added 7 new VS Code API types
-- `src/test/setup.ts` - Fixed cleanup logic for mock modules
-
-### Integration Tests Addition (Completed - January 2025)
-**Goal**: Add integration tests for VS Code commands that run in Extension Host environment
-
-**Implementation**: Created 3 comprehensive integration test suites
-- `src/test/integration/commands.test.ts` - Note creation, editor, configuration, view, and search commands
-- `src/test/integration/noteManagement.test.ts` - Setup, folder management, export, and calendar commands
-- `src/test/integration/tagSystem.test.ts` - Tag view, filtering, autocomplete, and search integration
-
-**Test Coverage**:
-- ✅ Note creation commands (openToday, openWithTemplate with all 4 templates)
-- ✅ Editor commands (insertTimestamp)
-- ✅ Configuration commands (changeFormat, showConfig)
-- ✅ View commands (refresh, showStats)
-- ✅ Search commands (searchNotes)
-- ✅ Setup commands (setupDefaultFolder)
-- ✅ Folder management (createFolder)
-- ✅ Export commands (exportNotes)
-- ✅ Calendar commands (showCalendar)
-- ✅ Tag system (refreshTags, sortTagsByName, sortTagsByFrequency, filterByTag)
-- ✅ Tag autocomplete (completion provider integration)
-- ✅ Tag configuration (tagAutoComplete setting)
-
-**Results**:
-- ✅ All integration tests compile and run in VS Code Extension Host
-- ✅ Tests verify command execution without errors
-- ✅ Tests validate file creation, content structure, and configuration changes
-- ✅ Unit tests continue to pass (184 tests)
+#### Test Coverage
+- [ ] **Unit Tests**: 184 passing tests covering all core functionality
+- [ ] **Integration Tests**: 3 comprehensive test suites
+  - `src/test/integration/commands.test.ts` - Note creation, editor, configuration, view, and search commands
+  - `src/test/integration/noteManagement.test.ts` - Setup, folder management, export, and calendar commands
+  - `src/test/integration/tagSystem.test.ts` - Tag view, filtering, autocomplete, and search integration

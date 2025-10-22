@@ -10,6 +10,7 @@ import { NotesTreeProvider } from '../providers/notesTreeProvider';
 import { NoteItem } from '../providers/treeItems';
 import { deleteFile } from '../services/fileSystemService';
 import { ArchiveService } from '../services/archiveService';
+import { LinkService } from '../services/linkService';
 import { getAllFolders } from '../utils/folderHelpers';
 import { getNotesPath } from '../services/configService';
 import { UndoService } from '../services/undoService';
@@ -154,6 +155,7 @@ export async function handleBulkDelete(
  */
 export async function handleBulkMove(
     bulkService: BulkOperationsService,
+    linkService?: LinkService,
     undoService?: UndoService
 ) {
     const selectedNotes = bulkService.getSelectedNotes();
@@ -236,6 +238,8 @@ export async function handleBulkMove(
     // Move each note
     let successCount = 0;
     let errorCount = 0;
+    let totalLinksUpdated = 0;
+    let totalFilesWithUpdatedLinks = 0;
 
     for (const notePath of selectedNotes) {
         try {
@@ -252,6 +256,15 @@ export async function handleBulkMove(
                 // File doesn't exist, proceed with move
             }
 
+            // Update all links to this note before moving (if linkService is available)
+            if (linkService) {
+                const linkUpdateResult = await linkService.updateLinksOnRename(notePath, targetPath);
+                totalLinksUpdated += linkUpdateResult.linksUpdated;
+                if (linkUpdateResult.filesUpdated > 0) {
+                    totalFilesWithUpdatedLinks += linkUpdateResult.filesUpdated;
+                }
+            }
+
             await fs.rename(notePath, targetPath);
             successCount++;
         } catch (error) {
@@ -266,7 +279,11 @@ export async function handleBulkMove(
 
     if (errorCount === 0) {
         const undoMsg = undoService ? ' (Undo available)' : '';
-        vscode.window.showInformationMessage(`Moved ${successCount} note${successCount > 1 ? 's' : ''}${undoMsg} to ${selected.label}`);
+        let message = `Moved ${successCount} note${successCount > 1 ? 's' : ''}${undoMsg} to ${selected.label}`;
+        if (totalLinksUpdated > 0) {
+            message += ` - Updated ${totalLinksUpdated} link(s) in ${totalFilesWithUpdatedLinks} file(s)`;
+        }
+        vscode.window.showInformationMessage(message);
     } else {
         vscode.window.showWarningMessage(`Moved ${successCount} note${successCount > 1 ? 's' : ''}, ${errorCount} failed`);
     }

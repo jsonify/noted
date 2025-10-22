@@ -108,11 +108,17 @@ export class GraphService {
                     const reverseLinks = this.linkService.getOutgoingLinks(link.targetPath);
                     const isBidirectional = reverseLinks.some(l => l.targetPath === notePath);
 
+                    // Build tooltip showing display text if available
+                    const targetBasename = path.basename(link.targetPath);
+                    const tooltip = link.displayText
+                        ? `Links to ${targetBasename}\n(displayed as: "${link.displayText}")`
+                        : `Links to ${targetBasename}`;
+
                     edges.push({
                         from: notePath,
                         to: link.targetPath,
                         arrows: 'to',
-                        title: `Links to ${path.basename(link.targetPath)}`,
+                        title: tooltip,
                         width: isBidirectional ? 3 : 1
                     });
                 }
