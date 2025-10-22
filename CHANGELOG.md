@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.17.0](https://github.com/jsonify/noted/compare/v1.16.1...v1.17.0) (2025-10-22)
+
+
+### Features
+
+* implement live transclusion support with file watching and caching ([e4ba916](https://github.com/jsonify/noted/commit/e4ba9162fde9baf8a14778468f3b0eea71d49422))
+
 ### [1.16.1](https://github.com/jsonify/noted/compare/v1.16.0...v1.16.1) (2025-10-22)
 
 ## [1.16.0](https://github.com/jsonify/noted/compare/v1.15.0...v1.16.0) (2025-10-22)
