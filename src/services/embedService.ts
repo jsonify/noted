@@ -34,6 +34,8 @@ export interface NoteEmbed {
  */
 export class EmbedService {
     private linkService: LinkService;
+    /** Cache: document URI -> array of source files that are embedded in that document */
+    private embedSourcesCache: Map<string, Set<string>> = new Map();
 
     constructor(linkService: LinkService) {
         this.linkService = linkService;
@@ -325,6 +327,77 @@ export class EmbedService {
             console.error('[NOTED] Error getting sections from note:', filePath, error);
             return [];
         }
+    }
+
+    /**
+     * Track embedded sources for a document
+     * This is used for transclusion - knowing which source files to watch
+     * @param documentUri The URI of the document containing embeds
+     * @param embeds The embeds found in that document
+     */
+    async updateEmbedSourcesCache(documentUri: string, embeds: NoteEmbed[]): Promise<void> {
+        const sources = new Set<string>();
+
+        for (const embed of embeds) {
+            // Get the document path from the URI
+            // Handle both URI strings (file:///) and plain paths
+            let documentPath: string;
+            try {
+                const uri = vscode.Uri.parse(documentUri);
+                documentPath = uri.fsPath;
+            } catch {
+                // If parse fails, assume it's already a file path
+                documentPath = documentUri.replace('file:///', '/').replace('file://', '/');
+            }
+
+            const targetPath = await this.resolveEmbed(embed, documentPath);
+            if (targetPath) {
+                sources.add(targetPath);
+            }
+        }
+
+        // Update cache
+        this.embedSourcesCache.set(documentUri, sources);
+        console.log(`[NOTED] Tracking ${sources.size} embedded sources for ${documentUri}`);
+    }
+
+    /**
+     * Get all source files embedded in a document
+     * Returns empty array if no embeds are tracked
+     */
+    getEmbeddedSources(documentUri: string): string[] {
+        const sources = this.embedSourcesCache.get(documentUri);
+        return sources ? Array.from(sources) : [];
+    }
+
+    /**
+     * Get all documents that embed a specific source file
+     * This is used to know which documents to refresh when a source file changes
+     */
+    getDocumentsEmbeddingSource(sourceFilePath: string): string[] {
+        const documents: string[] = [];
+
+        for (const [documentUri, sources] of this.embedSourcesCache) {
+            if (sources.has(sourceFilePath)) {
+                documents.push(documentUri);
+            }
+        }
+
+        return documents;
+    }
+
+    /**
+     * Clear embed sources cache for a specific document
+     */
+    clearEmbedSourcesCache(documentUri: string): void {
+        this.embedSourcesCache.delete(documentUri);
+    }
+
+    /**
+     * Clear all embed sources cache
+     */
+    clearAllEmbedSourcesCache(): void {
+        this.embedSourcesCache.clear();
     }
 
     /**

@@ -15,6 +15,7 @@ import { TreeItem, NoteItem, SectionItem, TagItem } from './providers/treeItems'
 import { TagCompletionProvider } from './services/tagCompletionProvider';
 import { LinkService } from './services/linkService';
 import { EmbedService } from './services/embedService';
+import { FileWatcherService } from './services/fileWatcherService';
 import { NoteLinkProvider } from './providers/noteLinkProvider';
 import { BacklinkHoverProvider } from './providers/backlinkHoverProvider';
 import { NotePreviewHoverProvider } from './providers/notePreviewHoverProvider';
@@ -153,14 +154,50 @@ export function activate(context: vscode.ExtensionContext) {
     const embedDecoratorProvider = new EmbedDecoratorProvider(embedService);
     context.subscriptions.push(embedDecoratorProvider);
 
+    // Create file watcher service for transclusion (live-updating embeds)
+    const fileWatcherService = new FileWatcherService();
+    context.subscriptions.push(fileWatcherService);
+
+    // Track which files we're currently watching for transclusion
+    const watchedFilesForTransclusion = new Set<string>();
+
     // Update embed decorations when editor changes
-    const updateEmbedDecorations = (editor: vscode.TextEditor | undefined) => {
+    const updateEmbedDecorations = async (editor: vscode.TextEditor | undefined) => {
         if (editor && (editor.document.languageId === 'plaintext' || editor.document.languageId === 'markdown')) {
-            embedDecoratorProvider.updateDecorations(editor).catch(err => {
+            try {
+                await embedDecoratorProvider.updateDecorations(editor);
+
+                // Get the embedded sources for this document
+                const embeddedSources = embedService.getEmbeddedSources(editor.document.uri.toString());
+
+                // Start watching new embedded source files for changes (transclusion)
+                for (const sourcePath of embeddedSources) {
+                    if (!watchedFilesForTransclusion.has(sourcePath)) {
+                        fileWatcherService.watchFile(sourcePath);
+                        watchedFilesForTransclusion.add(sourcePath);
+                        console.log('[NOTED] Started watching for transclusion:', sourcePath);
+                    }
+                }
+            } catch (err) {
                 console.error('[NOTED] Error updating embed decorations:', err);
-            });
+            }
         }
     };
+
+    // Listen for changes to watched source files (transclusion)
+    context.subscriptions.push(
+        fileWatcherService.onDidChangeFile(async (uri) => {
+            console.log('[NOTED] Source file changed, updating embeds:', uri.fsPath);
+
+            // Find all documents that embed this source file
+            const documentsToRefresh = embedService.getDocumentsEmbeddingSource(uri.fsPath);
+
+            // Refresh decorations for each document that embeds this source
+            for (const documentUri of documentsToRefresh) {
+                await embedDecoratorProvider.refreshDecorationsForDocument(vscode.Uri.parse(documentUri));
+            }
+        })
+    );
 
     // Update decorations for active editor
     updateEmbedDecorations(vscode.window.activeTextEditor);

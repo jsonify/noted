@@ -44,8 +44,13 @@ export class EmbedDecoratorProvider {
 
         if (embeds.length === 0) {
             editor.setDecorations(this.decorationType, []);
+            // Clear embed sources cache for this document
+            this.embedService.clearEmbedSourcesCache(document.uri.toString());
             return;
         }
+
+        // Update embed sources cache for transclusion tracking
+        await this.embedService.updateEmbedSourcesCache(document.uri.toString(), embeds);
 
         // Create decorations for each embed
         const decorations: vscode.DecorationOptions[] = [];
@@ -58,6 +63,21 @@ export class EmbedDecoratorProvider {
         }
 
         editor.setDecorations(this.decorationType, decorations);
+    }
+
+    /**
+     * Refresh decorations for a specific document (by URI)
+     * Used when a source file changes and we need to update all documents that embed it
+     */
+    async refreshDecorationsForDocument(documentUri: vscode.Uri): Promise<void> {
+        // Find the editor for this document
+        const editor = vscode.window.visibleTextEditors.find(
+            e => e.document.uri.toString() === documentUri.toString()
+        );
+
+        if (editor) {
+            await this.updateDecorations(editor);
+        }
     }
 
     /**

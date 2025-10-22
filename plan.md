@@ -44,7 +44,12 @@ For a complete list of implemented features, see [notes.md](./notes.md).
   - Inline decorations render embedded content with icons
   - Case-insensitive section matching
   - Comprehensive test coverage with 14 new tests
-- [ ] **Embed with transclusion**: Live-updating embedded content when source changes
+- [x] **Embed with transclusion**: Live-updating embedded content when source changes (v1.17.0)
+  - FileWatcherService monitors source files for changes
+  - EmbedService tracks which files are embedded in which documents
+  - Decorations automatically refresh when embedded source content changes
+  - Real-time updates: edit a source note and see embeds update instantly
+  - Comprehensive test coverage with 15 new tests for transclusion (314 total tests passing)
 
 ### Preview Enhancements (inspired by Markdown Memo)
 - [x] **Hover previews**: Show note/link preview on hover without opening the file (v1.15.0)

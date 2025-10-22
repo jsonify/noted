@@ -13,6 +13,12 @@ export class Uri {
     return new Uri(path);
   }
 
+  static parse(value: string): Uri {
+    // Handle file:// URIs and convert them to paths
+    const path = value.replace(/^file:\/\/\//, '/').replace(/^file:\/\//, '/');
+    return new Uri(path);
+  }
+
   constructor(public fsPath: string) {}
 
   toString(): string {
@@ -57,6 +63,10 @@ export class EventEmitter<T> {
       };
     };
   }
+
+  dispose(): void {
+    this.listeners = [];
+  }
 }
 
 export enum ConfigurationTarget {
@@ -65,12 +75,39 @@ export enum ConfigurationTarget {
   WorkspaceFolder = 3
 }
 
+export class RelativePattern {
+  constructor(public base: string, public pattern: string) {}
+}
+
+export interface FileSystemWatcher {
+  onDidChange: (listener: (uri: Uri) => any) => { dispose: () => void };
+  onDidCreate: (listener: (uri: Uri) => any) => { dispose: () => void };
+  onDidDelete: (listener: (uri: Uri) => any) => { dispose: () => void };
+  dispose: () => void;
+}
+
 export const workspace = {
   workspaceFolders: undefined as any,
   getConfiguration: (section: string) => ({
     get: (key: string, defaultValue?: any) => defaultValue,
     update: (key: string, value: any, target: ConfigurationTarget) => Promise.resolve()
-  })
+  }),
+  createFileSystemWatcher: (pattern: any): FileSystemWatcher => {
+    const changeEmitter = new EventEmitter<Uri>();
+    const createEmitter = new EventEmitter<Uri>();
+    const deleteEmitter = new EventEmitter<Uri>();
+
+    return {
+      onDidChange: changeEmitter.event,
+      onDidCreate: createEmitter.event,
+      onDidDelete: deleteEmitter.event,
+      dispose: () => {
+        changeEmitter.dispose();
+        createEmitter.dispose();
+        deleteEmitter.dispose();
+      }
+    };
+  }
 };
 
 export const window = {

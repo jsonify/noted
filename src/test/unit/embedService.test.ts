@@ -413,5 +413,182 @@ describe('EmbedService', () => {
                 expect(embed!.type).to.equal('note');
             });
         });
+
+        describe('Transclusion Support', () => {
+            it('should track embedded sources for a document', async () => {
+                // Create test notes
+                const sourceNote1 = path.join(tempDir, 'source1.txt');
+                const sourceNote2 = path.join(tempDir, 'source2.txt');
+                await fs.writeFile(sourceNote1, 'Source 1 content');
+                await fs.writeFile(sourceNote2, 'Source 2 content');
+
+                // Create document with embeds
+                const documentUri = 'file:///test/document.txt';
+                const embeds = [
+                    {
+                        noteName: 'source1',
+                        range: new vscode.Range(0, 0, 0, 15),
+                        type: 'note' as const
+                    },
+                    {
+                        noteName: 'source2',
+                        range: new vscode.Range(1, 0, 1, 15),
+                        type: 'note' as const
+                    }
+                ];
+
+                await embedService.updateEmbedSourcesCache(documentUri, embeds);
+
+                const sources = embedService.getEmbeddedSources(documentUri);
+                expect(sources).to.have.lengthOf(2);
+                expect(sources).to.include(sourceNote1);
+                expect(sources).to.include(sourceNote2);
+            });
+
+            it('should get documents that embed a specific source', async () => {
+                // Create test notes
+                const sourceNote = path.join(tempDir, 'source.txt');
+                await fs.writeFile(sourceNote, 'Source content');
+
+                // Create two documents that embed the same source
+                const documentUri1 = 'file:///test/doc1.txt';
+                const documentUri2 = 'file:///test/doc2.txt';
+                const embeds = [
+                    {
+                        noteName: 'source',
+                        range: new vscode.Range(0, 0, 0, 15),
+                        type: 'note' as const
+                    }
+                ];
+
+                await embedService.updateEmbedSourcesCache(documentUri1, embeds);
+                await embedService.updateEmbedSourcesCache(documentUri2, embeds);
+
+                const documents = embedService.getDocumentsEmbeddingSource(sourceNote);
+                expect(documents).to.have.lengthOf(2);
+                expect(documents).to.include(documentUri1);
+                expect(documents).to.include(documentUri2);
+            });
+
+            it('should return empty array for documents with no embeds', () => {
+                const documentUri = 'file:///test/document.txt';
+                const sources = embedService.getEmbeddedSources(documentUri);
+                expect(sources).to.have.lengthOf(0);
+            });
+
+            it('should return empty array for source not embedded anywhere', () => {
+                const sourcePath = path.join(tempDir, 'unused.txt');
+                const documents = embedService.getDocumentsEmbeddingSource(sourcePath);
+                expect(documents).to.have.lengthOf(0);
+            });
+
+            it('should clear embed sources cache for specific document', async () => {
+                // Create test notes
+                const sourceNote = path.join(tempDir, 'source.txt');
+                await fs.writeFile(sourceNote, 'Source content');
+
+                const documentUri = 'file:///test/document.txt';
+                const embeds = [
+                    {
+                        noteName: 'source',
+                        range: new vscode.Range(0, 0, 0, 15),
+                        type: 'note' as const
+                    }
+                ];
+
+                await embedService.updateEmbedSourcesCache(documentUri, embeds);
+                expect(embedService.getEmbeddedSources(documentUri)).to.have.lengthOf(1);
+
+                embedService.clearEmbedSourcesCache(documentUri);
+                expect(embedService.getEmbeddedSources(documentUri)).to.have.lengthOf(0);
+            });
+
+            it('should clear all embed sources cache', async () => {
+                // Create test notes
+                const sourceNote1 = path.join(tempDir, 'source1.txt');
+                const sourceNote2 = path.join(tempDir, 'source2.txt');
+                await fs.writeFile(sourceNote1, 'Source 1 content');
+                await fs.writeFile(sourceNote2, 'Source 2 content');
+
+                const documentUri1 = 'file:///test/doc1.txt';
+                const documentUri2 = 'file:///test/doc2.txt';
+                const embeds1 = [
+                    {
+                        noteName: 'source1',
+                        range: new vscode.Range(0, 0, 0, 15),
+                        type: 'note' as const
+                    }
+                ];
+                const embeds2 = [
+                    {
+                        noteName: 'source2',
+                        range: new vscode.Range(0, 0, 0, 15),
+                        type: 'note' as const
+                    }
+                ];
+
+                await embedService.updateEmbedSourcesCache(documentUri1, embeds1);
+                await embedService.updateEmbedSourcesCache(documentUri2, embeds2);
+
+                embedService.clearAllEmbedSourcesCache();
+
+                expect(embedService.getEmbeddedSources(documentUri1)).to.have.lengthOf(0);
+                expect(embedService.getEmbeddedSources(documentUri2)).to.have.lengthOf(0);
+            });
+
+            it('should handle documents with unresolvable embeds', async () => {
+                const documentUri = 'file:///test/document.txt';
+                const embeds = [
+                    {
+                        noteName: 'nonexistent-note',
+                        range: new vscode.Range(0, 0, 0, 25),
+                        type: 'note' as const
+                    }
+                ];
+
+                await embedService.updateEmbedSourcesCache(documentUri, embeds);
+
+                const sources = embedService.getEmbeddedSources(documentUri);
+                // Should not include unresolvable embeds
+                expect(sources).to.have.lengthOf(0);
+            });
+
+            it('should update cache when document embeds change', async () => {
+                // Create test notes
+                const sourceNote1 = path.join(tempDir, 'source1.txt');
+                const sourceNote2 = path.join(tempDir, 'source2.txt');
+                await fs.writeFile(sourceNote1, 'Source 1 content');
+                await fs.writeFile(sourceNote2, 'Source 2 content');
+
+                const documentUri = 'file:///test/document.txt';
+
+                // Initial embeds
+                const embeds1 = [
+                    {
+                        noteName: 'source1',
+                        range: new vscode.Range(0, 0, 0, 15),
+                        type: 'note' as const
+                    }
+                ];
+                await embedService.updateEmbedSourcesCache(documentUri, embeds1);
+                expect(embedService.getEmbeddedSources(documentUri)).to.have.lengthOf(1);
+
+                // Updated embeds - now embedding both sources
+                const embeds2 = [
+                    {
+                        noteName: 'source1',
+                        range: new vscode.Range(0, 0, 0, 15),
+                        type: 'note' as const
+                    },
+                    {
+                        noteName: 'source2',
+                        range: new vscode.Range(1, 0, 1, 15),
+                        type: 'note' as const
+                    }
+                ];
+                await embedService.updateEmbedSourcesCache(documentUri, embeds2);
+                expect(embedService.getEmbeddedSources(documentUri)).to.have.lengthOf(2);
+            });
+        });
     });
 });
