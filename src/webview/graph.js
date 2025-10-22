@@ -6,6 +6,10 @@ let allNodes = window.graphData.nodes;
 let allEdges = window.graphData.edges;
 let currentFilter = 'all';
 let searchQuery = '';
+let timeFilter = 'all';
+let customStartDate = null;
+let customEndDate = null;
+let timeFilterMode = 'modified'; // 'created' or 'modified'
 
 // Create the network
 const container = document.getElementById('graph');
@@ -296,7 +300,7 @@ function getFilteredData() {
     let nodes = allNodes;
     let edges = allEdges;
 
-    // Apply filter
+    // Apply connection filter
     if (currentFilter === 'connected') {
         nodes = nodes.filter(n => !n.isOrphan);
         const nodeIds = new Set(nodes.map(n => n.id));
@@ -304,6 +308,57 @@ function getFilteredData() {
     } else if (currentFilter === 'orphans') {
         nodes = nodes.filter(n => n.isOrphan);
         edges = [];
+    }
+
+    // Apply time filter
+    if (timeFilter !== 'all') {
+        const now = Date.now();
+        let startTime, endTime;
+
+        if (timeFilter === 'custom') {
+            // Custom date range
+            if (customStartDate) {
+                startTime = new Date(customStartDate).getTime();
+            }
+            if (customEndDate) {
+                endTime = new Date(customEndDate).getTime() + 86400000; // Add 24 hours to include entire end date
+            }
+        } else {
+            // Preset time ranges
+            endTime = now;
+            switch (timeFilter) {
+                case 'today':
+                    const todayStart = new Date();
+                    todayStart.setHours(0, 0, 0, 0);
+                    startTime = todayStart.getTime();
+                    break;
+                case 'week':
+                    startTime = now - (7 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'month':
+                    startTime = now - (30 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'quarter':
+                    startTime = now - (90 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'year':
+                    startTime = now - (365 * 24 * 60 * 60 * 1000);
+                    break;
+            }
+        }
+
+        // Filter nodes by time
+        nodes = nodes.filter(node => {
+            const timestamp = timeFilterMode === 'created' ? node.createdTime : node.modifiedTime;
+            if (!timestamp) return true; // Include nodes without timestamp info
+
+            if (startTime && timestamp < startTime) return false;
+            if (endTime && timestamp > endTime) return false;
+            return true;
+        });
+
+        const nodeIds = new Set(nodes.map(n => n.id));
+        edges = edges.filter(e => nodeIds.has(e.from) && nodeIds.has(e.to));
     }
 
     // Apply search
@@ -375,6 +430,61 @@ document.getElementById('layoutSelect').addEventListener('change', (e) => {
 
 document.getElementById('filterSelect').addEventListener('change', (e) => {
     currentFilter = e.target.value;
+    updateGraph();
+});
+
+document.getElementById('timeFilterSelect').addEventListener('change', (e) => {
+    timeFilter = e.target.value;
+
+    // Show/hide custom time range controls
+    const customTimeRange = document.getElementById('customTimeRange');
+    if (timeFilter === 'custom') {
+        customTimeRange.classList.remove('hidden');
+
+        // Set default dates if not already set
+        if (!customStartDate || !customEndDate) {
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+            document.getElementById('endDate').valueAsDate = today;
+            document.getElementById('startDate').valueAsDate = thirtyDaysAgo;
+
+            customEndDate = today.toISOString().split('T')[0];
+            customStartDate = thirtyDaysAgo.toISOString().split('T')[0];
+        }
+    } else {
+        customTimeRange.classList.add('hidden');
+        updateGraph();
+    }
+});
+
+document.getElementById('timeFilterMode').addEventListener('change', (e) => {
+    timeFilterMode = e.target.value;
+    if (timeFilter !== 'all') {
+        updateGraph();
+    }
+});
+
+document.getElementById('applyTimeRangeBtn').addEventListener('click', () => {
+    customStartDate = document.getElementById('startDate').value;
+    customEndDate = document.getElementById('endDate').value;
+
+    if (!customStartDate && !customEndDate) {
+        alert('Please select at least a start or end date');
+        return;
+    }
+
+    updateGraph();
+});
+
+document.getElementById('clearTimeRangeBtn').addEventListener('click', () => {
+    customStartDate = null;
+    customEndDate = null;
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
+    timeFilter = 'all';
+    document.getElementById('timeFilterSelect').value = 'all';
+    document.getElementById('customTimeRange').classList.add('hidden');
     updateGraph();
 });
 

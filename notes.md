@@ -103,7 +103,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Month Navigation**: Previous/Next month buttons and "Today" quick jump
 - **Multi-note Support**: Handles multiple notes per day (daily notes + templated notes)
 
-### Graph View (v1.14.0, Enhanced v1.17.1)
+### Graph View (v1.14.0, Enhanced v1.17.1, v1.19.1)
 - **Show Graph View**: Interactive visualization of note connections via wiki-style links
 - **Interactive Graph Features**:
   - **Click nodes** to open notes instantly
@@ -122,6 +122,12 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - **Search box**: Find specific notes by name (live filtering)
   - **Filter by connection**: Show all notes, connected only, or orphans only
   - **Orphan detection**: Quickly identify notes without any links
+  - **Time-based filtering** (v1.19.1): Filter notes by creation or modification date
+    - **Preset ranges**: Today, Last 7 Days, Last 30 Days, Last 90 Days, Last Year
+    - **Custom date range**: Select specific start and end dates
+    - **Toggle mode**: Switch between filtering by created date or modified date
+    - **Combined filtering**: Works seamlessly with connection filters and search
+    - **Real-time updates**: Graph updates instantly when filters are changed
 - **Visual Encoding**:
   - **Node size**: Larger nodes have more connections (logarithmic scaling)
   - **Node color** (customizable):

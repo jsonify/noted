@@ -91,6 +91,10 @@ button:active {
     min-width: 120px;
 }
 
+#timeFilterSelect {
+    min-width: 140px;
+}
+
 #graph {
     flex: 1;
     border: 1px solid var(--vscode-panel-border);
@@ -346,5 +350,67 @@ button.primary:hover {
 }
 
 #customizeBtn:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Custom Time Range */
+#customTimeRange {
+    width: 100%;
+    background-color: var(--vscode-editor-background);
+    border-top: 1px solid var(--vscode-panel-border);
+    padding: 12px;
+    margin-top: 4px;
+}
+
+.time-range-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.time-range-controls label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.time-range-controls label span {
+    opacity: 0.8;
+    min-width: 40px;
+}
+
+.time-range-controls input[type="date"] {
+    padding: 5px 10px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.time-range-controls select {
+    min-width: 100px;
+    padding: 5px 10px;
+}
+
+.time-range-controls button {
+    padding: 5px 14px;
+    font-size: 13px;
+}
+
+#applyTimeRangeBtn {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+#applyTimeRangeBtn:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+#clearTimeRangeBtn {
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+#clearTimeRangeBtn:hover {
     background-color: var(--vscode-button-secondaryHoverBackground);
 }

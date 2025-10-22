@@ -137,7 +137,12 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 - [ ] **Graph focus mode**: Focus on single note and its immediate connections
 - [x] **Connection strength**: Edge thickness based on number of links between notes (v1.14.0)
   - Bidirectional links shown with thicker edges (3px)
-- [ ] **Time-based filtering**: Show notes created/modified in specific time periods
+- [x] **Time-based filtering**: Show notes created/modified in specific time periods (v1.19.1)
+  - Filter by preset time ranges: Today, Last 7/30/90/365 Days
+  - Custom date range picker with start/end dates
+  - Toggle between created and modified timestamps
+  - Real-time filtering updates graph visualization
+  - Integrated seamlessly with existing connection and search filters
 
 ### Attachment Support (inspired by Foam)
 - [ ] **PDF support**: Link to PDFs with `[[document.pdf]]`, preview in hover

@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as fs from 'fs';
 import { LinkService } from './linkService';
 import { readFile } from './fileSystemService';
 
@@ -14,6 +15,8 @@ export interface GraphNode {
     group?: string; // for grouping/coloring
     isOrphan: boolean; // has no connections
     linkCount: number; // total links (in + out)
+    createdTime?: number; // file creation timestamp (ms since epoch)
+    modifiedTime?: number; // file modification timestamp (ms since epoch)
 }
 
 /**
@@ -87,6 +90,18 @@ export class GraphService {
             const linkCount = outgoingLinks.length + backlinks.length;
             const isOrphan = orphanSet.has(notePath) && linkCount === 0;
 
+            // Get file timestamps
+            let createdTime: number | undefined;
+            let modifiedTime: number | undefined;
+            try {
+                const stats = await fs.promises.stat(notePath);
+                createdTime = stats.birthtimeMs;
+                modifiedTime = stats.mtimeMs;
+            } catch (error) {
+                // If we can't get stats, just continue without timestamps
+                console.warn(`Could not get file stats for ${notePath}:`, error);
+            }
+
             // Create node
             const basename = path.basename(notePath, path.extname(notePath));
             const node: GraphNode = {
@@ -97,7 +112,9 @@ export class GraphService {
                 isOrphan,
                 linkCount,
                 color: this.getNodeColor(isOrphan, linkCount),
-                group: isOrphan ? 'orphan' : 'connected'
+                group: isOrphan ? 'orphan' : 'connected',
+                createdTime,
+                modifiedTime
             };
             nodes.push(node);
 

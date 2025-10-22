@@ -52,10 +52,58 @@ Type any text to instantly filter the graph to show only matching notes. The gra
 
 **Example:** Type "meeting" to see only notes with "meeting" in their name
 
-### Filter Options
+### Connection Filter
 - **All Notes**: Shows every note in your workspace
 - **Connected Only**: Shows only notes that have at least one link (hides orphans)
 - **Orphans Only**: Shows only notes with no incoming or outgoing links
+
+### Time-Based Filtering
+
+Filter notes based on when they were created or modified. This powerful feature helps you focus on recent work, track productivity over time, or explore notes from specific periods.
+
+#### Preset Time Ranges
+Select from common time periods using the time filter dropdown:
+- **All Time** - No time filtering (default)
+- **Today** - Notes from midnight onwards today
+- **Last 7 Days** - Notes from the past week
+- **Last 30 Days** - Notes from the past month
+- **Last 90 Days** - Notes from the past quarter
+- **Last Year** - Notes from the past 365 days
+
+#### Custom Date Range
+Select **Custom Range...** to specify exact dates:
+1. Choose start and end dates using the date pickers
+2. Select whether to filter by **Created** or **Modified** date
+3. Click **Apply** to update the graph
+4. Click **Clear** to reset the time filter
+
+**Example:** View only notes created in January 2025:
+- Start Date: 2025-01-01
+- End Date: 2025-01-31
+- Mode: Created
+
+#### Filter Mode: Created vs Modified
+Toggle between two different perspectives on your notes:
+
+**Created Date**
+- Shows notes based on when the file was first created
+- Useful for tracking note-taking patterns over time
+- Helps identify productive periods
+
+**Modified Date**
+- Shows notes based on when they were last edited
+- Useful for finding recently updated notes
+- Helps identify active areas of your knowledge base
+
+#### Combined Filtering
+Time filters work seamlessly with other filters for powerful queries:
+
+**Examples:**
+- **Connected Only + Last 7 Days** - See recently created/modified notes that have links
+- **Orphans Only + Last 30 Days** - Find recent notes that haven't been linked yet
+- **Search "project" + Last 90 Days** - Find project-related notes from this quarter
+
+**Pro Tip:** Use time filtering to review notes from specific project periods or identify notes that might need updating.
 
 ## Graph Customization
 
@@ -183,6 +231,13 @@ Opens the customization panel for adjusting graph appearance and behavior.
 1. Use the Force-Directed layout to see natural groupings
 2. Clusters indicate related topics or projects
 3. Consider creating bridge notes to connect isolated clusters
+
+### Using Time Filters Effectively
+1. **Daily Review**: Use "Today" filter to see what you worked on
+2. **Weekly Review**: Use "Last 7 Days" + "Modified" to see recently edited notes
+3. **Project Retrospectives**: Use custom date range to view notes from specific project periods
+4. **Find Stale Notes**: Use "Modified" filter with older date ranges to find notes that may need updating
+5. **Track Productivity**: Compare different time periods to see when you were most active
 
 ### Performance with Large Graphs
 1. Use filters to reduce visual complexity (Connected Only, search)

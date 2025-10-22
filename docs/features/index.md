@@ -33,7 +33,7 @@ Advanced search with regex, date filters, and tag filtering. Quick switcher for 
 Interactive monthly calendar for navigating daily notes and viewing note history.
 
 ### [Graph View]({{ '/features/graph' | relative_url }})
-Visualize note connections with an interactive graph showing your knowledge network. Fully customizable with node shapes, colors, edge styles, and physics tuning.
+Visualize note connections with an interactive graph showing your knowledge network. Filter by time periods, search, and connection status. Fully customizable with node shapes, colors, edge styles, and physics tuning.
 
 ### [Bulk Operations]({{ '/features/bulk-operations' | relative_url }})
 Multi-select notes for batch operations: move, delete, or archive multiple notes at once.
@@ -76,7 +76,7 @@ Live markdown rendering with side-by-side editing and preview.
 - **Advanced Search**: Regex, case-sensitive, date range, and tag filters
 - **Quick Switcher**: Access 20 most recent notes instantly
 - **Calendar View**: Visual navigation with daily note indicators
-- **Graph View**: Interactive visualization with customizable appearance and multiple layout options
+- **Graph View**: Interactive visualization with time-based filtering, customizable appearance, and multiple layout options
 - **Bulk Operations**: Multi-select, bulk delete, move, and archive
 - **Pinned Notes**: Quick access to favorite notes
 - **Archive**: Hide completed work from main view
