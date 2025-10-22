@@ -118,12 +118,25 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 - [ ] **Tag breadcrumbs**: Show full tag path when hovering over nested tags
 
 ### Enhanced Graph Features (inspired by Foam)
-- [ ] **Graph filtering**: Show/hide specific notes, tags, or connection types in graph
-- [ ] **Graph customization**: Adjust node colors, sizes, edge styles, and layout algorithms
+- [x] **Graph filtering**: Show/hide specific notes, tags, or connection types in graph (v1.17.1)
+  - Filter by "All Notes", "Connected Only", or "Orphans Only"
+  - Real-time search to find and highlight specific notes
+  - Layout switching between Force-Directed, Hierarchical, and Circular views
+- [x] **Graph customization**: Adjust node colors, sizes, edge styles, and layout algorithms (v1.17.1)
+  - Customizable node appearance: size (5-50), border width (1-6), shape (dot/diamond/square/triangle/star/hexagon)
+  - Toggle node shadows on/off
+  - Customizable edge appearance: width (1-8), color (color picker), style (smooth/dynamic/straight/cubic)
+  - Toggle edge arrows on/off
+  - Physics tuning: spring length (50-400), node repulsion (10k-50k), central gravity (0-1.0)
+  - Custom color schemes for node connection levels (orphan, 1-2, 3-5, 6-10, 10+ connections)
+  - Settings persist across sessions using VS Code webview state
+  - Reset to defaults option available
+  - Interactive customization panel with live preview of slider values
 - [ ] **Orphan highlighting**: Visual indicator for orphaned notes in graph (different color/shape)
 - [ ] **Export graph**: Save graph visualization as PNG/SVG image
 - [ ] **Graph focus mode**: Focus on single note and its immediate connections
-- [ ] **Connection strength**: Edge thickness based on number of links between notes
+- [x] **Connection strength**: Edge thickness based on number of links between notes (v1.14.0)
+  - Bidirectional links shown with thicker edges (3px)
 - [ ] **Time-based filtering**: Show notes created/modified in specific time periods
 
 ### Attachment Support (inspired by Foam)

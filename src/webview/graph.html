@@ -47,6 +47,7 @@
 
                 <button id="refreshBtn">Refresh</button>
                 <button id="fitBtn">Fit View</button>
+                <button id="customizeBtn">Customize</button>
             </div>
         </div>
 
@@ -86,10 +87,150 @@
                 <div class="legend-color" style="background-color: #ff6b6b;"></div>
                 <span class="legend-label">10+ connections</span>
             </div>
+            <div class="legend-divider"></div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e83e8c;"></div>
+                <span class="legend-label">Links</span>
+            </div>
+            <div class="legend-hint">
+                💡 Click a node to highlight its connections<br>
+                💡 Click canvas to clear highlights
+            </div>
         </div>
     </div>
 
     <div id="tooltip"></div>
+
+    <div id="customizePanel" class="hidden">
+        <div class="panel-header">
+            <h2>Graph Customization</h2>
+            <button id="closePanelBtn">✕</button>
+        </div>
+        <div class="panel-content">
+            <div class="setting-section">
+                <h3>Node Appearance</h3>
+
+                <div class="setting-item">
+                    <label for="nodeSize">Node Size</label>
+                    <input type="range" id="nodeSize" min="5" max="50" value="20" />
+                    <span id="nodeSizeValue">20</span>
+                </div>
+
+                <div class="setting-item">
+                    <label for="nodeBorderWidth">Border Width</label>
+                    <input type="range" id="nodeBorderWidth" min="1" max="6" value="2" />
+                    <span id="nodeBorderWidthValue">2</span>
+                </div>
+
+                <div class="setting-item">
+                    <label for="nodeShape">Node Shape</label>
+                    <select id="nodeShape">
+                        <option value="dot">Dot (Circle)</option>
+                        <option value="diamond">Diamond</option>
+                        <option value="square">Square</option>
+                        <option value="triangle">Triangle</option>
+                        <option value="star">Star</option>
+                        <option value="hexagon">Hexagon</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="nodeShadow" checked />
+                        Enable Shadows
+                    </label>
+                </div>
+            </div>
+
+            <div class="setting-section">
+                <h3>Edge Appearance</h3>
+
+                <div class="setting-item">
+                    <label for="edgeWidth">Edge Width</label>
+                    <input type="range" id="edgeWidth" min="1" max="8" value="2" />
+                    <span id="edgeWidthValue">2</span>
+                </div>
+
+                <div class="setting-item">
+                    <label for="edgeColor">Edge Color</label>
+                    <input type="color" id="edgeColor" value="#e83e8c" />
+                </div>
+
+                <div class="setting-item">
+                    <label for="edgeStyle">Edge Style</label>
+                    <select id="edgeStyle">
+                        <option value="continuous">Smooth Curve</option>
+                        <option value="dynamic">Dynamic</option>
+                        <option value="straight">Straight Line</option>
+                        <option value="cubicBezier">Cubic Bezier</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="edgeArrows" checked />
+                        Show Arrows
+                    </label>
+                </div>
+            </div>
+
+            <div class="setting-section">
+                <h3>Physics & Animation</h3>
+
+                <div class="setting-item">
+                    <label for="springLength">Spring Length</label>
+                    <input type="range" id="springLength" min="50" max="400" value="200" />
+                    <span id="springLengthValue">200</span>
+                </div>
+
+                <div class="setting-item">
+                    <label for="repulsion">Node Repulsion</label>
+                    <input type="range" id="repulsion" min="10000" max="50000" value="30000" />
+                    <span id="repulsionValue">30000</span>
+                </div>
+
+                <div class="setting-item">
+                    <label for="gravity">Central Gravity</label>
+                    <input type="range" id="gravity" min="0" max="100" value="30" step="5" />
+                    <span id="gravityValue">0.30</span>
+                </div>
+            </div>
+
+            <div class="setting-section">
+                <h3>Custom Node Colors</h3>
+
+                <div class="setting-item">
+                    <label for="orphanColor">Orphan Nodes</label>
+                    <input type="color" id="orphanColor" value="#cccccc" />
+                </div>
+
+                <div class="setting-item">
+                    <label for="lowConnColor">Low Connections (1-2)</label>
+                    <input type="color" id="lowConnColor" value="#69db7c" />
+                </div>
+
+                <div class="setting-item">
+                    <label for="medConnColor">Medium Connections (3-5)</label>
+                    <input type="color" id="medConnColor" value="#4dabf7" />
+                </div>
+
+                <div class="setting-item">
+                    <label for="highConnColor">High Connections (6-10)</label>
+                    <input type="color" id="highConnColor" value="#ffa500" />
+                </div>
+
+                <div class="setting-item">
+                    <label for="veryHighConnColor">Very High Connections (10+)</label>
+                    <input type="color" id="veryHighConnColor" value="#ff6b6b" />
+                </div>
+            </div>
+
+            <div class="panel-footer">
+                <button id="resetDefaultsBtn">Reset to Defaults</button>
+                <button id="applySettingsBtn" class="primary">Apply</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Inject graph data

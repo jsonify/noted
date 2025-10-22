@@ -103,13 +103,17 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Month Navigation**: Previous/Next month buttons and "Today" quick jump
 - **Multi-note Support**: Handles multiple notes per day (daily notes + templated notes)
 
-### Graph View (v1.14.0)
+### Graph View (v1.14.0, Enhanced v1.17.1)
 - **Show Graph View**: Interactive visualization of note connections via wiki-style links
 - **Interactive Graph Features**:
   - **Click nodes** to open notes instantly
   - **Drag nodes** to reposition and explore relationships
   - **Zoom and pan** to navigate large graphs
-  - **Hover tooltips** showing connection counts (outgoing links and backlinks)
+  - **Hover tooltips** showing note names, connection counts, and "Click to open" hint
+  - **Node highlighting** (v1.17.1): Click any node to highlight its immediate connections
+    - Connected nodes stay at full opacity while others dim to 20%
+    - Connected edges become hot pink and thicker
+    - Click canvas to clear highlights
 - **Layout Options**:
   - **Force-Directed** (default): Natural physics-based layout showing organic clusters
   - **Hierarchical**: Top-down tree structure showing clear relationships
@@ -120,20 +124,47 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - **Orphan detection**: Quickly identify notes without any links
 - **Visual Encoding**:
   - **Node size**: Larger nodes have more connections (logarithmic scaling)
-  - **Node color**:
+  - **Node color** (customizable):
     - Gray: Orphan notes (no connections)
     - Green: Lightly connected (1-2 links)
     - Blue: Moderately connected (3-5 links)
     - Orange: Well connected (6-10 links)
     - Red: Highly connected hubs (10+ links)
   - **Edge width**: Thicker edges for bidirectional links (notes linking to each other)
+  - **Edge color** (v1.17.1): Pink (#e83e8c) for better visibility on dark backgrounds
+  - **Edge arrows** (v1.17.1): Directional arrows showing link direction
+  - **Node shadows** (v1.17.1): Drop shadows for depth perception
 - **Statistics Dashboard**: Real-time graph metrics
   - Total notes count
   - Total links count
   - Orphan notes count
   - Average connections per note
-- **Refresh button**: Rebuild graph after creating new links
-- **Fit View button**: Auto-zoom to show entire graph
+- **Graph Customization** (v1.17.1): Comprehensive appearance controls
+  - **Node Appearance**:
+    - Adjustable node size (5-50 pixels)
+    - Border width control (1-6 pixels)
+    - 6 node shapes: Dot/Circle, Diamond, Square, Triangle, Star, Hexagon
+    - Toggle shadows on/off
+  - **Edge Appearance**:
+    - Adjustable edge width (1-8 pixels)
+    - Custom edge color via color picker
+    - 4 edge styles: Smooth Curve, Dynamic, Straight Line, Cubic Bezier
+    - Toggle directional arrows on/off
+  - **Physics & Animation Tuning**:
+    - Spring length control (50-400) for edge spacing
+    - Node repulsion control (10k-50k) for node spacing
+    - Central gravity control (0-1.0) for graph centering
+  - **Custom Color Schemes**:
+    - Customize colors for each connection level (orphan, 1-2, 3-5, 6-10, 10+)
+    - Full color picker support
+    - Colors update in both graph and legend
+  - **Settings Persistence**: All customizations save across VS Code sessions
+  - **Reset to Defaults**: One-click restore to original settings
+  - **Live Preview**: Range sliders show current values in real-time
+- **Controls**:
+  - **Refresh button**: Rebuild graph after creating new links
+  - **Fit View button**: Auto-zoom to show entire graph
+  - **Customize button**: Open customization panel
 
 ### Search (ENHANCED v1.6.0)
 - **Full-Text Search**: Search across all notes with preview of matching lines
