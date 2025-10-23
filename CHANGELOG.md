@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.26.0](https://github.com/jsonify/noted/compare/v1.25.0...v1.26.0) (2025-10-23)
+
+
+### Features
+
+* add YAML frontmatter tag support and enhance inline tagging system ([1d34728](https://github.com/jsonify/noted/commit/1d347285c39533b14dbf160c797a27f0736f67ee))
+
 ## [1.25.0](https://github.com/jsonify/noted/compare/v1.24.0...v1.25.0) (2025-10-23)
 
 
