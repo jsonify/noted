@@ -42,15 +42,18 @@ function generateFrontmatter(date: Date, filename?: string): string {
     const dateStr = formatDateForNote(date);
     const timeStr = formatTimeForNote(date);
 
-    let frontmatter = '---\n';
-    frontmatter += 'tags: \n';
-    frontmatter += `created: ${dateStr} at ${timeStr}\n`;
-    if (filename) {
-        frontmatter += `file: ${filename}\n`;
-    }
-    frontmatter += '---\n\n';
+    const lines = [
+        '---',
+        'tags: []',
+        `created: ${dateStr} at ${timeStr}`,
+    ];
 
-    return frontmatter;
+    if (filename) {
+        lines.push(`file: ${filename}`);
+    }
+
+    lines.push('---');
+    return lines.join('\n') + '\n\n';
 }
 
 /**
@@ -97,8 +100,8 @@ export async function generateTemplate(templateType: string | undefined, date: D
         return yamlFrontmatter + templateFn();
     }
 
-    // Default fallback
-    return yamlFrontmatter + `${dateStr}\n${'='.repeat(DEFAULTS.SEPARATOR_LENGTH)}\n\n`;
+    // Default fallback (consistent with quick template - frontmatter only)
+    return yamlFrontmatter;
 }
 
 /**

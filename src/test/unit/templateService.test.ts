@@ -62,7 +62,8 @@ describe('Template Service', () => {
       expect(result).to.include('created:');
       expect(result).to.include('2024');
       expect(result).to.include('October');
-      expect(result).to.include('==================================================');
+      // Default template should only include frontmatter (no redundant date/separator in body)
+      expect(result).to.not.include('==================================================');
     });
 
     it('should not include filename in frontmatter when not provided', async () => {
