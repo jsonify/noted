@@ -121,3 +121,81 @@ export class TagItem extends TreeItem {
         };
     }
 }
+
+/**
+ * Section item for connections panel (e.g., "Outgoing Links", "Backlinks")
+ */
+export class ConnectionSectionItem extends TreeItem {
+    constructor(
+        public readonly label: string,
+        public readonly sectionType: 'outgoing' | 'incoming',
+        public readonly count: number
+    ) {
+        super(`${label} (${count})`, vscode.TreeItemCollapsibleState.Expanded);
+
+        // Set appropriate icon based on section type
+        if (sectionType === 'outgoing') {
+            this.iconPath = new vscode.ThemeIcon('arrow-right');
+        } else if (sectionType === 'incoming') {
+            this.iconPath = new vscode.ThemeIcon('arrow-left');
+        }
+
+        this.contextValue = 'connection-section';
+        this.tooltip = `${count} ${label.toLowerCase()}`;
+    }
+}
+
+/**
+ * Connection item representing a single link between notes
+ */
+export class ConnectionItem extends TreeItem {
+    constructor(
+        public readonly targetPath: string,
+        public readonly sourcePath: string,
+        public readonly lineNumber: number,
+        public readonly context: string,
+        public readonly connectionType: 'outgoing' | 'incoming',
+        public readonly displayText?: string
+    ) {
+        const filename = require('path').basename(targetPath, require('path').extname(targetPath));
+        super(filename, vscode.TreeItemCollapsibleState.None);
+
+        this.iconPath = new vscode.ThemeIcon('note');
+        this.contextValue = 'connection';
+
+        // Show display text if available, otherwise show context
+        const preview = displayText
+            ? `"${displayText}" (line ${lineNumber})`
+            : `line ${lineNumber}`;
+        this.description = preview;
+
+        // Tooltip shows full context
+        this.tooltip = this.buildTooltip();
+
+        // Make clickable to open the connected note
+        this.command = {
+            command: 'noted.openConnection',
+            title: 'Open Connection',
+            arguments: [this]
+        };
+
+        this.resourceUri = vscode.Uri.file(targetPath);
+    }
+
+    private buildTooltip(): string {
+        const filename = require('path').basename(this.targetPath);
+        const sourceFilename = require('path').basename(this.sourcePath);
+
+        let tooltip = `${filename}\n`;
+        tooltip += `Line ${this.lineNumber}\n\n`;
+
+        if (this.displayText) {
+            tooltip += `Display: "${this.displayText}"\n`;
+        }
+
+        tooltip += `Context: ${this.context}\n\n`;
+        tooltip += `Source: ${sourceFilename}`;
+
+        return tooltip;
+    }
+}

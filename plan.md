@@ -79,9 +79,22 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 - [ ] **Split note**: Break large notes into smaller linked notes with intelligent splitting
 
 ### Reference Panel Enhancements (inspired by Markdown Memo)
-- [ ] **Dedicated backlinks sidebar panel**: Always-visible panel showing all incoming references
-- [ ] **Context preview in backlinks**: Show surrounding text/paragraph for each backlink
-- [ ] **Backlinks grouping**: Group backlinks by source note, date, or section
+- [x] **Dedicated backlinks sidebar panel**: Always-visible panel showing all incoming references (v1.22.0)
+  - Dedicated "Connections" panel in sidebar showing incoming (backlinks) and outgoing links
+  - Real-time updates when switching between notes
+  - Shows context snippets for each connection with line numbers
+  - Click connections to navigate to linked notes
+  - "Open Connection Source" command to jump to exact line where link appears
+  - Grouped display showing all connections for active note
+  - Automatic refresh when documents are saved
+- [x] **Context preview in backlinks**: Show surrounding text/paragraph for each backlink (v1.22.0)
+  - Each connection displays the line containing the link
+  - Extended context available (configurable lines before/after)
+  - Display text shown when using `[[link|Display Text]]` syntax
+- [x] **Backlinks grouping**: Group backlinks by source note (v1.22.0)
+  - Connections grouped by source/target note
+  - Shows count when multiple connections exist to same note
+  - Separate sections for "Outgoing Links" and "Backlinks"
 - [ ] **Unlinked mentions**: Find notes that mention current note's title without explicit links
 
 ### Orphan & Placeholder Detection (inspired by Foam)
@@ -167,12 +180,30 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 - [ ] **Case-sensitive link matching**: Option for strict vs. fuzzy link matching
 
 ### Connections Panel (inspired by Foam)
-- [ ] **Dedicated connections sidebar**: Always-visible panel showing all related notes
-- [ ] **Bidirectional view**: Display both incoming (backlinks) and outgoing links together
-- [ ] **Context snippets**: Show surrounding text for each connection with highlighting
-- [ ] **Grouped connections**: Group by connection type (direct links, tags, mentions)
-- [ ] **Connection strength indicators**: Show how many times notes reference each other
-- [ ] **Quick navigation**: Click connection to jump to linked note or specific mention
+- [x] **Dedicated connections sidebar**: Always-visible panel showing all related notes (v1.22.0)
+  - "Connections" view in sidebar activity bar
+  - Auto-updates when switching between notes
+  - Shows empty state when no note is active
+- [x] **Bidirectional view**: Display both incoming (backlinks) and outgoing links together (v1.22.0)
+  - Separate sections for "Outgoing Links (N)" and "Backlinks (N)"
+  - Clear visual distinction between incoming and outgoing connections
+  - Real-time count of connections in section headers
+- [x] **Context snippets**: Show surrounding text for each connection with highlighting (v1.22.0)
+  - Each connection shows the line containing the link
+  - Tooltip displays full context with file metadata
+  - Line numbers shown for easy navigation
+  - Extended context available (configurable before/after lines)
+- [x] **Grouped connections**: Group by connection type (v1.22.0)
+  - Groups connections by source/target note
+  - Shows connection count when multiple links exist
+  - Organized by direct wiki-style `[[links]]`
+- [x] **Connection strength indicators**: Show how many times notes reference each other (v1.22.0)
+  - Connection count shown in grouped view
+  - Multiple connections to same note grouped together
+- [x] **Quick navigation**: Click connection to jump to linked note or specific mention (v1.22.0)
+  - Click any connection to open the target note
+  - Right-click menu: "Open Connection" and "Open Connection Source"
+  - "Open Connection Source" navigates to exact line with link
 
 ### Editor Enhancements
 - [ ] **Syntax highlighting for note content**: Custom syntax highlighting for note-specific patterns
