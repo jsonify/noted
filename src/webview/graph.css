@@ -414,3 +414,68 @@ button.primary:hover {
 #clearTimeRangeBtn:hover {
     background-color: var(--vscode-button-secondaryHoverBackground);
 }
+
+/* Focus Mode */
+#focusModeIndicator {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--vscode-editorWidget-background);
+    border: 2px solid #ff69b4;
+    padding: 12px 20px;
+    border-radius: 6px;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    pointer-events: auto;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+#focusModeText {
+    font-size: 14px;
+    color: var(--vscode-editor-foreground);
+}
+
+#focusModeText strong {
+    color: #ff69b4;
+    font-weight: 600;
+}
+
+#exitFocusModeBtn {
+    padding: 6px 12px;
+    font-size: 13px;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+#exitFocusModeBtn:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+#focusModeBtn.active {
+    background-color: #ff69b4;
+    color: white;
+    border: 1px solid #ff69b4;
+}
+
+#focusModeBtn.active:hover {
+    background-color: #ff4da6;
+}

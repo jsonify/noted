@@ -134,7 +134,14 @@ For a complete list of implemented features, see [notes.md](./notes.md).
   - Interactive customization panel with live preview of slider values
 - [ ] **Orphan highlighting**: Visual indicator for orphaned notes in graph (different color/shape)
 - [ ] **Export graph**: Save graph visualization as PNG/SVG image
-- [ ] **Graph focus mode**: Focus on single note and its immediate connections
+- [x] **Graph focus mode**: Focus on single note and its immediate connections (v1.20.1)
+  - Right-click any node to enter focus mode
+  - Shows only the selected note and its immediate connections (1-hop neighbors)
+  - Visual indicator displays focused note name with exit button
+  - Focused node is highlighted with pink border and larger size
+  - Connected edges highlighted in pink
+  - "Focus Mode" button in toolbar shows active state
+  - Easy exit via button or clicking "Focus Mode" toggle
 - [x] **Connection strength**: Edge thickness based on number of links between notes (v1.14.0)
   - Bidirectional links shown with thicker edges (3px)
 - [x] **Time-based filtering**: Show notes created/modified in specific time periods (v1.19.1)
@@ -194,6 +201,24 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 - [ ] Add inline code comments for complex logic
 - [ ] Create video tutorials or GIFs for features
 - [ ] Write migration guide for major version updates
+
+### Visual Documentation for Graph Features
+- [ ] **Screenshots for Graph Focus Mode**:
+  - How to right-click a node to enter focus mode
+  - The focus mode indicator appearance
+  - Before/after comparison of full graph vs focused view
+  - The pink active state of the Focus Mode button
+- [ ] **Video Tutorial for Graph View**:
+  - Common focus mode workflows
+  - How focus mode helps with large graphs
+  - Comparison between Focus Mode and Node Highlighting feature
+  - Demonstrating all graph customization options
+- [ ] **Graph View FAQ Section**:
+  - "What's the difference between Focus Mode and Node Highlighting?"
+  - "Can I use Focus Mode with filters and search?"
+  - "Does Focus Mode persist when I close and reopen the graph?"
+  - Common graph customization questions
+- [ ] **Keyboard Shortcut for Focus Mode**: Consider adding keyboard shortcut for toggling focus mode (currently only via right-click and toolbar button)
 
 ## Architecture Status
 

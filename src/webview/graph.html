@@ -57,6 +57,7 @@
 
                 <button id="refreshBtn">Refresh</button>
                 <button id="fitBtn">Fit View</button>
+                <button id="focusModeBtn" title="Toggle focus mode - right-click a node to focus">Focus Mode</button>
                 <button id="customizeBtn">Customize</button>
             </div>
 
@@ -81,6 +82,11 @@
         </div>
 
         <div id="graph"></div>
+
+        <div id="focusModeIndicator" class="hidden">
+            <span id="focusModeText">Focus Mode: <strong id="focusedNodeName"></strong></span>
+            <button id="exitFocusModeBtn">✕ Exit Focus</button>
+        </div>
 
         <div id="noLinksMessage" class="{{noLinksClass}}">
             <h3>No Links Found</h3>
@@ -123,6 +129,7 @@
             </div>
             <div class="legend-hint">
                 💡 Click a node to highlight its connections<br>
+                💡 Right-click a node to enter focus mode<br>
                 💡 Click canvas to clear highlights
             </div>
         </div>

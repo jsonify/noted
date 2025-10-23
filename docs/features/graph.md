@@ -26,6 +26,33 @@ Use the keyboard shortcut `Cmd+Shift+G` (macOS) or `Ctrl+Shift+G` (Windows/Linux
   - Connected edges become hot pink and thicker for emphasis
 - **Click canvas** (empty space) to clear highlights
 
+### Focus Mode
+Focus on a single note and its immediate connections to reduce visual clutter and explore local neighborhoods in your knowledge graph.
+
+**Entering Focus Mode:**
+- **Right-click any node** to enter focus mode for that note
+- Or click the **Focus Mode** button in the toolbar, then right-click a node
+
+**What Happens in Focus Mode:**
+- Only the selected note and its directly connected notes are shown (1-hop neighbors)
+- All other notes are hidden to reduce clutter
+- The focused node is highlighted with:
+  - Pink border (extra thick)
+  - 30% larger size
+- Connected edges are highlighted in pink
+- A focus indicator appears at the top showing the focused note's name
+
+**Exiting Focus Mode:**
+- Click the **✕ Exit Focus** button in the focus indicator
+- Or click the **Focus Mode** button in the toolbar
+- The full graph is restored with all nodes visible
+
+**Best Uses:**
+- Exploring the immediate context around a specific note
+- Understanding a note's local connections without distraction
+- Reviewing how a particular note connects to others
+- Creating screenshots of specific note relationships
+
 ## Layout Options
 
 Switch between different graph layouts using the layout dropdown:
@@ -212,6 +239,9 @@ Rebuilds the graph after creating new links or modifying notes. The graph doesn'
 ### Fit View Button
 Auto-zooms and centers the graph to show all nodes. Useful after filtering or when the graph has drifted off screen.
 
+### Focus Mode Button
+Toggle focus mode on/off. When active, the button turns pink. Right-click any node to focus on it and see only its immediate connections.
+
 ### Customize Button
 Opens the customization panel for adjusting graph appearance and behavior.
 
@@ -231,6 +261,13 @@ Opens the customization panel for adjusting graph appearance and behavior.
 1. Use the Force-Directed layout to see natural groupings
 2. Clusters indicate related topics or projects
 3. Consider creating bridge notes to connect isolated clusters
+
+### Using Focus Mode Effectively
+1. **Reduce Overwhelm**: Right-click a hub note in a large graph to see just its connections
+2. **Verify Links**: Focus on a note to quickly check all its incoming and outgoing links
+3. **Local Exploration**: Use focus mode to explore one area of your graph at a time
+4. **Clean Screenshots**: Capture focused views for documentation or sharing
+5. **Quick Context**: Right-click any note to instantly see what it's connected to
 
 ### Using Time Filters Effectively
 1. **Daily Review**: Use "Today" filter to see what you worked on

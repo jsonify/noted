@@ -103,7 +103,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Month Navigation**: Previous/Next month buttons and "Today" quick jump
 - **Multi-note Support**: Handles multiple notes per day (daily notes + templated notes)
 
-### Graph View (v1.14.0, Enhanced v1.17.1, v1.19.1)
+### Graph View (v1.14.0, Enhanced v1.17.1, v1.19.1, v1.20.1)
 - **Show Graph View**: Interactive visualization of note connections via wiki-style links
 - **Interactive Graph Features**:
   - **Click nodes** to open notes instantly
@@ -114,6 +114,13 @@ Templates support powerful variable substitution with 10 built-in placeholders:
     - Connected nodes stay at full opacity while others dim to 20%
     - Connected edges become hot pink and thicker
     - Click canvas to clear highlights
+  - **Focus Mode** (v1.20.1): Right-click any node to focus on it and its immediate connections
+    - Shows only the selected note and its 1-hop neighbors
+    - Focused node highlighted with pink border and enlarged 30%
+    - Visual indicator displays focused note name with exit button
+    - "Focus Mode" button in toolbar turns pink when active
+    - Exit via button click or toolbar toggle
+    - Best for exploring local neighborhoods, reducing clutter, and creating clean screenshots
 - **Layout Options**:
   - **Force-Directed** (default): Natural physics-based layout showing organic clusters
   - **Hierarchical**: Top-down tree structure showing clear relationships

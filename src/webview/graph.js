@@ -11,6 +11,10 @@ let customStartDate = null;
 let customEndDate = null;
 let timeFilterMode = 'modified'; // 'created' or 'modified'
 
+// Focus mode state
+let focusMode = false;
+let focusedNodeId = null;
+
 // Create the network
 const container = document.getElementById('graph');
 let network = null;
@@ -84,16 +88,30 @@ function initGraph() {
         if (params.nodes.length > 0) {
             const nodeId = params.nodes[0];
 
-            // Highlight connected nodes
-            highlightConnectedNodes(nodeId);
+            // Highlight connected nodes (unless in focus mode)
+            if (!focusMode) {
+                highlightConnectedNodes(nodeId);
+            }
 
             vscode.postMessage({
                 command: 'openNote',
                 filePath: nodeId
             });
         } else {
-            // Clicked on canvas, clear highlights
-            clearHighlights();
+            // Clicked on canvas, clear highlights (unless in focus mode)
+            if (!focusMode) {
+                clearHighlights();
+            }
+        }
+    });
+
+    // Right-click context menu
+    network.on('oncontext', function(params) {
+        params.event.preventDefault();
+
+        const nodeId = network.getNodeAt(params.pointer.DOM);
+        if (nodeId) {
+            enterFocusMode(nodeId);
         }
     });
 
@@ -372,7 +390,7 @@ function getFilteredData() {
     return { nodes, edges };
 }
 
-function updateGraph() {
+function updateGraph(skipFit = false) {
     const { nodes, edges } = getFilteredData();
 
     // Apply custom colors to nodes
@@ -387,7 +405,8 @@ function updateGraph() {
     network.setData({ nodes: coloredNodes, edges });
 
     // Manually fit if physics is disabled, as stabilization events won't fire
-    if (options.physics && options.physics.enabled === false) {
+    // Skip fitting if requested (to avoid zoom on hover after focus mode exit)
+    if (!skipFit && options.physics && options.physics.enabled === false) {
         network.fit();
     }
 
@@ -569,6 +588,114 @@ function clearHighlights() {
     network.setData({ nodes: coloredNodes, edges });
 }
 
+// Focus Mode Functions
+function enterFocusMode(nodeId) {
+    focusMode = true;
+    focusedNodeId = nodeId;
+
+    // Get the focused node
+    const focusedNode = allNodes.find(n => n.id === nodeId);
+    if (!focusedNode) return;
+
+    // Show focus mode indicator
+    const indicator = document.getElementById('focusModeIndicator');
+    const focusedNodeName = document.getElementById('focusedNodeName');
+    focusedNodeName.textContent = focusedNode.label;
+    indicator.classList.remove('hidden');
+
+    // Update focus mode button style
+    const focusModeBtn = document.getElementById('focusModeBtn');
+    focusModeBtn.classList.add('active');
+
+    // Get connected nodes (1-hop neighbors)
+    const connectedNodeIds = new Set();
+    connectedNodeIds.add(nodeId);
+
+    // Find all edges connected to this node
+    const connectedEdges = allEdges.filter(e => e.from === nodeId || e.to === nodeId);
+
+    // Add all connected nodes
+    connectedEdges.forEach(edge => {
+        connectedNodeIds.add(edge.from);
+        connectedNodeIds.add(edge.to);
+    });
+
+    // Filter to only show focused node and its immediate connections
+    const focusedNodes = allNodes.filter(node => connectedNodeIds.has(node.id));
+    const focusedEdges = allEdges.filter(edge =>
+        connectedNodeIds.has(edge.from) && connectedNodeIds.has(edge.to)
+    );
+
+    // Apply custom colors to focused nodes
+    const coloredNodes = focusedNodes.map(node => {
+        const customColor = getCustomNodeColor(node.isOrphan, node.linkCount);
+        // Make the focused node more prominent
+        if (node.id === nodeId) {
+            return {
+                ...node,
+                color: {
+                    background: customColor,
+                    border: '#ff69b4',
+                    highlight: {
+                        background: customColor,
+                        border: '#ff69b4'
+                    }
+                },
+                borderWidth: 4,
+                size: node.size * 1.3
+            };
+        }
+        return { ...node, color: customColor };
+    });
+
+    // Highlight edges connected to focused node
+    const highlightedEdges = focusedEdges.map(edge => {
+        if (edge.from === nodeId || edge.to === nodeId) {
+            return { ...edge, color: { color: '#ff69b4', opacity: 1.0 }, width: 3 };
+        }
+        return edge;
+    });
+
+    // Update the network
+    network.setData({ nodes: coloredNodes, edges: highlightedEdges });
+
+    // Fit the view to show the focused subgraph
+    setTimeout(() => {
+        network.fit({
+            animation: {
+                duration: 500,
+                easingFunction: 'easeInOutQuad'
+            }
+        });
+    }, 100);
+}
+
+function exitFocusMode() {
+    focusMode = false;
+    focusedNodeId = null;
+
+    // Hide focus mode indicator
+    const indicator = document.getElementById('focusModeIndicator');
+    indicator.classList.add('hidden');
+
+    // Update focus mode button style
+    const focusModeBtn = document.getElementById('focusModeBtn');
+    focusModeBtn.classList.remove('active');
+
+    // Restore full graph by rebuilding it to avoid stabilization issues
+    network.destroy();
+    initGraph();
+}
+
+function toggleFocusMode() {
+    if (focusMode) {
+        exitFocusMode();
+    } else {
+        // Show message to right-click a node
+        alert('Right-click on any node to enter focus mode and see only that note and its immediate connections.');
+    }
+}
+
 // Customization Panel Functions
 function initializeCustomizationPanel() {
     // Load current settings into UI
@@ -713,3 +840,7 @@ document.getElementById('closePanelBtn').addEventListener('click', () => {
 
 document.getElementById('applySettingsBtn').addEventListener('click', applyCustomizations);
 document.getElementById('resetDefaultsBtn').addEventListener('click', resetToDefaults);
+
+// Focus mode event listeners
+document.getElementById('focusModeBtn').addEventListener('click', toggleFocusMode);
+document.getElementById('exitFocusModeBtn').addEventListener('click', exitFocusMode);
