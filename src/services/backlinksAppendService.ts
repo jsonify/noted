@@ -154,27 +154,29 @@ export class BacklinksAppendService {
     /**
      * Rebuild backlinks sections for all notes in the workspace
      * This is useful for initial setup or manual refresh
+     * Processes notes in parallel for better performance
      */
     async rebuildAllBacklinks(notesPath: string): Promise<number> {
-        let updatedCount = 0;
-
-        // Get all notes that have backlinks
         const allNotes = await this.linkService.getAllNotes();
 
-        for (const notePath of allNotes) {
-            const backlinks = this.linkService.getBacklinks(notePath);
+        const updatePromises = allNotes.map(async (notePath) => {
+            try {
+                const backlinks = this.linkService.getBacklinks(notePath);
+                const content = await readFile(notePath);
+                const hasBacklinksSection = content.includes(this.backlinksMarker);
 
-            // Only update notes that have backlinks or currently have a backlinks section
-            const content = await readFile(notePath);
-            const hasBacklinksSection = content.includes(this.backlinksMarker);
-
-            if (backlinks.length > 0 || hasBacklinksSection) {
-                await this.updateBacklinksSection(notePath);
-                updatedCount++;
+                if (backlinks.length > 0 || hasBacklinksSection) {
+                    await this.updateBacklinksSection(notePath);
+                    return true;
+                }
+            } catch (error) {
+                console.error(`[NOTED] Error rebuilding backlinks for note:`, notePath, error);
             }
-        }
+            return false;
+        });
 
-        return updatedCount;
+        const results = await Promise.all(updatePromises);
+        return results.filter(r => r).length;
     }
 
     /**
@@ -188,41 +190,29 @@ export class BacklinksAppendService {
     /**
      * Clear all backlinks sections from all notes
      * Useful if user wants to disable the feature
+     * Processes notes in parallel for better performance
      */
     async clearAllBacklinks(notesPath: string): Promise<number> {
-        let clearedCount = 0;
         const allNotes = await this.linkService.getAllNotes();
 
-        for (const notePath of allNotes) {
+        const clearPromises = allNotes.map(async (notePath) => {
             try {
                 const content = await readFile(notePath);
 
                 if (content.includes(this.backlinksMarker)) {
                     const contentWithoutBacklinks = this.removeBacklinksSection(content);
-                    await writeFile(notePath, contentWithoutBacklinks);
-                    clearedCount++;
+                    if (contentWithoutBacklinks !== content) {
+                        await writeFile(notePath, contentWithoutBacklinks);
+                        return true;
+                    }
                 }
             } catch (error) {
                 console.error('[NOTED] Error clearing backlinks from note:', notePath, error);
             }
-        }
+            return false;
+        });
 
-        return clearedCount;
-    }
-
-    /**
-     * Update backlinks when a note is renamed
-     * This updates both the link references AND the backlinks sections
-     */
-    async handleNoteRename(oldPath: string, newPath: string): Promise<void> {
-        // The linkService already handles updating link references
-        // We just need to update the backlinks sections of affected notes
-
-        // Get all notes that link to the renamed note (using new path after cache update)
-        const backlinks = this.linkService.getBacklinks(newPath);
-
-        for (const backlink of backlinks) {
-            await this.updateBacklinksSection(backlink.sourceFile);
-        }
+        const results = await Promise.all(clearPromises);
+        return results.filter(r => r).length;
     }
 }
