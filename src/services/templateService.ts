@@ -36,16 +36,32 @@ function replacePlaceholders(content: string, date: Date, filename?: string): st
 }
 
 /**
+ * Generate YAML frontmatter for a note
+ */
+function generateFrontmatter(date: Date, filename?: string): string {
+    const dateStr = formatDateForNote(date);
+    const timeStr = formatTimeForNote(date);
+
+    const lines = [
+        '---',
+        'tags: []',
+        `created: ${dateStr} at ${timeStr}`,
+    ];
+
+    if (filename) {
+        lines.push(`file: ${filename}`);
+    }
+
+    lines.push('---');
+    return lines.join('\n') + '\n\n';
+}
+
+/**
  * Generate template content for a note
  */
 export async function generateTemplate(templateType: string | undefined, date: Date, filename?: string): Promise<string> {
     const dateStr = formatDateForNote(date);
-    const timeStr = formatTimeForNote(date);
-
-    // Always include timestamp in frontmatter
-    const frontmatter = filename
-        ? `File: ${filename}\nCreated: ${dateStr} at ${timeStr}\n${'='.repeat(DEFAULTS.SEPARATOR_LENGTH)}\n\n`
-        : `Created: ${dateStr} at ${timeStr}\n${'='.repeat(DEFAULTS.SEPARATOR_LENGTH)}\n\n`;
+    const yamlFrontmatter = generateFrontmatter(date, filename);
 
     // Check if it's a custom template
     const templatesPath = getTemplatesPath();
@@ -61,7 +77,13 @@ export async function generateTemplate(templateType: string | undefined, date: D
                     // Replace placeholders
                     const processedContent = replacePlaceholders(content, date, filename);
 
-                    return processedContent;
+                    // If custom template already has frontmatter, return as-is
+                    // Otherwise, prepend YAML frontmatter
+                    if (processedContent.trimStart().startsWith('---')) {
+                        return processedContent;
+                    } else {
+                        return yamlFrontmatter + processedContent;
+                    }
                 } catch {
                     // Custom template doesn't exist, fall through to built-in templates
                 }
@@ -74,11 +96,12 @@ export async function generateTemplate(templateType: string | undefined, date: D
     // Built-in templates
     const templateFn = BUILT_IN_TEMPLATES[templateType as keyof typeof BUILT_IN_TEMPLATES];
     if (templateFn) {
-        return templateFn(frontmatter);
+        // Built-in templates no longer receive frontmatter parameter
+        return yamlFrontmatter + templateFn();
     }
 
-    // Default fallback
-    return `${dateStr}\n${'='.repeat(DEFAULTS.SEPARATOR_LENGTH)}\n\n`;
+    // Default fallback (consistent with quick template - frontmatter only)
+    return yamlFrontmatter;
 }
 
 /**

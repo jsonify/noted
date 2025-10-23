@@ -5,21 +5,26 @@ describe('Template Service', () => {
   describe('generateTemplate', () => {
     const testDate = new Date('2024-10-15T14:30:00');
 
-    it('should generate problem-solution template', async () => {
+    it('should generate problem-solution template with YAML frontmatter', async () => {
       const result = await generateTemplate('problem-solution', testDate, 'test-note.txt');
 
-      expect(result).to.include('File: test-note.txt');
-      expect(result).to.include('Created:');
+      expect(result).to.match(/^---\n/); // Starts with frontmatter delimiter
+      expect(result).to.include('tags:'); // Has tags field
+      expect(result).to.include('created:'); // Has created metadata
+      expect(result).to.include('file: test-note.txt'); // Has filename in frontmatter
+      expect(result).to.include('---\n'); // Has closing delimiter
       expect(result).to.include('PROBLEM:');
       expect(result).to.include('STEPS TAKEN:');
       expect(result).to.include('SOLUTION:');
       expect(result).to.include('NOTES:');
     });
 
-    it('should generate meeting template', async () => {
+    it('should generate meeting template with YAML frontmatter', async () => {
       const result = await generateTemplate('meeting', testDate, 'meeting-note.txt');
 
-      expect(result).to.include('File: meeting-note.txt');
+      expect(result).to.match(/^---\n/);
+      expect(result).to.include('tags:');
+      expect(result).to.include('file: meeting-note.txt');
       expect(result).to.include('MEETING:');
       expect(result).to.include('ATTENDEES:');
       expect(result).to.include('AGENDA:');
@@ -27,40 +32,50 @@ describe('Template Service', () => {
       expect(result).to.include('ACTION ITEMS:');
     });
 
-    it('should generate research template', async () => {
+    it('should generate research template with YAML frontmatter', async () => {
       const result = await generateTemplate('research', testDate, 'research-note.txt');
 
-      expect(result).to.include('File: research-note.txt');
+      expect(result).to.match(/^---\n/);
+      expect(result).to.include('tags:');
+      expect(result).to.include('file: research-note.txt');
       expect(result).to.include('TOPIC:');
       expect(result).to.include('QUESTIONS:');
       expect(result).to.include('FINDINGS:');
       expect(result).to.include('SOURCES:');
     });
 
-    it('should generate quick template', async () => {
+    it('should generate quick template with YAML frontmatter', async () => {
       const result = await generateTemplate('quick', testDate, 'quick-note.txt');
 
-      expect(result).to.include('File: quick-note.txt');
-      expect(result).to.include('Created:');
-      expect(result).to.include('==================================================');
+      expect(result).to.match(/^---\n/);
+      expect(result).to.include('tags:');
+      expect(result).to.include('created:');
+      expect(result).to.include('file: quick-note.txt');
+      expect(result).to.include('---\n');
     });
 
-    it('should generate default template for undefined type', async () => {
+    it('should generate default template with YAML frontmatter for undefined type', async () => {
       const result = await generateTemplate(undefined, testDate);
 
+      expect(result).to.match(/^---\n/);
+      expect(result).to.include('tags:');
+      expect(result).to.include('created:');
       expect(result).to.include('2024');
       expect(result).to.include('October');
-      expect(result).to.include('==================================================');
+      // Default template should only include frontmatter (no redundant date/separator in body)
+      expect(result).to.not.include('==================================================');
     });
 
-    it('should not include filename when not provided', async () => {
+    it('should not include filename in frontmatter when not provided', async () => {
       const result = await generateTemplate('quick', testDate);
 
-      expect(result).to.not.include('File:');
-      expect(result).to.include('Created:');
+      expect(result).to.match(/^---\n/);
+      expect(result).to.include('tags:');
+      expect(result).to.not.include('file:');
+      expect(result).to.include('created:');
     });
 
-    it('should include proper date formatting', async () => {
+    it('should include proper date formatting in frontmatter', async () => {
       const result = await generateTemplate('quick', testDate, 'test.txt');
 
       expect(result).to.include('October');
@@ -68,11 +83,26 @@ describe('Template Service', () => {
       expect(result).to.include('2024');
     });
 
-    it('should include proper time formatting', async () => {
+    it('should include proper time formatting in frontmatter', async () => {
       const result = await generateTemplate('quick', testDate, 'test.txt');
 
       // Time should be in 12-hour format with AM/PM
       expect(result).to.match(/\d{1,2}:\d{2} (AM|PM)/);
+    });
+
+    it('should have valid YAML frontmatter structure', async () => {
+      const result = await generateTemplate('quick', testDate, 'test.txt');
+
+      // Check for proper frontmatter delimiters
+      const frontmatterMatch = result.match(/^---\n([\s\S]*?)\n---\n/);
+      expect(frontmatterMatch).to.not.be.null;
+
+      if (frontmatterMatch) {
+        const frontmatterContent = frontmatterMatch[1];
+        expect(frontmatterContent).to.include('tags:');
+        expect(frontmatterContent).to.include('created:');
+        expect(frontmatterContent).to.include('file:');
+      }
     });
   });
 
