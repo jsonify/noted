@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 /**
  * Base tree item class
@@ -157,19 +158,19 @@ export class ConnectionItem extends TreeItem {
         public readonly connectionType: 'outgoing' | 'incoming',
         public readonly displayText?: string
     ) {
-        const filename = require('path').basename(targetPath, require('path').extname(targetPath));
+        const filename = path.basename(targetPath, path.extname(targetPath));
         super(filename, vscode.TreeItemCollapsibleState.None);
 
         this.iconPath = new vscode.ThemeIcon('note');
         this.contextValue = 'connection';
 
-        // Show display text if available, otherwise show context
+        // Show display text if available, otherwise show line number (1-indexed)
         const preview = displayText
-            ? `"${displayText}" (line ${lineNumber})`
-            : `line ${lineNumber}`;
+            ? `"${displayText}" (line ${lineNumber + 1})`
+            : `line ${lineNumber + 1}`;
         this.description = preview;
 
-        // Tooltip shows full context
+        // Tooltip shows full context with rich formatting
         this.tooltip = this.buildTooltip();
 
         // Make clickable to open the connected note
@@ -182,19 +183,21 @@ export class ConnectionItem extends TreeItem {
         this.resourceUri = vscode.Uri.file(targetPath);
     }
 
-    private buildTooltip(): string {
-        const filename = require('path').basename(this.targetPath);
-        const sourceFilename = require('path').basename(this.sourcePath);
+    private buildTooltip(): vscode.MarkdownString {
+        const filename = path.basename(this.targetPath);
+        const sourceFilename = path.basename(this.sourcePath);
 
-        let tooltip = `${filename}\n`;
-        tooltip += `Line ${this.lineNumber}\n\n`;
+        const tooltip = new vscode.MarkdownString('', true);
+        tooltip.appendMarkdown(`**File:** \`${filename}\`\n\n`);
+        tooltip.appendMarkdown(`**Line:** ${this.lineNumber + 1}\n\n`);
 
         if (this.displayText) {
-            tooltip += `Display: "${this.displayText}"\n`;
+            tooltip.appendMarkdown(`**Display Text:** "${this.displayText}"\n\n`);
         }
 
-        tooltip += `Context: ${this.context}\n\n`;
-        tooltip += `Source: ${sourceFilename}`;
+        tooltip.appendMarkdown(`**Context:**\n`);
+        tooltip.appendCodeblock(this.context, 'markdown');
+        tooltip.appendMarkdown(`\n\n**Source:** \`${sourceFilename}\``);
 
         return tooltip;
     }
