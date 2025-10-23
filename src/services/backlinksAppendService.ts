@@ -121,32 +121,28 @@ export class BacklinksAppendService {
      * Update backlinks for all notes that are linked from a specific file
      * This is called when a file is saved and its links have changed
      * @param sourceFile The file that was modified
+     * @param oldOutgoingLinks Previous outgoing links before the file was saved (optional)
      */
-    async updateBacklinksForLinkedNotes(sourceFile: string): Promise<void> {
-        // Get all outgoing links from this file
-        const outgoingLinks = this.linkService.getOutgoingLinks(sourceFile);
+    async updateBacklinksForLinkedNotes(sourceFile: string, oldOutgoingLinks?: NoteLink[]): Promise<void> {
+        // Get all currently linked notes
+        const currentOutgoingLinks = this.linkService.getOutgoingLinks(sourceFile);
+        const currentTargets = new Set<string>(
+            currentOutgoingLinks.map(link => link.targetPath).filter((p): p is string => !!p)
+        );
 
-        // Update backlinks section for each target note
-        const targetPaths = new Set<string>();
-        for (const link of outgoingLinks) {
-            if (link.targetPath) {
-                targetPaths.add(link.targetPath);
-            }
-        }
+        // Get previously linked notes (if provided)
+        const oldTargets = new Set<string>(
+            oldOutgoingLinks?.map(link => link.targetPath).filter((p): p is string => !!p) || []
+        );
 
-        // Also check if this file used to link to notes that it no longer links to
-        // We need to update those notes as well to remove the backlink
-        // This is handled by getting all notes that currently have this file as a backlink
-        const allBacklinks = this.linkService.getBacklinks(sourceFile);
-        // Wait, that's backwards. Let me think...
+        // Combine all affected notes: current targets + old targets
+        // We need to update both sets:
+        // - Current targets: to add/update backlinks
+        // - Old targets: to remove backlinks if they're no longer linked
+        const allAffectedNotes = new Set([...currentTargets, ...oldTargets]);
 
-        // We need to find all notes that previously had backlinks from sourceFile
-        // The linkService already updated its cache, so we need to update all affected notes
-        // The safest approach is to update all notes that currently have backlinks from sourceFile
-        // AND all notes in the old cache (but we don't have access to old cache)
-
-        // Simpler approach: just update all target notes that are currently linked
-        for (const targetPath of targetPaths) {
+        // Update backlinks section for all affected notes
+        for (const targetPath of allAffectedNotes) {
             await this.updateBacklinksSection(targetPath);
         }
     }
