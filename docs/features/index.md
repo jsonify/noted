@@ -15,6 +15,9 @@ Quickly create or open today's note with automatic organization in a year/month/
 ### [Wiki-Style Links]({{ '/features/wiki-links' | relative_url }})
 Connect your notes together using `[[note-name]]` syntax to build a personal knowledge base.
 
+### [Connections Panel]({{ '/features/connections' | relative_url }})
+Always-visible sidebar showing all incoming backlinks and outgoing links with rich context and quick navigation.
+
 ### [Note Embeds]({{ '/features/embeds' | relative_url }})
 Embed entire notes or specific sections inline with `![[note-name]]` and `![[note#section]]` syntax.
 
@@ -63,7 +66,10 @@ Live markdown rendering with side-by-side editing and preview.
 - **Path-Based Links**: Disambiguate with `[[folder/note-name]]`
 - **Link Autocomplete**: Type `[[` for intelligent suggestions
 - **Link Diagnostics**: Real-time warnings for ambiguous or broken links
-- **Backlinks**: Automatic tracking of incoming links
+- **Connections Panel**: Always-visible sidebar with incoming/outgoing links
+- **Backlinks**: Automatic tracking of incoming links with context
+- **Connection Context**: See line numbers and snippets for each connection
+- **Quick Navigation**: Click connections to open notes or jump to source lines
 - **Extract to Note**: Create new linked notes from selected text
 - **Rename Symbol**: Refactor links across all notes
 - **Note Embeds**: Embed full notes with `![[note-name]]`
