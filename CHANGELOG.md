@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.24.0](https://github.com/jsonify/noted/compare/v1.23.0...v1.24.0) (2025-10-23)
+
+
+### Features
+
+* implement automatic backlinks sections in notes ([#17](https://github.com/jsonify/noted/issues/17)) ([82fb571](https://github.com/jsonify/noted/commit/82fb571ef2c1d5189679feebce6294ec955b5737)), closes [#tag1](https://github.com/jsonify/noted/issues/tag1) [#tag2](https://github.com/jsonify/noted/issues/tag2)
+
 ## [1.23.0](https://github.com/jsonify/noted/compare/v1.22.0...v1.23.0) (2025-10-23)
 
 
