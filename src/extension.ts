@@ -299,11 +299,18 @@ export function activate(context: vscode.ExtensionContext) {
     // Update connections when document is saved (links may have changed)
     context.subscriptions.push(
         vscode.workspace.onDidSaveTextDocument(async (document) => {
-            if (vscode.window.activeTextEditor && document === vscode.window.activeTextEditor.document) {
-                // Rebuild backlinks index when document is saved
-                await linkService.buildBacklinksIndex();
-                // Update connections panel
-                await updateConnectionsPanel(vscode.window.activeTextEditor);
+            // Only update index for note files in the notes folder
+            const filePath = document.uri.fsPath;
+            const isSupportedFile = ['.txt', '.md'].some(ext => filePath.endsWith(ext));
+
+            if (isSupportedFile && notesPath && filePath.startsWith(notesPath)) {
+                // Incremental update: only re-index this specific file
+                await linkService.updateIndexForFile(filePath);
+
+                // Update connections panel if this is the active editor
+                if (vscode.window.activeTextEditor && document === vscode.window.activeTextEditor.document) {
+                    await updateConnectionsPanel(vscode.window.activeTextEditor);
+                }
             }
         })
     );

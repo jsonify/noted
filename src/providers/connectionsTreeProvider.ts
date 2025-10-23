@@ -14,6 +14,8 @@ export class ConnectionsTreeProvider implements vscode.TreeDataProvider<TreeItem
 
     private connectionsService: ConnectionsService;
     private currentNotePath: string | null = null;
+    // Cache connection data to avoid fetching multiple times
+    private connectionDataCache: Map<string, { outgoing: Connection[]; incoming: Connection[] }> = new Map();
 
     constructor(connectionsService: ConnectionsService) {
         this.connectionsService = connectionsService;
@@ -25,6 +27,8 @@ export class ConnectionsTreeProvider implements vscode.TreeDataProvider<TreeItem
      */
     async updateForNote(notePath: string | null): Promise<void> {
         this.currentNotePath = notePath;
+        // Clear cache when switching notes
+        this.connectionDataCache.clear();
         this.refresh();
     }
 
@@ -39,6 +43,8 @@ export class ConnectionsTreeProvider implements vscode.TreeDataProvider<TreeItem
      * Refresh the tree view
      */
     refresh(): void {
+        // Clear cache on manual refresh
+        this.connectionDataCache.clear();
         this._onDidChangeTreeData.fire();
     }
 
@@ -57,14 +63,30 @@ export class ConnectionsTreeProvider implements vscode.TreeDataProvider<TreeItem
             return this.getEmptyStateItems();
         }
 
+        // Fetch connection data once and cache it
+        let connectionData = this.connectionDataCache.get(this.currentNotePath);
+        if (!connectionData) {
+            try {
+                const fullData = await this.connectionsService.getConnectionsForNote(this.currentNotePath);
+                connectionData = {
+                    outgoing: fullData.outgoing,
+                    incoming: fullData.incoming
+                };
+                this.connectionDataCache.set(this.currentNotePath, connectionData);
+            } catch (error) {
+                console.error('[NOTED] Error fetching connections:', error);
+                return [];
+            }
+        }
+
         // Root level - show sections
         if (!element) {
-            return this.getRootItems();
+            return this.getRootItems(connectionData);
         }
 
         // Section level - show connections
         if (element instanceof ConnectionSectionItem) {
-            return this.getConnectionItems(element.sectionType);
+            return this.getConnectionItems(element.sectionType, connectionData);
         }
 
         return [];
@@ -73,33 +95,22 @@ export class ConnectionsTreeProvider implements vscode.TreeDataProvider<TreeItem
     /**
      * Get root-level items (sections for outgoing and incoming connections)
      */
-    private async getRootItems(): Promise<TreeItem[]> {
-        if (!this.currentNotePath) {
-            return [];
-        }
-
+    private getRootItems(connectionData: { outgoing: Connection[]; incoming: Connection[] }): TreeItem[] {
         const items: TreeItem[] = [];
 
-        try {
-            const connectionData = await this.connectionsService.getConnectionsForNote(this.currentNotePath);
+        // Outgoing links section
+        items.push(new ConnectionSectionItem(
+            'Outgoing Links',
+            'outgoing',
+            connectionData.outgoing.length
+        ));
 
-            // Outgoing links section
-            items.push(new ConnectionSectionItem(
-                'Outgoing Links',
-                'outgoing',
-                connectionData.outgoing.length
-            ));
-
-            // Backlinks (incoming) section
-            items.push(new ConnectionSectionItem(
-                'Backlinks',
-                'incoming',
-                connectionData.incoming.length
-            ));
-
-        } catch (error) {
-            console.error('[NOTED] Error getting connections:', error);
-        }
+        // Backlinks (incoming) section
+        items.push(new ConnectionSectionItem(
+            'Backlinks',
+            'incoming',
+            connectionData.incoming.length
+        ));
 
         return items;
     }
@@ -107,48 +118,17 @@ export class ConnectionsTreeProvider implements vscode.TreeDataProvider<TreeItem
     /**
      * Get connection items for a specific section
      */
-    private async getConnectionItems(sectionType: 'outgoing' | 'incoming'): Promise<TreeItem[]> {
-        if (!this.currentNotePath) {
-            return [];
-        }
-
+    private getConnectionItems(
+        sectionType: 'outgoing' | 'incoming',
+        connectionData: { outgoing: Connection[]; incoming: Connection[] }
+    ): TreeItem[] {
         const items: TreeItem[] = [];
+        const connections = sectionType === 'outgoing' ? connectionData.outgoing : connectionData.incoming;
 
-        try {
-            const connectionData = await this.connectionsService.getConnectionsForNote(this.currentNotePath);
-            const connections = sectionType === 'outgoing' ? connectionData.outgoing : connectionData.incoming;
-
-            // Group connections by target/source note
-            const grouped = this.connectionsService.groupConnectionsByNote(connections);
-
-            // Create items for each unique note
-            for (const [notePath, noteConnections] of grouped.entries()) {
-                // If multiple connections to the same note, show count
-                if (noteConnections.length > 1) {
-                    // Create a parent item for the note
-                    const filename = path.basename(notePath, path.extname(notePath));
-                    const parentItem = new vscode.TreeItem(
-                        filename,
-                        vscode.TreeItemCollapsibleState.Expanded
-                    );
-                    parentItem.iconPath = new vscode.ThemeIcon('note');
-                    parentItem.description = `${noteConnections.length} connection${noteConnections.length !== 1 ? 's' : ''}`;
-                    parentItem.contextValue = 'connection-group';
-                    parentItem.resourceUri = vscode.Uri.file(notePath);
-
-                    // Add as connection item for now (will need custom handling)
-                    // For simplicity, we'll just add individual connections
-                    for (const conn of noteConnections) {
-                        items.push(this.createConnectionItem(conn));
-                    }
-                } else {
-                    // Single connection
-                    items.push(this.createConnectionItem(noteConnections[0]));
-                }
-            }
-
-        } catch (error) {
-            console.error('[NOTED] Error getting connection items:', error);
+        // Simply show all connections as flat list
+        // For better UX with many connections, users can see line numbers to distinguish
+        for (const conn of connections) {
+            items.push(this.createConnectionItem(conn));
         }
 
         return items;

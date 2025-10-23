@@ -87,30 +87,66 @@ export class ConnectionsService {
 
     /**
      * Process backlinks into Connection objects
+     * Optimized to read each source file only once
      */
     private async processBacklinks(backlinks: Backlink[], targetPath: string): Promise<Connection[]> {
         const connections: Connection[] = [];
 
+        // Group backlinks by source file to minimize file reads
+        const backlinksByFile = new Map<string, Backlink[]>();
         for (const backlink of backlinks) {
-            // Extract link text from target path
-            const linkText = path.basename(targetPath, path.extname(targetPath));
+            if (!backlinksByFile.has(backlink.sourceFile)) {
+                backlinksByFile.set(backlink.sourceFile, []);
+            }
+            backlinksByFile.get(backlink.sourceFile)!.push(backlink);
+        }
 
-            // Get extended context if needed
-            const extendedContext = await this.getExtendedContext(
-                backlink.sourceFile,
-                backlink.line
-            );
+        // Extract link text from target path (same for all backlinks)
+        const linkText = path.basename(targetPath, path.extname(targetPath));
 
-            connections.push({
-                type: 'incoming',
-                targetPath: targetPath,
-                sourcePath: backlink.sourceFile,
-                lineNumber: backlink.line,
-                context: backlink.context,
-                displayText: backlink.displayText,
-                linkText: linkText,
-                extendedContext
-            });
+        // Process each source file once
+        for (const [sourceFile, fileBacklinks] of backlinksByFile.entries()) {
+            try {
+                // Read the source file once
+                const content = await readFile(sourceFile);
+                const lines = content.split('\n');
+
+                // Process all backlinks from this file
+                for (const backlink of fileBacklinks) {
+                    const extendedContext = this.extractContextFromLines(
+                        lines,
+                        backlink.line,
+                        this.contextLinesBefore,
+                        this.contextLinesAfter
+                    );
+
+                    connections.push({
+                        type: 'incoming',
+                        targetPath: targetPath,
+                        sourcePath: backlink.sourceFile,
+                        lineNumber: backlink.line,
+                        context: backlink.context,
+                        displayText: backlink.displayText,
+                        linkText: linkText,
+                        extendedContext
+                    });
+                }
+            } catch (error) {
+                console.error('[NOTED] Error processing backlinks from file:', sourceFile, error);
+                // Add backlinks without extended context
+                for (const backlink of fileBacklinks) {
+                    connections.push({
+                        type: 'incoming',
+                        targetPath: targetPath,
+                        sourcePath: backlink.sourceFile,
+                        lineNumber: backlink.line,
+                        context: backlink.context,
+                        displayText: backlink.displayText,
+                        linkText: linkText,
+                        extendedContext: []
+                    });
+                }
+            }
         }
 
         // Sort by source file name
@@ -125,33 +161,59 @@ export class ConnectionsService {
 
     /**
      * Process outgoing links into Connection objects
+     * Optimized to read the source file only once
      */
     private async processOutgoingLinks(links: NoteLink[], sourcePath: string): Promise<Connection[]> {
         const connections: Connection[] = [];
 
-        for (const link of links) {
-            // Only include links that resolved to a target
-            if (!link.targetPath) {
-                continue;
+        // Filter out links without target paths
+        const validLinks = links.filter(link => link.targetPath);
+        if (validLinks.length === 0) {
+            return connections;
+        }
+
+        try {
+            // Read the source file once for all outgoing links
+            const content = await readFile(sourcePath);
+            const lines = content.split('\n');
+
+            // Process all links using the in-memory content
+            for (const link of validLinks) {
+                const lineNumber = link.range.start.line;
+                const context = lines[lineNumber]?.trim() || link.linkText;
+                const extendedContext = this.extractContextFromLines(
+                    lines,
+                    lineNumber,
+                    this.contextLinesBefore,
+                    this.contextLinesAfter
+                );
+
+                connections.push({
+                    type: 'outgoing',
+                    targetPath: link.targetPath!,
+                    sourcePath: sourcePath,
+                    lineNumber: lineNumber,
+                    context: context,
+                    displayText: link.displayText,
+                    linkText: link.linkText,
+                    extendedContext
+                });
             }
-
-            // Get the line content for context
-            const lineNumber = link.range.start.line;
-            const context = await this.getLineContent(sourcePath, lineNumber);
-
-            // Get extended context
-            const extendedContext = await this.getExtendedContext(sourcePath, lineNumber);
-
-            connections.push({
-                type: 'outgoing',
-                targetPath: link.targetPath,
-                sourcePath: sourcePath,
-                lineNumber: lineNumber,
-                context: context || link.linkText,
-                displayText: link.displayText,
-                linkText: link.linkText,
-                extendedContext
-            });
+        } catch (error) {
+            console.error('[NOTED] Error processing outgoing links from file:', sourcePath, error);
+            // Add links without extended context
+            for (const link of validLinks) {
+                connections.push({
+                    type: 'outgoing',
+                    targetPath: link.targetPath!,
+                    sourcePath: sourcePath,
+                    lineNumber: link.range.start.line,
+                    context: link.linkText,
+                    displayText: link.displayText,
+                    linkText: link.linkText,
+                    extendedContext: []
+                });
+            }
         }
 
         // Sort by target file name
@@ -165,40 +227,24 @@ export class ConnectionsService {
     }
 
     /**
-     * Get the content of a specific line from a file
+     * Extract context lines from already-loaded file content
+     * This helper avoids reading the same file multiple times
      */
-    private async getLineContent(filePath: string, lineNumber: number): Promise<string> {
-        try {
-            const content = await readFile(filePath);
-            const lines = content.split('\n');
-            return lines[lineNumber]?.trim() || '';
-        } catch (error) {
-            console.error('[NOTED] Error reading line content:', filePath, error);
-            return '';
+    private extractContextFromLines(
+        lines: string[],
+        lineNumber: number,
+        linesBefore: number,
+        linesAfter: number
+    ): string[] {
+        const startLine = Math.max(0, lineNumber - linesBefore);
+        const endLine = Math.min(lines.length - 1, lineNumber + linesAfter);
+
+        const contextLines: string[] = [];
+        for (let i = startLine; i <= endLine; i++) {
+            contextLines.push(lines[i]);
         }
-    }
 
-    /**
-     * Get extended context (lines before and after) for better preview
-     */
-    private async getExtendedContext(filePath: string, lineNumber: number): Promise<string[]> {
-        try {
-            const content = await readFile(filePath);
-            const lines = content.split('\n');
-
-            const startLine = Math.max(0, lineNumber - this.contextLinesBefore);
-            const endLine = Math.min(lines.length - 1, lineNumber + this.contextLinesAfter);
-
-            const contextLines: string[] = [];
-            for (let i = startLine; i <= endLine; i++) {
-                contextLines.push(lines[i]);
-            }
-
-            return contextLines;
-        } catch (error) {
-            console.error('[NOTED] Error getting extended context:', filePath, error);
-            return [];
-        }
+        return contextLines;
     }
 
     /**

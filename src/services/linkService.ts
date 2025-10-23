@@ -363,6 +363,58 @@ export class LinkService {
     }
 
     /**
+     * Incrementally update the backlinks index for a single file
+     * This is much more efficient than rebuilding the entire index
+     * @param filePath Path to the file that was modified
+     */
+    async updateIndexForFile(filePath: string): Promise<void> {
+        // Step 1: Remove old backlinks that originated from this file
+        // We need to remove entries from backlinksCache where sourceFile === filePath
+        for (const [targetPath, backlinks] of this.backlinksCache.entries()) {
+            const filteredBacklinks = backlinks.filter(bl => bl.sourceFile !== filePath);
+            if (filteredBacklinks.length === 0) {
+                this.backlinksCache.delete(targetPath);
+            } else if (filteredBacklinks.length !== backlinks.length) {
+                this.backlinksCache.set(targetPath, filteredBacklinks);
+            }
+        }
+
+        // Step 2: Remove old outgoing links from this file
+        this.linksCache.delete(filePath);
+
+        // Step 3: Extract new links from the updated file
+        const links = await this.extractLinksFromFile(filePath);
+        this.linksCache.set(filePath, links);
+
+        // Step 4: Re-populate backlinks for the new links
+        for (const link of links) {
+            const targetPath = await this.resolveLink(link.linkText);
+            if (targetPath) {
+                link.targetPath = targetPath;
+
+                // Add to backlinks cache
+                if (!this.backlinksCache.has(targetPath)) {
+                    this.backlinksCache.set(targetPath, []);
+                }
+
+                const content = await readFile(filePath);
+                const lines = content.split('\n');
+                const lineNumber = link.range.start.line;
+                const context = lines[lineNumber]?.trim() || '';
+
+                this.backlinksCache.get(targetPath)!.push({
+                    sourceFile: filePath,
+                    line: lineNumber,
+                    context,
+                    displayText: link.displayText
+                });
+            }
+        }
+
+        console.log('[NOTED] Backlinks index updated for:', filePath);
+    }
+
+    /**
      * Get all backlinks for a specific note
      */
     getBacklinks(filePath: string): Backlink[] {
