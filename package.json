@@ -291,6 +291,11 @@
         "icon": "$(references)"
       },
       {
+        "command": "noted.clearBacklinks",
+        "title": "Noted: Clear All Backlinks Sections",
+        "icon": "$(clear-all)"
+      },
+      {
         "command": "noted.toggleSelectMode",
         "title": "Noted: Toggle Select Mode",
         "icon": "$(checklist)"
@@ -621,6 +626,11 @@
           "type": "boolean",
           "default": true,
           "description": "Enable tag autocomplete suggestions when typing # in metadata section of the file"
+        },
+        "noted.autoBacklinks": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically append backlinks section to notes when other notes link to them"
         }
       }
     }

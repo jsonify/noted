@@ -271,6 +271,20 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Async Indexing**: Background index building for optimal performance
 - **Rebuild Index**: Command to manually refresh the backlinks index
 
+### Auto-Backlinks Sections (v1.24.0)
+- **Automatic Appending**: Backlinks are automatically written to the end of note files
+- **Format**: Each backlink shows as `- [[source-note]] - #tag1 #tag2`
+- **Tag Integration**: Displays tags from the source note's frontmatter
+- **Separator**: Clear `---` separator marks the auto-generated section
+- **Real-Time Updates**: Backlinks section updates automatically when notes are saved
+- **Configurable**: Toggle with `noted.autoBacklinks` setting (enabled by default)
+- **Manual Control**:
+  - **Rebuild All**: `noted.rebuildBacklinks` command regenerates all backlinks sections
+  - **Clear All**: `noted.clearBacklinks` removes all backlinks sections from notes
+- **Smart Updates**: Only updates files when backlinks actually change
+- **No Circular Updates**: Prevents infinite loops when saving notes with backlinks sections
+- **Frontmatter Support**: Parses YAML frontmatter to extract tags for display
+
 ### Pinned/Favorite Notes (v1.5.0)
 - **Pin Notes**: Mark frequently accessed notes as favorites
 - **Dedicated Section**: "Pinned Notes" section at top of tree view
