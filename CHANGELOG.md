@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.23.0](https://github.com/jsonify/noted/compare/v1.22.0...v1.23.0) (2025-10-23)
+
+
+### Features
+
+* implement intelligent category-based note organization ([#16](https://github.com/jsonify/noted/issues/16)) ([d1e216e](https://github.com/jsonify/noted/commit/d1e216e3e9a417a6c76be2ff080919812d19af8b))
+
 ## [1.22.0](https://github.com/jsonify/noted/compare/v1.21.0...v1.22.0) (2025-10-23)
 
 
