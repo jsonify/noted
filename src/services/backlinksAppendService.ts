@@ -65,18 +65,12 @@ export class BacklinksAppendService {
             return ''; // No backlinks section if no backlinks
         }
 
-        // Group backlinks by source file
-        const backlinksByFile = new Map<string, Backlink[]>();
-        for (const backlink of backlinks) {
-            if (!backlinksByFile.has(backlink.sourceFile)) {
-                backlinksByFile.set(backlink.sourceFile, []);
-            }
-            backlinksByFile.get(backlink.sourceFile)!.push(backlink);
-        }
+        // Get unique source files to prevent duplicate entries for multiple links from the same file
+        const sourceFiles = new Set(backlinks.map(b => b.sourceFile));
 
         // Build backlinks section
         let section = this.backlinksMarker;
-        const sortedFiles = Array.from(backlinksByFile.keys()).sort();
+        const sortedFiles = Array.from(sourceFiles).sort();
 
         for (const sourceFile of sortedFiles) {
             const sourceBasename = path.basename(sourceFile, path.extname(sourceFile));
