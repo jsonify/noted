@@ -63,7 +63,7 @@ export function parseFrontmatter(content: string): Frontmatter {
         }
 
         // Check for key-value pairs
-        const keyValueMatch = trimmedLine.match(/^(\w+):\s*(.*)$/);
+        const keyValueMatch = trimmedLine.match(/^([\w-]+):\s*(.*)$/);
 
         if (keyValueMatch) {
             const key = keyValueMatch[1];

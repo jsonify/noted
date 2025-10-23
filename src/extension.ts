@@ -314,12 +314,13 @@ export function activate(context: vscode.ExtensionContext) {
                 }
 
                 // Incremental update: only re-index this specific file
+                const oldOutgoingLinks = linkService.getOutgoingLinks(filePath);
                 await linkService.updateIndexForFile(filePath);
 
                 // Update backlinks sections if auto-backlinks is enabled
                 const autoBacklinks = vscode.workspace.getConfiguration('noted').get<boolean>('autoBacklinks', true);
                 if (autoBacklinks) {
-                    await backlinksAppendService.updateBacklinksForLinkedNotes(filePath);
+                    await backlinksAppendService.updateBacklinksForLinkedNotes(filePath, oldOutgoingLinks);
                 }
 
                 // Update connections panel if this is the active editor

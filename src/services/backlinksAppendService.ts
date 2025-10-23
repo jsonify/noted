@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { LinkService, Backlink } from './linkService';
+import { LinkService, Backlink, NoteLink } from './linkService';
 import { readFile, writeFile } from './fileSystemService';
 import { parseFrontmatter } from '../utils/frontmatterParser';
 
