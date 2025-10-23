@@ -382,6 +382,12 @@ export function activate(context: vscode.ExtensionContext) {
         notesProvider.refresh();
     });
 
+    // Command to create category note
+    let createCategoryNote = vscode.commands.registerCommand('noted.createCategoryNote', async (templateType: string) => {
+        const { handleCreateCategoryNote } = await import('./commands/commands');
+        await handleCreateCategoryNote(templateType);
+    });
+
     // Command to insert timestamp
     let insertTimestamp = vscode.commands.registerCommand('noted.insertTimestamp', async () => {
         const editor = vscode.window.activeTextEditor;
@@ -1343,8 +1349,8 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(
-        openTodayNote, openWithTemplate, insertTimestamp, extractSelectionToNote, changeFormat,
-        refreshNotes, refreshConnections, openNote, openConnection, openConnectionSource, deleteNote, renameNote, copyPath, revealInExplorer,
+        openTodayNote, openWithTemplate, createCategoryNote, insertTimestamp, extractSelectionToNote, changeFormat,
+        refreshNotes, refreshConnections, openNote, openConnection, openConnectionSource, createNoteFromLink, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, quickSwitcher, filterByTag, clearTagFilters, sortTagsByName, sortTagsByFrequency, refreshTags,
         renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,
         showStats, exportNotes, duplicateNote, moveNotesFolder,
