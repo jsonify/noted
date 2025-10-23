@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.22.0](https://github.com/jsonify/noted/compare/v1.21.0...v1.22.0) (2025-10-23)
+
+
+### Features
+
+* add dedicated connections sidebar panel for backlinks and outgo… ([#15](https://github.com/jsonify/noted/issues/15)) ([899ddf1](https://github.com/jsonify/noted/commit/899ddf140ae23867687dca2583bc615207322a1a))
+
 ## [1.21.0](https://github.com/jsonify/noted/compare/v1.20.0...v1.21.0) (2025-10-23)
 
 
