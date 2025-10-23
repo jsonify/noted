@@ -16,6 +16,7 @@ import { TreeItem, NoteItem, SectionItem, TagItem, ConnectionItem } from './prov
 import { TagCompletionProvider } from './services/tagCompletionProvider';
 import { LinkService } from './services/linkService';
 import { ConnectionsService } from './services/connectionsService';
+import { BacklinksAppendService } from './services/backlinksAppendService';
 import { EmbedService } from './services/embedService';
 import { FileWatcherService } from './services/fileWatcherService';
 import { NoteLinkProvider } from './providers/noteLinkProvider';
@@ -116,6 +117,9 @@ export function activate(context: vscode.ExtensionContext) {
             console.error('[NOTED] Error building backlinks index:', err);
         });
     }
+
+    // Initialize backlinks append service for automatic backlink sections
+    const backlinksAppendService = new BacklinksAppendService(linkService);
 
     // Register document link provider for clickable [[note-name]] links
     const linkProvider = new NoteLinkProvider(linkService);
@@ -304,8 +308,19 @@ export function activate(context: vscode.ExtensionContext) {
             const isSupportedFile = ['.txt', '.md'].some(ext => filePath.endsWith(ext));
 
             if (isSupportedFile && notesPath && filePath.startsWith(notesPath)) {
+                // Skip if this file is being processed by backlinks service (prevent circular updates)
+                if (backlinksAppendService.isProcessing(filePath)) {
+                    return;
+                }
+
                 // Incremental update: only re-index this specific file
                 await linkService.updateIndexForFile(filePath);
+
+                // Update backlinks sections if auto-backlinks is enabled
+                const autoBacklinks = vscode.workspace.getConfiguration('noted').get<boolean>('autoBacklinks', true);
+                if (autoBacklinks) {
+                    await backlinksAppendService.updateBacklinksForLinkedNotes(filePath);
+                }
 
                 // Update connections panel if this is the active editor
                 if (vscode.window.activeTextEditor && document === vscode.window.activeTextEditor.document) {
@@ -686,9 +701,42 @@ export function activate(context: vscode.ExtensionContext) {
     let rebuildBacklinks = vscode.commands.registerCommand('noted.rebuildBacklinks', async () => {
         try {
             await linkService.buildBacklinksIndex();
-            vscode.window.showInformationMessage('Backlinks index rebuilt');
+
+            // Also rebuild backlinks sections if auto-backlinks is enabled
+            const autoBacklinks = vscode.workspace.getConfiguration('noted').get<boolean>('autoBacklinks', true);
+            if (autoBacklinks && notesPath) {
+                const updatedCount = await backlinksAppendService.rebuildAllBacklinks(notesPath);
+                vscode.window.showInformationMessage(`Backlinks index rebuilt. Updated ${updatedCount} note(s) with backlinks sections.`);
+            } else {
+                vscode.window.showInformationMessage('Backlinks index rebuilt');
+            }
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to rebuild backlinks: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
+    // Command to clear all backlinks sections from notes
+    let clearBacklinks = vscode.commands.registerCommand('noted.clearBacklinks', async () => {
+        if (!notesPath) {
+            vscode.window.showErrorMessage('Notes path not configured');
+            return;
+        }
+
+        const confirmation = await vscode.window.showWarningMessage(
+            'This will remove all backlinks sections from your notes. Continue?',
+            { modal: true },
+            'Yes', 'No'
+        );
+
+        if (confirmation !== 'Yes') {
+            return;
+        }
+
+        try {
+            const clearedCount = await backlinksAppendService.clearAllBacklinks(notesPath);
+            vscode.window.showInformationMessage(`Cleared backlinks sections from ${clearedCount} note(s)`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to clear backlinks: ${error instanceof Error ? error.message : String(error)}`);
         }
     });
 
@@ -1358,7 +1406,7 @@ export function activate(context: vscode.ExtensionContext) {
         createCustomTemplate, editCustomTemplateCmd, deleteCustomTemplateCmd,
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph,
-        togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks,
+        togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive,
         toggleMarkdownPreview,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,

@@ -32,6 +32,7 @@ The extension now uses a fully modular architecture with clear separation of con
   - `validators.ts`: Folder name validation
   - `dateHelpers.ts`: Date formatting utilities
   - `folderHelpers.ts`: Recursive folder operations
+  - `frontmatterParser.ts`: YAML frontmatter parsing and tag extraction (v1.24.0)
 - **`src/services/`**: Business logic and file operations
   - `configService.ts`: Configuration management
   - `fileSystemService.ts`: Async file operation wrappers
@@ -44,6 +45,7 @@ The extension now uses a fully modular architecture with clear separation of con
   - `archiveService.ts`: Archive functionality (v1.5.0)
   - `linkService.ts`: Wiki-style links and backlinks (v1.5.0)
   - `connectionsService.ts`: Connection data for backlinks and outgoing links (v1.22.0)
+  - `backlinksAppendService.ts`: Automatic backlinks sections appended to notes (v1.24.0)
   - `bulkOperationsService.ts`: Multi-select and bulk operations (v1.10.0)
   - `undoService.ts`: Undo/redo functionality (v1.13.0)
   - `undoHelpers.ts`: Undo operation helpers (v1.13.0)
@@ -123,6 +125,17 @@ The extension now uses a fully modular architecture with clear separation of con
     - Clickable to open target note
     - Context menu: "Open Connection" and "Open Connection Source"
 
+- **BacklinksAppendService** (v1.24.0): Automatically appends backlinks sections to notes
+  - Maintains a "Backlinks" section at the end of each note file
+  - Format: `- [[source-note]] - #tag1 #tag2` (tags from source note's frontmatter)
+  - `updateBacklinksSection()` updates a specific note's backlinks section
+  - `updateBacklinksForLinkedNotes()` updates all target notes when a file is saved
+  - `rebuildAllBacklinks()` regenerates backlinks sections for all notes
+  - `clearAllBacklinks()` removes all backlinks sections from workspace
+  - Prevents circular updates using `processingFiles` set
+  - Integrates with `LinkService` backlinks cache
+  - Controlled by `noted.autoBacklinks` configuration setting (default: true)
+
 ### File Organization Pattern
 
 Notes are stored in hierarchical structure:
@@ -173,6 +186,8 @@ Settings in `package.json` contributions:
 - `noted.fileFormat`: "txt" or "md" (default: "txt")
 - `noted.useTemplate`: Boolean (not currently used in code)
 - `noted.template`: Template string (defined but not used - only built-in templates are used)
+- `noted.tagAutoComplete`: Enable tag autocomplete (default: true)
+- `noted.autoBacklinks`: Automatically append backlinks sections to notes (default: true, v1.24.0)
 
 ## Commands
 
@@ -228,6 +243,10 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.refreshConnections` - Rebuild backlinks index and refresh connections panel
 - `noted.openConnection` - Open the target note of a connection (invoked by clicking connection item)
 - `noted.openConnectionSource` - Navigate to the source note and jump to the line where the link appears
+
+**Auto-Backlinks Commands** (v1.24.0):
+- `noted.rebuildBacklinks` - Rebuild backlinks index and regenerate all backlinks sections in notes
+- `noted.clearBacklinks` - Remove all backlinks sections from all notes (with confirmation)
 
 ## Important Implementation Details
 

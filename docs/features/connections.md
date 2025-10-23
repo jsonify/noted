@@ -83,6 +83,49 @@ The Connections panel automatically refreshes when:
 
 **No manual refresh needed** - the panel stays synchronized with your workspace.
 
+### Auto-Backlinks Sections
+
+Noted can automatically append a backlinks section to your notes, providing a permanent record of all incoming references directly in the note file.
+
+**How it works:**
+- When enabled, notes automatically get a `## Backlinks` section at the end
+- The section lists all notes that link to the current note
+- Each backlink shows the source note's tags from frontmatter
+- Updates automatically whenever links are created or removed
+
+**Example backlinks section:**
+```markdown
+---
+## Backlinks
+- [[project-notes]] - #important #project
+- [[meeting-2025-01-15]] - #meeting #team
+- [[research-ideas]]
+```
+
+**Configuration:**
+- **Enabled by default** - backlinks sections are added automatically
+- **Toggle in settings**: `noted.autoBacklinks` (true/false)
+- **Manual refresh**: Run "Noted: Rebuild Backlinks Index"
+- **Clear all**: Run "Noted: Clear All Backlinks Sections"
+
+**Format details:**
+- Each backlink shows: `- [[note-name]] - #tag1 #tag2`
+- Tags are extracted from the source note's frontmatter
+- Separator line (`---`) clearly marks auto-generated content
+- Only notes with actual backlinks get the section
+
+**Benefits:**
+- Permanent record of references (survives outside VS Code)
+- See tags from referencing notes at a glance
+- Portable - works with any markdown viewer
+- Complements the Connections panel (UI vs. file-based)
+
+**Disabling:**
+1. Open Settings (`Cmd+,`)
+2. Search for "noted.autoBacklinks"
+3. Uncheck to disable
+4. Run "Noted: Clear All Backlinks Sections" to remove existing sections
+
 ## Using the Connections Panel
 
 ### Basic Workflow
