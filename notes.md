@@ -80,7 +80,14 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 ## Search & Discovery
 
 ### Tags
-- **Tag Your Notes**: Add tags anywhere in notes using `#tagname` syntax - works inline throughout your entire note
+- **Tag Your Notes**: Add tags using two methods:
+  - **Inline hashtags**: `#tagname` syntax works anywhere in your note content
+  - **YAML frontmatter** (v1.25.0): `tags: [tag1, tag2, tag3]` array format at the beginning of notes
+- **Flexible Tag Formats**:
+  - Inline: `#tagname` throughout note content
+  - Frontmatter array: `tags: [backend, auth, bugfix]`
+  - Quoted values: `tags: ["bug", "feature"]` or `tags: ['bug', 'feature']`
+  - Combined: Use both frontmatter and inline tags in the same note (automatically merged)
 - **Tags View**: Dedicated sidebar showing all tags with usage counts
 - **Filter by Tag**: Click any tag to instantly filter the My Notes view, or use the Filter command for multi-tag selection
 - **Tag Autocomplete**: Type `#` anywhere in notes to see autocomplete suggestions from existing tags
@@ -449,7 +456,7 @@ All commands are accessible via:
 
 ## Testing Infrastructure
 
-### Unit Tests (296 tests - all passing)
+### Unit Tests (325 tests - all passing)
 - **Testing Framework**: Mocha + Chai (v4 for CommonJS compatibility)
 - **Test Coverage**:
   - Utilities: validators, date helpers, folder operations (23 tests)
@@ -480,7 +487,7 @@ All commands are accessible via:
 - `src/test/unit/treeItems.test.ts` - Tree view item tests
 - `src/test/unit/noteService.test.ts` - Note search and tag integration tests
 - `src/test/unit/tagService.test.ts` - Tag indexing and querying tests
-- `src/test/unit/tagHelpers.test.ts` - Tag parsing and validation tests
+- `src/test/unit/tagHelpers.test.ts` - Tag parsing and validation tests (including YAML frontmatter support)
 - `src/test/unit/tagCompletion.test.ts` - Tag autocomplete provider tests
 - `src/test/unit/tagCommands.test.ts` - Tag command handler tests
 - `src/test/unit/notesTreeProvider.test.ts` - Notes tree view and filtering tests
@@ -501,6 +508,14 @@ pnpm run test
 ```
 
 ## Recent Updates
+
+### YAML Frontmatter Tag Support (v1.25.0)
+- **Frontmatter Tags**: Add tags using standard YAML frontmatter array format: `tags: [tag1, tag2, tag3]`
+- **Flexible Formats**: Supports unquoted, double-quoted, and single-quoted tag values
+- **Combined Support**: Use both frontmatter tags and inline hashtags in the same note
+- **Automatic Merging**: Tags from frontmatter and inline content are automatically combined and deduplicated
+- **Validation**: Frontmatter tags are validated using the same rules as inline tags
+- **Comprehensive Testing**: 11 new unit tests covering all frontmatter scenarios (325 total passing tests)
 
 ### Undo/Redo System (v1.13.0)
 - **Comprehensive Undo/Redo**: Full undo/redo support for all destructive operations
@@ -523,14 +538,17 @@ pnpm run test
 - **Safety Confirmations**: All operations show confirmation dialogs with previews
 - **Comprehensive Testing**: 51 unit tests covering all bulk operation scenarios
 
-### Note Tagging System (Completed - v1.4.0)
+### Note Tagging System (Completed - v1.4.0, Enhanced v1.25.0)
 - **Inline Tag Support**: Add tags anywhere in note content using `#tagname` syntax
-- **Tag Parsing and Indexing**: Automatically parse and index tags from entire note content
+- **YAML Frontmatter Tags** (v1.25.0): Add tags in frontmatter using `tags: [tag1, tag2, tag3]` format
+- **Flexible Tag Formats** (v1.25.0): Supports both inline hashtags and YAML frontmatter arrays
+- **Combined Tag Support** (v1.25.0): Use both formats in same note - automatically merged and deduplicated
+- **Tag Parsing and Indexing**: Automatically parse and index tags from entire note content and frontmatter
 - **Tags Tree View**: Dedicated sidebar panel showing all tags with usage counts
 - **Tag Filtering**: Click tags to filter notes instantly, or select multiple tags for AND filtering
 - **Tag Autocomplete**: Intelligent autocomplete suggestions when typing `#` anywhere in notes
 - **Tag Sorting**: Sort tags alphabetically or by frequency (most-used first)
-- **Comprehensive Testing**: Full unit test coverage for tag functionality (143 passing tests)
+- **Comprehensive Testing**: Full unit test coverage for tag functionality (325 passing tests, including 11 frontmatter tests)
 - **Tag Service**: Efficient tag indexing with async operations and in-memory caching
 - **Tag Commands**: Filter, sort, refresh, and clear filter operations
 - **Real-time Updates**: Tags automatically detected and indexed as you type

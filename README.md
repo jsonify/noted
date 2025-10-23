@@ -40,7 +40,7 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
    - Instantly access your 20 most recently modified notes
 
 5. **Use Tags**:
-   - Add tags anywhere in your notes using `#tagname` syntax
+   - Add tags using inline `#tagname` syntax or YAML frontmatter `tags: [tag1, tag2]`
    - View all tags in the dedicated Tags sidebar panel
    - Click any tag to filter notes containing that tag
    - Type `#` in a note to see autocomplete suggestions
@@ -53,6 +53,8 @@ A VS Code extension for quick daily note-taking, meeting notes, project ideas, a
 The tag system helps you organize and find your notes quickly:
 
 ### Adding Tags to Notes
+
+**Option 1: Inline Hashtags**
 
 Simply type `#` followed by your tag name anywhere in your note:
 
@@ -68,6 +70,25 @@ Next steps:
 - Add tests #todo
 - Update documentation #docs
 ```
+
+**Option 2: YAML Frontmatter** (v1.25.0)
+
+Add tags in a structured format at the beginning of your note:
+
+```yaml
+---
+tags: [backend, auth, bugfix]
+---
+
+2025-10-19
+==================================================
+
+Working on the new authentication feature today.
+```
+
+**Mix Both Approaches:**
+
+You can use both frontmatter and inline tags in the same note - they are automatically combined!
 
 **Tag Format:**
 - Tags can contain letters, numbers, hyphens, and underscores

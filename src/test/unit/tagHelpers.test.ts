@@ -102,6 +102,118 @@ describe('Tag Helpers', () => {
       expect(tags[0]).to.equal('tag0');
       expect(tags[49]).to.equal('tag49');
     });
+
+    // Frontmatter array format tests
+    it('should extract tags from YAML frontmatter array format', () => {
+      const content = `---
+tags: [diy, tires, maintenance]
+---
+
+Note content here`;
+      const tags = extractTagsFromContent(content);
+      expect(tags).to.have.members(['diy', 'tires', 'maintenance']);
+    });
+
+    it('should extract tags from frontmatter with quoted values', () => {
+      const content = `---
+tags: ["bug", "urgent", "project-alpha"]
+---
+
+Note content`;
+      const tags = extractTagsFromContent(content);
+      expect(tags).to.have.members(['bug', 'urgent', 'project-alpha']);
+    });
+
+    it('should extract tags from frontmatter with single quotes', () => {
+      const content = `---
+tags: ['feature', 'enhancement']
+---
+
+Content`;
+      const tags = extractTagsFromContent(content);
+      expect(tags).to.have.members(['feature', 'enhancement']);
+    });
+
+    it('should extract tags from frontmatter with mixed spacing', () => {
+      const content = `---
+tags: [  bug,  feature  ,  urgent  ]
+---
+
+Content`;
+      const tags = extractTagsFromContent(content);
+      expect(tags).to.have.members(['bug', 'feature', 'urgent']);
+    });
+
+    it('should combine frontmatter and inline hashtag tags', () => {
+      const content = `---
+tags: [diy, tires]
+---
+
+Working on #maintenance and #repair today`;
+      const tags = extractTagsFromContent(content);
+      expect(tags).to.have.members(['diy', 'tires', 'maintenance', 'repair']);
+    });
+
+    it('should deduplicate tags from frontmatter and inline', () => {
+      const content = `---
+tags: [bug, urgent]
+---
+
+Working on #bug and #feature`;
+      const tags = extractTagsFromContent(content);
+      expect(tags).to.have.members(['bug', 'urgent', 'feature']);
+    });
+
+    it('should handle frontmatter with empty array', () => {
+      const content = `---
+tags: []
+---
+
+Content with #hashtag`;
+      const tags = extractTagsFromContent(content);
+      expect(tags).to.deep.equal(['hashtag']);
+    });
+
+    it('should handle frontmatter without tags field', () => {
+      const content = `---
+title: My Note
+author: John
+---
+
+Content with #hashtag`;
+      const tags = extractTagsFromContent(content);
+      expect(tags).to.deep.equal(['hashtag']);
+    });
+
+    it('should normalize tags from frontmatter to lowercase', () => {
+      const content = `---
+tags: [Bug, URGENT, Project-Alpha]
+---
+
+Content`;
+      const tags = extractTagsFromContent(content);
+      expect(tags).to.have.members(['bug', 'urgent', 'project-alpha']);
+    });
+
+    it('should validate tags from frontmatter (reject invalid)', () => {
+      const content = `---
+tags: [valid-tag, invalid!, another-valid, 123invalid]
+---
+
+Content`;
+      const tags = extractTagsFromContent(content);
+      expect(tags).to.have.members(['valid-tag', 'another-valid']);
+    });
+
+    it('should handle frontmatter with hashtags in array (normalize them)', () => {
+      const content = `---
+tags: [#bug, #feature]
+---
+
+Content`;
+      const tags = extractTagsFromContent(content);
+      expect(tags).to.have.members(['bug', 'feature']);
+    });
   });
 
   describe('isValidTag', () => {

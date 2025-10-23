@@ -9,11 +9,20 @@ Organize and discover your notes with a powerful inline tagging system that supp
 
 ## Overview
 
-The tags system in Noted allows you to categorize and organize your notes using simple `#tagname` syntax. Unlike metadata-only tags, Noted supports inline tags that can appear anywhere in your notes.
+The tags system in Noted allows you to categorize and organize your notes using two flexible approaches:
+
+1. **Inline hashtags**: Simple `#tagname` syntax that can appear anywhere in your note content
+2. **YAML frontmatter** (v1.25.0): Standard `tags: [tag1, tag2, tag3]` array format at the beginning of notes
+
+Unlike metadata-only tag systems, Noted supports both approaches and automatically combines tags from both sources, giving you maximum flexibility in how you organize your notes.
 
 ## Adding Tags
 
 ### Tag Syntax
+
+Noted supports two ways to add tags to your notes:
+
+#### 1. Inline Hashtag Tags
 
 Simply type `#` followed by your tag name anywhere in your note:
 
@@ -29,6 +38,64 @@ Next steps:
 - Add tests #todo
 - Update documentation #docs
 ```
+
+#### 2. YAML Frontmatter Tags (v1.25.0)
+
+Add tags in YAML frontmatter at the beginning of your note:
+
+```yaml
+---
+tags: [backend, auth, bugfix]
+---
+
+2025-10-19
+==================================================
+
+Working on the new authentication feature today.
+
+Fixed bug in login form.
+```
+
+**Frontmatter features:**
+- Standard YAML array format: `tags: [tag1, tag2, tag3]`
+- Supports quoted values: `tags: ["bug", "feature"]` or `tags: ['bug', 'feature']`
+- Case-insensitive (tags are normalized to lowercase)
+- Automatically validates tag format
+- Tags can include hyphens in array format: `tags: [bug-fix, work-notes]`
+
+**Best of both worlds:**
+You can use both frontmatter tags AND inline hashtags in the same note. They are automatically combined and deduplicated:
+
+```yaml
+---
+tags: [project-alpha, backend]
+---
+
+Working on authentication #auth #security
+```
+
+This note will have 4 tags: `project-alpha`, `backend`, `auth`, `security`
+
+#### When to Use Each Format
+
+**Use frontmatter tags when:**
+- You want a clean, organized metadata section at the top of your notes
+- You're using other frontmatter fields (title, author, date, etc.)
+- You prefer a more structured, standardized approach
+- You're migrating from other note-taking systems that use frontmatter
+- You want to separate metadata from content
+
+**Use inline hashtags when:**
+- You want tags to appear contextually within your content
+- You're tagging specific topics or ideas as you write
+- You prefer a more casual, blog-style tagging approach
+- You want tags to be visible in the note content itself
+- You're quickly jotting down notes without formal structure
+
+**Use both when:**
+- You want broad categorization in frontmatter (e.g., `tags: [project-alpha, backend]`)
+- Plus contextual tags inline (e.g., "Fixed the #authentication bug")
+- This gives you the best of both worlds!
 
 ### Tag Format
 
@@ -48,13 +115,15 @@ Next steps:
 
 ### Inline Support
 
-Tags work anywhere in your notes:
+**Inline hashtag tags** work anywhere in your notes:
 - In paragraphs
 - In lists
 - In headings
 - In code comments (for `.md` files)
 - At the end of lines
 - Throughout your entire note
+
+**Frontmatter tags** are placed at the very beginning of your note in a YAML frontmatter block (between `---` delimiters)
 
 ## Tag Autocomplete
 
@@ -242,7 +311,29 @@ Search results show all tags for each matching note.
 
 ## Common Tag Workflows
 
-### Project Organization
+### Project Organization with Frontmatter
+
+```yaml
+---
+tags: [project-alpha, backend, feature]
+---
+
+2025-10-23
+==================================================
+
+Implementing user authentication system.
+
+TODO:
+- Set up OAuth providers
+- Add session management #security
+- Write tests #testing
+```
+
+The note has 5 tags total: `project-alpha`, `backend`, `feature`, `security`, `testing`
+
+Filter by `#project-alpha` to see all related notes.
+
+### Project Organization with Inline Tags
 
 ```
 Working on user authentication #project-alpha #backend
