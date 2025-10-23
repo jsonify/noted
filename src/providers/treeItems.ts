@@ -202,3 +202,70 @@ export class ConnectionItem extends TreeItem {
         return tooltip;
     }
 }
+
+/**
+ * Category item for organizing templates by type
+ */
+export class CategoryItem extends TreeItem {
+    constructor(
+        public readonly categoryName: string,
+        public readonly icon: string,
+        public readonly description: string
+    ) {
+        super(`${icon} ${categoryName}`, vscode.TreeItemCollapsibleState.Collapsed);
+
+        this.iconPath = new vscode.ThemeIcon('folder');
+        this.contextValue = 'category';
+        this.tooltip = description;
+    }
+}
+
+/**
+ * Template action item - a clickable button to create a note
+ */
+export class TemplateActionItem extends TreeItem {
+    constructor(
+        public readonly label: string,
+        public readonly templateType: string,
+        public readonly commandId: string,
+        public readonly description?: string
+    ) {
+        super(label, vscode.TreeItemCollapsibleState.None);
+
+        this.iconPath = new vscode.ThemeIcon('add');
+        this.contextValue = 'template-action';
+        this.tooltip = description || `Create a new ${label}`;
+
+        // Make clickable
+        this.command = {
+            command: commandId,
+            title: `Create ${label}`,
+            arguments: [templateType]
+        };
+    }
+}
+
+/**
+ * Action button item - generic clickable action in the tree
+ */
+export class ActionButtonItem extends TreeItem {
+    constructor(
+        public readonly label: string,
+        public readonly commandId: string,
+        public readonly icon: string,
+        public readonly description?: string
+    ) {
+        super(label, vscode.TreeItemCollapsibleState.None);
+
+        this.iconPath = new vscode.ThemeIcon(icon);
+        this.contextValue = 'action-button';
+        this.tooltip = description || label;
+
+        // Make clickable
+        this.command = {
+            command: commandId,
+            title: label,
+            arguments: []
+        };
+    }
+}

@@ -117,3 +117,51 @@ export const SUPPORTED_EXTENSIONS = ['.txt', '.md'];
  * Image file extensions supported for embedding
  */
 export const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.ico'];
+
+/**
+ * Category configuration for organizing notes
+ * Maps template types to category folders with icons
+ */
+export interface CategoryConfig {
+    folder: string;
+    icon: string;
+    templates: string[];
+    description?: string;
+}
+
+/**
+ * Default categories for note organization
+ * Daily notes go in date-based folders, all others go in semantic folders
+ */
+export const DEFAULT_CATEGORIES: Record<string, CategoryConfig> = {
+    'Daily': {
+        folder: 'Daily',
+        icon: '📅',
+        templates: [],
+        description: 'Daily journal notes organized by date'
+    },
+    'Meetings': {
+        folder: 'Meetings',
+        icon: '🤝',
+        templates: ['meeting'],
+        description: 'Meeting notes and agendas'
+    },
+    'Research': {
+        folder: 'Research',
+        icon: '🔬',
+        templates: ['research'],
+        description: 'Research notes and findings'
+    },
+    'Projects': {
+        folder: 'Projects',
+        icon: '📋',
+        templates: ['problem-solution'],
+        description: 'Project notes and problem-solving'
+    },
+    'Quick': {
+        folder: 'Quick',
+        icon: '⚡',
+        templates: ['quick'],
+        description: 'Quick notes and jots'
+    }
+};

@@ -68,10 +68,6 @@
     },
     "viewsWelcome": [
       {
-        "view": "notedTemplatesView",
-        "contents": "Create a new note from a template.\n\n[Choose Template...](command:noted.openWithTemplate)\n\n---\n\nQuick Access\n\n[Problem/Solution](command:noted.openWithTemplate?%5B%22problem-solution%22%5D) • [Meeting](command:noted.openWithTemplate?%5B%22meeting%22%5D) • [Research](command:noted.openWithTemplate?%5B%22research%22%5D) • [Quick](command:noted.openWithTemplate?%5B%22quick%22%5D)\n\n---\n\nManage Templates\n\n[Create New Template](command:noted.createCustomTemplate)\n\n[Edit Template](command:noted.editCustomTemplate) • [Delete Template](command:noted.deleteCustomTemplate)\n\n[Duplicate Template](command:noted.duplicateCustomTemplate)\n\n[Template Variables Reference](command:noted.previewTemplateVariables)\n\n[Open Templates Folder](command:noted.openTemplatesFolder)"
-      },
-      {
         "view": "notedView",
         "contents": "Welcome to Noted! 📝\n\nYour digital scratch pad for tracking solutions, bugs, and daily progress.\n\nTo get started, choose where to store your notes:\n[Use Default Location](command:noted.setupDefaultFolder)\nNotes will be stored in your workspace under 'Notes/'\n\n[Choose Custom Location](command:noted.setupCustomFolder)\nSelect a different folder for your notes\n\nOnce set up, you can:\n• Press Cmd+Shift+N to open today's note\n• Use templates for structured notes\n• Search across all your notes\n• Track your daily progress"
       }
@@ -85,6 +81,11 @@
       {
         "command": "noted.openWithTemplate",
         "title": "Noted: Open with Template"
+      },
+      {
+        "command": "noted.createCategoryNote",
+        "title": "Noted: Create Category Note",
+        "icon": "$(add)"
       },
       {
         "command": "noted.insertTimestamp",

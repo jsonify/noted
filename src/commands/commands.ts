@@ -75,6 +75,46 @@ export async function handleOpenWithTemplate(templateType?: string) {
     refresh();
 }
 
+export async function handleCreateCategoryNote(templateType: string) {
+    try {
+        // Import category service
+        const { createCategoryNote } = await import('../services/categoryService');
+
+        // Prompt for note name
+        const noteName = await vscode.window.showInputBox({
+            prompt: 'Enter note name',
+            placeHolder: 'my-note',
+            validateInput: (value) => {
+                if (!value || !value.trim()) {
+                    return 'Note name cannot be empty';
+                }
+                return null;
+            }
+        });
+
+        if (!noteName) {
+            return;
+        }
+
+        // Create the note in the appropriate category folder
+        const filePath = await createCategoryNote(templateType, noteName);
+
+        // Open the note
+        const document = await vscode.workspace.openTextDocument(filePath);
+        const editor = await vscode.window.showTextDocument(document);
+
+        // Move cursor to end of document
+        const lastLine = document.lineCount - 1;
+        const lastCharacter = document.lineAt(lastLine).text.length;
+        editor.selection = new vscode.Selection(lastLine, lastCharacter, lastLine, lastCharacter);
+
+        refresh();
+        vscode.window.showInformationMessage(`Created note: ${noteName}`);
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to create note: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
 export async function handleOpenNote(filePath: string) {
     const document = await vscode.workspace.openTextDocument(filePath);
     await vscode.window.showTextDocument(document);
