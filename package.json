@@ -52,6 +52,10 @@
           "name": "My Notes"
         },
         {
+          "id": "notedConnectionsView",
+          "name": "Connections"
+        },
+        {
           "id": "notedTagsView",
           "name": "Tags"
         }
@@ -348,6 +352,20 @@
         "command": "noted.renameSymbol",
         "title": "Noted: Rename Symbol (Refactor Links)",
         "icon": "$(symbol-keyword)"
+      },
+      {
+        "command": "noted.refreshConnections",
+        "title": "Noted: Refresh Connections",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "noted.openConnection",
+        "title": "Noted: Open Connection"
+      },
+      {
+        "command": "noted.openConnectionSource",
+        "title": "Noted: Open Connection Source",
+        "icon": "$(go-to-file)"
       }
     ],
     "menus": {
@@ -480,6 +498,11 @@
           "command": "noted.exportTags",
           "when": "view == notedTagsView",
           "group": "actions@4"
+        },
+        {
+          "command": "noted.refreshConnections",
+          "when": "view == notedConnectionsView",
+          "group": "navigation@1"
         }
       ],
       "view/item/context": [
@@ -552,6 +575,16 @@
           "command": "noted.deleteTag",
           "when": "view == notedTagsView && viewItem == tag",
           "group": "edit@2"
+        },
+        {
+          "command": "noted.openConnection",
+          "when": "view == notedConnectionsView && viewItem == connection",
+          "group": "navigation@1"
+        },
+        {
+          "command": "noted.openConnectionSource",
+          "when": "view == notedConnectionsView && viewItem == connection",
+          "group": "navigation@2"
         }
       ]
     },

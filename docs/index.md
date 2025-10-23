@@ -33,6 +33,11 @@ Noted is a powerful VS Code extension designed for developers who need quick acc
 </div>
 
 <div class="feature-card">
+<h3>🔄 Connections Panel</h3>
+<p>Always-visible sidebar showing all incoming backlinks and outgoing links with rich context and quick navigation.</p>
+</div>
+
+<div class="feature-card">
 <h3>📄 Note Embeds</h3>
 <p>Embed entire notes or specific sections inline with <code>![[note#section]]</code> syntax. Perfect for reusable content.</p>
 </div>
@@ -114,11 +119,14 @@ Create structured meeting notes with the built-in template, then link to related
 
 ## What's New
 
-### Latest Release: v1.17.0
+### Latest Release: v1.22.0
 
+- **Connections Panel**: Dedicated sidebar showing all incoming backlinks and outgoing links with rich context
+- **Bidirectional View**: See both backlinks and outgoing connections in one always-visible panel
+- **Connection Context**: View line numbers and snippets for each connection
+- **Quick Navigation**: Click connections to open notes or jump to exact source lines
 - **Note Embeds**: Embed entire notes with `![[note-name]]` syntax
 - **Section Embeds**: Embed specific sections with `![[note#section]]` syntax
-- **Embed Previews**: Hover to preview embedded content with visual indicators
 - **Enhanced Link Features**: Full-path links for disambiguation, autocomplete, and diagnostics
 - **Extract to Note**: Create new linked notes from selected text
 - **Rename Symbol**: Refactor links across all notes

@@ -105,26 +105,42 @@ Hover over ambiguous links to see all matching notes with their paths.
 
 ## Backlinks System
 
-### Viewing Backlinks
+### Connections Panel (v1.22.0)
 
-Hover over any note's header (first line) to see all notes that link to it:
+The **[Connections Panel]({{ '/features/connections' | relative_url }})** provides the best way to view and navigate backlinks:
+
+- **Always visible** in the sidebar
+- Shows **both incoming backlinks and outgoing links**
+- Displays **line numbers and context snippets**
+- Click to **navigate to connected notes**
+- **Auto-updates** when switching notes
+
+**Access:** Noted Sidebar → Connections view
+
+The Connections Panel automatically displays all relationships for the currently active note, giving you constant visibility into your knowledge network. See the [Connections Panel documentation]({{ '/features/connections' | relative_url }}) for complete details.
+
+### Hover Backlinks
+
+For quick reference, you can also hover over any note's header (first line) to see backlinks:
 
 ```
 Meeting Notes - 2025-10-19
 ==================================================
 ```
 
-**Backlinks panel shows:**
+**Hover preview shows:**
 - Source note name
 - Context (surrounding text)
 - Click to navigate to linking note
+
+**Tip:** For a more comprehensive view, use the Connections Panel instead of hover previews.
 
 ### Rebuilding Backlinks Index
 
 If backlinks seem out of date:
 
 1. Open Command Palette (`Cmd+Shift+P`)
-2. Run "Noted: Rebuild Backlinks Index"
+2. Run "Noted: Refresh Connections" (or "Rebuild Backlinks Index")
 3. Index rebuilds automatically in background
 
 ## Extract Selection to Note (v1.14.1)
@@ -291,8 +307,9 @@ Link as `[[2025/10-October/meeting]]`
 
 ### Finding Connections
 
-- Use Graph View to visualize all link connections
-- Check backlinks to see incoming references
+- Use **Connections Panel** to see all incoming and outgoing links for current note
+- Use **Graph View** to visualize all link connections across workspace
+- Check **hover backlinks** for quick reference
 - Search for `[[` to find all links in a note
 
 ### Maintaining Link Integrity

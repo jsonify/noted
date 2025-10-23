@@ -11,9 +11,11 @@ import { renameTag, mergeTags, deleteTag, exportTags } from './commands/tagComma
 import { NotesTreeProvider } from './providers/notesTreeProvider';
 import { TemplatesTreeProvider } from './providers/templatesTreeProvider';
 import { TagsTreeProvider } from './providers/tagsTreeProvider';
-import { TreeItem, NoteItem, SectionItem, TagItem } from './providers/treeItems';
+import { ConnectionsTreeProvider } from './providers/connectionsTreeProvider';
+import { TreeItem, NoteItem, SectionItem, TagItem, ConnectionItem } from './providers/treeItems';
 import { TagCompletionProvider } from './services/tagCompletionProvider';
 import { LinkService } from './services/linkService';
+import { ConnectionsService } from './services/connectionsService';
 import { EmbedService } from './services/embedService';
 import { FileWatcherService } from './services/fileWatcherService';
 import { NoteLinkProvider } from './providers/noteLinkProvider';
@@ -269,6 +271,50 @@ export function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(codeActionDisposable);
 
+    // Initialize connections service and provider
+    const connectionsService = new ConnectionsService(linkService);
+    const connectionsProvider = new ConnectionsTreeProvider(connectionsService);
+    vscode.window.registerTreeDataProvider('notedConnectionsView', connectionsProvider);
+
+    // Update connections panel when active editor changes
+    const updateConnectionsPanel = async (editor: vscode.TextEditor | undefined) => {
+        if (editor && notesPath && editor.document.uri.fsPath.startsWith(notesPath)) {
+            // Only update if the editor is showing a note file
+            const filePath = editor.document.uri.fsPath;
+            await connectionsProvider.updateForNote(filePath);
+        } else {
+            // No active note or not in notes folder
+            await connectionsProvider.updateForNote(null);
+        }
+    };
+
+    // Update connections for initial active editor
+    updateConnectionsPanel(vscode.window.activeTextEditor);
+
+    // Update connections when active editor changes
+    context.subscriptions.push(
+        vscode.window.onDidChangeActiveTextEditor(updateConnectionsPanel)
+    );
+
+    // Update connections when document is saved (links may have changed)
+    context.subscriptions.push(
+        vscode.workspace.onDidSaveTextDocument(async (document) => {
+            // Only update index for note files in the notes folder
+            const filePath = document.uri.fsPath;
+            const isSupportedFile = ['.txt', '.md'].some(ext => filePath.endsWith(ext));
+
+            if (isSupportedFile && notesPath && filePath.startsWith(notesPath)) {
+                // Incremental update: only re-index this specific file
+                await linkService.updateIndexForFile(filePath);
+
+                // Update connections panel if this is the active editor
+                if (vscode.window.activeTextEditor && document === vscode.window.activeTextEditor.document) {
+                    await updateConnectionsPanel(vscode.window.activeTextEditor);
+                }
+            }
+        })
+    );
+
     // Initialize pinned notes service
     const pinnedNotesService = new PinnedNotesService(context);
     notesProvider.setPinnedNotesService(pinnedNotesService);
@@ -370,6 +416,43 @@ export function activate(context: vscode.ExtensionContext) {
     // Command to refresh notes view
     let refreshNotes = vscode.commands.registerCommand('noted.refresh', () => {
         notesProvider.refresh();
+    });
+
+    // Command to refresh connections panel
+    let refreshConnections = vscode.commands.registerCommand('noted.refreshConnections', async () => {
+        // Rebuild backlinks index
+        await linkService.buildBacklinksIndex();
+        // Refresh the connections panel
+        await updateConnectionsPanel(vscode.window.activeTextEditor);
+        vscode.window.showInformationMessage('Connections refreshed');
+    });
+
+    // Command to open a connection (the connected note)
+    let openConnection = vscode.commands.registerCommand('noted.openConnection', async (connectionItem: ConnectionItem) => {
+        try {
+            const document = await vscode.workspace.openTextDocument(connectionItem.targetPath);
+            await vscode.window.showTextDocument(document);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to open note: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
+    // Command to open the source of a connection (navigate to the line where the link appears)
+    let openConnectionSource = vscode.commands.registerCommand('noted.openConnectionSource', async (connectionItem: ConnectionItem) => {
+        try {
+            const document = await vscode.workspace.openTextDocument(connectionItem.sourcePath);
+            const editor = await vscode.window.showTextDocument(document);
+
+            // Navigate to the line where the connection appears
+            const line = connectionItem.lineNumber;
+            const position = new vscode.Position(line, 0);
+            const range = new vscode.Range(position, position);
+
+            editor.selection = new vscode.Selection(position, position);
+            editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to open source: ${error instanceof Error ? error.message : String(error)}`);
+        }
     });
 
     // Command to open note from tree
@@ -1261,7 +1344,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         openTodayNote, openWithTemplate, insertTimestamp, extractSelectionToNote, changeFormat,
-        refreshNotes, openNote, deleteNote, renameNote, copyPath, revealInExplorer,
+        refreshNotes, refreshConnections, openNote, openConnection, openConnectionSource, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, quickSwitcher, filterByTag, clearTagFilters, sortTagsByName, sortTagsByFrequency, refreshTags,
         renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,
         showStats, exportNotes, duplicateNote, moveNotesFolder,

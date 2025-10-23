@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 /**
  * Base tree item class
@@ -119,5 +120,85 @@ export class TagItem extends TreeItem {
             title: 'Filter by Tag',
             arguments: [tagName]
         };
+    }
+}
+
+/**
+ * Section item for connections panel (e.g., "Outgoing Links", "Backlinks")
+ */
+export class ConnectionSectionItem extends TreeItem {
+    constructor(
+        public readonly label: string,
+        public readonly sectionType: 'outgoing' | 'incoming',
+        public readonly count: number
+    ) {
+        super(`${label} (${count})`, vscode.TreeItemCollapsibleState.Expanded);
+
+        // Set appropriate icon based on section type
+        if (sectionType === 'outgoing') {
+            this.iconPath = new vscode.ThemeIcon('arrow-right');
+        } else if (sectionType === 'incoming') {
+            this.iconPath = new vscode.ThemeIcon('arrow-left');
+        }
+
+        this.contextValue = 'connection-section';
+        this.tooltip = `${count} ${label.toLowerCase()}`;
+    }
+}
+
+/**
+ * Connection item representing a single link between notes
+ */
+export class ConnectionItem extends TreeItem {
+    constructor(
+        public readonly targetPath: string,
+        public readonly sourcePath: string,
+        public readonly lineNumber: number,
+        public readonly context: string,
+        public readonly connectionType: 'outgoing' | 'incoming',
+        public readonly displayText?: string
+    ) {
+        const filename = path.basename(targetPath, path.extname(targetPath));
+        super(filename, vscode.TreeItemCollapsibleState.None);
+
+        this.iconPath = new vscode.ThemeIcon('note');
+        this.contextValue = 'connection';
+
+        // Show display text if available, otherwise show line number (1-indexed)
+        const preview = displayText
+            ? `"${displayText}" (line ${lineNumber + 1})`
+            : `line ${lineNumber + 1}`;
+        this.description = preview;
+
+        // Tooltip shows full context with rich formatting
+        this.tooltip = this.buildTooltip();
+
+        // Make clickable to open the connected note
+        this.command = {
+            command: 'noted.openConnection',
+            title: 'Open Connection',
+            arguments: [this]
+        };
+
+        this.resourceUri = vscode.Uri.file(targetPath);
+    }
+
+    private buildTooltip(): vscode.MarkdownString {
+        const filename = path.basename(this.targetPath);
+        const sourceFilename = path.basename(this.sourcePath);
+
+        const tooltip = new vscode.MarkdownString('', true);
+        tooltip.appendMarkdown(`**File:** \`${filename}\`\n\n`);
+        tooltip.appendMarkdown(`**Line:** ${this.lineNumber + 1}\n\n`);
+
+        if (this.displayText) {
+            tooltip.appendMarkdown(`**Display Text:** "${this.displayText}"\n\n`);
+        }
+
+        tooltip.appendMarkdown(`**Context:**\n`);
+        tooltip.appendCodeblock(this.context, 'markdown');
+        tooltip.appendMarkdown(`\n\n**Source:** \`${sourceFilename}\``);
+
+        return tooltip;
     }
 }

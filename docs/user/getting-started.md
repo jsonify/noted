@@ -89,7 +89,7 @@ Notes auto-save in VS Code. Just start typing!
 
 ## Exploring the Sidebar
 
-Open the **Noted** activity bar (notebook icon) to see three panels:
+Open the **Noted** activity bar (notebook icon) to see four panels:
 
 ### 1. Templates
 
@@ -109,7 +109,16 @@ Open the **Noted** activity bar (notebook icon) to see three panels:
 
 **Try it:** See your first note appear in the tree
 
-### 3. Tags
+### 3. Connections
+
+- See all incoming backlinks for current note
+- See all outgoing links from current note
+- View context snippets with line numbers
+- Click to navigate to connected notes
+
+**Try it:** Open a note with links and see connections automatically
+
+### 4. Tags
 
 - All tags with usage counts
 - Click to filter notes
@@ -179,10 +188,11 @@ Create a custom template for your daily workflow:
 ### Build Your Knowledge Base
 
 - Link related notes with `[[note-name]]`
-- View backlinks by hovering over note headers
+- View all connections in the Connections panel (always visible)
+- See backlinks by hovering over note headers
 - Visualize connections with Graph View
 
-[Learn more about linking]({{ '/user/linking-notes' | relative_url }})
+[Learn more about linking]({{ '/features/wiki-links' | relative_url }}) • [Learn about Connections Panel]({{ '/features/connections' | relative_url }})
 
 ### Customize Settings
 

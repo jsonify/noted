@@ -43,14 +43,16 @@ The extension now uses a fully modular architecture with clear separation of con
   - `pinnedNotesService.ts`: Pinned notes management (v1.5.0)
   - `archiveService.ts`: Archive functionality (v1.5.0)
   - `linkService.ts`: Wiki-style links and backlinks (v1.5.0)
+  - `connectionsService.ts`: Connection data for backlinks and outgoing links (v1.22.0)
   - `bulkOperationsService.ts`: Multi-select and bulk operations (v1.10.0)
   - `undoService.ts`: Undo/redo functionality (v1.13.0)
   - `undoHelpers.ts`: Undo operation helpers (v1.13.0)
   - `graphService.ts`: Graph data preparation and analysis (v1.14.0)
 - **`src/providers/`**: VS Code tree view providers
-  - `treeItems.ts`: Tree item classes
+  - `treeItems.ts`: Tree item classes (includes ConnectionSectionItem and ConnectionItem)
   - `templatesTreeProvider.ts`: Templates view
   - `notesTreeProvider.ts`: Main notes tree with drag-and-drop
+  - `connectionsTreeProvider.ts`: Connections panel for showing backlinks and outgoing links (v1.22.0)
 - **`src/commands/`**: Command handlers
   - `commands.ts`: Main command handlers
   - `tagCommands.ts`: Tag management commands
@@ -96,6 +98,30 @@ The extension now uses a fully modular architecture with clear separation of con
   - Supports node coloring based on connection count
   - Calculates node sizes using logarithmic scaling for better visual distribution
   - Identifies bidirectional links (notes that link to each other)
+
+- **ConnectionsService** (v1.22.0): Manages connection data for the connections panel
+  - Builds on `LinkService` to provide enriched connection information
+  - `getConnectionsForNote()` returns incoming (backlinks) and outgoing connections
+  - Extracts context snippets showing lines before/after each connection
+  - Groups connections by source/target note for better organization
+  - Tracks connection strength (number of links between notes)
+  - Configurable context lines via `setContextLines(before, after)`
+
+- **ConnectionsTreeProvider** (v1.22.0): Tree provider for the connections sidebar panel
+  - Implements `vscode.TreeDataProvider<TreeItem>` for connections view
+  - Shows two main sections: "Outgoing Links" and "Backlinks" with counts
+  - Auto-updates when active editor changes or documents are saved
+  - `updateForNote()` refreshes panel for specific note
+  - Displays empty state when no note is active
+  - Connection items are clickable to navigate to linked notes
+
+- **Connection Tree Items** (v1.22.0):
+  - `ConnectionSectionItem`: Section headers for "Outgoing Links (N)" and "Backlinks (N)"
+  - `ConnectionItem`: Individual connections with target path, source path, line number, context
+    - Shows filename as label with line number in description
+    - Tooltip displays full context and metadata
+    - Clickable to open target note
+    - Context menu: "Open Connection" and "Open Connection Source"
 
 ### File Organization Pattern
 
@@ -198,6 +224,11 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.showUndoHistory` - Show complete undo history with operation details
 - `noted.clearUndoHistory` - Clear all stored undo history
 
+**Connections Panel Commands** (v1.22.0):
+- `noted.refreshConnections` - Rebuild backlinks index and refresh connections panel
+- `noted.openConnection` - Open the target note of a connection (invoked by clicking connection item)
+- `noted.openConnectionSource` - Navigate to the source note and jump to the line where the link appears
+
 ## Important Implementation Details
 
 1. **File I/O is asynchronous**: All operations use `fs.promises` API with async/await pattern
@@ -224,10 +255,16 @@ All commands are registered in `activate()` and defined in package.json contribu
 - **VS Code API version**: ^1.80.0
 - **Main entry**: `./out/extension.js` (compiled from TypeScript)
 - **Activity bar icon**: Uses codicon `$(notebook)`
-- **View ID**: `notedView` in container `notedExplorer`
+- **View IDs in container `notedExplorer`**:
+  - `notedTemplatesView` - Templates view
+  - `notedView` - Main notes tree view
+  - `notedConnectionsView` - Connections panel (v1.22.0)
+  - `notedTagsView` - Tags view
 - **Context values**:
   - Notes have `contextValue: 'note'` for context menu visibility
   - Selected notes have `contextValue: 'note-selected'` (v1.10.0)
+  - Connection items have `contextValue: 'connection'` (v1.22.0)
+  - Connection sections have `contextValue: 'connection-section'` (v1.22.0)
   - Context variables: `noted.selectModeActive`, `noted.hasSelectedNotes`, `noted.hasActiveTagFilters`
 
 ## TypeScript Configuration
