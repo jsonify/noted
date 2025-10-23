@@ -4,10 +4,10 @@
 
 /**
  * Built-in template definitions
- * Each template includes a frontmatter section and structured content
+ * Each template returns structured content (frontmatter is added separately)
  */
 export const BUILT_IN_TEMPLATES = {
-    'problem-solution': (frontmatter: string) => `${frontmatter}PROBLEM:
+    'problem-solution': () => `PROBLEM:
 
 
 STEPS TAKEN:
@@ -19,7 +19,7 @@ SOLUTION:
 NOTES:
 
 `,
-    'meeting': (frontmatter: string) => `${frontmatter}MEETING:
+    'meeting': () => `MEETING:
 ATTENDEES:
 
 AGENDA:
@@ -32,7 +32,7 @@ ACTION ITEMS:
 -
 
 `,
-    'research': (frontmatter: string) => `${frontmatter}TOPIC:
+    'research': () => `TOPIC:
 
 QUESTIONS:
 -
@@ -47,7 +47,7 @@ NEXT STEPS:
 
 
 `,
-    'quick': (frontmatter: string) => `${frontmatter}`
+    'quick': () => ``
 };
 
 /**
