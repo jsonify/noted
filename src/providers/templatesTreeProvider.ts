@@ -47,19 +47,10 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
 
     async getChildren(element?: TreeItem): Promise<TreeItem[]> {
         if (!element) {
-            // Root level - show primary actions, recent notes, and categories
+            // Root level - show primary action, categories, and recent notes at bottom
             const items: TreeItem[] = [];
 
-            // Primary action buttons at top
-            items.push(
-                new ActionButtonItem(
-                    '📅 Today\'s Note',
-                    'noted.openToday',
-                    'calendar',
-                    'Open or create today\'s daily note'
-                )
-            );
-
+            // Primary action button at top
             items.push(
                 new ActionButtonItem(
                     '+ New Note...',
@@ -69,14 +60,11 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                 )
             );
 
-            // Recent notes section
-            items.push(new SectionItem('Recent Notes', 'recent'));
-
-            // Get all categories (excluding Daily since it's handled by Today button)
+            // Get all categories (excluding Daily since it's in Journal panel)
             const categories = getAllCategories();
             for (const [categoryName, config] of Object.entries(categories)) {
                 if (categoryName === 'Daily') {
-                    continue; // Skip Daily - it's handled by Today button
+                    continue; // Skip Daily - it's in Journal panel
                 }
 
                 items.push(
@@ -96,6 +84,9 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                     'Manage templates and settings'
                 )
             );
+
+            // Recent notes section at bottom
+            items.push(new SectionItem('Recent Notes', 'recent'));
 
             return items;
         } else if (element instanceof SectionItem) {

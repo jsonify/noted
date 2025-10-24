@@ -383,7 +383,7 @@
       ],
       "view/title": [
         {
-          "command": "noted.openToday",
+          "command": "noted.openWithTemplate",
           "when": "view == notedView",
           "group": "navigation@1"
         },
@@ -408,14 +408,24 @@
           "group": "navigation@4"
         },
         {
-          "command": "noted.showCalendar",
+          "command": "noted.showGraph",
           "when": "view == notedView",
           "group": "navigation@5"
         },
         {
-          "command": "noted.showGraph",
-          "when": "view == notedView",
-          "group": "navigation@6"
+          "command": "noted.openToday",
+          "when": "view == notedJournalView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "noted.showCalendar",
+          "when": "view == notedJournalView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "noted.refresh",
+          "when": "view == notedJournalView",
+          "group": "navigation@3"
         },
         {
           "command": "noted.clearTagFilters",
