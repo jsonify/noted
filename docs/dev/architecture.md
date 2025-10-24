@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Architecture Overview
+parent: Development
+nav_order: 1
 ---
 
 # Architecture Overview

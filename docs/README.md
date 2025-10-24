@@ -32,25 +32,42 @@ docs/
 
 ## Local Development
 
+**Note:** Local testing is **optional**. GitHub Pages builds the site automatically when you push changes.
+
 ### Prerequisites
 
-1. **Ruby** (version 2.7 or higher)
+Due to compatibility issues with macOS system Ruby (2.6), you need a modern Ruby installation:
+
+1. **Ruby 3.1+** (install via Homebrew)
 2. **Bundler** gem
 
 ### Setup
 
-1. Install Ruby dependencies:
+1. Install Ruby via Homebrew:
+   ```bash
+   brew install ruby@3.1
+
+   # Add to PATH (add to ~/.zshrc or ~/.bash_profile)
+   export PATH="/opt/homebrew/opt/ruby@3.1/bin:$PATH"
+
+   # Reload shell
+   source ~/.zshrc
+   ```
+
+2. Uncomment gems in `Gemfile` (lines 9-13)
+
+3. Install dependencies:
    ```bash
    cd docs
    bundle install
    ```
 
-2. Run local Jekyll server:
+4. Run local Jekyll server:
    ```bash
    bundle exec jekyll serve
    ```
 
-3. Open browser to:
+5. Open browser to:
    ```
    http://localhost:4000/noted/
    ```
@@ -61,6 +78,14 @@ docs/
 2. Jekyll will auto-rebuild (watch mode)
 3. Refresh browser to see changes
 4. Check for build errors in terminal
+
+### Troubleshooting Bundle Install
+
+If you encounter native extension compilation errors with system Ruby:
+
+1. **Option 1 (Recommended):** Skip local testing and rely on GitHub Pages
+2. **Option 2:** Install modern Ruby via Homebrew (see setup above)
+3. **Option 3:** Use Docker for Jekyll development
 
 ## Deploying to GitHub Pages
 
@@ -104,23 +129,18 @@ Updates are published automatically:
 
 ### Theme
 
-The site uses the **Cayman** theme from GitHub Pages:
-- Clean, modern design
-- Responsive layout
-- Professional appearance
+The site uses the **Just the Docs** theme via `remote_theme`:
+- Professional documentation-focused design
+- Built-in search functionality
+- Automatic navigation sidebar
+- Mobile-responsive layout
+- Clean, readable typography
 
-### Custom Styles
-
-Custom styles are in `assets/css/style.scss`:
-- Navigation bar
-- Feature cards
-- Custom colors
-- Responsive adjustments
-
-To customize:
-1. Edit `assets/css/style.scss`
-2. Follow SCSS syntax
-3. Test locally before pushing
+Theme configuration is in `_config.yml`:
+- Search settings
+- Color scheme
+- Navigation structure
+- Footer content
 
 ## Content Guidelines
 
