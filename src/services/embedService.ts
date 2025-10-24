@@ -478,29 +478,65 @@ export class EmbedService {
             });
         }
 
+        // Track processing statistics
+        let successCount = 0;
+        let failureCount = 0;
+
         // Process embeds in reverse order to maintain correct indices
         for (let i = embedMatches.length - 1; i >= 0; i--) {
             const embed = embedMatches[i];
             let replacement: string;
 
-            if (embed.type === 'image') {
-                // Process as embedded image
-                replacement = await this.renderEmbeddedImageForWebview(
-                    embed.noteName,
-                    webview,
-                    currentDocumentUri?.fsPath
-                );
-            } else {
-                // Process as embedded note
-                replacement = await this.renderEmbeddedNoteForWebview(
-                    embed.noteName,
-                    embed.section,
-                    embed.displayText
-                );
-            }
+            try {
+                if (embed.type === 'image') {
+                    // Process as embedded image
+                    replacement = await this.renderEmbeddedImageForWebview(
+                        embed.noteName,
+                        webview,
+                        currentDocumentUri?.fsPath
+                    );
+                } else {
+                    // Process as embedded note
+                    replacement = await this.renderEmbeddedNoteForWebview(
+                        embed.noteName,
+                        embed.section,
+                        embed.displayText
+                    );
+                }
 
-            // Replace the embed syntax with rendered content
-            processedContent = processedContent.replace(embed.match, replacement);
+                // Replace the embed syntax with rendered content
+                processedContent = processedContent.replace(embed.match, replacement);
+                successCount++;
+            } catch (error) {
+                // Handle individual embed processing errors
+                failureCount++;
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const embedReference = embed.section
+                    ? `${embed.noteName}#${embed.section}`
+                    : embed.noteName;
+
+                console.error(
+                    `[NOTED] Failed to process ${embed.type} embed '${embedReference}':`,
+                    {
+                        error: errorMessage,
+                        embedType: embed.type,
+                        noteName: embed.noteName,
+                        section: embed.section,
+                        displayText: embed.displayText
+                    }
+                );
+
+                // Replace with error placeholder instead of crashing
+                replacement = `\n\n> ❌ **Error rendering ${embed.type}**: \`${embedReference}\`\n> _${errorMessage}_\n\n`;
+                processedContent = processedContent.replace(embed.match, replacement);
+            }
+        }
+
+        // Log processing summary
+        if (embedMatches.length > 0) {
+            console.log(
+                `[NOTED] Embed processing complete: ${successCount} succeeded, ${failureCount} failed (${embedMatches.length} total)`
+            );
         }
 
         return processedContent;

@@ -148,18 +148,49 @@ export class MarkdownPreviewManager {
         }
 
         let content = this.currentDocument.getText();
+        const documentPath = this.currentDocument.uri.fsPath;
 
         // Process embedded content if service is available
         if (this.embedService && this.panel) {
             try {
+                const originalLength = content.length;
                 content = await this.embedService.processEmbedsForWebview(
                     content,
                     this.panel.webview,
                     this.currentDocument.uri
                 );
+
+                // Log successful processing with metrics
+                const processedLength = content.length;
+                const embeddedCount = (content.match(/!?\[\[/g) || []).length;
+                console.log(
+                    `[NOTED] Processed embedded content for ${path.basename(documentPath)}: ` +
+                    `${originalLength} -> ${processedLength} chars, ${embeddedCount} embeds`
+                );
             } catch (error) {
-                console.error('[NOTED] Error processing embedded content:', error);
-                // Continue with original content if processing fails
+                // Enhanced error logging with context
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const errorStack = error instanceof Error ? error.stack : undefined;
+
+                console.error(
+                    `[NOTED] Error processing embedded content in ${path.basename(documentPath)}:`,
+                    {
+                        message: errorMessage,
+                        path: documentPath,
+                        error: error,
+                        stack: errorStack
+                    }
+                );
+
+                // Add error notification in the preview itself
+                const errorNotice = `\n\n> ⚠️ **Note**: Some embedded content may not have rendered correctly. Check the developer console for details.\n\n`;
+                content = errorNotice + content;
+
+                // Show non-intrusive status bar message
+                vscode.window.setStatusBarMessage(
+                    '$(warning) Noted: Error processing embedded content',
+                    3000
+                );
             }
         }
 
