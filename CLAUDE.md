@@ -64,6 +64,8 @@ The extension now uses a fully modular architecture with clear separation of con
   - `calendarView.ts`: Webview and HTML generation
 - **`src/graph/`**: Graph view visualization
   - `graphView.ts`: Interactive graph webview with vis.js
+- **`src/preview/`**: Markdown preview functionality
+  - `markdownPreview.ts`: Markdown preview webview manager with embedded content rendering (v1.28.9)
 
 **File Operations**:
 - All file I/O uses `fs.promises` API with async/await pattern
@@ -100,6 +102,25 @@ The extension now uses a fully modular architecture with clear separation of con
   - Supports node coloring based on connection count
   - Calculates node sizes using logarithmic scaling for better visual distribution
   - Identifies bidirectional links (notes that link to each other)
+
+- **EmbedService** (v1.5.0, Enhanced v1.28.9): Manages note and image embeds
+  - Extracts embeds using `![[note-name]]` and `![[image.png]]` syntax
+  - Supports section-specific embeds: `![[note#section]]`
+  - Supports custom display text: `![[note|Display Text]]`
+  - **Webview Rendering** (v1.28.9): New methods for markdown preview integration
+    - `processEmbedsForWebview()`: Processes embedded content for webview display
+    - `renderEmbeddedImageForWebview()`: Converts images to webview-compatible URIs
+    - `renderEmbeddedNoteForWebview()`: Renders note content with styling and frontmatter removal
+  - Image resolution: Supports relative, absolute, and workspace-relative paths
+  - Section extraction: Supports both markdown headers and text-style headings
+  - Transclusion support: Live-updating embeds when source files change
+
+- **MarkdownPreviewManager** (v1.12.0, Enhanced v1.28.9): Manages markdown preview panel
+  - Creates side-by-side webview panel for .md files
+  - **Embedded Content Rendering** (v1.28.9): Integrates with `EmbedService` to render embedded notes and images
+  - Auto-updates on document changes with debounced refresh
+  - Uses VS Code's built-in markdown API with fallback renderer
+  - Supports local resource roots for workspace images
 
 - **ConnectionsService** (v1.22.0): Manages connection data for the connections panel
   - Builds on `LinkService` to provide enriched connection information
@@ -230,8 +251,13 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.bulkMove` - Move all selected notes to a folder with picker
 - `noted.bulkArchive` - Archive all selected notes with confirmation
 
-**Markdown Preview Commands** (v1.12.0):
+**Markdown Preview Commands** (v1.12.0, Enhanced v1.28.9):
 - `noted.toggleMarkdownPreview` - Toggle markdown preview for .md files (Cmd+K Cmd+V)
+  - **Embedded Content Rendering** (v1.28.9): Automatically renders embedded notes and images in preview
+    - `![[note-name]]` - Embeds entire note content
+    - `![[note-name#section]]` - Embeds specific section
+    - `![[note-name|Display Text]]` - Embeds with custom display text
+    - `![[image.png]]` - Embeds image files (supports PNG, JPG, GIF, SVG, etc.)
 
 **Undo/Redo Commands** (v1.13.0):
 - `noted.undo` - Undo last destructive operation (Cmd+Alt+Z)

@@ -316,6 +316,18 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Editor Title Button**: Click preview icon in editor toolbar for .md files
 - **Side-by-Side View**: View source and preview simultaneously
 - **Auto-Update**: Preview updates automatically as you type
+- **Embedded Content Rendering** (v1.28.9):
+  - **Embedded Notes**: Render note content inline using `![[note-name]]` syntax
+    - Supports wiki-style note resolution (finds notes by name across workspace)
+    - Section-specific embeds: `![[note-name#section]]` to embed only a specific section
+    - Custom display text: `![[note-name|Display Text]]` to override the shown title
+    - Automatic frontmatter removal for cleaner embedded content
+    - Styled with distinct visual separator and title
+  - **Embedded Images**: Render images inline using `![[image.png]]` syntax
+    - Supports relative paths (from notes folder or current note)
+    - Supports workspace-relative paths
+    - Supports all common formats: PNG, JPG, JPEG, GIF, SVG, WebP, BMP, ICO
+    - Graceful error handling with descriptive placeholders for missing resources
 
 ### Undo/Redo System (v1.13.0)
 - **Undo Last Operation**: Undo destructive operations
@@ -525,11 +537,23 @@ pnpm run test
 - **Keyboard Shortcuts**: Quick access via Cmd/Ctrl+Alt+Z (undo) and Cmd/Ctrl+Shift+Alt+Z (redo)
 - **Clear History**: Option to clear undo history when needed
 
-### Markdown Preview (v1.12.0)
+### Embedded Content Rendering (v1.28.9)
+- **Embedded Notes**: Render note content inline in markdown preview using `![[note-name]]` syntax
+- **Section Embeds**: Embed specific sections with `![[note-name#section]]`
+- **Custom Display Text**: Override titles with `![[note-name|Display Text]]`
+- **Embedded Images**: Render images inline using `![[image.png]]` syntax
+- **Smart Resolution**: Automatically finds notes and images across workspace
+- **Multiple Formats**: Supports PNG, JPG, JPEG, GIF, SVG, WebP, BMP, ICO
+- **Clean Rendering**: Automatic frontmatter removal from embedded notes
+- **Visual Styling**: Distinct styling for embedded content with titles and separators
+- **Error Handling**: Graceful placeholders for missing notes or images
+
+### Markdown Preview (v1.12.0, Enhanced v1.28.9)
 - **Live Preview**: Real-time markdown rendering for .md files
 - **Editor Integration**: Toggle preview from editor toolbar or keyboard shortcut
 - **Side-by-Side View**: View source and rendered markdown simultaneously
 - **Auto-Update**: Preview automatically updates as you type
+- **Embedded Content** (v1.28.9): Full support for embedded notes and images in preview
 
 ### Bulk Operations (v1.10.0-1.11.0)
 - **Multi-Select Mode**: Select multiple notes for batch operations

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { EmbedService } from '../services/embedService';
 
 /**
  * Manages the markdown preview panel
@@ -9,8 +10,14 @@ export class MarkdownPreviewManager {
     private currentDocument: vscode.TextDocument | undefined;
     private updateTimeout: NodeJS.Timeout | undefined;
     private disposables: vscode.Disposable[] = [];
+    private embedService: EmbedService | undefined;
 
-    constructor(private context: vscode.ExtensionContext) {}
+    constructor(
+        private context: vscode.ExtensionContext,
+        embedService?: EmbedService
+    ) {
+        this.embedService = embedService;
+    }
 
     /**
      * Toggle the markdown preview panel
@@ -55,6 +62,19 @@ export class MarkdownPreviewManager {
     private createPreviewPanel(document: vscode.TextDocument): void {
         this.currentDocument = document;
 
+        // Build local resource roots to allow images from various locations
+        const localResourceRoots = [
+            vscode.Uri.file(path.dirname(document.fileName))
+        ];
+
+        // Add workspace folders
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders) {
+            workspaceFolders.forEach(folder => {
+                localResourceRoots.push(folder.uri);
+            });
+        }
+
         this.panel = vscode.window.createWebviewPanel(
             'notedMarkdownPreview',
             `Preview: ${path.basename(document.fileName)}`,
@@ -62,9 +82,7 @@ export class MarkdownPreviewManager {
             {
                 enableScripts: true,
                 retainContextWhenHidden: true,
-                localResourceRoots: [
-                    vscode.Uri.file(path.dirname(document.fileName))
-                ]
+                localResourceRoots
             }
         );
 
@@ -129,7 +147,53 @@ export class MarkdownPreviewManager {
             return;
         }
 
-        const content = this.currentDocument.getText();
+        let content = this.currentDocument.getText();
+        const documentPath = this.currentDocument.uri.fsPath;
+
+        // Process embedded content if service is available
+        if (this.embedService && this.panel) {
+            try {
+                const originalLength = content.length;
+                content = await this.embedService.processEmbedsForWebview(
+                    content,
+                    this.panel.webview,
+                    this.currentDocument.uri
+                );
+
+                // Log successful processing with metrics
+                const processedLength = content.length;
+                const embeddedCount = (content.match(/!?\[\[/g) || []).length;
+                console.log(
+                    `[NOTED] Processed embedded content for ${path.basename(documentPath)}: ` +
+                    `${originalLength} -> ${processedLength} chars, ${embeddedCount} embeds`
+                );
+            } catch (error) {
+                // Enhanced error logging with context
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const errorStack = error instanceof Error ? error.stack : undefined;
+
+                console.error(
+                    `[NOTED] Error processing embedded content in ${path.basename(documentPath)}:`,
+                    {
+                        message: errorMessage,
+                        path: documentPath,
+                        error: error,
+                        stack: errorStack
+                    }
+                );
+
+                // Add error notification in the preview itself
+                const errorNotice = `\n\n> ⚠️ **Note**: Some embedded content may not have rendered correctly. Check the developer console for details.\n\n`;
+                content = errorNotice + content;
+
+                // Show non-intrusive status bar message
+                vscode.window.setStatusBarMessage(
+                    '$(warning) Noted: Error processing embedded content',
+                    3000
+                );
+            }
+        }
+
         const html = await this.renderMarkdown(content, this.currentDocument.uri);
         this.panel.webview.html = this.getHtmlForWebview(html);
     }
@@ -328,6 +392,22 @@ export class MarkdownPreviewManager {
             font-size: 0.85em;
             display: inline-block;
             margin: 0 4px;
+        }
+
+        /* Embedded content styles */
+        .embedded-note {
+            border-left: 3px solid var(--vscode-textLink-foreground);
+            padding-left: 16px;
+            margin: 20px 0;
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            padding: 16px;
+            border-radius: 4px;
+        }
+
+        .embedded-note h3 {
+            margin-top: 0;
+            color: var(--vscode-textLink-foreground);
+            font-size: 1.1em;
         }
     </style>
 </head>

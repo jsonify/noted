@@ -146,90 +146,105 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(notePreviewHoverDisposable);
 
     // Initialize embed service for note embeds with section support
-    const embedService = new EmbedService(linkService);
-
-    // Register hover provider for embeds
-    const embedHoverProvider = new EmbedHoverProvider(embedService);
-    const embedHoverDisposable = vscode.languages.registerHoverProvider(
-        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
-        embedHoverProvider
-    );
-    context.subscriptions.push(embedHoverDisposable);
-
-    // Register embed decorator provider for inline rendering
-    const embedDecoratorProvider = new EmbedDecoratorProvider(embedService);
-    context.subscriptions.push(embedDecoratorProvider);
-
-    // Create file watcher service for transclusion (live-updating embeds)
-    const fileWatcherService = new FileWatcherService();
-    context.subscriptions.push(fileWatcherService);
-
-    // Track which files we're currently watching for transclusion
-    const watchedFilesForTransclusion = new Set<string>();
-
-    // Update embed decorations when editor changes
-    const updateEmbedDecorations = async (editor: vscode.TextEditor | undefined) => {
-        if (editor && (editor.document.languageId === 'plaintext' || editor.document.languageId === 'markdown')) {
-            try {
-                await embedDecoratorProvider.updateDecorations(editor);
-
-                // Get the embedded sources for this document
-                const embeddedSources = embedService.getEmbeddedSources(editor.document.uri.toString());
-
-                // Start watching new embedded source files for changes (transclusion)
-                for (const sourcePath of embeddedSources) {
-                    if (!watchedFilesForTransclusion.has(sourcePath)) {
-                        fileWatcherService.watchFile(sourcePath);
-                        watchedFilesForTransclusion.add(sourcePath);
-                        console.log('[NOTED] Started watching for transclusion:', sourcePath);
-                    }
-                }
-            } catch (err) {
-                console.error('[NOTED] Error updating embed decorations:', err);
-            }
+    let embedService: EmbedService | undefined;
+    try {
+        if (!linkService) {
+            throw new Error('LinkService is not initialized');
         }
-    };
+        embedService = new EmbedService(linkService);
+        console.log('[NOTED] EmbedService initialized successfully');
+    } catch (error) {
+        console.error('[NOTED] Failed to initialize EmbedService:', error);
+        vscode.window.showWarningMessage(
+            'Noted: Failed to initialize embed service. Embedded content features may not work correctly.'
+        );
+        // embedService remains undefined, features will gracefully degrade
+    }
 
-    // Listen for changes to watched source files (transclusion)
-    context.subscriptions.push(
-        fileWatcherService.onDidChangeFile(async (uri) => {
-            console.log('[NOTED] Source file changed, updating embeds:', uri.fsPath);
+    // Register hover provider for embeds (only if embedService is available)
+    if (embedService) {
+        const embedHoverProvider = new EmbedHoverProvider(embedService);
+        const embedHoverDisposable = vscode.languages.registerHoverProvider(
+            [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+            embedHoverProvider
+        );
+        context.subscriptions.push(embedHoverDisposable);
 
-            // Find all documents that embed this source file
-            const documentsToRefresh = embedService.getDocumentsEmbeddingSource(uri.fsPath);
+        // Register embed decorator provider for inline rendering
+        const embedDecoratorProvider = new EmbedDecoratorProvider(embedService);
+        context.subscriptions.push(embedDecoratorProvider);
 
-            // Refresh decorations for each document that embeds this source
-            for (const documentUri of documentsToRefresh) {
-                await embedDecoratorProvider.refreshDecorationsForDocument(vscode.Uri.parse(documentUri));
+        // Create file watcher service for transclusion (live-updating embeds)
+        const fileWatcherService = new FileWatcherService();
+        context.subscriptions.push(fileWatcherService);
+
+        // Track which files we're currently watching for transclusion
+        const watchedFilesForTransclusion = new Set<string>();
+
+        // Update embed decorations when editor changes
+        const updateEmbedDecorations = async (editor: vscode.TextEditor | undefined) => {
+            if (editor && (editor.document.languageId === 'plaintext' || editor.document.languageId === 'markdown')) {
+                try {
+                    await embedDecoratorProvider.updateDecorations(editor);
+
+                    // Get the embedded sources for this document
+                    const embeddedSources = embedService.getEmbeddedSources(editor.document.uri.toString());
+
+                    // Start watching new embedded source files for changes (transclusion)
+                    for (const sourcePath of embeddedSources) {
+                        if (!watchedFilesForTransclusion.has(sourcePath)) {
+                            fileWatcherService.watchFile(sourcePath);
+                            watchedFilesForTransclusion.add(sourcePath);
+                            console.log('[NOTED] Started watching for transclusion:', sourcePath);
+                        }
+                    }
+                } catch (err) {
+                    console.error('[NOTED] Error updating embed decorations:', err);
+                }
             }
-        })
-    );
+        };
 
-    // Update decorations for active editor
-    updateEmbedDecorations(vscode.window.activeTextEditor);
+        // Listen for changes to watched source files (transclusion)
+        context.subscriptions.push(
+            fileWatcherService.onDidChangeFile(async (uri) => {
+                console.log('[NOTED] Source file changed, updating embeds:', uri.fsPath);
 
-    // Update decorations when active editor changes
-    context.subscriptions.push(
-        vscode.window.onDidChangeActiveTextEditor(updateEmbedDecorations)
-    );
+                // Find all documents that embed this source file
+                const documentsToRefresh = embedService.getDocumentsEmbeddingSource(uri.fsPath);
 
-    // Update decorations when document is edited
-    context.subscriptions.push(
-        vscode.workspace.onDidChangeTextDocument(event => {
-            if (vscode.window.activeTextEditor && event.document === vscode.window.activeTextEditor.document) {
-                updateEmbedDecorations(vscode.window.activeTextEditor);
-            }
-        })
-    );
+                // Refresh decorations for each document that embeds this source
+                for (const documentUri of documentsToRefresh) {
+                    await embedDecoratorProvider.refreshDecorationsForDocument(vscode.Uri.parse(documentUri));
+                }
+            })
+        );
 
-    // Update decorations when document is saved
-    context.subscriptions.push(
-        vscode.workspace.onDidSaveTextDocument(document => {
-            if (vscode.window.activeTextEditor && document === vscode.window.activeTextEditor.document) {
-                updateEmbedDecorations(vscode.window.activeTextEditor);
-            }
-        })
-    );
+        // Update decorations for active editor
+        updateEmbedDecorations(vscode.window.activeTextEditor);
+
+        // Update decorations when active editor changes
+        context.subscriptions.push(
+            vscode.window.onDidChangeActiveTextEditor(updateEmbedDecorations)
+        );
+
+        // Update decorations when document is edited
+        context.subscriptions.push(
+            vscode.workspace.onDidChangeTextDocument(event => {
+                if (vscode.window.activeTextEditor && event.document === vscode.window.activeTextEditor.document) {
+                    updateEmbedDecorations(vscode.window.activeTextEditor);
+                }
+            })
+        );
+
+        // Update decorations when document is saved
+        context.subscriptions.push(
+            vscode.workspace.onDidSaveTextDocument(document => {
+                if (vscode.window.activeTextEditor && document === vscode.window.activeTextEditor.document) {
+                    updateEmbedDecorations(vscode.window.activeTextEditor);
+                }
+            })
+        );
+    }
 
     // Register completion provider for note links
     const linkCompletionProvider = new LinkCompletionProvider(linkService, notesPath || '');
@@ -346,8 +361,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize undo service for tracking destructive operations
     const undoService = new UndoService();
 
-    // Initialize markdown preview manager
-    const markdownPreviewManager = new MarkdownPreviewManager(context);
+    // Initialize markdown preview manager with embed service for embedded content rendering
+    const markdownPreviewManager = new MarkdownPreviewManager(context, embedService);
     context.subscriptions.push(markdownPreviewManager);
 
     // Command to open today's note

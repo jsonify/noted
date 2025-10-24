@@ -30,6 +30,24 @@ export interface NoteEmbed {
 }
 
 /**
+ * Represents a matched embed during webview processing
+ */
+export interface EmbedMatch {
+    /** The full matched text including ![[...]] syntax */
+    match: string;
+    /** The note or image name */
+    noteName: string;
+    /** Optional section name (after #) */
+    section?: string;
+    /** Optional display text (after |) */
+    displayText?: string;
+    /** Character index where the match starts in the content */
+    index: number;
+    /** Type of embed: 'note' or 'image' */
+    type: 'note' | 'image';
+}
+
+/**
  * Service for managing note embeds and section extraction
  */
 export class EmbedService {
@@ -438,5 +456,260 @@ export class EmbedService {
         }
 
         return undefined;
+    }
+
+    /**
+     * Process embedded content for webview rendering
+     * Replaces ![[note-name]] and ![[image.png]] with rendered markdown
+     */
+    async processEmbedsForWebview(
+        content: string,
+        webview: vscode.Webview,
+        currentDocumentUri?: vscode.Uri
+    ): Promise<string> {
+        const embedMatches: EmbedMatch[] = [];
+
+        // First, collect all embed matches
+        EMBED_PATTERN.lastIndex = 0;
+        let match;
+        while ((match = EMBED_PATTERN.exec(content)) !== null) {
+            const noteName = match[1].trim();
+            const section = match[2] ? match[2].trim() : undefined;
+            const displayText = match[3] ? match[3].trim() : undefined;
+            const type = this.isImageFile(noteName) ? 'image' : 'note';
+
+            embedMatches.push({
+                match: match[0],
+                noteName,
+                section,
+                displayText,
+                index: match.index,
+                type
+            });
+        }
+
+        // Track processing statistics
+        let successCount = 0;
+        let failureCount = 0;
+
+        // Build array of replacement parts (process in reverse to maintain indices)
+        const parts: string[] = [];
+        let lastIndex = content.length;
+
+        // Process embeds in reverse order to maintain correct indices
+        for (let i = embedMatches.length - 1; i >= 0; i--) {
+            const embed = embedMatches[i];
+            const embedEnd = embed.index + embed.match.length;
+            let replacement: string;
+
+            try {
+                if (embed.type === 'image') {
+                    // Process as embedded image
+                    replacement = await this.renderEmbeddedImageForWebview(
+                        embed.noteName,
+                        webview,
+                        currentDocumentUri?.fsPath
+                    );
+                } else {
+                    // Process as embedded note
+                    replacement = await this.renderEmbeddedNoteForWebview(
+                        embed.noteName,
+                        embed.section,
+                        embed.displayText
+                    );
+                }
+                successCount++;
+            } catch (error) {
+                // Handle individual embed processing errors
+                failureCount++;
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const embedReference = embed.section
+                    ? `${embed.noteName}#${embed.section}`
+                    : embed.noteName;
+
+                console.error(
+                    `[NOTED] Failed to process ${embed.type} embed '${embedReference}':`,
+                    {
+                        error: errorMessage,
+                        embedType: embed.type,
+                        noteName: embed.noteName,
+                        section: embed.section,
+                        displayText: embed.displayText
+                    }
+                );
+
+                // Replace with error placeholder instead of crashing
+                replacement = `\n\n> ❌ **Error rendering ${embed.type}**: \`${embedReference}\`\n> _${errorMessage}_\n\n`;
+            }
+
+            // Build content parts: text after this embed + replacement
+            parts.unshift(content.substring(embedEnd, lastIndex));
+            parts.unshift(replacement);
+            lastIndex = embed.index;
+        }
+
+        // Add the content before the first embed (or entire content if no embeds)
+        parts.unshift(content.substring(0, lastIndex));
+
+        // Log processing summary
+        if (embedMatches.length > 0) {
+            console.log(
+                `[NOTED] Embed processing complete: ${successCount} succeeded, ${failureCount} failed (${embedMatches.length} total)`
+            );
+        }
+
+        // Join all parts to create final processed content
+        return parts.join('');
+    }
+
+    /**
+     * Render an embedded image for webview display
+     */
+    private async renderEmbeddedImageForWebview(
+        imagePath: string,
+        webview: vscode.Webview,
+        currentDocumentPath?: string
+    ): Promise<string> {
+        const resolvedPath = await this.resolveImagePath(imagePath, currentDocumentPath);
+
+        if (!resolvedPath) {
+            // Image not found, render a placeholder
+            return `\n\n> 📷 **Image not found:** \`${imagePath}\`\n\n`;
+        }
+
+        try {
+            // Convert to webview URI
+            const imageUri = webview.asWebviewUri(vscode.Uri.file(resolvedPath));
+            const filename = path.basename(resolvedPath);
+
+            // Return markdown image syntax
+            return `\n\n![${filename}](${imageUri.toString()})\n\n`;
+        } catch (error) {
+            console.error('[NOTED] Error processing embedded image:', imagePath, error);
+            return `\n\n> ⚠️ **Error loading image:** \`${imagePath}\`\n\n`;
+        }
+    }
+
+    /**
+     * Render an embedded note for webview display
+     */
+    private async renderEmbeddedNoteForWebview(
+        noteName: string,
+        section?: string,
+        displayText?: string
+    ): Promise<string> {
+        try {
+            // Resolve the note using link service
+            const notePath = await this.linkService.resolveLink(noteName);
+
+            if (!notePath) {
+                // Note not found, render a placeholder
+                return `\n\n> 📝 **Note not found:** \`${noteName}\`\n\n`;
+            }
+
+            // Read the note content (with optional section)
+            const noteContent = await this.getEmbedContent(notePath, section);
+
+            if (!noteContent) {
+                return `\n\n> 📝 **Section not found:** \`${noteName}${section ? '#' + section : ''}\`\n\n`;
+            }
+
+            const filename = path.basename(notePath, path.extname(notePath));
+            const displayName = displayText || (section ? `${filename}#${section}` : filename);
+
+            // Process the note content:
+            // 1. Remove frontmatter if present
+            const contentWithoutFrontmatter = this.removeFrontmatter(noteContent);
+
+            // 2. Create embedded note section using helper
+            return this.generateEmbeddedNoteHtml(displayName, contentWithoutFrontmatter);
+        } catch (error) {
+            console.error('[NOTED] Error processing embedded note:', noteName, error);
+            return `\n\n> ⚠️ **Error loading note:** \`${noteName}\`\n\n`;
+        }
+    }
+
+    /**
+     * Generate HTML structure for embedded note
+     * @param displayName The display name/title for the embedded note
+     * @param content The note content to embed
+     * @returns HTML string for the embedded note
+     */
+    private generateEmbeddedNoteHtml(displayName: string, content: string): string {
+        // Escape any HTML in the display name to prevent XSS
+        const escapedDisplayName = this.escapeHtml(displayName);
+        const trimmedContent = content.trim();
+
+        return [
+            '\n',
+            '<div class="embedded-note">',
+            '\n',
+            `### 📄 ${escapedDisplayName}`,
+            '\n\n',
+            trimmedContent,
+            '\n',
+            '</div>',
+            '\n'
+        ].join('');
+    }
+
+    /**
+     * Escape HTML special characters to prevent XSS
+     */
+    private escapeHtml(text: string): string {
+        const htmlEscapes: Record<string, string> = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        };
+        return text.replace(/[&<>"']/g, char => htmlEscapes[char]);
+    }
+
+    /**
+     * Remove YAML frontmatter from note content
+     * Handles various edge cases:
+     * - CRLF and LF line endings
+     * - Leading/trailing whitespace
+     * - Different spacing variations around delimiters
+     */
+    private removeFrontmatter(content: string): string {
+        // Normalize line endings to LF for consistent processing
+        const normalizedContent = content.replace(/\r\n/g, '\n');
+
+        // Trim leading whitespace to find frontmatter at the start
+        const trimmedContent = normalizedContent.trimStart();
+
+        // Check if content starts with frontmatter delimiters (---)
+        // Pattern explanation:
+        // ^---         : Must start with exactly three hyphens at the beginning
+        // [\s]*        : Optional whitespace after opening ---
+        // \n           : Newline
+        // ([\s\S]*?)   : Capture group for frontmatter content (non-greedy)
+        // \n           : Newline before closing delimiter
+        // ---          : Closing delimiter (exactly three hyphens)
+        // [\s]*        : Optional whitespace after closing ---
+        // (?:\n|$)     : Must be followed by newline or end of string
+        const frontmatterRegex = /^---[\s]*\n([\s\S]*?)\n---[\s]*(?:\n|$)/;
+        const match = trimmedContent.match(frontmatterRegex);
+
+        if (match) {
+            // Calculate how much leading whitespace was removed
+            const leadingWhitespace = normalizedContent.length - trimmedContent.length;
+
+            // Return content after frontmatter, preserving original line ending style
+            const contentAfterFrontmatter = trimmedContent.substring(match[0].length);
+
+            // If the original content had CRLF, restore it
+            if (content.includes('\r\n')) {
+                return contentAfterFrontmatter.replace(/\n/g, '\r\n');
+            }
+
+            return contentAfterFrontmatter;
+        }
+
+        // No frontmatter found, return original content
+        return content;
     }
 }
