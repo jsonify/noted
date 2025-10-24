@@ -56,6 +56,14 @@
           "name": "Connections"
         },
         {
+          "id": "notedOrphansView",
+          "name": "Orphans"
+        },
+        {
+          "id": "notedPlaceholdersView",
+          "name": "Placeholders"
+        },
+        {
           "id": "notedTagsView",
           "name": "Tags"
         }
@@ -367,6 +375,26 @@
         "command": "noted.openConnectionSource",
         "title": "Noted: Open Connection Source",
         "icon": "$(go-to-file)"
+      },
+      {
+        "command": "noted.refreshOrphans",
+        "title": "Noted: Refresh Orphans",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "noted.refreshPlaceholders",
+        "title": "Noted: Refresh Placeholders",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "noted.createNoteFromPlaceholder",
+        "title": "Noted: Create Note from Placeholder",
+        "icon": "$(add)"
+      },
+      {
+        "command": "noted.openPlaceholderSource",
+        "title": "Noted: Open Placeholder Source",
+        "icon": "$(go-to-file)"
       }
     ],
     "menus": {
@@ -497,6 +525,16 @@
           "command": "noted.refreshConnections",
           "when": "view == notedConnectionsView",
           "group": "navigation@1"
+        },
+        {
+          "command": "noted.refreshOrphans",
+          "when": "view == notedOrphansView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "noted.refreshPlaceholders",
+          "when": "view == notedPlaceholdersView",
+          "group": "navigation@1"
         }
       ],
       "view/item/context": [
@@ -579,6 +617,16 @@
           "command": "noted.openConnectionSource",
           "when": "view == notedConnectionsView && viewItem == connection",
           "group": "navigation@2"
+        },
+        {
+          "command": "noted.createNoteFromPlaceholder",
+          "when": "view == notedPlaceholdersView && viewItem == placeholder-group",
+          "group": "navigation@1"
+        },
+        {
+          "command": "noted.openPlaceholderSource",
+          "when": "view == notedPlaceholdersView && viewItem == placeholder-source",
+          "group": "navigation@1"
         }
       ]
     },
