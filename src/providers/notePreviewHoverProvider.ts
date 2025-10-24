@@ -169,9 +169,10 @@ export class NotePreviewHoverProvider implements vscode.HoverProvider {
         const markdownContent = new vscode.MarkdownString();
         markdownContent.isTrusted = true;
 
-        // Show the note name as header
+        // Show the note name as header (clickable to open)
         const filename = path.basename(targetPath, path.extname(targetPath));
-        markdownContent.appendMarkdown(`### 📄 ${filename}\n\n`);
+        const openCommand = `command:noted.openNote?${encodeURIComponent(JSON.stringify([targetPath]))}`;
+        markdownContent.appendMarkdown(`### [📄 ${filename}](${openCommand})\n\n`);
 
         // Show metadata section
         markdownContent.appendMarkdown('**Metadata:**\n\n');
@@ -207,11 +208,6 @@ export class NotePreviewHoverProvider implements vscode.HoverProvider {
         markdownContent.appendMarkdown('---\n\n');
         markdownContent.appendMarkdown('**Preview:**\n\n');
         markdownContent.appendMarkdown(preview);
-        markdownContent.appendMarkdown('\n\n---\n');
-
-        // Add a clickable link to open the note
-        const openCommand = `command:noted.openNote?${encodeURIComponent(JSON.stringify([targetPath]))}`;
-        markdownContent.appendMarkdown(`\n[📖 Open note →](${openCommand})`);
 
         return new vscode.Hover(markdownContent, range);
     }

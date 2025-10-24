@@ -216,7 +216,7 @@ It has tags and frontmatter.`
     });
 
     describe('hover includes command links', () => {
-        it('should include "Open note" command for valid links', async () => {
+        it('should include clickable title with openNote command', async () => {
             const content = 'Link [[target-note]]';
             const document = {
                 uri: vscode.Uri.file(path.join(tempDir, 'test.txt')),
@@ -235,7 +235,8 @@ It has tags and frontmatter.`
 
             expect(hover).to.not.be.undefined;
             const markdown = hover!.contents[0] as vscode.MarkdownString;
-            expect(markdown.value).to.include('Open note');
+            // Title should be clickable with the openNote command
+            expect(markdown.value).to.include('target-note');
             expect(markdown.value).to.include('command:noted.openNote');
         });
 
