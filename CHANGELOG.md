@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.28.0](https://github.com/jsonify/noted/compare/v1.27.3...v1.28.0) (2025-10-24)
+
+
+### Features
+
+* add Tailwind-inspired styles and custom CSS for Noted documentation ([c3d1148](https://github.com/jsonify/noted/commit/c3d11489cd0d044ff50c7caefdc254e43d6f2d70))
+
 ### [1.27.3](https://github.com/jsonify/noted/compare/v1.27.2...v1.27.3) (2025-10-24)
 
 ### [1.27.2](https://github.com/jsonify/noted/compare/v1.27.1...v1.27.2) (2025-10-24)
