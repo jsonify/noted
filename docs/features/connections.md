@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Connections Panel
+parent: Features
+nav_order: 6
 ---
 
 # Connections Panel

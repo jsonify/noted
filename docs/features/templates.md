@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Templates
+parent: Features
+nav_order: 1
 ---
 
 # Templates

@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Tags System
+parent: Features
+nav_order: 3
 ---
 
 # Tags System

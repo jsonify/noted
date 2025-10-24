@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Search & Discovery
+parent: Features
+nav_order: 2
 ---
 
 # Search & Discovery

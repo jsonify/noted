@@ -1,6 +1,9 @@
 ---
 layout: default
 title: Home
+nav_order: 1
+description: "Your digital scratch pad for organized note-taking in VS Code"
+permalink: /
 ---
 
 # Noted
@@ -20,64 +23,38 @@ Noted is a powerful VS Code extension designed for developers who need quick acc
 
 ## Key Features
 
-<div class="feature-grid">
+### 📝 Daily Notes
+Instantly create or open today's note with automatic organization by year and month.
 
-<div class="feature-card">
-<h3>📝 Daily Notes</h3>
-<p>Instantly create or open today's note with automatic organization by year and month.</p>
-</div>
+### 🔗 Wiki-Style Links
+Connect your notes with `[[note-name]]` syntax. Build your personal knowledge base with automatic backlinks.
 
-<div class="feature-card">
-<h3>🔗 Wiki-Style Links</h3>
-<p>Connect your notes with <code>[[note-name]]</code> syntax. Build your personal knowledge base with automatic backlinks.</p>
-</div>
+### 🔄 Connections Panel
+Always-visible sidebar showing all incoming backlinks and outgoing links with rich context and quick navigation.
 
-<div class="feature-card">
-<h3>🔄 Connections Panel</h3>
-<p>Always-visible sidebar showing all incoming backlinks and outgoing links with rich context and quick navigation.</p>
-</div>
+### 📄 Note Embeds
+Embed entire notes or specific sections inline with `![[note#section]]` syntax. Perfect for reusable content.
 
-<div class="feature-card">
-<h3>📄 Note Embeds</h3>
-<p>Embed entire notes or specific sections inline with <code>![[note#section]]</code> syntax. Perfect for reusable content.</p>
-</div>
+### 🏷️ Tag System
+Organize with inline tags using `#tagname`. Filter, search, and autocomplete your tags.
 
-<div class="feature-card">
-<h3>🏷️ Tag System</h3>
-<p>Organize with inline tags using <code>#tagname</code>. Filter, search, and autocomplete your tags.</p>
-</div>
+### 📋 Templates
+Built-in templates for meetings, research, and problem-solving. Create custom templates with 10 dynamic variables.
 
-<div class="feature-card">
-<h3>📋 Templates</h3>
-<p>Built-in templates for meetings, research, and problem-solving. Create custom templates with 10 dynamic variables.</p>
-</div>
+### 🔍 Advanced Search
+Powerful search with regex, date filters, and tag filtering to find exactly what you need.
 
-<div class="feature-card">
-<h3>🔍 Advanced Search</h3>
-<p>Powerful search with regex, date filters, and tag filtering to find exactly what you need.</p>
-</div>
+### 📅 Calendar View
+Visual monthly calendar for navigating daily notes and viewing note history.
 
-<div class="feature-card">
-<h3>📅 Calendar View</h3>
-<p>Visual monthly calendar for navigating daily notes and viewing note history.</p>
-</div>
+### 🕸️ Graph View
+Interactive visualization of note connections showing your knowledge network.
 
-<div class="feature-card">
-<h3>🕸️ Graph View</h3>
-<p>Interactive visualization of note connections showing your knowledge network.</p>
-</div>
+### ⚡ Bulk Operations
+Multi-select notes for batch operations: move, delete, or archive multiple notes at once.
 
-<div class="feature-card">
-<h3>⚡ Bulk Operations</h3>
-<p>Multi-select notes for batch operations: move, delete, or archive multiple notes at once.</p>
-</div>
-
-<div class="feature-card">
-<h3>↩️ Undo/Redo</h3>
-<p>Full undo/redo support for all destructive operations with complete history tracking.</p>
-</div>
-
-</div>
+### ↩️ Undo/Redo
+Full undo/redo support for all destructive operations with complete history tracking.
 
 ## Why Noted?
 
@@ -113,9 +90,9 @@ Create structured meeting notes with the built-in template, then link to related
 
 ## Get Started
 
-<a href="{{ '/user/getting-started' | relative_url }}" class="btn-secondary">Getting Started Guide</a>
-<a href="{{ '/features/' | relative_url }}" class="btn-secondary">Explore Features</a>
-<a href="https://marketplace.visualstudio.com/items?itemName=jsonify.noted" class="btn-secondary">Install Now</a>
+[Getting Started Guide]({{ '/user/getting-started' | relative_url }}){: .btn .btn-primary }
+[Explore Features]({{ '/features/' | relative_url }}){: .btn .btn-blue }
+[Install Now](https://marketplace.visualstudio.com/items?itemName=jsonify.noted){: .btn .btn-green }
 
 ## What's New
 

@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Wiki-Style Links
+parent: Features
+nav_order: 4
 ---
 
 # Wiki-Style Links

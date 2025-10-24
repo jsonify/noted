@@ -2,6 +2,7 @@
 layout: default
 title: Graph View
 parent: Features
+nav_order: 5
 ---
 
 # Graph View

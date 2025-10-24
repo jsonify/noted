@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Keyboard Shortcuts
+parent: User Guide
+nav_order: 2
 ---
 
 # Keyboard Shortcuts

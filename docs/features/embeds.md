@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Note and Image Embeds
+parent: Features
+nav_order: 7
 ---
 
 # Note and Image Embeds
