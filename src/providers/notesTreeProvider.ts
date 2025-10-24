@@ -3,7 +3,7 @@ import * as path from 'path';
 import { TreeItem, NoteItem, SectionItem } from './treeItems';
 import { getNotesPath } from '../services/configService';
 import { pathExists, createDirectory, readDirectoryWithTypes, getFileStats, renameFile } from '../services/fileSystemService';
-import { isYearFolder, isMonthFolder } from '../utils/validators';
+import { isYearFolder, isMonthFolder, isDailyNote } from '../utils/validators';
 import { DEFAULTS, SUPPORTED_EXTENSIONS } from '../constants';
 import { TagService } from '../services/tagService';
 import { formatTagForDisplay } from '../utils/tagHelpers';
@@ -287,7 +287,7 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
         }
 
         if (!element) {
-            // Root level - show pinned notes, recent notes, archive, years, and custom folders
+            // Root level - show pinned notes, archive, and custom folders only (no years, no recent notes)
             const items: TreeItem[] = [];
 
             // Pinned notes section (if service is available and has pinned notes)
@@ -297,9 +297,6 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                     items.push(new SectionItem('Pinned Notes', 'pinned'));
                 }
             }
-
-            // Recent notes section
-            items.push(new SectionItem('Recent Notes', 'recent'));
 
             // Archive section (if service is available)
             if (this.archiveService) {
@@ -312,37 +309,19 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
             try {
                 // Get all directories in notes path
                 const allEntries = await readDirectoryWithTypes(notesPath);
-                const entries = [];
+                const customFolders: string[] = [];
 
                 for (const entry of allEntries) {
-                    if (entry.isDirectory() && entry.name !== '.archive') {
-                        entries.push(entry.name);
+                    // Only include custom folders (not year folders, not archive)
+                    if (entry.isDirectory() && entry.name !== '.archive' && !isYearFolder(entry.name)) {
+                        customFolders.push(entry.name);
                     }
                 }
 
-                entries.sort().reverse();
-
-                // Separate years and custom folders
-                const years: string[] = [];
-                const customFolders: string[] = [];
-
-                entries.forEach(entry => {
-                    if (isYearFolder(entry)) {
-                        years.push(entry);
-                    } else {
-                        customFolders.push(entry);
-                    }
-                });
-
-                // Add custom folders first (sorted alphabetically)
+                // Add custom folders (sorted alphabetically)
                 customFolders.sort();
                 items.push(...customFolders.map(folder =>
                     new NoteItem(folder, path.join(notesPath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
-                ));
-
-                // Then add years (already sorted in reverse)
-                items.push(...years.map(year =>
-                    new NoteItem(year, path.join(notesPath, year), vscode.TreeItemCollapsibleState.Collapsed, 'year')
                 ));
             } catch (error) {
                 console.error('[NOTED] Error reading notes directory:', error);
@@ -350,58 +329,13 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
 
             return items;
         } else if (element instanceof SectionItem) {
-            if (element.sectionType === 'recent') {
-                return this.getRecentNotes(notesPath);
-            } else if (element.sectionType === 'pinned') {
+            if (element.sectionType === 'pinned') {
                 return this.getPinnedNotes();
             } else if (element.sectionType === 'archive') {
                 return this.getArchivedNotes();
             }
         } else if (element instanceof NoteItem) {
-            if (element.type === 'year') {
-                try {
-                    const allEntries = await readDirectoryWithTypes(element.filePath);
-                    const entries = [];
-
-                    for (const entry of allEntries) {
-                        if (entry.isDirectory()) {
-                            entries.push(entry.name);
-                        }
-                    }
-
-                    entries.sort().reverse();
-
-                    // In year folders, show months and custom folders
-                    const months: string[] = [];
-                    const customFolders: string[] = [];
-
-                    entries.forEach(entry => {
-                        if (isMonthFolder(entry)) {
-                            months.push(entry);
-                        } else {
-                            customFolders.push(entry);
-                        }
-                    });
-
-                    const items: NoteItem[] = [];
-
-                    // Add custom folders first
-                    customFolders.sort();
-                    items.push(...customFolders.map(folder =>
-                        new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
-                    ));
-
-                    // Then add months
-                    items.push(...months.map(month =>
-                        new NoteItem(month, path.join(element.filePath, month), vscode.TreeItemCollapsibleState.Collapsed, 'month')
-                    ));
-
-                    return items;
-                } catch (error) {
-                    console.error('[NOTED] Error reading year folder:', element.filePath, error);
-                    return [];
-                }
-            } else if (element.type === 'month' || element.type === 'custom-folder') {
+            if (element.type === 'custom-folder') {
                 // Both month and custom folders can contain notes and subfolders
                 try {
                     const entries = await readDirectoryWithTypes(element.filePath);
@@ -417,9 +351,11 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                         new NoteItem(folder, path.join(element.filePath, folder), vscode.TreeItemCollapsibleState.Collapsed, 'custom-folder')
                     ));
 
-                    // Get notes
+                    // Get notes (exclude daily notes)
                     const notes = entries
-                        .filter(e => !e.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => e.name.endsWith(ext)))
+                        .filter(e => !e.isDirectory() &&
+                               SUPPORTED_EXTENSIONS.some(ext => e.name.endsWith(ext)) &&
+                               !isDailyNote(e.name))
                         .map(e => e.name)
                         .sort()
                         .reverse();

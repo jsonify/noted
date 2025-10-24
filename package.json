@@ -45,11 +45,15 @@
       "notedExplorer": [
         {
           "id": "notedTemplatesView",
-          "name": "Templates"
+          "name": "Templates & Recent"
         },
         {
           "id": "notedView",
           "name": "My Notes"
+        },
+        {
+          "id": "notedJournalView",
+          "name": "Journal"
         },
         {
           "id": "notedConnectionsView",

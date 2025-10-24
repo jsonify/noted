@@ -66,7 +66,8 @@ export const BUILT_IN_TEMPLATE_INFO = [
 export const FOLDER_PATTERNS = {
     YEAR: /^\d{4}$/,
     MONTH: /^\d{2}-[A-Za-z]+$/,
-    INVALID_CHARS: /[<>:"|?*]/
+    INVALID_CHARS: /[<>:"|?*]/,
+    DAILY_NOTE: /^\d{4}-\d{2}-\d{2}$/
 };
 
 /**

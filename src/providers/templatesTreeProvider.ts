@@ -1,15 +1,41 @@
 import * as vscode from 'vscode';
-import { TreeItem, CategoryItem, TemplateActionItem, ActionButtonItem } from './treeItems';
+import * as path from 'path';
+import { TreeItem, CategoryItem, TemplateActionItem, ActionButtonItem, SectionItem, NoteItem } from './treeItems';
 import { getAllCategories, getCategoryConfig } from '../services/categoryService';
 import { getCustomTemplates } from '../services/templateService';
+import { getNotesPath } from '../services/configService';
+import { readDirectoryWithTypes, getFileStats } from '../services/fileSystemService';
+import { DEFAULTS, SUPPORTED_EXTENSIONS } from '../constants';
+import { PinnedNotesService } from '../services/pinnedNotesService';
+import { BulkOperationsService } from '../services/bulkOperationsService';
 
 /**
  * Tree data provider for templates view
- * Shows category-based template organization with action buttons
+ * Shows category-based template organization with action buttons and recent notes
  */
 export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
+
+    // Optional services
+    private pinnedNotesService?: PinnedNotesService;
+    private bulkOperationsService?: BulkOperationsService;
+
+    /**
+     * Set the pinned notes service
+     */
+    setPinnedNotesService(service: PinnedNotesService): void {
+        this.pinnedNotesService = service;
+        service.onDidChangePinnedNotes(() => this.refresh());
+    }
+
+    /**
+     * Set the bulk operations service
+     */
+    setBulkOperationsService(service: BulkOperationsService): void {
+        this.bulkOperationsService = service;
+        service.onDidChangeSelection(() => this.refresh());
+    }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
@@ -21,7 +47,7 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
 
     async getChildren(element?: TreeItem): Promise<TreeItem[]> {
         if (!element) {
-            // Root level - show primary actions and categories
+            // Root level - show primary actions, recent notes, and categories
             const items: TreeItem[] = [];
 
             // Primary action buttons at top
@@ -42,6 +68,9 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                     'Create a new note from template picker'
                 )
             );
+
+            // Recent notes section
+            items.push(new SectionItem('Recent Notes', 'recent'));
 
             // Get all categories (excluding Daily since it's handled by Today button)
             const categories = getAllCategories();
@@ -69,6 +98,10 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
             );
 
             return items;
+        } else if (element instanceof SectionItem) {
+            if (element.sectionType === 'recent') {
+                return this.getRecentNotes();
+            }
         } else if (element instanceof CategoryItem) {
             // Show template actions for this category
             if (element.categoryName === 'Manage') {
@@ -161,6 +194,78 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                 'Open the templates folder in system explorer'
             )
         ];
+    }
+
+    /**
+     * Get recent notes
+     */
+    private async getRecentNotes(): Promise<TreeItem[]> {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            return [];
+        }
+
+        const allNotes: Array<{path: string, mtime: Date, name: string}> = [];
+
+        async function findNotes(dir: string) {
+            try {
+                const entries = await readDirectoryWithTypes(dir);
+                for (const entry of entries) {
+                    const fullPath = path.join(dir, entry.name);
+                    if (entry.isDirectory()) {
+                        await findNotes(fullPath);
+                    } else if (SUPPORTED_EXTENSIONS.some(ext => entry.name.endsWith(ext))) {
+                        try {
+                            const stat = await getFileStats(fullPath);
+                            allNotes.push({ path: fullPath, mtime: stat.mtime, name: entry.name });
+                        } catch (error) {
+                            console.error('[NOTED] Error stating file:', fullPath, error);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('[NOTED] Error reading directory:', dir, error);
+            }
+        }
+
+        await findNotes(notesPath);
+        allNotes.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
+
+        return allNotes
+            .slice(0, DEFAULTS.RECENT_NOTES_LIMIT)
+            .map(note => {
+                const item = new NoteItem(note.name, note.path, vscode.TreeItemCollapsibleState.None, 'note');
+
+                // Set command based on whether select mode is active
+                if (this.bulkOperationsService?.isSelectModeActive()) {
+                    item.command = {
+                        command: 'noted.toggleNoteSelection',
+                        title: 'Toggle Selection',
+                        arguments: [item]
+                    };
+                } else {
+                    item.command = {
+                        command: 'noted.openNote',
+                        title: 'Open Note',
+                        arguments: [note.path]
+                    };
+                }
+
+                item.contextValue = 'note';
+
+                // Mark as pinned if applicable
+                if (this.pinnedNotesService && this.pinnedNotesService.isPinned(note.path)) {
+                    item.setPinned(true);
+                }
+
+                // Apply selection state if bulk operations is active
+                if (this.bulkOperationsService && item.type === 'note') {
+                    const isSelected = this.bulkOperationsService.isSelected(item.filePath);
+                    item.setSelected(isSelected);
+                }
+
+                return item;
+            });
     }
 
     /**
