@@ -1,41 +1,31 @@
 import * as vscode from 'vscode';
 
+interface FormattingOption {
+    id: string;
+    label: string;
+    description: string;
+    icon: string;
+    action: () => void | Promise<void>;
+}
+
 export class MarkdownToolbarService {
-    private statusBarItems: Map<string, vscode.StatusBarItem> = new Map();
+    private toolbarButton: vscode.StatusBarItem;
     private disposables: vscode.Disposable[] = [];
 
     constructor(private context: vscode.ExtensionContext) {
-        this.createStatusBarItems();
+        this.toolbarButton = this.createToolbarButton();
         this.setupEventListeners();
     }
 
-    private createStatusBarItems(): void {
-        // Define toolbar buttons with icons and tooltips
-        const buttons = [
-            { id: 'bold', text: '$(bold) B', tooltip: 'Bold (Ctrl+B)', priority: 100, command: 'noted.format.bold' },
-            { id: 'italic', text: '$(italic) I', tooltip: 'Italic (Ctrl+I)', priority: 99, command: 'noted.format.italic' },
-            { id: 'strikethrough', text: '$(strikethrough) S', tooltip: 'Strikethrough', priority: 98, command: 'noted.format.strikethrough' },
-            { id: 'code', text: '$(code) Code', tooltip: 'Inline Code', priority: 97, command: 'noted.format.code' },
-            { id: 'codeblock', text: '$(file-code) Block', tooltip: 'Code Block', priority: 96, command: 'noted.format.codeblock' },
-            { id: 'bulletlist', text: '$(list-unordered) List', tooltip: 'Bullet List', priority: 95, command: 'noted.format.bulletlist' },
-            { id: 'numberedlist', text: '$(list-ordered) 1-2-3', tooltip: 'Numbered List', priority: 94, command: 'noted.format.numberedlist' },
-            { id: 'checklist', text: '$(checklist) Todo', tooltip: 'Checklist', priority: 93, command: 'noted.format.checklist' },
-            { id: 'quote', text: '$(quote) Quote', tooltip: 'Block Quote', priority: 92, command: 'noted.format.quote' },
-            { id: 'link', text: '$(link) Link', tooltip: 'Insert Link', priority: 91, command: 'noted.format.link' },
-            { id: 'heading', text: '$(symbol-text) H', tooltip: 'Heading', priority: 90, command: 'noted.format.heading' },
-        ];
-
-        // Create status bar items
-        for (const button of buttons) {
-            const item = vscode.window.createStatusBarItem(
-                vscode.StatusBarAlignment.Right,
-                button.priority
-            );
-            item.text = button.text;
-            item.tooltip = button.tooltip;
-            item.command = button.command;
-            this.statusBarItems.set(button.id, item);
-        }
+    private createToolbarButton(): vscode.StatusBarItem {
+        const item = vscode.window.createStatusBarItem(
+            vscode.StatusBarAlignment.Right,
+            100
+        );
+        item.text = '$(edit) Markdown Tools';
+        item.tooltip = 'Open markdown formatting menu';
+        item.command = 'noted.showMarkdownToolbar';
+        return item;
     }
 
     private setupEventListeners(): void {
@@ -65,19 +55,116 @@ export class MarkdownToolbarService {
             this.isMarkdownFile(editor.document) &&
             !editor.selection.isEmpty;
 
-        // Show or hide all toolbar items
-        for (const item of this.statusBarItems.values()) {
-            if (shouldShow) {
-                item.show();
-            } else {
-                item.hide();
-            }
+        // Show or hide the toolbar button
+        if (shouldShow) {
+            this.toolbarButton.show();
+        } else {
+            this.toolbarButton.hide();
         }
     }
 
     private isMarkdownFile(document: vscode.TextDocument): boolean {
         const ext = document.fileName.split('.').pop()?.toLowerCase();
         return ext === 'md' || ext === 'txt';
+    }
+
+    // Show formatting menu with all options
+    public async showFormattingMenu(): Promise<void> {
+        const options: FormattingOption[] = [
+            {
+                id: 'bold',
+                label: '$(bold) Bold',
+                description: 'Wrap text with **bold**',
+                icon: '$(bold)',
+                action: () => this.formatBold()
+            },
+            {
+                id: 'italic',
+                label: '$(italic) Italic',
+                description: 'Wrap text with *italic*',
+                icon: '$(italic)',
+                action: () => this.formatItalic()
+            },
+            {
+                id: 'strikethrough',
+                label: '$(strikethrough) Strikethrough',
+                description: 'Wrap text with ~~strikethrough~~',
+                icon: '$(strikethrough)',
+                action: () => this.formatStrikethrough()
+            },
+            {
+                id: 'code',
+                label: '$(code) Inline Code',
+                description: 'Wrap text with `code`',
+                icon: '$(code)',
+                action: () => this.formatCode()
+            },
+            {
+                id: 'codeblock',
+                label: '$(file-code) Code Block',
+                description: 'Create a code block with syntax highlighting',
+                icon: '$(file-code)',
+                action: () => this.formatCodeBlock()
+            },
+            {
+                id: 'bulletlist',
+                label: '$(list-unordered) Bullet List',
+                description: 'Convert to bullet list',
+                icon: '$(list-unordered)',
+                action: () => this.formatBulletList()
+            },
+            {
+                id: 'numberedlist',
+                label: '$(list-ordered) Numbered List',
+                description: 'Convert to numbered list',
+                icon: '$(list-ordered)',
+                action: () => this.formatNumberedList()
+            },
+            {
+                id: 'checklist',
+                label: '$(checklist) Task List',
+                description: 'Convert to checklist items',
+                icon: '$(checklist)',
+                action: () => this.formatChecklist()
+            },
+            {
+                id: 'quote',
+                label: '$(quote) Block Quote',
+                description: 'Convert to block quote',
+                icon: '$(quote)',
+                action: () => this.formatQuote()
+            },
+            {
+                id: 'link',
+                label: '$(link) Insert Link',
+                description: 'Create markdown link',
+                icon: '$(link)',
+                action: () => this.formatLink()
+            },
+            {
+                id: 'heading',
+                label: '$(symbol-text) Heading',
+                description: 'Convert to heading (H1-H6)',
+                icon: '$(symbol-text)',
+                action: () => this.formatHeading()
+            }
+        ];
+
+        const selected = await vscode.window.showQuickPick(
+            options.map(opt => ({
+                label: opt.label,
+                description: opt.description,
+                action: opt.action
+            })),
+            {
+                placeHolder: 'Choose a markdown formatting option',
+                matchOnDescription: true
+            }
+        );
+
+        if (selected && selected.action) {
+            await selected.action();
+        }
     }
 
     // Formatting command handlers
@@ -243,11 +330,8 @@ export class MarkdownToolbarService {
     }
 
     public dispose(): void {
-        // Dispose all status bar items
-        for (const item of this.statusBarItems.values()) {
-            item.dispose();
-        }
-        this.statusBarItems.clear();
+        // Dispose toolbar button
+        this.toolbarButton.dispose();
 
         // Dispose event listeners
         for (const disposable of this.disposables) {

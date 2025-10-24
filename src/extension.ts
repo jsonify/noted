@@ -1395,48 +1395,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Markdown Formatting Commands (Visual Toolbar)
     // ============================================================================
 
-    let formatBold = vscode.commands.registerCommand('noted.format.bold', () => {
-        markdownToolbarService.formatBold();
-    });
-
-    let formatItalic = vscode.commands.registerCommand('noted.format.italic', () => {
-        markdownToolbarService.formatItalic();
-    });
-
-    let formatStrikethrough = vscode.commands.registerCommand('noted.format.strikethrough', () => {
-        markdownToolbarService.formatStrikethrough();
-    });
-
-    let formatCode = vscode.commands.registerCommand('noted.format.code', () => {
-        markdownToolbarService.formatCode();
-    });
-
-    let formatCodeBlock = vscode.commands.registerCommand('noted.format.codeblock', async () => {
-        await markdownToolbarService.formatCodeBlock();
-    });
-
-    let formatBulletList = vscode.commands.registerCommand('noted.format.bulletlist', () => {
-        markdownToolbarService.formatBulletList();
-    });
-
-    let formatNumberedList = vscode.commands.registerCommand('noted.format.numberedlist', () => {
-        markdownToolbarService.formatNumberedList();
-    });
-
-    let formatChecklist = vscode.commands.registerCommand('noted.format.checklist', () => {
-        markdownToolbarService.formatChecklist();
-    });
-
-    let formatQuote = vscode.commands.registerCommand('noted.format.quote', () => {
-        markdownToolbarService.formatQuote();
-    });
-
-    let formatLink = vscode.commands.registerCommand('noted.format.link', async () => {
-        await markdownToolbarService.formatLink();
-    });
-
-    let formatHeading = vscode.commands.registerCommand('noted.format.heading', async () => {
-        await markdownToolbarService.formatHeading();
+    let showMarkdownToolbar = vscode.commands.registerCommand('noted.showMarkdownToolbar', async () => {
+        await markdownToolbarService.showFormattingMenu();
     });
 
     // ============================================================================
@@ -1478,8 +1438,7 @@ export function activate(context: vscode.ExtensionContext) {
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive,
         toggleMarkdownPreview,
-        formatBold, formatItalic, formatStrikethrough, formatCode, formatCodeBlock,
-        formatBulletList, formatNumberedList, formatChecklist, formatQuote, formatLink, formatHeading,
+        showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol
     );
