@@ -58,9 +58,16 @@ For a complete list of implemented features, see [notes.md](./notes.md).
   - Truncates long lines for better readability
   - Includes clickable "Open note" link
   - Shows "Create note" option for broken links
+- [x] **Link preview cards**: Rich previews showing note metadata (tags, created date, etc.) (v1.29.2)
+  - Displays comprehensive metadata in hover preview cards
+  - Shows all tags from frontmatter and inline `#tags`
+  - Smart date formatting with relative times (e.g., "Just now", "2 days ago")
+  - Displays file size in KB
+  - Shows up to 3 additional frontmatter fields (status, priority, etc.)
+  - Maintains existing content preview alongside metadata
+  - 8 comprehensive unit tests added (334 total tests passing)
 - [ ] **Inline image previews**: Display images directly in editor when using markdown image syntax
 - [ ] **Embedded content rendering**: Render embedded notes/images in preview mode
-- [ ] **Link preview cards**: Rich previews showing note metadata (tags, created date, etc.)
 
 ### Navigation Features (inspired by Markdown Memo)
 - [ ] **Random note**: Open a random note for serendipitous discovery and review

@@ -213,11 +213,16 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - **Full path**: `[[2025/10-October/meeting]]` - disambiguates to specific note
   - **Partial path**: `[[work/meeting]]` - works with custom folders too
   - **Cross-platform**: Supports both forward slashes `/` and backslashes `\` in paths
-- **Hover Previews** (v1.15.0): See note content without opening files
+- **Hover Previews** (v1.15.0, Enhanced v1.29.2): See note content and rich metadata without opening files
+  - **Rich Metadata Cards** (v1.29.2): Preview cards now display comprehensive note metadata
+    - **Tags**: Shows all tags from frontmatter and inline `#tags`
+    - **Dates**: Displays created and modified dates with smart relative formatting (e.g., "Just now", "2 days ago")
+    - **File Size**: Shows note size in KB
+    - **Custom Frontmatter**: Displays up to 3 additional frontmatter fields (status, priority, etc.)
   - **Preview on Hover**: Hover over any `[[wiki-link]]` to see note content preview
   - **First 10 Lines**: Shows the beginning of the note for quick context
   - **Smart Truncation**: Long lines are automatically truncated for readability
-  - **Quick Actions**: Click "Open note →" to open the full note
+  - **Quick Actions**: Click "📖 Open note →" to open the full note
   - **Create from Broken Links**: Hover over non-existent notes shows "Create note →" link
   - **Works with Display Text**: Previews work for `[[note|Display Text]]` syntax too
 - **Link Autocomplete** (v1.14.0): Type `[[` to get intelligent suggestions
