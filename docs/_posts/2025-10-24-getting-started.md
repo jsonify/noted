@@ -1,6 +1,6 @@
 ---
 title: Getting Started with Noted
-date: 2024-10-23 12:00:00 -0800
+date: 2025-10-24 12:00:00 -0800
 categories: [Documentation, Getting Started]
 tags: [tutorial, setup, quickstart]
 pin: true

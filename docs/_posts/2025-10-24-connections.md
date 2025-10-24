@@ -1,6 +1,6 @@
 ---
 title: Connections Panel
-date: 2024-10-23 08:30:00 -0800
+date: 2025-10-24 08:30:00 -0800
 categories: [Features, Navigation]
 tags: [connections, backlinks, navigation, links]
 ---

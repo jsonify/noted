@@ -1,6 +1,6 @@
 ---
 title: Bulk Operations
-date: 2024-10-23 06:00:00 -0800
+date: 2025-10-24 06:00:00 -0800
 categories: [Features, Productivity]
 tags: [bulk, multi-select, operations, productivity]
 ---

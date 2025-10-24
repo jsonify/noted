@@ -1,6 +1,6 @@
 ---
 title: Wiki-Style Links
-date: 2024-10-23 11:00:00 -0800
+date: 2025-10-24 11:00:00 -0800
 categories: [Features, Linking]
 tags: [wiki-links, backlinks, connections]
 ---

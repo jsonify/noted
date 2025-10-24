@@ -1,6 +1,6 @@
 ---
 title: Templates System
-date: 2024-10-23 10:00:00 -0800
+date: 2025-10-24 10:00:00 -0800
 categories: [Features, Templates]
 tags: [templates, automation, productivity]
 ---
