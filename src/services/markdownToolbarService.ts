@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 interface FormattingOption {
     id: string;
@@ -64,8 +65,8 @@ export class MarkdownToolbarService {
     }
 
     private isMarkdownFile(document: vscode.TextDocument): boolean {
-        const ext = document.fileName.split('.').pop()?.toLowerCase();
-        return ext === 'md' || ext === 'txt';
+        const ext = path.extname(document.fileName).toLowerCase();
+        return ext === '.md' || ext === '.txt';
     }
 
     // Show formatting menu with all options
@@ -237,13 +238,17 @@ export class MarkdownToolbarService {
             return;
         }
 
+        // Regex to find existing list markers (bullet, numbered, or checklist)
+        const listMarkerRegex = /^\s*(-|\*|\+|\d+\.|- \[[ x]\])\s*/;
+
         // Split by lines and add prefix to each
         const lines = selectedText.split('\n');
         const formatted = lines.map((line, index) => {
+            const cleanLine = line.replace(listMarkerRegex, '');
             if (isNumbered) {
-                return `${index + 1}. ${line}`;
+                return `${index + 1}. ${cleanLine}`;
             }
-            return `${prefix}${line}`;
+            return `${prefix}${cleanLine}`;
         }).join('\n');
 
         editor.edit(editBuilder => {
@@ -330,6 +335,7 @@ export class MarkdownToolbarService {
 
         const selection = editor.selection;
         const selectedText = editor.document.getText(selection);
+        const headingRegex = /^\s*#{1,6}\s*/;
 
         // If no selection, insert placeholder
         if (!selectedText) {
@@ -349,7 +355,8 @@ export class MarkdownToolbarService {
                 if (line.trim() === '') {
                     return line;
                 }
-                return `${level.value} ${line}`;
+                const cleanLine = line.replace(headingRegex, '');
+                return `${level.value} ${cleanLine}`;
             }).join('\n');
 
             await editor.edit(editBuilder => {
@@ -357,8 +364,9 @@ export class MarkdownToolbarService {
             });
         } else {
             // Single line
+            const cleanLine = selectedText.replace(headingRegex, '');
             await editor.edit(editBuilder => {
-                editBuilder.replace(selection, `${level.value} ${selectedText}`);
+                editBuilder.replace(selection, `${level.value} ${cleanLine}`);
             });
         }
     }
