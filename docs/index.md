@@ -96,20 +96,16 @@ Create structured meeting notes with the built-in template, then link to related
 
 ## What's New
 
-### Latest Release: v1.22.0
+### Recent Highlights
 
+- **Auto-Backlinks Sections**: Backlinks automatically appended to notes with tags from source notes
+- **YAML Frontmatter Tags**: Add tags using standard frontmatter format: `tags: [tag1, tag2, tag3]`
 - **Connections Panel**: Dedicated sidebar showing all incoming backlinks and outgoing links with rich context
-- **Bidirectional View**: See both backlinks and outgoing connections in one always-visible panel
-- **Connection Context**: View line numbers and snippets for each connection
-- **Quick Navigation**: Click connections to open notes or jump to exact source lines
-- **Note Embeds**: Embed entire notes with `![[note-name]]` syntax
-- **Section Embeds**: Embed specific sections with `![[note#section]]` syntax
-- **Enhanced Link Features**: Full-path links for disambiguation, autocomplete, and diagnostics
-- **Extract to Note**: Create new linked notes from selected text
-- **Rename Symbol**: Refactor links across all notes
-- **Undo/Redo System**: Complete history tracking for all operations
-- **Bulk Operations**: Multi-select and batch operations
-- **Graph View**: Interactive visualization of note connections
+- **Note & Image Embeds**: Embed entire notes, sections, or images inline with `![[note-name]]` syntax
+- **Graph View**: Interactive visualization with customizable nodes, edges, physics, focus mode, and time-based filtering
+- **Undo/Redo System**: Complete history tracking for all destructive operations
+- **Bulk Operations**: Multi-select notes for batch delete, move, or archive operations
+- **Extract to Note**: Create new linked notes from selected text with automatic linking
 
 [View Full Changelog](https://github.com/jsonify/noted/releases)
 
