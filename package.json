@@ -45,11 +45,15 @@
       "notedExplorer": [
         {
           "id": "notedTemplatesView",
-          "name": "Templates"
+          "name": "Templates & Recent"
         },
         {
           "id": "notedView",
           "name": "My Notes"
+        },
+        {
+          "id": "notedJournalView",
+          "name": "Journal"
         },
         {
           "id": "notedConnectionsView",
@@ -80,7 +84,13 @@
       },
       {
         "command": "noted.openWithTemplate",
-        "title": "Noted: Open with Template"
+        "title": "Noted: Open with Template",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "noted.createQuickNote",
+        "title": "Noted: New Quick Note",
+        "icon": "$(add)"
       },
       {
         "command": "noted.createCategoryNote",
@@ -379,32 +389,32 @@
       ],
       "view/title": [
         {
-          "command": "noted.openToday",
+          "command": "noted.createQuickNote",
           "when": "view == notedView",
           "group": "navigation@1"
         },
         {
-          "command": "noted.createFolder",
+          "command": "noted.openWithTemplate",
           "when": "view == notedView",
           "group": "navigation@2"
         },
         {
-          "command": "noted.searchNotes",
+          "command": "noted.createFolder",
           "when": "view == notedView",
           "group": "navigation@3"
         },
         {
-          "command": "noted.quickSwitcher",
-          "when": "view == notedView",
-          "group": "navigation@3.5"
-        },
-        {
-          "command": "noted.refresh",
+          "command": "noted.searchNotes",
           "when": "view == notedView",
           "group": "navigation@4"
         },
         {
-          "command": "noted.showCalendar",
+          "command": "noted.quickSwitcher",
+          "when": "view == notedView",
+          "group": "navigation@4.5"
+        },
+        {
+          "command": "noted.refresh",
           "when": "view == notedView",
           "group": "navigation@5"
         },
@@ -412,6 +422,21 @@
           "command": "noted.showGraph",
           "when": "view == notedView",
           "group": "navigation@6"
+        },
+        {
+          "command": "noted.openToday",
+          "when": "view == notedJournalView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "noted.showCalendar",
+          "when": "view == notedJournalView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "noted.refresh",
+          "when": "view == notedJournalView",
+          "group": "navigation@3"
         },
         {
           "command": "noted.clearTagFilters",

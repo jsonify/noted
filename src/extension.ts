@@ -9,6 +9,7 @@ import { TagService } from './services/tagService';
 import { formatTagForDisplay } from './utils/tagHelpers';
 import { renameTag, mergeTags, deleteTag, exportTags } from './commands/tagCommands';
 import { NotesTreeProvider } from './providers/notesTreeProvider';
+import { JournalTreeProvider } from './providers/journalTreeProvider';
 import { TemplatesTreeProvider } from './providers/templatesTreeProvider';
 import { TagsTreeProvider } from './providers/tagsTreeProvider';
 import { ConnectionsTreeProvider } from './providers/connectionsTreeProvider';
@@ -76,6 +77,10 @@ export function activate(context: vscode.ExtensionContext) {
         treeDataProvider: notesProvider,
         dragAndDropController: notesProvider
     });
+
+    // Create tree data provider for journal view (daily notes)
+    const journalProvider = new JournalTreeProvider();
+    vscode.window.registerTreeDataProvider('notedJournalView', journalProvider);
 
     // Create tree data provider for templates view (empty, uses viewsWelcome)
     const templatesProvider = new TemplatesTreeProvider();
@@ -349,6 +354,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize pinned notes service
     const pinnedNotesService = new PinnedNotesService(context);
     notesProvider.setPinnedNotesService(pinnedNotesService);
+    journalProvider.setPinnedNotesService(pinnedNotesService);
+    templatesProvider.setPinnedNotesService(pinnedNotesService);
 
     // Initialize archive service
     const archiveService = new ArchiveService(notesPath || '');
@@ -357,6 +364,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize bulk operations service
     const bulkOperationsService = new BulkOperationsService();
     notesProvider.setBulkOperationsService(bulkOperationsService);
+    journalProvider.setBulkOperationsService(bulkOperationsService);
+    templatesProvider.setBulkOperationsService(bulkOperationsService);
 
     // Initialize undo service for tracking destructive operations
     const undoService = new UndoService();
@@ -365,10 +374,17 @@ export function activate(context: vscode.ExtensionContext) {
     const markdownToolbarService = new MarkdownToolbarService(context);
     context.subscriptions.push(markdownToolbarService);
 
+    // Helper function to refresh all tree providers
+    const refreshAllProviders = () => {
+        notesProvider.refresh();
+        journalProvider.refresh();
+        templatesProvider.refresh();
+    };
+
     // Command to open today's note
     let openTodayNote = vscode.commands.registerCommand('noted.openToday', async () => {
         await openDailyNote();
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     // Command to open with template
@@ -410,7 +426,13 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         await createNoteFromTemplate(templateType);
-        notesProvider.refresh();
+        refreshAllProviders();
+    });
+
+    // Command to create a quick note directly
+    let createQuickNote = vscode.commands.registerCommand('noted.createQuickNote', async () => {
+        await createNoteFromTemplate('quick');
+        refreshAllProviders();
     });
 
     // Command to create category note
@@ -452,7 +474,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command to refresh notes view
     let refreshNotes = vscode.commands.registerCommand('noted.refresh', () => {
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     // Command to refresh connections panel
@@ -552,7 +574,7 @@ export function activate(context: vscode.ExtensionContext) {
             await vscode.window.showTextDocument(document);
 
             // Refresh the tree view
-            notesProvider.refresh();
+            refreshAllProviders();
 
             vscode.window.showInformationMessage(`Created note: ${sanitizedName}`);
         } catch (error) {
@@ -574,7 +596,7 @@ export function activate(context: vscode.ExtensionContext) {
                 await trackDeleteNote(undoService, item.filePath);
 
                 await fsp.unlink(item.filePath);
-                notesProvider.refresh();
+                refreshAllProviders();
                 vscode.window.showInformationMessage(`Deleted ${item.label} (Undo available)`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to delete note: ${error instanceof Error ? error.message : String(error)}`);
@@ -600,7 +622,7 @@ export function activate(context: vscode.ExtensionContext) {
                 const linkUpdateResult = await linkService.updateLinksOnRename(item.filePath, newPath);
 
                 await fsp.rename(item.filePath, newPath);
-                notesProvider.refresh();
+                refreshAllProviders();
 
                 // Show success message with link update info
                 let message = `Renamed to ${newName} (Undo available)`;
@@ -631,7 +653,7 @@ export function activate(context: vscode.ExtensionContext) {
             const isPinned = await pinnedNotesService.togglePin(item.filePath);
             const message = isPinned ? `Pinned ${item.label}` : `Unpinned ${item.label}`;
             vscode.window.showInformationMessage(message);
-            notesProvider.refresh();
+            refreshAllProviders();
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to toggle pin: ${error instanceof Error ? error.message : String(error)}`);
         }
@@ -670,7 +692,7 @@ export function activate(context: vscode.ExtensionContext) {
             // Track operation for undo (unarchive is also undoable - it archives again)
             await trackArchiveNote(undoService, destinationPath, item.filePath);
 
-            notesProvider.refresh();
+            refreshAllProviders();
             vscode.window.showInformationMessage(`Unarchived ${item.label} (Undo available)`);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to unarchive note: ${error instanceof Error ? error.message : String(error)}`);
@@ -705,7 +727,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (answer === 'Archive') {
             try {
                 const count = await archiveService.archiveOldNotes(days);
-                notesProvider.refresh();
+                refreshAllProviders();
                 vscode.window.showInformationMessage(`Archived ${count} note${count !== 1 ? 's' : ''}`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to archive old notes: ${error instanceof Error ? error.message : String(error)}`);
@@ -926,7 +948,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
         await renameTag(tagService, notesPath);
         await tagsProvider.refresh();
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     // Command to merge tags
@@ -938,7 +960,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
         await mergeTags(tagService, notesPath);
         await tagsProvider.refresh();
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     // Command to delete a tag
@@ -950,7 +972,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
         await deleteTag(tagService, notesPath);
         await tagsProvider.refresh();
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     // Command to export tags
@@ -980,7 +1002,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Command to move notes folder
     let moveNotesFolder = vscode.commands.registerCommand('noted.moveNotesFolder', async () => {
         await moveNotesFolderLocation();
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     // Command to duplicate note
@@ -994,7 +1016,7 @@ export function activate(context: vscode.ExtensionContext) {
             const newPath = path.join(dir, newName);
 
             await fsp.writeFile(newPath, content);
-            notesProvider.refresh();
+            refreshAllProviders();
             vscode.window.showInformationMessage(`Duplicated as ${newName}`);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to duplicate note: ${error instanceof Error ? error.message : String(error)}`);
@@ -1042,7 +1064,7 @@ export function activate(context: vscode.ExtensionContext) {
             // Folder doesn't exist, create it
             try {
                 await fsp.mkdir(newFolderPath, { recursive: true });
-                notesProvider.refresh();
+                refreshAllProviders();
                 vscode.window.showInformationMessage(`Created folder: ${folderName}`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to create folder: ${error instanceof Error ? error.message : String(error)}`);
@@ -1092,7 +1114,7 @@ export function activate(context: vscode.ExtensionContext) {
                 await trackMoveNote(undoService, item.filePath, newPath);
 
                 await fsp.rename(item.filePath, newPath);
-                notesProvider.refresh();
+                refreshAllProviders();
                 vscode.window.showInformationMessage(`Moved to ${selected.folder.name} (Undo available)`);
             }
         } catch (error) {
@@ -1142,7 +1164,7 @@ export function activate(context: vscode.ExtensionContext) {
                 await trackRenameFolder(undoService, item.filePath, newPath);
 
                 await fsp.rename(item.filePath, newPath);
-                notesProvider.refresh();
+                refreshAllProviders();
                 vscode.window.showInformationMessage(`Renamed to ${newName} (Undo available)`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to rename folder: ${error instanceof Error ? error.message : String(error)}`);
@@ -1173,7 +1195,7 @@ export function activate(context: vscode.ExtensionContext) {
             await trackDeleteFolder(undoService, item.filePath);
 
             await fsp.rm(item.filePath, { recursive: true, force: true });
-            notesProvider.refresh();
+            refreshAllProviders();
             vscode.window.showInformationMessage(`Deleted folder: ${item.label} (Undo available)`);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to delete folder: ${error instanceof Error ? error.message : String(error)}`);
@@ -1248,7 +1270,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             console.log('[NOTED DEBUG] Setup default folder:', defaultNotesPath);
             vscode.window.showInformationMessage(`Notes folder created at: ${defaultNotesPath}`);
-            notesProvider.refresh();
+            refreshAllProviders();
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to create default notes folder: ${error instanceof Error ? error.message : String(error)}`);
         }
@@ -1335,7 +1357,7 @@ export function activate(context: vscode.ExtensionContext) {
 
                 console.log('[NOTED DEBUG] Setup custom folder:', selectedPath);
                 vscode.window.showInformationMessage(`Notes folder set to: ${selectedPath}`);
-                notesProvider.refresh();
+                refreshAllProviders();
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to create notes folder: ${error instanceof Error ? error.message : String(error)}`);
@@ -1348,37 +1370,37 @@ export function activate(context: vscode.ExtensionContext) {
 
     let toggleSelectMode = vscode.commands.registerCommand('noted.toggleSelectMode', async () => {
         await handleToggleSelectMode(bulkOperationsService);
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     let toggleNoteSelection = vscode.commands.registerCommand('noted.toggleNoteSelection', async (item: NoteItem) => {
         await handleToggleNoteSelection(item, bulkOperationsService);
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     let selectAllNotes = vscode.commands.registerCommand('noted.selectAllNotes', async () => {
         await handleSelectAllNotes(notesProvider, bulkOperationsService);
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     let clearSelection = vscode.commands.registerCommand('noted.clearSelection', async () => {
         await handleClearSelection(bulkOperationsService);
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     let bulkDelete = vscode.commands.registerCommand('noted.bulkDelete', async () => {
         await handleBulkDelete(bulkOperationsService, undoService);
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     let bulkMove = vscode.commands.registerCommand('noted.bulkMove', async () => {
         await handleBulkMove(bulkOperationsService, linkService, undoService);
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     let bulkArchive = vscode.commands.registerCommand('noted.bulkArchive', async () => {
         await handleBulkArchive(bulkOperationsService, archiveService, undoService);
-        notesProvider.refresh();
+        refreshAllProviders();
     });
 
     // ============================================================================
@@ -1394,11 +1416,11 @@ export function activate(context: vscode.ExtensionContext) {
     // ============================================================================
 
     let undoCommand = vscode.commands.registerCommand('noted.undo', async () => {
-        await handleUndo(undoService, () => notesProvider.refresh());
+        await handleUndo(undoService, refreshAllProviders);
     });
 
     let redoCommand = vscode.commands.registerCommand('noted.redo', async () => {
-        await handleRedo(undoService, () => notesProvider.refresh());
+        await handleRedo(undoService, refreshAllProviders);
     });
 
     let showUndoHistory = vscode.commands.registerCommand('noted.showUndoHistory', async () => {
@@ -1416,7 +1438,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(
-        openTodayNote, openWithTemplate, createCategoryNote, insertTimestamp, extractSelectionToNote, changeFormat,
+        openTodayNote, openWithTemplate, createQuickNote, createCategoryNote, insertTimestamp, extractSelectionToNote, changeFormat,
         refreshNotes, refreshConnections, openNote, openConnection, openConnectionSource, createNoteFromLink, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, quickSwitcher, filterByTag, clearTagFilters, sortTagsByName, sortTagsByFrequency, refreshTags,
         renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,
@@ -1778,21 +1800,12 @@ async function createNoteFromTemplate(templateType: string) {
 
         const now = new Date();
 
-        const year = now.getFullYear().toString();
-        const month = now.toLocaleString('en-US', { month: '2-digit' });
-        const monthName = now.toLocaleString('en-US', { month: 'long' });
-        const folderName = `${month}-${monthName}`;
-        const day = now.toLocaleString('en-US', { day: '2-digit' });
-        const time = now.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        }).replace(':', '');
-
-        const noteFolder = path.join(notesPath, year, folderName);
-        const fileName = `${year}-${month}-${day}-${time}-${sanitizedName}.${fileFormat}`;
+        // All non-daily notes go to Inbox folder
+        const noteFolder = path.join(notesPath, 'Inbox');
+        const fileName = `${sanitizedName}.${fileFormat}`;
         const filePath = path.join(noteFolder, fileName);
 
+        // Create Inbox folder if it doesn't exist
         try {
             await fsp.access(noteFolder);
         } catch {

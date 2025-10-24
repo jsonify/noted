@@ -44,14 +44,15 @@ describe('Template Service', () => {
       expect(result).to.include('SOURCES:');
     });
 
-    it('should generate quick template with YAML frontmatter', async () => {
+    it('should generate quick template with just note title (no frontmatter)', async () => {
       const result = await generateTemplate('quick', testDate, 'quick-note.txt');
 
-      expect(result).to.match(/^---\n/);
-      expect(result).to.include('tags:');
-      expect(result).to.include('created:');
-      expect(result).to.include('file: quick-note.txt');
-      expect(result).to.include('---\n');
+      // Quick template should only have the note title
+      expect(result).to.equal('# quick-note\n\n');
+      // Should NOT have frontmatter
+      expect(result).to.not.include('---');
+      expect(result).to.not.include('tags:');
+      expect(result).to.not.include('created:');
     });
 
     it('should generate default template with YAML frontmatter for undefined type', async () => {
@@ -66,32 +67,32 @@ describe('Template Service', () => {
       expect(result).to.not.include('==================================================');
     });
 
-    it('should not include filename in frontmatter when not provided', async () => {
+    it('should use default name when filename not provided for quick template', async () => {
       const result = await generateTemplate('quick', testDate);
 
-      expect(result).to.match(/^---\n/);
-      expect(result).to.include('tags:');
-      expect(result).to.not.include('file:');
-      expect(result).to.include('created:');
+      // Quick template should use "Note" as default when filename not provided
+      expect(result).to.equal('# Note\n\n');
+      // Should NOT have frontmatter
+      expect(result).to.not.include('---');
+      expect(result).to.not.include('tags:');
     });
 
-    it('should include proper date formatting in frontmatter', async () => {
+    it('should strip file extension from note title for quick template', async () => {
       const result = await generateTemplate('quick', testDate, 'test.txt');
 
-      expect(result).to.include('October');
-      expect(result).to.include('15');
-      expect(result).to.include('2024');
+      // Should show just "test" without the .txt extension
+      expect(result).to.equal('# test\n\n');
     });
 
-    it('should include proper time formatting in frontmatter', async () => {
-      const result = await generateTemplate('quick', testDate, 'test.txt');
+    it('should handle .md extension for quick template', async () => {
+      const result = await generateTemplate('quick', testDate, 'my-note.md');
 
-      // Time should be in 12-hour format with AM/PM
-      expect(result).to.match(/\d{1,2}:\d{2} (AM|PM)/);
+      // Should show just "my-note" without the .md extension
+      expect(result).to.equal('# my-note\n\n');
     });
 
-    it('should have valid YAML frontmatter structure', async () => {
-      const result = await generateTemplate('quick', testDate, 'test.txt');
+    it('should have valid YAML frontmatter structure for non-quick templates', async () => {
+      const result = await generateTemplate('problem-solution', testDate, 'test.txt');
 
       // Check for proper frontmatter delimiters
       const frontmatterMatch = result.match(/^---\n([\s\S]*?)\n---\n/);

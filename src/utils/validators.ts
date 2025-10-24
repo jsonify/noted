@@ -1,4 +1,5 @@
 import { FOLDER_PATTERNS } from '../constants';
+import * as path from 'path';
 
 /**
  * Check if a folder name matches year pattern (YYYY)
@@ -12,6 +13,16 @@ export function isYearFolder(name: string): boolean {
  */
 export function isMonthFolder(name: string): boolean {
     return FOLDER_PATTERNS.MONTH.test(name);
+}
+
+/**
+ * Check if a file is a daily note based on its filename (YYYY-MM-DD.ext)
+ * @param filePath Full path or just filename
+ */
+export function isDailyNote(filePath: string): boolean {
+    const fileName = path.basename(filePath);
+    const nameWithoutExt = fileName.replace(/\.(txt|md)$/i, '');
+    return FOLDER_PATTERNS.DAILY_NOTE.test(nameWithoutExt);
 }
 
 /**
