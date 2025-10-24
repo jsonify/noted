@@ -32,15 +32,30 @@ Notes/2024/10-October/2024-10-23.txt
 
 Your notes are automatically organized by year and month - no manual folder management required!
 
-## Essential Keyboard Shortcuts
+## Accessing Commands
 
-| Shortcut | Action |
-|----------|--------|
-| `Cmd+Shift+N` | Open today's note |
-| `Cmd+Shift+T` | Insert timestamp |
-| `Cmd+Shift+F` | Search notes |
-| `Cmd+Shift+C` | Show calendar |
-| `Cmd+Shift+G` | Show graph view |
+All Noted features are accessible via the Command Palette:
+
+```
+Press: Cmd+Shift+P (or Ctrl+Shift+P on Windows/Linux)
+Type: "Noted"
+Select: Your desired command
+```
+
+**Optional: Set Up Keyboard Shortcuts**
+
+You can configure custom keyboard shortcuts in VS Code:
+
+1. `File > Preferences > Keyboard Shortcuts` (or `Cmd+K Cmd+S`)
+2. Search for "Noted"
+3. Assign your preferred shortcuts
+
+**Popular shortcuts to consider:**
+- `Cmd+Shift+N` - Open Today's Note
+- `Cmd+Shift+T` - Insert Timestamp
+- `Cmd+Shift+F` - Search Notes
+- `Cmd+Shift+C` - Show Calendar
+- `Cmd+Shift+G` - Show Graph View
 
 ## Configuration
 

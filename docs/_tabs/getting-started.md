@@ -2,7 +2,7 @@
 layout: page
 title: Getting Started
 icon: fas fa-rocket
-order: 2
+order: 0
 ---
 
 # Getting Started with Noted
@@ -57,19 +57,32 @@ Click the notebook icon in the Activity Bar (left sidebar) to see your notes org
 
 ## Essential Commands
 
-Here are the most important commands to know:
+Access all Noted commands via the Command Palette (`Cmd+Shift+P` or `Ctrl+Shift+P`) and type "Noted":
 
-| Command | Keyboard Shortcut | Description |
-|---------|------------------|-------------|
-| Open Today's Note | `Cmd+Shift+N` | Create or open today's daily note |
-| Insert Timestamp | `Cmd+Shift+T` | Insert current time at cursor |
-| Search Notes | `Cmd+Shift+F` | Advanced search across all notes |
-| Quick Switcher | `Cmd+Shift+P` | Quick access to recent notes |
-| Show Calendar | `Cmd+Shift+C` | Open calendar view |
-| Show Graph | `Cmd+Shift+G` | Visualize note connections |
+| Command | Description |
+|---------|-------------|
+| Noted: Open Today's Note | Create or open today's daily note |
+| Noted: Insert Timestamp | Insert current time at cursor |
+| Noted: Search Notes | Advanced search across all notes |
+| Noted: Quick Switcher | Quick access to recent notes |
+| Noted: Show Calendar | Open calendar view |
+| Noted: Show Graph | Visualize note connections |
 
-> **Tip**: Access all commands by opening the Command Palette (`Cmd+Shift+P`) and typing "Noted"
-{: .prompt-tip }
+### Setting Up Keyboard Shortcuts
+
+Noted doesn't include default keyboard shortcuts, but you can easily set up your own:
+
+1. Open `File > Preferences > Keyboard Shortcuts` (or `Cmd+K Cmd+S`)
+2. Search for "Noted"
+3. Click the `+` icon next to any command to assign a shortcut
+4. Enter your preferred key combination
+
+**Suggested shortcuts:**
+- `Cmd+Shift+N` - Open Today's Note
+- `Cmd+Shift+T` - Insert Timestamp
+- `Cmd+Shift+F` - Search Notes
+- `Cmd+Shift+C` - Show Calendar
+- `Cmd+Shift+G` - Show Graph
 
 ## Configuration
 
@@ -98,7 +111,7 @@ For the best experience, we recommend:
 
 ### Daily Standup Notes
 
-1. Press `Cmd+Shift+N` to open today's note
+1. Use Command Palette → "Noted: Open Today's Note"
 2. Add `#standup` tag
 3. Use template variables for structure
 4. Link to project notes with `[[project-name]]`

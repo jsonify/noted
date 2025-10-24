@@ -11,12 +11,12 @@ Visualize your entire note network as an interactive graph showing connections, 
 
 ## Opening Graph View
 
-**Keyboard Shortcut**: `Cmd+Shift+G`
-
 **Command Palette**:
 ```
 Noted: Show Graph
 ```
+
+**Optional**: Set up a custom keyboard shortcut (e.g., `Cmd+Shift+G`) in VS Code settings for faster access.
 
 ## Graph Features
 
