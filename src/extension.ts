@@ -376,7 +376,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Helper function to refresh all tree providers
     const refreshAllProviders = () => {
-        refreshAllProviders();
+        notesProvider.refresh();
         journalProvider.refresh();
         templatesProvider.refresh();
     };
