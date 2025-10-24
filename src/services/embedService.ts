@@ -30,6 +30,24 @@ export interface NoteEmbed {
 }
 
 /**
+ * Represents a matched embed during webview processing
+ */
+export interface EmbedMatch {
+    /** The full matched text including ![[...]] syntax */
+    match: string;
+    /** The note or image name */
+    noteName: string;
+    /** Optional section name (after #) */
+    section?: string;
+    /** Optional display text (after |) */
+    displayText?: string;
+    /** Character index where the match starts in the content */
+    index: number;
+    /** Type of embed: 'note' or 'image' */
+    type: 'note' | 'image';
+}
+
+/**
  * Service for managing note embeds and section extraction
  */
 export class EmbedService {
@@ -449,15 +467,7 @@ export class EmbedService {
         webview: vscode.Webview,
         currentDocumentUri?: vscode.Uri
     ): Promise<string> {
-        let processedContent = content;
-        const embedMatches: Array<{
-            match: string;
-            noteName: string;
-            section?: string;
-            displayText?: string;
-            index: number;
-            type: 'note' | 'image';
-        }> = [];
+        const embedMatches: EmbedMatch[] = [];
 
         // First, collect all embed matches
         EMBED_PATTERN.lastIndex = 0;
@@ -482,9 +492,14 @@ export class EmbedService {
         let successCount = 0;
         let failureCount = 0;
 
+        // Build array of replacement parts (process in reverse to maintain indices)
+        const parts: string[] = [];
+        let lastIndex = content.length;
+
         // Process embeds in reverse order to maintain correct indices
         for (let i = embedMatches.length - 1; i >= 0; i--) {
             const embed = embedMatches[i];
+            const embedEnd = embed.index + embed.match.length;
             let replacement: string;
 
             try {
@@ -503,9 +518,6 @@ export class EmbedService {
                         embed.displayText
                     );
                 }
-
-                // Replace the embed syntax with rendered content
-                processedContent = processedContent.replace(embed.match, replacement);
                 successCount++;
             } catch (error) {
                 // Handle individual embed processing errors
@@ -528,9 +540,16 @@ export class EmbedService {
 
                 // Replace with error placeholder instead of crashing
                 replacement = `\n\n> ❌ **Error rendering ${embed.type}**: \`${embedReference}\`\n> _${errorMessage}_\n\n`;
-                processedContent = processedContent.replace(embed.match, replacement);
             }
+
+            // Build content parts: text after this embed + replacement
+            parts.unshift(content.substring(embedEnd, lastIndex));
+            parts.unshift(replacement);
+            lastIndex = embed.index;
         }
+
+        // Add the content before the first embed (or entire content if no embeds)
+        parts.unshift(content.substring(0, lastIndex));
 
         // Log processing summary
         if (embedMatches.length > 0) {
@@ -539,7 +558,8 @@ export class EmbedService {
             );
         }
 
-        return processedContent;
+        // Join all parts to create final processed content
+        return parts.join('');
     }
 
     /**
@@ -601,19 +621,8 @@ export class EmbedService {
             // 1. Remove frontmatter if present
             const contentWithoutFrontmatter = this.removeFrontmatter(noteContent);
 
-            // 2. Create embedded note section
-            const embeddedNote = `
-<div class="embedded-note">
-
-### 📄 ${displayName}
-
-${contentWithoutFrontmatter.trim()}
-
-</div>
-
-`;
-
-            return embeddedNote;
+            // 2. Create embedded note section using helper
+            return this.generateEmbeddedNoteHtml(displayName, contentWithoutFrontmatter);
         } catch (error) {
             console.error('[NOTED] Error processing embedded note:', noteName, error);
             return `\n\n> ⚠️ **Error loading note:** \`${noteName}\`\n\n`;
@@ -621,17 +630,86 @@ ${contentWithoutFrontmatter.trim()}
     }
 
     /**
+     * Generate HTML structure for embedded note
+     * @param displayName The display name/title for the embedded note
+     * @param content The note content to embed
+     * @returns HTML string for the embedded note
+     */
+    private generateEmbeddedNoteHtml(displayName: string, content: string): string {
+        // Escape any HTML in the display name to prevent XSS
+        const escapedDisplayName = this.escapeHtml(displayName);
+        const trimmedContent = content.trim();
+
+        return [
+            '\n',
+            '<div class="embedded-note">',
+            '\n',
+            `### 📄 ${escapedDisplayName}`,
+            '\n\n',
+            trimmedContent,
+            '\n',
+            '</div>',
+            '\n'
+        ].join('');
+    }
+
+    /**
+     * Escape HTML special characters to prevent XSS
+     */
+    private escapeHtml(text: string): string {
+        const htmlEscapes: Record<string, string> = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        };
+        return text.replace(/[&<>"']/g, char => htmlEscapes[char]);
+    }
+
+    /**
      * Remove YAML frontmatter from note content
+     * Handles various edge cases:
+     * - CRLF and LF line endings
+     * - Leading/trailing whitespace
+     * - Different spacing variations around delimiters
      */
     private removeFrontmatter(content: string): string {
-        // Check if content starts with frontmatter (---)
-        const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
-        const match = content.match(frontmatterRegex);
+        // Normalize line endings to LF for consistent processing
+        const normalizedContent = content.replace(/\r\n/g, '\n');
+
+        // Trim leading whitespace to find frontmatter at the start
+        const trimmedContent = normalizedContent.trimStart();
+
+        // Check if content starts with frontmatter delimiters (---)
+        // Pattern explanation:
+        // ^---         : Must start with exactly three hyphens at the beginning
+        // [\s]*        : Optional whitespace after opening ---
+        // \n           : Newline
+        // ([\s\S]*?)   : Capture group for frontmatter content (non-greedy)
+        // \n           : Newline before closing delimiter
+        // ---          : Closing delimiter (exactly three hyphens)
+        // [\s]*        : Optional whitespace after closing ---
+        // (?:\n|$)     : Must be followed by newline or end of string
+        const frontmatterRegex = /^---[\s]*\n([\s\S]*?)\n---[\s]*(?:\n|$)/;
+        const match = trimmedContent.match(frontmatterRegex);
 
         if (match) {
-            return content.substring(match[0].length);
+            // Calculate how much leading whitespace was removed
+            const leadingWhitespace = normalizedContent.length - trimmedContent.length;
+
+            // Return content after frontmatter, preserving original line ending style
+            const contentAfterFrontmatter = trimmedContent.substring(match[0].length);
+
+            // If the original content had CRLF, restore it
+            if (content.includes('\r\n')) {
+                return contentAfterFrontmatter.replace(/\n/g, '\r\n');
+            }
+
+            return contentAfterFrontmatter;
         }
 
+        // No frontmatter found, return original content
         return content;
     }
 }
