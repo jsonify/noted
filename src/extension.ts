@@ -13,11 +13,15 @@ import { JournalTreeProvider } from './providers/journalTreeProvider';
 import { TemplatesTreeProvider } from './providers/templatesTreeProvider';
 import { TagsTreeProvider } from './providers/tagsTreeProvider';
 import { ConnectionsTreeProvider } from './providers/connectionsTreeProvider';
+import { OrphansTreeProvider } from './providers/orphansTreeProvider';
+import { PlaceholdersTreeProvider } from './providers/placeholdersTreeProvider';
 import { TreeItem, NoteItem, SectionItem, TagItem, ConnectionItem } from './providers/treeItems';
 import { TagCompletionProvider } from './services/tagCompletionProvider';
 import { LinkService } from './services/linkService';
 import { ConnectionsService } from './services/connectionsService';
 import { BacklinksAppendService } from './services/backlinksAppendService';
+import { OrphansService } from './services/orphansService';
+import { PlaceholdersService } from './services/placeholdersService';
 import { EmbedService } from './services/embedService';
 import { FileWatcherService } from './services/fileWatcherService';
 import { NoteLinkProvider } from './providers/noteLinkProvider';
@@ -300,6 +304,16 @@ export function activate(context: vscode.ExtensionContext) {
     const connectionsProvider = new ConnectionsTreeProvider(connectionsService);
     vscode.window.registerTreeDataProvider('notedConnectionsView', connectionsProvider);
 
+    // Initialize orphans service and provider
+    const orphansService = new OrphansService(linkService);
+    const orphansProvider = new OrphansTreeProvider(orphansService);
+    vscode.window.registerTreeDataProvider('notedOrphansView', orphansProvider);
+
+    // Initialize placeholders service and provider
+    const placeholdersService = new PlaceholdersService(linkService);
+    const placeholdersProvider = new PlaceholdersTreeProvider(placeholdersService);
+    vscode.window.registerTreeDataProvider('notedPlaceholdersView', placeholdersProvider);
+
     // Update connections panel when active editor changes
     const updateConnectionsPanel = async (editor: vscode.TextEditor | undefined) => {
         if (editor && notesPath && editor.document.uri.fsPath.startsWith(notesPath)) {
@@ -505,6 +519,109 @@ export function activate(context: vscode.ExtensionContext) {
             // Navigate to the line where the connection appears
             const line = connectionItem.lineNumber;
             const position = new vscode.Position(line, 0);
+            const range = new vscode.Range(position, position);
+
+            editor.selection = new vscode.Selection(position, position);
+            editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to open source: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
+    // Command to refresh orphans panel
+    let refreshOrphans = vscode.commands.registerCommand('noted.refreshOrphans', async () => {
+        orphansProvider.refresh();
+        vscode.window.showInformationMessage('Orphans panel refreshed');
+    });
+
+    // Command to refresh placeholders panel
+    let refreshPlaceholders = vscode.commands.registerCommand('noted.refreshPlaceholders', async () => {
+        placeholdersProvider.refresh();
+        vscode.window.showInformationMessage('Placeholders panel refreshed');
+    });
+
+    // Command to create note from placeholder
+    let createNoteFromPlaceholder = vscode.commands.registerCommand('noted.createNoteFromPlaceholder', async (linkText: string) => {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            vscode.window.showErrorMessage('Notes folder not configured.');
+            return;
+        }
+
+        try {
+            // Ask user for confirmation
+            const answer = await vscode.window.showInformationMessage(
+                `Create new note "${linkText}"?`,
+                'Create',
+                'Cancel'
+            );
+
+            if (answer !== 'Create') {
+                return;
+            }
+
+            // Get current date for folder structure
+            const now = new Date();
+            const year = now.getFullYear().toString();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const monthName = now.toLocaleString('en-US', { month: 'long' });
+            const folderName = `${month}-${monthName}`;
+
+            // Create folder structure if it doesn't exist
+            const yearPath = path.join(notesPath, year);
+            const monthPath = path.join(yearPath, folderName);
+
+            if (!fs.existsSync(yearPath)) {
+                fs.mkdirSync(yearPath, { recursive: true });
+            }
+            if (!fs.existsSync(monthPath)) {
+                fs.mkdirSync(monthPath, { recursive: true });
+            }
+
+            // Get file format from config
+            const config = vscode.workspace.getConfiguration('noted');
+            const fileFormat = config.get<string>('fileFormat', 'md');
+
+            // Create the note file
+            const fileName = `${linkText}.${fileFormat}`;
+            const filePath = path.join(monthPath, fileName);
+
+            // Check if file already exists
+            if (fs.existsSync(filePath)) {
+                vscode.window.showWarningMessage(`Note "${linkText}" already exists.`);
+                // Open the existing note
+                const document = await vscode.workspace.openTextDocument(filePath);
+                await vscode.window.showTextDocument(document);
+                return;
+            }
+
+            // Create the file with basic content
+            const content = `# ${linkText}\n\nCreated from placeholder link.\n`;
+            fs.writeFileSync(filePath, content, 'utf8');
+
+            // Refresh views
+            notesProvider.refresh();
+            placeholdersProvider.refresh();
+            orphansProvider.refresh();
+
+            // Open the new note
+            const document = await vscode.workspace.openTextDocument(filePath);
+            await vscode.window.showTextDocument(document);
+
+            vscode.window.showInformationMessage(`Created note: ${linkText}`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to create note: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
+    // Command to open placeholder source (navigate to the line where the placeholder appears)
+    let openPlaceholderSource = vscode.commands.registerCommand('noted.openPlaceholderSource', async (filePath: string, lineNumber: number) => {
+        try {
+            const document = await vscode.workspace.openTextDocument(filePath);
+            const editor = await vscode.window.showTextDocument(document);
+
+            // Navigate to the line where the placeholder appears
+            const position = new vscode.Position(lineNumber, 0);
             const range = new vscode.Range(position, position);
 
             editor.selection = new vscode.Selection(position, position);
@@ -1451,7 +1568,8 @@ export function activate(context: vscode.ExtensionContext) {
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive,
         showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
-        renameSymbol
+        renameSymbol,
+        refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource
     );
 }
 

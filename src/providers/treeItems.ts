@@ -269,3 +269,173 @@ export class ActionButtonItem extends TreeItem {
         };
     }
 }
+
+/**
+ * Section item for orphans panel
+ */
+export class OrphanSectionItem extends TreeItem {
+    constructor(
+        public readonly label: string,
+        public readonly sectionType: 'true-orphans' | 'source-only' | 'sink-only',
+        public readonly count: number
+    ) {
+        super(`${label} (${count})`, vscode.TreeItemCollapsibleState.Expanded);
+
+        // Set appropriate icon based on section type
+        if (sectionType === 'true-orphans') {
+            this.iconPath = new vscode.ThemeIcon('circle-slash');
+        } else if (sectionType === 'source-only') {
+            this.iconPath = new vscode.ThemeIcon('arrow-right');
+        } else if (sectionType === 'sink-only') {
+            this.iconPath = new vscode.ThemeIcon('arrow-left');
+        }
+
+        this.contextValue = 'orphan-section';
+        this.tooltip = `${count} ${label.toLowerCase()}`;
+    }
+}
+
+/**
+ * Orphan note item
+ */
+export class OrphanNoteItem extends TreeItem {
+    constructor(
+        public readonly filePath: string,
+        public readonly hasIncomingLinks: boolean,
+        public readonly hasOutgoingLinks: boolean
+    ) {
+        const filename = path.basename(filePath, path.extname(filePath));
+        super(filename, vscode.TreeItemCollapsibleState.None);
+
+        this.iconPath = new vscode.ThemeIcon('note');
+        this.contextValue = 'orphan-note';
+        this.resourceUri = vscode.Uri.file(filePath);
+
+        // Build description based on link status
+        if (!hasIncomingLinks && !hasOutgoingLinks) {
+            this.description = 'no connections';
+        } else if (!hasIncomingLinks) {
+            this.description = 'no backlinks';
+        } else if (!hasOutgoingLinks) {
+            this.description = 'no outgoing links';
+        }
+
+        // Build tooltip
+        this.tooltip = this.buildTooltip();
+
+        // Make clickable to open the note
+        this.command = {
+            command: 'vscode.open',
+            title: 'Open Note',
+            arguments: [vscode.Uri.file(filePath)]
+        };
+    }
+
+    private buildTooltip(): vscode.MarkdownString {
+        const filename = path.basename(this.filePath);
+        const relativePath = vscode.workspace.asRelativePath(this.filePath);
+
+        const tooltip = new vscode.MarkdownString('', true);
+        tooltip.appendMarkdown(`**File:** \`${filename}\`\n\n`);
+        tooltip.appendMarkdown(`**Path:** \`${relativePath}\`\n\n`);
+
+        if (!this.hasIncomingLinks && !this.hasOutgoingLinks) {
+            tooltip.appendMarkdown('🔗 **No connections** to other notes\n\n');
+            tooltip.appendMarkdown('This note has no incoming or outgoing links.');
+        } else if (!this.hasIncomingLinks) {
+            tooltip.appendMarkdown('⬅️ **No backlinks**\n\n');
+            tooltip.appendMarkdown('No other notes link to this note.');
+        } else if (!this.hasOutgoingLinks) {
+            tooltip.appendMarkdown('➡️ **No outgoing links**\n\n');
+            tooltip.appendMarkdown('This note doesn\'t link to any other notes.');
+        }
+
+        return tooltip;
+    }
+}
+
+/**
+ * Placeholder link item grouped by target
+ */
+export class PlaceholderGroupItem extends TreeItem {
+    constructor(
+        public readonly linkText: string,
+        public readonly sourceCount: number,
+        public readonly sources: Array<{ file: string; line: number; context: string; displayText?: string }>
+    ) {
+        super(linkText, vscode.TreeItemCollapsibleState.Expanded);
+
+        this.iconPath = new vscode.ThemeIcon('link');
+        this.contextValue = 'placeholder-group';
+        this.description = `${sourceCount} reference${sourceCount !== 1 ? 's' : ''}`;
+
+        // Tooltip shows summary
+        const tooltip = new vscode.MarkdownString('', true);
+        tooltip.appendMarkdown(`**Placeholder:** \`[[${linkText}]]\`\n\n`);
+        tooltip.appendMarkdown(`Referenced in **${sourceCount}** location${sourceCount !== 1 ? 's' : ''}\n\n`);
+        tooltip.appendMarkdown('Click to create this note');
+
+        this.tooltip = tooltip;
+
+        // Make clickable to create the note
+        this.command = {
+            command: 'noted.createNoteFromPlaceholder',
+            title: 'Create Note',
+            arguments: [linkText]
+        };
+    }
+}
+
+/**
+ * Placeholder source item (where the placeholder is referenced)
+ */
+export class PlaceholderSourceItem extends TreeItem {
+    constructor(
+        public readonly filePath: string,
+        public readonly lineNumber: number,
+        public readonly context: string,
+        public readonly displayText?: string
+    ) {
+        const filename = path.basename(filePath, path.extname(filePath));
+        super(filename, vscode.TreeItemCollapsibleState.None);
+
+        this.iconPath = new vscode.ThemeIcon('note');
+        this.contextValue = 'placeholder-source';
+        this.resourceUri = vscode.Uri.file(filePath);
+
+        // Show line number or display text
+        const preview = displayText
+            ? `"${displayText}" (line ${lineNumber + 1})`
+            : `line ${lineNumber + 1}`;
+        this.description = preview;
+
+        // Build tooltip
+        this.tooltip = this.buildTooltip();
+
+        // Make clickable to navigate to the source location
+        this.command = {
+            command: 'noted.openPlaceholderSource',
+            title: 'Open Source',
+            arguments: [filePath, lineNumber]
+        };
+    }
+
+    private buildTooltip(): vscode.MarkdownString {
+        const filename = path.basename(this.filePath);
+        const relativePath = vscode.workspace.asRelativePath(this.filePath);
+
+        const tooltip = new vscode.MarkdownString('', true);
+        tooltip.appendMarkdown(`**File:** \`${filename}\`\n\n`);
+        tooltip.appendMarkdown(`**Path:** \`${relativePath}\`\n\n`);
+        tooltip.appendMarkdown(`**Line:** ${this.lineNumber + 1}\n\n`);
+
+        if (this.displayText) {
+            tooltip.appendMarkdown(`**Display Text:** "${this.displayText}"\n\n`);
+        }
+
+        tooltip.appendMarkdown(`**Context:**\n`);
+        tooltip.appendCodeblock(this.context, 'markdown');
+
+        return tooltip;
+    }
+}
