@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.30.0](https://github.com/jsonify/noted/compare/v1.29.2...v1.30.0) (2025-10-24)
+
+
+### Features
+
+* add rich metadata to link preview cards ([#26](https://github.com/jsonify/noted/issues/26)) ([7f2376f](https://github.com/jsonify/noted/commit/7f2376f3f3b43c96e75c73d132ee4b0e18061462))
+
 ### [1.29.2](https://github.com/jsonify/noted/compare/v1.29.1...v1.29.2) (2025-10-24)
 
 ### [1.29.1](https://github.com/jsonify/noted/compare/v1.29.0...v1.29.1) (2025-10-24)
