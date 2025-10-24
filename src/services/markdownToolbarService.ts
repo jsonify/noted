@@ -258,9 +258,9 @@ export class MarkdownToolbarService {
         const selection = editor.selection;
         const selectedText = editor.document.getText(selection);
 
-        // Check if selected text is a URL
+        // Check if selected text is a URL (single line only)
         const urlPattern = /^https?:\/\//i;
-        const isUrl = urlPattern.test(selectedText);
+        const isUrl = !selectedText.includes('\n') && urlPattern.test(selectedText);
 
         if (isUrl) {
             // URL selected, prompt for link text
@@ -281,7 +281,26 @@ export class MarkdownToolbarService {
                 placeHolder: 'https://example.com',
             });
 
-            if (url !== undefined) {
+            if (url === undefined) return;
+
+            // Check if selection spans multiple lines
+            const lines = selectedText ? selectedText.split('\n') : [];
+
+            if (lines.length > 1) {
+                // Apply link to each line individually
+                const formatted = lines.map(line => {
+                    // Don't add link to empty lines
+                    if (line.trim() === '') {
+                        return line;
+                    }
+                    return `[${line}](${url})`;
+                }).join('\n');
+
+                await editor.edit(editBuilder => {
+                    editBuilder.replace(selection, formatted);
+                });
+            } else {
+                // Single line or no selection
                 const linkText = selectedText || 'link text';
                 await editor.edit(editBuilder => {
                     editBuilder.replace(selection, `[${linkText}](${url})`);
@@ -312,9 +331,36 @@ export class MarkdownToolbarService {
         const selection = editor.selection;
         const selectedText = editor.document.getText(selection);
 
-        await editor.edit(editBuilder => {
-            editBuilder.replace(selection, `${level.value} ${selectedText || 'Heading'}`);
-        });
+        // If no selection, insert placeholder
+        if (!selectedText) {
+            await editor.edit(editBuilder => {
+                editBuilder.replace(selection, `${level.value} Heading`);
+            });
+            return;
+        }
+
+        // Check if selection spans multiple lines
+        const lines = selectedText.split('\n');
+
+        if (lines.length > 1) {
+            // Apply heading to each line individually
+            const formatted = lines.map(line => {
+                // Don't add heading to empty lines
+                if (line.trim() === '') {
+                    return line;
+                }
+                return `${level.value} ${line}`;
+            }).join('\n');
+
+            await editor.edit(editBuilder => {
+                editBuilder.replace(selection, formatted);
+            });
+        } else {
+            // Single line
+            await editor.edit(editBuilder => {
+                editBuilder.replace(selection, `${level.value} ${selectedText}`);
+            });
+        }
     }
 
     private wrapSelection(prefix: string, suffix: string, placeholder: string): void {
@@ -324,9 +370,36 @@ export class MarkdownToolbarService {
         const selection = editor.selection;
         const selectedText = editor.document.getText(selection);
 
-        editor.edit(editBuilder => {
-            editBuilder.replace(selection, prefix + (selectedText || placeholder) + suffix);
-        });
+        // If no selection, just insert placeholder
+        if (!selectedText) {
+            editor.edit(editBuilder => {
+                editBuilder.replace(selection, prefix + placeholder + suffix);
+            });
+            return;
+        }
+
+        // Check if selection spans multiple lines
+        const lines = selectedText.split('\n');
+
+        if (lines.length > 1) {
+            // Apply formatting to each line individually
+            const formatted = lines.map(line => {
+                // Don't wrap empty lines
+                if (line.trim() === '') {
+                    return line;
+                }
+                return prefix + line + suffix;
+            }).join('\n');
+
+            editor.edit(editBuilder => {
+                editBuilder.replace(selection, formatted);
+            });
+        } else {
+            // Single line - wrap normally
+            editor.edit(editBuilder => {
+                editBuilder.replace(selection, prefix + selectedText + suffix);
+            });
+        }
     }
 
     public dispose(): void {
