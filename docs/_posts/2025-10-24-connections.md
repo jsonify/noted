@@ -5,7 +5,7 @@ categories: [Features, Navigation]
 tags: [connections, backlinks, navigation, links]
 ---
 
-# Connections Panel
+# What is the Connections Panel?
 
 The Connections Panel provides an always-visible sidebar showing all incoming backlinks and outgoing links for your current note. See your note's relationships at a glance.
 

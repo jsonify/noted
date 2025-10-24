@@ -5,7 +5,7 @@ categories: [Features, Templates]
 tags: [templates, automation, productivity]
 ---
 
-# Templates System
+# What is the Templates System?
 
 Create structured notes quickly with built-in and custom templates featuring dynamic variables.
 

@@ -5,7 +5,7 @@ categories: [Features, Organization]
 tags: [pinned, favorites, quick-access, organization]
 ---
 
-# Pinned Notes
+# What are Pinned Notes?
 
 Pin important notes for instant access from the top of your sidebar. Keep frequently referenced notes always within reach.
 

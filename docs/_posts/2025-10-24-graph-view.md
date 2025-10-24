@@ -5,7 +5,7 @@ categories: [Features, Visualization]
 tags: [graph, visualization, network]
 ---
 
-# Graph View
+# What is Graph View?
 
 Visualize your entire note network as an interactive graph showing connections, clusters, and knowledge structure.
 

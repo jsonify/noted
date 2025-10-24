@@ -6,7 +6,7 @@ tags: [tutorial, setup, quickstart]
 pin: true
 ---
 
-# Getting Started with Noted
+# How to Get Started with Noted
 
 Get up and running with Noted in just a few minutes and start organizing your workspace notes like a pro.
 

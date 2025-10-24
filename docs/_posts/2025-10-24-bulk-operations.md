@@ -5,7 +5,7 @@ categories: [Features, Productivity]
 tags: [bulk, multi-select, operations, productivity]
 ---
 
-# Bulk Operations
+# What are Bulk Operations?
 
 Select multiple notes at once for batch operations: move, delete, or archive many notes in a single action. Powerful multi-select capabilities for efficient note management.
 

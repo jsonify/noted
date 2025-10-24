@@ -5,7 +5,7 @@ categories: [Features, Core]
 tags: [daily, notes, organization, timestamps]
 ---
 
-# Daily Notes
+# What are Daily Notes?
 
 Instantly create or open today's note with automatic organization by year and month. Daily notes are at the heart of Noted's workflow.
 

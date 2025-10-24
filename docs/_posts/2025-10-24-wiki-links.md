@@ -5,7 +5,7 @@ categories: [Features, Linking]
 tags: [wiki-links, backlinks, connections]
 ---
 
-# Wiki-Style Links
+# What are Wiki-Style Links?
 
 Connect your notes together to build a personal knowledge base with automatic bidirectional linking.
 
