@@ -5,6 +5,7 @@ import { promises as fsp } from 'fs';
 import { showCalendarView } from './calendar/calendarView';
 import { showGraphView } from './graph/graphView';
 import { MarkdownPreviewManager } from './preview/markdownPreview';
+import { MarkdownToolbarService } from './services/markdownToolbarService';
 import { TagService } from './services/tagService';
 import { formatTagForDisplay } from './utils/tagHelpers';
 import { renameTag, mergeTags, deleteTag, exportTags } from './commands/tagCommands';
@@ -364,6 +365,10 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize markdown preview manager with embed service for embedded content rendering
     const markdownPreviewManager = new MarkdownPreviewManager(context, embedService);
     context.subscriptions.push(markdownPreviewManager);
+
+    // Initialize markdown toolbar service for visual formatting buttons
+    const markdownToolbarService = new MarkdownToolbarService(context);
+    context.subscriptions.push(markdownToolbarService);
 
     // Command to open today's note
     let openTodayNote = vscode.commands.registerCommand('noted.openToday', async () => {
@@ -1387,6 +1392,54 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // ============================================================================
+    // Markdown Formatting Commands (Visual Toolbar)
+    // ============================================================================
+
+    let formatBold = vscode.commands.registerCommand('noted.format.bold', () => {
+        markdownToolbarService.formatBold();
+    });
+
+    let formatItalic = vscode.commands.registerCommand('noted.format.italic', () => {
+        markdownToolbarService.formatItalic();
+    });
+
+    let formatStrikethrough = vscode.commands.registerCommand('noted.format.strikethrough', () => {
+        markdownToolbarService.formatStrikethrough();
+    });
+
+    let formatCode = vscode.commands.registerCommand('noted.format.code', () => {
+        markdownToolbarService.formatCode();
+    });
+
+    let formatCodeBlock = vscode.commands.registerCommand('noted.format.codeblock', async () => {
+        await markdownToolbarService.formatCodeBlock();
+    });
+
+    let formatBulletList = vscode.commands.registerCommand('noted.format.bulletlist', () => {
+        markdownToolbarService.formatBulletList();
+    });
+
+    let formatNumberedList = vscode.commands.registerCommand('noted.format.numberedlist', () => {
+        markdownToolbarService.formatNumberedList();
+    });
+
+    let formatChecklist = vscode.commands.registerCommand('noted.format.checklist', () => {
+        markdownToolbarService.formatChecklist();
+    });
+
+    let formatQuote = vscode.commands.registerCommand('noted.format.quote', () => {
+        markdownToolbarService.formatQuote();
+    });
+
+    let formatLink = vscode.commands.registerCommand('noted.format.link', async () => {
+        await markdownToolbarService.formatLink();
+    });
+
+    let formatHeading = vscode.commands.registerCommand('noted.format.heading', async () => {
+        await markdownToolbarService.formatHeading();
+    });
+
+    // ============================================================================
     // Undo/Redo Commands
     // ============================================================================
 
@@ -1425,6 +1478,8 @@ export function activate(context: vscode.ExtensionContext) {
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive,
         toggleMarkdownPreview,
+        formatBold, formatItalic, formatStrikethrough, formatCode, formatCodeBlock,
+        formatBulletList, formatNumberedList, formatChecklist, formatQuote, formatLink, formatHeading,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol
     );
