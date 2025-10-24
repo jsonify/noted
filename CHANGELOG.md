@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.28.8](https://github.com/jsonify/noted/compare/v1.28.7...v1.28.8) (2025-10-24)
+
+
+### Documentation
+
+* enhance README with comprehensive feature descriptions and organization ([a135ba9](https://github.com/jsonify/noted/commit/a135ba9cc34e1a00622d6c3440cff72d9b2aa7c8))
+
 ### [1.28.7](https://github.com/jsonify/noted/compare/v1.28.6...v1.28.7) (2025-10-24)
 
 
