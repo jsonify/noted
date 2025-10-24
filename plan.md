@@ -98,16 +98,31 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 - [ ] **Unlinked mentions**: Find notes that mention current note's title without explicit links
 
 ### Orphan & Placeholder Detection (inspired by Foam)
-- [ ] **Orphan notes detection**: Identify notes with no incoming or outgoing links
-- [ ] **Placeholder tracking**: Track `[[links]]` to notes that don't exist yet (dangling references)
-- [ ] **Orphans explorer panel**: Dedicated tree view showing all orphaned notes
-- [ ] **Placeholders explorer panel**: Show all placeholder links with source note context
+- [x] **Orphan notes detection**: Identify notes with no incoming or outgoing links (v1.30.0)
+  - Three categories: Isolated Notes (no connections), No Backlinks, No Outgoing Links
+  - OrphansService analyzes link patterns to categorize notes
+  - Real-time tracking through LinkService integration
+- [x] **Placeholder tracking**: Track `[[links]]` to notes that don't exist yet (dangling references) (v1.30.0)
+  - PlaceholdersService detects broken wiki-style links
+  - Groups placeholders by target with reference counts
+  - Shows all source locations for each placeholder
+- [x] **Orphans explorer panel**: Dedicated tree view showing all orphaned notes (v1.30.0)
+  - Three expandable sections showing different orphan categories
+  - Click orphan note to open and edit
+  - Visual icons distinguish categories (circle-slash, arrows)
+  - Tooltips provide detailed connection status
+- [x] **Placeholders explorer panel**: Show all placeholder links with source note context (v1.30.0)
+  - Groups placeholders by target showing reference count
+  - Expandable groups reveal all source locations
+  - Context snippets with line numbers for each reference
+  - Click to create note or navigate to source
 - [ ] **Visual indicators**: Highlight orphans and placeholders in graph and tree views
-- [x] **Auto-create from placeholder**: Create new note directly from placeholder link (v1.17.1)
+- [x] **Auto-create from placeholder**: Create new note directly from placeholder link (v1.17.1, enhanced v1.30.0)
   - Click broken `[[links]]` to create missing notes
   - Prompts for confirmation before creating
   - Creates in current month's folder
   - Opens automatically for editing
+  - Available in hover previews and placeholders panel
 
 ### Advanced Template System (inspired by Foam)
 - [ ] **JavaScript templates**: Support templates with logic, functions, and conditionals
