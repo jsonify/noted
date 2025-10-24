@@ -1,0 +1,392 @@
+// Tailwind-inspired custom styles for Noted documentation
+// This overrides Just the Docs theme styles
+
+// Refined color palette inspired by Tailwind
+$custom-gray-50: #f9fafb;
+$custom-gray-100: #f3f4f6;
+$custom-gray-200: #e5e7eb;
+$custom-gray-300: #d1d5db;
+$custom-gray-400: #9ca3af;
+$custom-gray-500: #6b7280;
+$custom-gray-600: #4b5563;
+$custom-gray-700: #374151;
+$custom-gray-800: #1f2937;
+$custom-gray-900: #111827;
+$custom-gray-950: #030712;
+
+// Accent colors
+$custom-blue-50: #eff6ff;
+$custom-blue-500: #3b82f6;
+$custom-blue-600: #2563eb;
+$custom-green-500: #10b981;
+$custom-green-600: #059669;
+
+// Override Just the Docs theme colors
+$body-background-color: $custom-gray-50;
+$body-text-color: $custom-gray-900;
+$body-heading-color: $custom-gray-950;
+$link-color: $custom-blue-600;
+$sidebar-color: $custom-gray-50;
+$border-color: $custom-gray-200;
+$code-background-color: $custom-gray-100;
+$search-background-color: white;
+
+// Typography enhancements
+body {
+  font-size: 1rem !important;
+  line-height: 1.75 !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji" !important;
+}
+
+.main-content {
+  max-width: 50rem !important;
+  padding: 2rem 1.5rem !important;
+}
+
+// Headings with better hierarchy
+.main-content h1 {
+  font-size: 2.25rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  margin-top: 3rem !important;
+  margin-bottom: 1.5rem !important;
+  letter-spacing: -0.025em !important;
+  color: $custom-gray-950 !important;
+}
+
+.main-content h2 {
+  font-size: 1.875rem !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  margin-top: 2.5rem !important;
+  margin-bottom: 1rem !important;
+  letter-spacing: -0.02em !important;
+  color: $custom-gray-900 !important;
+  border-bottom: 1px solid $custom-gray-200 !important;
+  padding-bottom: 0.75rem !important;
+}
+
+.main-content h3 {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  margin-top: 2rem !important;
+  margin-bottom: 0.75rem !important;
+  color: $custom-gray-900 !important;
+}
+
+.main-content h4 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.5rem !important;
+  color: $custom-gray-800 !important;
+}
+
+// Paragraph spacing
+.main-content p {
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  color: $custom-gray-700 !important;
+}
+
+// Links with subtle styling
+.main-content a {
+  color: $custom-blue-600 !important;
+  text-decoration: none !important;
+  transition: color 0.15s ease-in-out !important;
+  font-weight: 500 !important;
+}
+
+.main-content a:hover {
+  color: $custom-blue-500 !important;
+}
+
+// Code blocks with refined styling
+.main-content code {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace !important;
+  font-size: 0.875rem !important;
+  background-color: $custom-gray-100 !important;
+  color: $custom-gray-800 !important;
+  padding: 0.125rem 0.375rem !important;
+  border-radius: 0.25rem !important;
+  border: 1px solid $custom-gray-200 !important;
+}
+
+.main-content pre {
+  background-color: $custom-gray-950 !important;
+  color: $custom-gray-100 !important;
+  padding: 1rem !important;
+  border-radius: 0.5rem !important;
+  overflow-x: auto !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  border: 1px solid $custom-gray-800 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+}
+
+.main-content pre code {
+  background-color: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.7 !important;
+}
+
+// Lists with better spacing
+.main-content ul,
+.main-content ol {
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  padding-left: 1.5rem !important;
+}
+
+.main-content li {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  color: $custom-gray-700 !important;
+}
+
+// Buttons with Tailwind-inspired design
+.btn {
+  display: inline-block !important;
+  padding: 0.625rem 1.25rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.15s ease-in-out !important;
+  text-decoration: none !important;
+  border: 1px solid transparent !important;
+  cursor: pointer !important;
+  margin: 0.25rem !important;
+}
+
+.btn-primary {
+  background-color: $custom-blue-600 !important;
+  color: white !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.btn-primary:hover {
+  background-color: $custom-blue-500 !important;
+  color: white !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-blue {
+  background-color: transparent !important;
+  color: $custom-blue-600 !important;
+  border-color: $custom-blue-600 !important;
+}
+
+.btn-blue:hover {
+  background-color: $custom-blue-50 !important;
+  color: $custom-blue-600 !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-green {
+  background-color: $custom-green-600 !important;
+  color: white !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.btn-green:hover {
+  background-color: $custom-green-500 !important;
+  color: white !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+// Blockquotes
+.main-content blockquote {
+  border-left: 4px solid $custom-gray-300 !important;
+  padding-left: 1rem !important;
+  margin: 1.5rem 0 !important;
+  color: $custom-gray-600 !important;
+  font-style: italic !important;
+}
+
+// Tables
+.main-content table {
+  width: 100% !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  border-collapse: collapse !important;
+  font-size: 0.875rem !important;
+}
+
+.main-content th {
+  background-color: $custom-gray-100 !important;
+  padding: 0.75rem 1rem !important;
+  text-align: left !important;
+  font-weight: 600 !important;
+  color: $custom-gray-900 !important;
+  border-bottom: 2px solid $custom-gray-300 !important;
+}
+
+.main-content td {
+  padding: 0.75rem 1rem !important;
+  border-bottom: 1px solid $custom-gray-200 !important;
+  color: $custom-gray-700 !important;
+}
+
+.main-content tr:last-child td {
+  border-bottom: none !important;
+}
+
+// Navigation improvements
+.side-bar {
+  background-color: $custom-gray-50 !important;
+  border-right: 1px solid $custom-gray-200 !important;
+}
+
+.navigation,
+.nav-list {
+  font-size: 0.875rem !important;
+}
+
+.navigation a,
+.nav-list a {
+  color: $custom-gray-700 !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.375rem !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.navigation a:hover,
+.nav-list a:hover {
+  background-color: $custom-gray-100 !important;
+  color: $custom-gray-900 !important;
+}
+
+.nav-list-link.active {
+  background-color: $custom-blue-50 !important;
+  color: $custom-blue-600 !important;
+  font-weight: 600 !important;
+}
+
+// Search bar
+.search-input {
+  border: 1px solid $custom-gray-300 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.search-input:focus {
+  outline: none !important;
+  border-color: $custom-blue-500 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+// Footer styling
+.site-footer {
+  border-top: 1px solid $custom-gray-200 !important;
+  padding: 1.5rem 0 !important;
+  margin-top: 4rem !important;
+  color: $custom-gray-600 !important;
+  font-size: 0.875rem !important;
+}
+
+// Dark mode
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: $custom-gray-950 !important;
+    color: $custom-gray-100 !important;
+  }
+
+  .main-content h1,
+  .main-content h2,
+  .main-content h3 {
+    color: $custom-gray-100 !important;
+  }
+
+  .main-content h2 {
+    border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .main-content h4 {
+    color: $custom-gray-200 !important;
+  }
+
+  .main-content p,
+  .main-content li {
+    color: $custom-gray-300 !important;
+  }
+
+  .main-content a {
+    color: $custom-blue-500 !important;
+  }
+
+  .main-content code {
+    background-color: $custom-gray-800 !important;
+    color: $custom-gray-200 !important;
+    border-color: $custom-gray-700 !important;
+  }
+
+  .main-content pre {
+    background-color: $custom-gray-900 !important;
+    border-color: $custom-gray-800 !important;
+  }
+
+  .side-bar {
+    background-color: $custom-gray-900 !important;
+    border-right-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .navigation a,
+  .nav-list a {
+    color: $custom-gray-300 !important;
+  }
+
+  .navigation a:hover,
+  .nav-list a:hover {
+    background-color: $custom-gray-800 !important;
+    color: $custom-gray-100 !important;
+  }
+
+  .nav-list-link.active {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    color: $custom-blue-500 !important;
+  }
+
+  .main-content table th {
+    background-color: $custom-gray-800 !important;
+    color: $custom-gray-100 !important;
+    border-bottom-color: $custom-gray-700 !important;
+  }
+
+  .main-content table td {
+    border-bottom-color: $custom-gray-800 !important;
+    color: $custom-gray-300 !important;
+  }
+
+  .main-content blockquote {
+    border-left-color: $custom-gray-700 !important;
+    color: $custom-gray-400 !important;
+  }
+
+  .search-input {
+    background-color: $custom-gray-800 !important;
+    border-color: $custom-gray-700 !important;
+    color: $custom-gray-100 !important;
+  }
+
+  .search-input:focus {
+    border-color: $custom-blue-500 !important;
+  }
+
+  .site-footer {
+    border-top-color: rgba(255, 255, 255, 0.1) !important;
+    color: $custom-gray-400 !important;
+  }
+}
