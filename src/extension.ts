@@ -346,8 +346,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize undo service for tracking destructive operations
     const undoService = new UndoService();
 
-    // Initialize markdown preview manager
-    const markdownPreviewManager = new MarkdownPreviewManager(context);
+    // Initialize markdown preview manager with embed service for embedded content rendering
+    const markdownPreviewManager = new MarkdownPreviewManager(context, embedService);
     context.subscriptions.push(markdownPreviewManager);
 
     // Command to open today's note

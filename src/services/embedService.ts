@@ -439,4 +439,163 @@ export class EmbedService {
 
         return undefined;
     }
+
+    /**
+     * Process embedded content for webview rendering
+     * Replaces ![[note-name]] and ![[image.png]] with rendered markdown
+     */
+    async processEmbedsForWebview(
+        content: string,
+        webview: vscode.Webview,
+        currentDocumentUri?: vscode.Uri
+    ): Promise<string> {
+        let processedContent = content;
+        const embedMatches: Array<{
+            match: string;
+            noteName: string;
+            section?: string;
+            displayText?: string;
+            index: number;
+            type: 'note' | 'image';
+        }> = [];
+
+        // First, collect all embed matches
+        EMBED_PATTERN.lastIndex = 0;
+        let match;
+        while ((match = EMBED_PATTERN.exec(content)) !== null) {
+            const noteName = match[1].trim();
+            const section = match[2] ? match[2].trim() : undefined;
+            const displayText = match[3] ? match[3].trim() : undefined;
+            const type = this.isImageFile(noteName) ? 'image' : 'note';
+
+            embedMatches.push({
+                match: match[0],
+                noteName,
+                section,
+                displayText,
+                index: match.index,
+                type
+            });
+        }
+
+        // Process embeds in reverse order to maintain correct indices
+        for (let i = embedMatches.length - 1; i >= 0; i--) {
+            const embed = embedMatches[i];
+            let replacement: string;
+
+            if (embed.type === 'image') {
+                // Process as embedded image
+                replacement = await this.renderEmbeddedImageForWebview(
+                    embed.noteName,
+                    webview,
+                    currentDocumentUri?.fsPath
+                );
+            } else {
+                // Process as embedded note
+                replacement = await this.renderEmbeddedNoteForWebview(
+                    embed.noteName,
+                    embed.section,
+                    embed.displayText
+                );
+            }
+
+            // Replace the embed syntax with rendered content
+            processedContent = processedContent.replace(embed.match, replacement);
+        }
+
+        return processedContent;
+    }
+
+    /**
+     * Render an embedded image for webview display
+     */
+    private async renderEmbeddedImageForWebview(
+        imagePath: string,
+        webview: vscode.Webview,
+        currentDocumentPath?: string
+    ): Promise<string> {
+        const resolvedPath = await this.resolveImagePath(imagePath, currentDocumentPath);
+
+        if (!resolvedPath) {
+            // Image not found, render a placeholder
+            return `\n\n> 📷 **Image not found:** \`${imagePath}\`\n\n`;
+        }
+
+        try {
+            // Convert to webview URI
+            const imageUri = webview.asWebviewUri(vscode.Uri.file(resolvedPath));
+            const filename = path.basename(resolvedPath);
+
+            // Return markdown image syntax
+            return `\n\n![${filename}](${imageUri.toString()})\n\n`;
+        } catch (error) {
+            console.error('[NOTED] Error processing embedded image:', imagePath, error);
+            return `\n\n> ⚠️ **Error loading image:** \`${imagePath}\`\n\n`;
+        }
+    }
+
+    /**
+     * Render an embedded note for webview display
+     */
+    private async renderEmbeddedNoteForWebview(
+        noteName: string,
+        section?: string,
+        displayText?: string
+    ): Promise<string> {
+        try {
+            // Resolve the note using link service
+            const notePath = await this.linkService.resolveLink(noteName);
+
+            if (!notePath) {
+                // Note not found, render a placeholder
+                return `\n\n> 📝 **Note not found:** \`${noteName}\`\n\n`;
+            }
+
+            // Read the note content (with optional section)
+            const noteContent = await this.getEmbedContent(notePath, section);
+
+            if (!noteContent) {
+                return `\n\n> 📝 **Section not found:** \`${noteName}${section ? '#' + section : ''}\`\n\n`;
+            }
+
+            const filename = path.basename(notePath, path.extname(notePath));
+            const displayName = displayText || (section ? `${filename}#${section}` : filename);
+
+            // Process the note content:
+            // 1. Remove frontmatter if present
+            const contentWithoutFrontmatter = this.removeFrontmatter(noteContent);
+
+            // 2. Create embedded note section
+            const embeddedNote = `
+<div class="embedded-note">
+
+### 📄 ${displayName}
+
+${contentWithoutFrontmatter.trim()}
+
+</div>
+
+`;
+
+            return embeddedNote;
+        } catch (error) {
+            console.error('[NOTED] Error processing embedded note:', noteName, error);
+            return `\n\n> ⚠️ **Error loading note:** \`${noteName}\`\n\n`;
+        }
+    }
+
+    /**
+     * Remove YAML frontmatter from note content
+     */
+    private removeFrontmatter(content: string): string {
+        // Check if content starts with frontmatter (---)
+        const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
+        const match = content.match(frontmatterRegex);
+
+        if (match) {
+            return content.substring(match[0].length);
+        }
+
+        return content;
+    }
 }
