@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.29.0](https://github.com/jsonify/noted/compare/v1.28.8...v1.29.0) (2025-10-24)
+
+
+### Features
+
+* add embedded content rendering in markdown preview ([#24](https://github.com/jsonify/noted/issues/24)) ([b2ea5fc](https://github.com/jsonify/noted/commit/b2ea5fcf77a03aa3604a22f5a9e3839be8a1f7e1))
+
 ### [1.28.8](https://github.com/jsonify/noted/compare/v1.28.7...v1.28.8) (2025-10-24)
 
 
