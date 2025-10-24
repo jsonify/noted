@@ -330,11 +330,6 @@
         "icon": "$(archive)"
       },
       {
-        "command": "noted.toggleMarkdownPreview",
-        "title": "Noted: Toggle Markdown Preview",
-        "icon": "$(open-preview)"
-      },
-      {
         "command": "noted.undo",
         "title": "Noted: Undo Last Operation",
         "icon": "$(discard)"
@@ -375,13 +370,6 @@
       }
     ],
     "menus": {
-      "editor/title": [
-        {
-          "command": "noted.toggleMarkdownPreview",
-          "when": "editorLangId == markdown || resourceExtname == .md",
-          "group": "navigation"
-        }
-      ],
       "editor/context": [
         {
           "command": "noted.extractSelectionToNote",
