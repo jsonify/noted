@@ -156,17 +156,6 @@ Archive completed or old notes to keep your workspace clean.
 
 [Learn more →](/noted/posts/archive/)
 
-## 👁️ Markdown Preview
-
-Toggle rich markdown preview for .md files directly in VS Code.
-
-- **Side-by-Side**: Edit and preview simultaneously
-- **Synchronized Scrolling**: Preview follows your cursor
-- **Full Markdown Support**: Tables, code blocks, images, and more
-- **Quick Toggle**: `Cmd+K Cmd+V` switches preview on/off
-
-[Learn more →](/noted/posts/markdown-preview/)
-
 ---
 
 Ready to explore these features? [Get Started →](/noted/posts/getting-started/)

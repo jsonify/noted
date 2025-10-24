@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import { promises as fsp } from 'fs';
 import { showCalendarView } from './calendar/calendarView';
 import { showGraphView } from './graph/graphView';
-import { MarkdownPreviewManager } from './preview/markdownPreview';
 import { MarkdownToolbarService } from './services/markdownToolbarService';
 import { TagService } from './services/tagService';
 import { formatTagForDisplay } from './utils/tagHelpers';
@@ -361,10 +360,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Initialize undo service for tracking destructive operations
     const undoService = new UndoService();
-
-    // Initialize markdown preview manager with embed service for embedded content rendering
-    const markdownPreviewManager = new MarkdownPreviewManager(context, embedService);
-    context.subscriptions.push(markdownPreviewManager);
 
     // Initialize markdown toolbar service for visual formatting buttons
     const markdownToolbarService = new MarkdownToolbarService(context);
@@ -1386,11 +1381,6 @@ export function activate(context: vscode.ExtensionContext) {
         notesProvider.refresh();
     });
 
-    // Command to toggle markdown preview
-    let toggleMarkdownPreview = vscode.commands.registerCommand('noted.toggleMarkdownPreview', async () => {
-        await markdownPreviewManager.togglePreview();
-    });
-
     // ============================================================================
     // Markdown Formatting Commands (Visual Toolbar)
     // ============================================================================
@@ -1437,7 +1427,6 @@ export function activate(context: vscode.ExtensionContext) {
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive,
-        toggleMarkdownPreview,
         showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol
