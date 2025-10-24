@@ -87,7 +87,7 @@ Check that Noted is working:
 
 Test the extension:
 
-1. **Press `Cmd+Shift+N`** (Mac) or `Ctrl+Shift+N`** (Windows/Linux)
+1. **Press `Cmd+Shift+N`** (Mac) or **`Ctrl+Shift+N`** (Windows/Linux)
 2. **Or run "Noted: Open Today's Note"** from Command Palette
 3. **Today's note opens** in the editor
 4. **Type something** and save
