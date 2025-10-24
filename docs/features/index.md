@@ -71,6 +71,7 @@ Live markdown rendering with side-by-side editing and preview.
 - **Link Diagnostics**: Real-time warnings for ambiguous or broken links
 - **Connections Panel**: Always-visible sidebar with incoming/outgoing links
 - **Backlinks**: Automatic tracking of incoming links with context
+- **Auto-Backlinks Sections**: Backlinks automatically appended to note files with tags
 - **Connection Context**: See line numbers and snippets for each connection
 - **Quick Navigation**: Click connections to open notes or jump to source lines
 - **Extract to Note**: Create new linked notes from selected text
@@ -79,8 +80,9 @@ Live markdown rendering with side-by-side editing and preview.
 - **Section Embeds**: Embed specific sections with `![[note#section]]`
 - **Embed Previews**: Hover to preview embedded content
 - **Visual Indicators**: Icons show embed status (📄 ⚠️ ❌)
-- **Tags**: Inline tags with `#tagname` syntax
+- **Tags**: Inline tags with `#tagname` or YAML frontmatter `tags: [tag1, tag2]`
 - **Tag Autocomplete**: Type `#` for tag suggestions
+- **YAML Frontmatter**: Standard frontmatter support for tags
 - **Tag Management**: Rename, merge, delete, and export tags
 - **Advanced Search**: Regex, case-sensitive, date range, and tag filters
 - **Quick Switcher**: Access 20 most recent notes instantly

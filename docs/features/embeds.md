@@ -46,7 +46,7 @@ Embeds show a 📄 icon next to them to indicate they're actively embedding cont
 
 Hover over the icon to see a preview of the embedded content.
 
-## Embed Specific Sections (v1.17.0)
+## Embed Specific Sections
 
 ### Section Syntax
 
@@ -528,7 +528,7 @@ Result: Note A shows content from Note C's section via Note B.
 
 ⚠️ **Warning:** Keep chains short for performance.
 
-## Image Embeds (v1.17.0)
+## Image Embeds
 
 ### Overview
 

@@ -25,7 +25,7 @@ See also: [[user-authentication-spec]]
 Related: [[api-design]] and [[security-considerations]]
 ```
 
-### Link with Display Text (v1.13.5)
+### Link with Display Text
 
 Use custom display text while linking to a note:
 
@@ -36,7 +36,7 @@ Review the [[api-docs|API documentation]] before starting.
 
 Syntax: `[[note-name|Custom Display Text]]`
 
-### Path-Based Disambiguation (v1.14.0)
+### Path-Based Disambiguation
 
 When you have multiple notes with the same name, use paths to specify which one:
 
@@ -52,7 +52,7 @@ Project kickoff: [[projects/alpha/meeting]]
 - Custom folders: `[[projects/alpha/notes]]`
 - Both `/` and `\` separators work
 
-## Link Autocomplete (v1.14.0)
+## Link Autocomplete
 
 Type `[[` to trigger intelligent autocomplete:
 
@@ -71,7 +71,7 @@ Type `[[` to trigger intelligent autocomplete:
   → Shows: 2025/10-October/meeting
 ```
 
-## Link Diagnostics (v1.14.0)
+## Link Diagnostics
 
 Real-time warnings and quick fixes help you maintain link integrity:
 
@@ -107,7 +107,7 @@ Hover over ambiguous links to see all matching notes with their paths.
 
 ## Backlinks System
 
-### Connections Panel (v1.22.0)
+### Connections Panel
 
 The **[Connections Panel]({{ '/features/connections' | relative_url }})** provides the best way to view and navigate backlinks:
 
@@ -145,7 +145,7 @@ If backlinks seem out of date:
 2. Run "Noted: Refresh Connections" (or "Rebuild Backlinks Index")
 3. Index rebuilds automatically in background
 
-## Extract Selection to Note (v1.14.1)
+## Extract Selection to Note
 
 Create new notes from selected text with automatic linking:
 
@@ -190,7 +190,7 @@ Extracted on: Sunday, October 21, 2025 at 2:30 PM
 This will require studying the W3C spec and browser support.
 ```
 
-## Rename Symbol (v1.14.2)
+## Rename Symbol
 
 Refactor links across your entire workspace:
 
@@ -210,7 +210,7 @@ Refactor links across your entire workspace:
 - Display text is preserved
 - Backlinks index automatically rebuilds
 
-## Automatic Link Synchronization (v1.13.5)
+## Automatic Link Synchronization
 
 When you rename or move notes, all links automatically update:
 

@@ -18,16 +18,14 @@ Welcome to the Noted user guide! This guide will help you get started and make t
 
 ## Core Workflows
 
-- [Daily Note-Taking]({{ '/user/daily-notes' | relative_url }}) - Your daily note workflow
-- [Using Templates]({{ '/user/using-templates' | relative_url }}) - Structure your notes with templates
-- [Organizing Notes]({{ '/user/organizing-notes' | relative_url }}) - Folders, tags, and structure
-- [Linking Notes]({{ '/user/linking-notes' | relative_url }}) - Build a knowledge base
+- [Daily Note-Taking]({{ '/user/daily-workflow' | relative_url }}) - Your daily note workflow
+- [Organizing Notes]({{ '/user/organizing-notes' | relative_url }}) - Folders, pinning, archiving, and bulk operations
+- [Linking Notes]({{ '/user/linking-workflow' | relative_url }}) - Build a knowledge base with wiki-style links
 
 ## Advanced Usage
 
 - [Search & Filter]({{ '/user/search-filter' | relative_url }}) - Find what you need quickly
 - [Keyboard Shortcuts]({{ '/user/keyboard-shortcuts' | relative_url }}) - Work faster with shortcuts
-- [Tips & Tricks]({{ '/user/tips-tricks' | relative_url }}) - Pro tips for power users
 
 ## Troubleshooting
 

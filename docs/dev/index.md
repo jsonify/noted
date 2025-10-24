@@ -30,15 +30,13 @@ Welcome to the Noted development documentation! This section covers contributing
 
 ## Project Status
 
-### Current Version
-
-**v1.13.8** - [View Changelog](https://github.com/jsonify/noted/releases)
+[View Latest Release](https://github.com/jsonify/noted/releases){: .btn .btn-primary }
 
 ### Build Status
 
 [![CI](https://github.com/jsonify/noted/actions/workflows/ci.yml/badge.svg)](https://github.com/jsonify/noted/actions/workflows/ci.yml)
 
-- **Tests:** 184 passing unit tests
+- **Tests:** 325 passing unit tests
 - **Platforms:** Ubuntu, macOS, Windows
 - **Node Versions:** 18.x, 20.x
 
@@ -138,10 +136,11 @@ pnpm run package
 Noted uses a modular architecture with clear separation of concerns:
 
 - **`src/extension.ts`** - Entry point and command registration
-- **`src/services/`** - Business logic (13 service modules)
+- **`src/constants.ts`** - Shared constants and templates
+- **`src/services/`** - Business logic and file operations
 - **`src/providers/`** - VS Code tree view providers
 - **`src/commands/`** - Command handlers
-- **`src/utils/`** - Helper functions and validators
+- **`src/utils/`** - Validation and helper functions
 - **`src/calendar/`** - Calendar view functionality
 - **`src/graph/`** - Graph visualization
 
@@ -150,11 +149,17 @@ Noted uses a modular architecture with clear separation of concerns:
 - **ConfigService** - Configuration management
 - **FileSystemService** - Async file operations
 - **NoteService** - Note operations (search, stats, export)
+- **SearchService** - Advanced search with regex and filters
 - **TagService** - Tag indexing and querying
 - **LinkService** - Wiki-style links and backlinks
+- **EmbedService** - Note and image embeds
+- **ConnectionsService** - Connection data for backlinks and outgoing links
+- **BacklinksAppendService** - Automatic backlinks sections
 - **BulkOperationsService** - Multi-select operations
 - **UndoService** - Undo/redo functionality
 - **GraphService** - Graph data and analysis
+- **PinnedNotesService** - Pinned notes management
+- **ArchiveService** - Archive functionality
 
 [Full Architecture Documentation]({{ '/dev/architecture' | relative_url }})
 
@@ -162,8 +167,8 @@ Noted uses a modular architecture with clear separation of concerns:
 
 ### Test Coverage
 
-- **184 unit tests** covering all core functionality
-- **Test suites:** validators, services, providers, commands
+- **325 unit tests** covering all core functionality
+- **Test suites:** utilities, services, providers, commands, helpers
 - **Execution time:** ~270ms for full suite
 - **All tests passing** across all platforms
 
@@ -179,26 +184,20 @@ Noted uses a modular architecture with clear separation of concerns:
 
 ## Recent Development
 
-### Latest Features (v1.13.8)
+### Latest Features
 
-- Enhanced link features with path-based disambiguation
-- Link autocomplete and diagnostics
-- Extract selection to new note functionality
-- Rename symbol command for refactoring links
-- Automatic link synchronization on rename/move
+- Auto-backlinks sections appended to notes
+- YAML frontmatter tag support
+- Connections panel with rich context
+- Note and image embeds with section support
+- Enhanced graph view with customization and focus mode
+- Time-based filtering in graph view
+- Comprehensive undo/redo system
+- Bulk operations for notes
 
-### In Progress
+### Roadmap
 
-See [plan.md](https://github.com/jsonify/noted/blob/main/plan.md) for roadmap and planned features.
-
-### Areas for Contribution
-
-- Embed notes functionality (`![[note-name]]`)
-- Hover previews for links
-- Hierarchical tags (`#parent/child`)
-- Section references (`[[note#section]]`)
-- Enhanced graph features
-- Performance optimizations
+See [plan.md](https://github.com/jsonify/noted/blob/main/plan.md) for upcoming features and development roadmap.
 
 ## Community & Support
 
