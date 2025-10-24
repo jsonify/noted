@@ -53,10 +53,12 @@ When you first use Noted, you'll choose where to store your notes.
 
 ### Create Today's Note
 
-1. Open Command Palette (`Cmd+Shift+P`)
+1. Open Command Palette (`Cmd+Shift+P` on Mac or `Ctrl+Shift+P` on Windows/Linux)
 2. Run **"Noted: Open Today's Note"**
 3. Note opens in editor
 4. Start writing!
+
+> **Tip:** You can assign a keyboard shortcut to this command for quick access. See the [Keyboard Shortcuts guide]({{ '/user/keyboard-shortcuts' | relative_url }}).
 
 Your note is automatically created at:
 ```
@@ -134,9 +136,11 @@ Open the **Noted** activity bar (notebook icon) to see four panels:
 
 Place cursor where you want timestamp:
 
-1. Open Command Palette
+1. Open Command Palette (`Cmd+Shift+P` or `Ctrl+Shift+P`)
 2. Run **"Noted: Insert Timestamp"**
 3. Timestamp inserted: `[2:30 PM]`
+
+> **Tip:** Consider assigning a keyboard shortcut for quick timestamp insertion.
 
 ### 2. Link Notes Together
 
@@ -254,10 +258,10 @@ Create a custom template for your daily workflow:
 
 Now that you've created your first note, explore these guides:
 
-- **[Daily Note-Taking]({{ '/user/daily-notes' | relative_url }})** - Establish a daily note routine
-- **[Using Templates]({{ '/user/using-templates' | relative_url }})** - Create structured notes efficiently
+- **[Daily Workflow]({{ '/user/daily-workflow' | relative_url }})** - Establish a daily note routine
 - **[Organizing Notes]({{ '/user/organizing-notes' | relative_url }})** - Keep your notes organized
-- **[Linking Notes]({{ '/user/linking-notes' | relative_url }})** - Build connections between ideas
+- **[Linking Workflow]({{ '/user/linking-workflow' | relative_url }})** - Build connections between ideas
+- **[Search & Filter]({{ '/user/search-filter' | relative_url }})** - Find what you need quickly
 
 ---
 

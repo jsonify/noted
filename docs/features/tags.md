@@ -14,7 +14,7 @@ Organize and discover your notes with a powerful inline tagging system that supp
 The tags system in Noted allows you to categorize and organize your notes using two flexible approaches:
 
 1. **Inline hashtags**: Simple `#tagname` syntax that can appear anywhere in your note content
-2. **YAML frontmatter** (v1.25.0): Standard `tags: [tag1, tag2, tag3]` array format at the beginning of notes
+2. **YAML frontmatter**: Standard `tags: [tag1, tag2, tag3]` array format at the beginning of notes
 
 Unlike metadata-only tag systems, Noted supports both approaches and automatically combines tags from both sources, giving you maximum flexibility in how you organize your notes.
 
@@ -41,7 +41,7 @@ Next steps:
 - Update documentation #docs
 ```
 
-#### 2. YAML Frontmatter Tags (v1.25.0)
+#### 2. YAML Frontmatter Tags
 
 Add tags in YAML frontmatter at the beginning of your note:
 

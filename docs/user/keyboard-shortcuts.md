@@ -11,7 +11,7 @@ Work faster with keyboard shortcuts for common Noted operations.
 
 ## Default Shortcuts
 
-Noted doesn't include default keyboard shortcuts to avoid conflicts, but all commands are accessible via the Command Palette.
+Noted does not include default keyboard shortcuts to avoid conflicts with other extensions. All commands are accessible via the Command Palette, and you can assign your own shortcuts to any command.
 
 ## Setting Up Shortcuts
 
@@ -269,4 +269,4 @@ Find full list in Command Palette or package.json
 
 ---
 
-[← Back to User Guide]({{ '/user/' | relative_url }}) | [Next: Tips & Tricks →]({{ '/user/tips-tricks' | relative_url }})
+[← Back to User Guide]({{ '/user/' | relative_url }})

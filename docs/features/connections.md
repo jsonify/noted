@@ -417,16 +417,6 @@ No keyboard shortcuts needed for basic navigation.
 - Large workspace (1000+ notes) may take seconds
 - Wait for background process to complete
 
-## Future Enhancements
-
-Planned improvements for the Connections panel:
-
-- **Unlinked mentions**: Find notes that mention current note's title without explicit links
-- **Tag-based connections**: Show notes connected by common tags
-- **Connection timeline**: See when connections were created
-- **Connection strength**: Visual indicators for frequently-linked notes
-- **Filtered views**: Show only certain types of connections
-
 ---
 
 [← Back to Features]({{ '/features/' | relative_url }}) | [Next: Graph View →]({{ '/features/graph' | relative_url }})
