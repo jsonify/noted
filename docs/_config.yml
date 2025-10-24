@@ -5,7 +5,7 @@ baseurl: "/noted"
 url: "https://jsonify.github.io"
 
 # Theme configuration
-remote_theme: just-the-docs/just-the-docs@v0.4.2
+remote_theme: just-the-docs/just-the-docs
 plugins:
   - jekyll-remote-theme
   - jekyll-relative-links
