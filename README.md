@@ -2,533 +2,521 @@
 
 [![CI](https://github.com/jsonify/noted/actions/workflows/ci.yml/badge.svg)](https://github.com/jsonify/noted/actions/workflows/ci.yml)
 
-A VS Code extension for quick daily note-taking, meeting notes, project ideas, and more - your digital scratch pad!
+A comprehensive VS Code extension for organized workspace notes with templates, wiki-style linking, graph visualization, and powerful search - your digital knowledge base!
 
-## Features
+## ✨ Key Features
 
-- **Quick Access**: Instantly open today's note via command palette
-- **Auto-Organization**: Notes are automatically organized in `Notes/YEAR/MM-MonthName/YYYY-MM-DD.txt`
-- **Timestamps**: Insert timestamps with custom note filenames
-- **Flexible Format**: Default .txt files, easily switch to .md with a command
-- **Built-in Templates**: Choose from Problem/Solution, Meeting, Research, or Quick note templates
-- **Custom Templates** Create, edit, and manage your own reusable templates with 10 powerful variables
-- **Template Variables** Use dynamic placeholders like {date}, {user}, {workspace}, and more
-- **Tag System**: Organize notes with tags, filter by tags, and get autocomplete suggestions
-- **Advanced Tag Management** Rename, merge, delete, and export tags across all notes
-- **Wiki-Style Links** Link notes together with `[[note-name]]` syntax and see backlinks
-- **Pinned Notes** Pin frequently accessed notes for quick access
-- **Archive** Archive old or completed notes to keep your workspace clean
-- **Calendar View**: Visual monthly calendar for navigating and creating daily notes
-- **Drag & Drop**: Move notes between folders with simple drag-and-drop
-- **Advanced Search** Powerful search with regex, date filters, and tag filtering
-- **Quick Switcher** Instantly access your 20 most recent notes
+- **📝 Daily Notes**: Instantly open today's note with automatic year/month organization
+- **🔗 Wiki-Style Links**: Connect notes with `[[note-name]]` syntax, see backlinks, and navigate your knowledge graph
+- **🔄 Connections Panel**: Always-visible sidebar showing incoming backlinks and outgoing links with context
+- **📄 Note & Image Embeds**: Embed entire notes or sections inline with `![[embed]]` syntax
+- **🕸️ Interactive Graph View**: Visualize your entire note network with customizable, interactive graph
+- **🏷️ Powerful Tag System**: Organize with inline `#tags` or YAML frontmatter, filter, autocomplete, and manage
+- **🔍 Advanced Search**: Regex patterns, date filters, tag filtering, and quick switcher
+- **📅 Calendar View**: Visual monthly calendar for navigating and creating daily notes
+- **📋 Templates**: Built-in and custom templates with 10 dynamic variables
+- **⚡ Bulk Operations**: Multi-select notes for batch move, delete, or archive
+- **↩️ Undo/Redo**: Full undo/redo support for all destructive operations
+- **📌 Pinned Notes**: Pin frequently accessed notes for instant access
+- **📦 Archive**: Keep workspace clean by archiving completed notes
+- **👁️ Markdown Preview**: Live preview for .md files with side-by-side editing
 
-## Usage
+## 🚀 Quick Start
 
-1. **Open Today's Note**:
-   - Command Palette: "Noted: Open Today's Note"
-   - Sidebar: Click the "+" icon in the Notes panel
+1. Open Command Palette (`Cmd+Shift+P` or `Ctrl+Shift+P`)
+2. Type "Noted: Open Today's Note"
+3. Start writing!
 
-2. **Insert Timestamp**:
-   - Command Palette: "Noted: Insert Timestamp"
+Notes are automatically organized in: `Notes/2025/10-October/2025-10-24.md`
 
-3. **Toggle Format**:
-   - Command Palette: "Noted: Toggle File Format (txt/md)"
+## 📖 Core Features
 
-4. **Quick Switcher**:
-   - Command Palette: "Noted: Quick Switcher (Recent Notes)"
-   - Instantly access your 20 most recently modified notes
+### Daily Notes
 
-5. **Use Tags**:
-   - Add tags using inline `#tagname` syntax or YAML frontmatter `tags: [tag1, tag2]`
-   - View all tags in the dedicated Tags sidebar panel
-   - Click any tag to filter notes containing that tag
-   - Type `#` in a note to see autocomplete suggestions
-   - Sort tags alphabetically or by frequency
-   - Filter by multiple tags simultaneously
-   - Manage tags: rename, merge, delete, or export them
+**Quick Access**: Open today's note instantly via Command Palette
 
-## Tag System
+**Auto-Organization**: Notes stored in `Notes/YEAR/MM-MonthName/YYYY-MM-DD.format`
 
-The tag system helps you organize and find your notes quickly:
+**Timestamps**: Insert formatted timestamps `[HH:MM AM/PM]` at cursor
 
-### Adding Tags to Notes
+**Flexible Format**: Choose between `.txt` or `.md` files (configurable)
 
-**Option 1: Inline Hashtags**
+### Wiki-Style Links
 
-Simply type `#` followed by your tag name anywhere in your note:
+Connect your notes to build a personal knowledge base:
 
-```
-2025-10-19
-==================================================
+```markdown
+Working on authentication today.
+See also: [[user-auth-spec]] and [[api-design]]
 
-Working on the new authentication feature today #backend #auth
+# Use custom display text
+Check out [[long-note-name|this note]] for details
 
-Fixed bug in login form #bugfix #frontend
-
-Next steps:
-- Add tests #todo
-- Update documentation #docs
+# Disambiguate with paths when names conflict
+Meeting notes: [[work/meeting]] vs [[personal/meeting]]
 ```
 
-**Option 2: YAML Frontmatter** (v1.25.0)
+**Features:**
+- Clickable `[[wiki-links]]` navigate directly to notes
+- Custom display text: `[[note|Display Text]]`
+- Path-based disambiguation: `[[folder/note]]` for duplicate names
+- Autocomplete while typing `[[` shows all available notes
+- Warnings for broken or ambiguous links with quick fixes
+- Automatic link updates when renaming/moving notes
+- Hover previews showing note content
+- Create missing notes directly from broken links
 
-Add tags in a structured format at the beginning of your note:
+### Connections Panel 🆕
 
-```yaml
+Always-visible sidebar showing all note relationships:
+
+**Outgoing Links**: Notes that the current note links to
+- Shows target note name
+- Line number and context where link appears
+- Click to navigate to linked note
+
+**Backlinks**: Notes that link to the current note
+- See what notes reference your work
+- Context snippets showing how notes are connected
+- Quick navigation to source notes
+- "Open Connection Source" to jump to exact line
+
+**Real-Time Updates**: Panel refreshes as you edit and save notes
+
+### Note & Image Embeds 🆕
+
+Include content from other notes or display images inline:
+
+**Embed Notes:**
+```markdown
+![[meeting-notes]]                    # Embed entire note
+![[project-overview#Goals]]           # Embed specific section
+![[api-docs#Authentication|How to Auth]]  # Custom display text
+```
+
+**Embed Images:**
+```markdown
+![[screenshot.png]]                   # Simple image
+![[./images/diagram.png|Diagram]]     # Relative path with caption
+![[/path/to/photo.jpg]]              # Absolute path
+```
+
+**Supported Formats**: PNG, JPG, JPEG, GIF, SVG, WebP, BMP, ICO
+
+**Live Updates**: Embedded content updates automatically when source changes
+
+### Graph View 🆕
+
+Interactive visualization of your note network:
+
+**Interactive Features:**
+- Click nodes to open notes
+- Drag nodes to reorganize
+- Zoom and pan to explore
+- Hover for tooltips
+- Click to highlight connections
+- Right-click for focus mode
+
+**Customization:**
+- 3 layout algorithms: Force-Directed, Hierarchical, Circular
+- Adjust node sizes, colors, shapes (6 options)
+- Configure edge styles, colors, arrows
+- Custom color schemes for connection levels
+- Physics tuning: spring length, repulsion, gravity
+
+**Filtering:**
+- Search by note name
+- Filter by connection type (all/connected/orphans)
+- Date-based filtering (created/modified)
+- Preset ranges: Today, Last 7/30/90/365 Days
+- Custom date ranges
+
+**Statistics:**
+- Total notes and links
+- Orphan detection
+- Most connected notes
+- Average connections per note
+
+### Tag System
+
+Organize notes with flexible tagging:
+
+**Add Tags:**
+```markdown
+# Inline hashtags
+Working on #backend #authentication today
+
+# YAML frontmatter
 ---
-tags: [backend, auth, bugfix]
+tags: [backend, security, auth]
 ---
 
-2025-10-19
-==================================================
-
-Working on the new authentication feature today.
+# Combine both approaches!
 ```
 
-**Mix Both Approaches:**
+**Features:**
+- Click tags to filter notes
+- Multi-tag filtering (AND logic)
+- Tag autocomplete when typing `#`
+- Sort alphabetically or by frequency
+- Rename tags across all notes
+- Merge duplicate tags
+- Delete tags with confirmation
+- Export tags to JSON
 
-You can use both frontmatter and inline tags in the same note - they are automatically combined!
+### Advanced Search
 
-**Tag Format:**
-- Tags can contain letters, numbers, hyphens, and underscores
-- Valid examples: `#bug-fix`, `#work_notes`, `#project2024`
-- Tags are case-insensitive (`#Bug` and `#bug` are the same)
+Powerful search with multiple filter types:
 
-### Finding Tagged Notes
-
-**Filter by Tag:**
-1. Open the "Tags" panel in the sidebar (third panel)
-2. Click any tag to filter notes
-3. Or use Command Palette: "Noted: Filter Notes by Tag"
-4. Select multiple tags to find notes with all selected tags
-
-**Tag Autocomplete:**
-- Type `#` in any note to see suggestions
-- Suggestions are sorted by frequency (most-used tags first)
-- Press Enter or Tab to accept a suggestion
-
-**Sort Tags:**
-- Click the sort buttons in the Tags panel toolbar
-- Sort alphabetically (A-Z)
-- Sort by frequency (most-used first)
-
-### Tag Management ⭐ NEW
-
-**Rename Tags:**
-- Right-click a tag and select "Rename Tag"
-- Or use Command Palette: "Noted: Rename Tag"
-- Updates the tag across all notes automatically
-- Validates tag names and prevents duplicates
-
-**Merge Tags:**
-- Use Command Palette: "Noted: Merge Tags"
-- Select the tag to keep and the tag to merge
-- Automatically removes duplicates after merging
-- Updates all affected notes in one operation
-
-**Delete Tags:**
-- Right-click a tag and select "Delete Tag"
-- Or use Command Palette: "Noted: Delete Tag"
-- Removes the tag from all notes with confirmation
-- Includes rollback support if errors occur
-
-**Export Tags:**
-- Use Command Palette: "Noted: Export Tags to JSON"
-- Exports all tags with metadata (name, count, notes)
-- Includes export date and total tag count
-- Perfect for backup or external analysis
-
-**Refresh Tags:**
-- Click the refresh button in Tags panel
-- Or use Command Palette: "Noted: Refresh Tags"
-- Automatically rebuilds the tag index from all notes
-
-**View Tag Statistics:**
-- Each tag shows its usage count in the Tags panel
-- See which tags you use most often at a glance
-
-## Note Organization & Discovery ⭐ NEW
-
-### Wiki-Style Note Linking ⭐ ENHANCED
-
-Connect your notes together to build a knowledge base:
-
-**Creating Links:**
+**Filter Syntax:**
 ```
-Working on the authentication feature today.
-See also: [[user-authentication-spec]]
-Related: [[api-design]] and [[security-considerations]]
-
-# New in v1.14.0: Disambiguate with paths when you have duplicate names
-Meeting today: [[work/meeting]]
-Yesterday's meeting: [[2025/10-October/meeting]]
+regex: pattern           # Regular expressions
+case: true              # Case-sensitive search
+tag:name               # Filter by tags
+from:2025-01-01        # Date range start
+to:2025-01-31          # Date range end
 ```
 
-**Link Features:**
-- Use `[[note-name]]` syntax to link to any note
-- Use `[[note-name|Custom Text]]` to display custom link text (v1.13.5)
-- Use `[[folder/note-name]]` for disambiguation when multiple notes share the same name (v1.14.0)
-- Links are clickable and navigate directly to the target note
-- Automatic link resolution with fuzzy matching
-- Works with partial note names for convenience
-- **NEW:** Autocomplete shows all available notes while typing `[[`
-- **NEW:** Warnings for ambiguous or broken links with quick fixes
+**Combine Filters:**
+```
+regex: tag:backend from:2025-10-01 authentication.*error
+```
 
-**Path-Based Disambiguation (v1.14.0):**
-When you have multiple notes with the same name in different folders:
-- `[[meeting]]` - links to first match
-- `[[work/meeting]]` - links to specific note in work folder
-- `[[2025/10-October/meeting]]` - links to note in specific month
-- Works with both `/` and `\` path separators
-- Get autocomplete suggestions showing all matches with their paths
-- Yellow warnings on ambiguous links with quick fixes to convert to full paths
+**Quick Switcher:**
+- Access 20 most recent notes instantly
+- Searchable by filename, tags, content
+- Fast navigation for active work
 
-**Viewing Backlinks:**
-- Hover over any note's header to see all notes that link to it
-- Each backlink shows the source note name and context
-- Click backlinks to navigate to linking notes
-- Automatically indexed for fast lookups
+### Calendar View
 
-**Managing Links:**
-- Links automatically update when you rename or move notes (v1.13.5)
-- Use Command Palette: "Noted: Rebuild Backlinks Index"
-- Index rebuilds automatically when notes change
-- Works across all note formats (.txt and .md)
+Visual monthly calendar for navigating daily notes:
+
+**Features:**
+- Click any date to see/create notes
+- Highlighted days with existing notes
+- Current day indicator
+- Month navigation (Previous/Today/Next)
+- Create multiple notes per day
+- Shows all notes for selected date
+
+### Templates
+
+**Built-in Templates:**
+- Problem/Solution: Troubleshooting and bug tracking
+- Meeting: Agenda, attendees, action items
+- Research: Structured research notes
+- Quick: Simple dated note
+
+**Custom Templates:**
+Create personalized templates with 10 dynamic variables:
+- `{filename}` - Note file name
+- `{date}` - Full date (Sunday, October 24, 2025)
+- `{time}` - 12-hour time (2:30 PM)
+- `{year}`, `{month}`, `{day}` - Date components
+- `{weekday}` - Short day name (Sun, Mon)
+- `{month_name}` - Full month name (October)
+- `{user}` - System username
+- `{workspace}` - VS Code workspace name
+
+**Template Management:**
+- Create, edit, duplicate, delete templates
+- Template variables reference viewer
+- Open templates folder in system
+
+### Bulk Operations 🆕
+
+Multi-select notes for batch operations:
+
+**Features:**
+- Toggle select mode
+- Visual selection with checkmarks
+- Select all / clear selection
+- Bulk delete with confirmation
+- Bulk move to folder
+- Bulk archive
+- Undo support for all operations
+
+### Undo/Redo 🆕
+
+Full undo/redo system for safety:
+
+**Supported Operations:**
+- Delete, rename, move notes
+- Archive/unarchive
+- Bulk operations
+- All destructive changes
+
+**Features:**
+- View complete undo history
+- Redo previously undone operations
+- Clear history when needed
+- Smart file restoration with content
 
 ### Pinned Notes
 
-Keep your most important notes at your fingertips:
+Pin important notes for quick access:
 
-**Pinning Notes:**
-- Right-click any note and select "Pin/Unpin Note"
-- Or use Command Palette: "Noted: Pin/Unpin Note"
-- Pinned notes appear in a dedicated section at the top of the tree view
-
-**Pinned Notes Features:**
-- Visual pin indicator (📌) on pinned notes
-- Persistent across VS Code sessions
-- Quick access without scrolling
-- Automatically removed if note is deleted
-
-**Common Uses:**
-- Current project notes
-- Meeting agenda templates
-- Frequently referenced guides
-- Active task lists
+**Features:**
+- Pin/unpin from context menu
+- Dedicated "Pinned Notes" section at top
+- Visual pin indicator (📌)
+- Persistent across sessions
+- Auto-cleanup if note deleted
 
 ### Archive
 
-Keep your workspace clean by archiving completed work:
-
-**Archiving Notes:**
-- Right-click any note and select "Archive Note"
-- Or use Command Palette: "Noted: Archive Note"
-- Archived notes move to a hidden `.archive` folder
-
-**Archive Features:**
-- Dedicated "Archive" section in tree view
-- Visual archive indicator (📦) on archived notes
-- Archive old notes in bulk by age
-- Unarchive notes to restore them
-
-**Bulk Archive:**
-- Use Command Palette: "Noted: Archive Old Notes"
-- Specify how many days old (e.g., 90 days)
-- Confirmation dialog before archiving
-- Perfect for end-of-project cleanup
-
-**Unarchiving:**
-- Right-click archived note and select "Unarchive Note"
-- Restores note to active notes
-- Safe with confirmation dialogs
-
-## Advanced Search & Discovery ⭐ NEW v1.6.0
-
-### Powerful Search with Filters
-
-Search across all your notes with advanced filtering capabilities:
-
-**Basic Search:**
-- Command Palette: "Noted: Search Notes"
-- Enter any text to search across all note content
-- View results with preview snippets and match counts
-
-**Advanced Filters:**
-
-Use special filter keywords in your search query:
-
-- `regex:` - Enable regular expression pattern matching
-  ```
-  regex: bug.*fix
-  ```
-
-- `case:` - Enable case-sensitive search
-  ```
-  case: TODO
-  ```
-
-- `tag:tagname` - Filter results by specific tags
-  ```
-  tag:backend tag:api
-  ```
-
-- `from:YYYY-MM-DD` - Show only notes modified after this date
-  ```
-  from:2025-01-01
-  ```
-
-- `to:YYYY-MM-DD` - Show only notes modified before this date
-  ```
-  to:2025-01-31
-  ```
-
-**Combine Multiple Filters:**
-```
-regex: tag:work from:2025-01-01 authentication.*error
-case: tag:bug tag:critical from:2025-10-01 BUG-
-```
-
-**Search Results:**
-- Shows match counts for each note
-- Displays tags associated with each note
-- Preview of matching content
-- Modification dates
-- Click any result to open the note
-
-### Quick Switcher
-
-Instantly access your most recent notes:
+Keep workspace clean:
 
 **Features:**
-- Command Palette: "Noted: Quick Switcher (Recent Notes)"
-- Shows 20 most recently modified notes
-- Displays tags, dates, and content preview
-- Searchable by filename, tags, or content
-- Fast navigation for easy access
+- Archive to hidden `.archive` folder
+- Dedicated archive section in tree
+- Visual archive indicator (📦)
+- Bulk archive by age
+- Easy unarchive to restore
 
-**Use Cases:**
-- Quickly return to your active work notes
-- Jump between related notes in a project
-- Access recently tagged items
-- Navigate your daily notes chronologically
+### Markdown Preview 🆕
 
-### Common Tag Use Cases
+Live preview for markdown files:
 
-**Project Organization:**
-```
-Working on user authentication #project-alpha #backend
-Designing new dashboard #project-alpha #frontend #design
-```
+**Features:**
+- Side-by-side editing and preview
+- Auto-update as you type
+- Toggle from editor toolbar
+- Full markdown support
 
-**Task Management:**
-```
-Need to refactor the database layer #todo #refactoring
-Bug in payment processing #bug #critical #backend
-Code review for PR #42 #review
-```
+## ⚙️ Configuration
 
-**Topic Categorization:**
-```
-Learned about React hooks today #learning #react #frontend
-Performance optimization notes #performance #optimization
-Meeting notes with design team #meeting #design
-```
+Access via VS Code Settings (search for "Noted"):
 
-**Status Tracking:**
-```
-Started implementation #in-progress
-Completed and tested #done
-Waiting for feedback #blocked
-```
+- **noted.notesFolder**: Where notes are stored (default: "Notes")
+- **noted.fileFormat**: File format - "txt" or "md" (default: "md")
+- **noted.tagAutoComplete**: Tag suggestions when typing # (default: true)
+- **noted.autoBacklinks**: Auto-append backlinks sections (default: true)
 
-## Custom Templates
+## 📥 Installation
 
-Create personalized templates that match your workflow! Custom templates support 10 powerful variables that automatically fill in contextual information.
+### From VS Code Marketplace
 
-### Creating a Custom Template
+1. Open VS Code Extensions (`Cmd+Shift+X` or `Ctrl+Shift+X`)
+2. Search for "Noted"
+3. Click Install
 
-1. Open the **Templates** panel in the sidebar (first panel)
-2. Click **"Create New Template"**
-3. Enter a name for your template
-4. Edit the template file with your structure
-5. Use any of the 10 template variables
+### Manual Installation
 
-### Template Variables
+1. Download latest `.vsix` from [releases](https://github.com/jsonify/noted/releases)
+2. Open VS Code Extensions view
+3. Click "..." menu → "Install from VSIX..."
+4. Select downloaded file
 
-All templates (built-in and custom) support these dynamic placeholders:
+## 🎯 Common Workflows
 
-**Basic Information:**
-- `{filename}` - The name of the note file
-- `{date}` - Full date (e.g., "Sunday, October 19, 2025")
-- `{time}` - Current time in 12-hour format (e.g., "2:30 PM")
+### Daily Standup
 
-**Date Components:**
-- `{year}` - Year (e.g., "2025")
-- `{month}` - Month with leading zero (e.g., "10")
-- `{day}` - Day with leading zero (e.g., "19")
-- `{weekday}` - Short day name (e.g., "Sun", "Mon")
-- `{month_name}` - Full month name (e.g., "October")
+```markdown
+---
+tags: [standup, team]
+---
 
-**Context:**
-- `{user}` - Your system username
-- `{workspace}` - Current VS Code workspace name
+# Standup - 2025-10-24
 
-### Example Custom Templates
+## Yesterday
+- Completed [[feature-auth]]
+- Reviewed [[pr-142]]
 
-**Daily Standup Template:**
-```
-File: {filename}
-Date: {date}
-Author: {user}
-==================================================
+## Today
+- Starting [[api-refactor]]
+- Meeting about [[database-migration]]
 
-## What I did yesterday:
--
-
-## What I'm doing today:
--
-
-## Blockers:
-- None
+## Blockers
+None
 
 #standup #team
 ```
 
-**Project Notes Template:**
-```
-Project: {workspace}
-Created: {date} at {time}
-==================================================
+### Project Notes
 
-## Objective:
+```markdown
+---
+tags: [project-alpha, planning]
+---
 
+# Project Alpha - Planning
 
-## Progress ({weekday}, {month_name} {day}):
+## Overview
+![[project-alpha-spec#Overview]]
 
+## Current Status
+See [[sprint-5-retrospective]] for latest updates
 
-## Next Steps:
--
+## Team
+- Alice: [[user-auth]]
+- Bob: [[database-migration]]
+- Charlie: [[ui-redesign]]
 
-#project #{workspace}
-```
+## Resources
+- [[architecture-decisions]]
+- [[api-documentation]]
 
-**Weekly Review Template:**
-```
-Weekly Review - Week of {month_name} {day}, {year}
-By: {user}
-==================================================
-
-## Accomplishments:
--
-
-## Challenges:
--
-
-## Goals for Next Week:
--
-
-#weekly-review #reflection
+#project-alpha
 ```
 
-### Managing Templates
+### Meeting Minutes
 
-**Edit Template:**
-- Click "Edit Template" in the Templates panel
-- Select the template to modify
-- Make your changes and save
+```markdown
+---
+tags: [meeting, team, weekly]
+---
 
-**Delete Template:**
-- Click "Delete Template" in the Templates panel
-- Confirm deletion
+# Weekly Team Sync - 2025-10-24
 
-**Duplicate Template:**
-- Click "Duplicate Template" to copy an existing template
-- Rename it and customize as needed
+**Attendees**: Alice, Bob, Charlie
 
-**View Variables Reference:**
-- Click "Template Variables Reference" to see all available placeholders
-- Opens a helpful reference panel with descriptions
+## Agenda
+1. Sprint review
+2. Blockers
+3. Next week planning
 
-**Templates Folder:**
-- Click "Open Templates Folder" to access your templates in the file system
-- Templates are stored in `{notesPath}/.templates/`
+## Notes
+[10:00 AM] Sprint 5 completed successfully
+- [[feature-auth]] shipped
+- [[bug-payment]] resolved
 
-## Configuration
+[10:15 AM] Blockers discussed
+- Bob blocked on [[database-migration]]
+- Need DevOps support
 
-Access settings via VS Code Settings (search for "Noted"):
+## Action Items
+- [ ] Bob: Schedule DevOps meeting
+- [ ] Alice: Document [[auth-flow]]
+- [ ] Charlie: Update [[roadmap]]
 
-- **Notes Folder**: Change where notes are stored (default: "Notes")
-- **File Format**: Choose between .txt or .md format (default: "txt")
-- **Tag Autocomplete**: Enable/disable tag suggestions when typing `#` (default: enabled)
+#meeting #weekly
+```
 
-### Template Variables in Settings
+## 🔧 Development
 
-The legacy `noted.useTemplate` and `noted.template` settings are superseded by the new Custom Templates feature. Use the Templates panel to create and manage templates instead of the settings.
-
-All custom templates support the full set of 10 template variables: `{filename}`, `{date}`, `{time}`, `{year}`, `{month}`, `{day}`, `{weekday}`, `{month_name}`, `{user}`, and `{workspace}`.
-
-## Installation
-
-### From VS Code Marketplace
-
-1. Open VS Code
-2. Go to Extensions (Ctrl+Shift+X / Cmd+Shift+X)
-3. Search for "Noted"
-4. Click Install
-
-### Manual Installation
-
-1. Download the latest `.vsix` file from the releases page
-2. Open VS Code
-3. Go to Extensions view
-4. Click the "..." menu at the top
-5. Select "Install from VSIX..."
-6. Choose the downloaded file
-
-## Development
-
-1. Clone this repository
-2. Run `pnpm install` to install dependencies
-3. Run `pnpm run compile` to build the extension
-4. Press F5 in VS Code to test the extension
-5. To package: `pnpm dlx @vscode/vsce package`
-
-### Testing
+### Setup
 
 ```bash
-# Run unit tests
-pnpm run test:unit
+# Clone repository
+git clone https://github.com/jsonify/noted.git
+cd noted
+
+# Install dependencies
+pnpm install
 
 # Compile TypeScript
 pnpm run compile
 
-# Run all tests (requires VS Code)
-pnpm run test
+# Run tests
+pnpm run test:unit
 ```
 
-The project includes 184 passing unit tests covering utilities, services, providers, templates, tag system, and search functionality.
+### Testing
 
-## Folder Structure
+```bash
+# Unit tests (325 passing)
+pnpm run test:unit
 
-Your notes will be organized like this:
+# Integration tests
+pnpm run test
+
+# Package extension
+pnpm dlx @vscode/vsce package
+```
+
+**Test Coverage:**
+- 325 unit tests covering all functionality
+- Cross-platform CI/CD (Ubuntu, macOS, Windows)
+- Multiple Node versions (18.x, 20.x)
+
+### Project Structure
+
+```
+src/
+├── extension.ts              # Entry point
+├── constants.ts              # Shared constants
+├── utils/                    # Utilities
+│   ├── validators.ts
+│   ├── dateHelpers.ts
+│   └── folderHelpers.ts
+├── services/                 # Business logic
+│   ├── noteService.ts
+│   ├── tagService.ts
+│   ├── linkService.ts
+│   ├── graphService.ts
+│   ├── connectionsService.ts
+│   ├── embedService.ts
+│   ├── bulkOperationsService.ts
+│   └── undoService.ts
+├── providers/                # Tree view providers
+├── commands/                 # Command handlers
+├── calendar/                 # Calendar view
+└── graph/                    # Graph visualization
+```
+
+## 📂 Folder Structure
+
+Notes are automatically organized:
 
 ```
 Notes/
-  └── 2025/
-      └── 10-October/
-          ├── 2025-10-02.txt
-          ├── 2025-10-03.txt
-          └── ...
+├── .templates/              # Custom templates
+├── .archive/               # Archived notes
+└── 2025/
+    ├── 10-October/
+    │   ├── 2025-10-01.md
+    │   ├── 2025-10-02.md
+    │   └── 2025-10-24.md
+    └── 11-November/
+        └── ...
 ```
 
-## License
+## 🌐 Documentation
+
+Full documentation available at: [https://jsonify.github.io/noted](https://jsonify.github.io/noted)
+
+**Topics:**
+- Getting Started Guide
+- Daily Notes Workflow
+- Wiki-Style Links & Connections
+- Note & Image Embeds
+- Graph View Tutorial
+- Tags System
+- Advanced Search
+- Calendar View
+- Bulk Operations
+- Undo/Redo
+- Templates Guide
+- Pinned Notes & Archive
+
+## 📝 License
 
 MIT
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-Please ensure to follow the existing code style and include tests for new features.
+Contributions welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new features
+4. Follow existing code style
+5. Submit a Pull Request
 
-Also, keep in mind that I tend to make lots of updates, so please check for any breaking changes before submitting PRs.
+**Note**: This project receives frequent updates, so please check for breaking changes before submitting PRs.
+
+## 🙏 Acknowledgments
+
+Built with ❤️ for the VS Code community
+
+**Technologies:**
+- TypeScript
+- VS Code Extension API
+- Vis.js (graph visualization)
+- Mocha & Chai (testing)
+
+## 📧 Support
+
+- **Issues**: [GitHub Issues](https://github.com/jsonify/noted/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/jsonify/noted/discussions)
+- **Documentation**: [Website](https://jsonify.github.io/noted)
