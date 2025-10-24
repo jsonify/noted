@@ -63,6 +63,12 @@ export async function generateTemplate(templateType: string | undefined, date: D
     const dateStr = formatDateForNote(date);
     const yamlFrontmatter = generateFrontmatter(date, filename);
 
+    // Special handling for "quick" template - no frontmatter, just note title
+    if (templateType === 'quick') {
+        const noteName = filename ? filename.replace(/\.(txt|md)$/i, '') : 'Note';
+        return `# ${noteName}\n\n`;
+    }
+
     // Check if it's a custom template
     const templatesPath = getTemplatesPath();
     if (templatesPath && templateType) {
