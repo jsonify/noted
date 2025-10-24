@@ -81,16 +81,12 @@ export async function createNoteFromTemplate(templateType: string): Promise<void
         const fileFormat = getFileFormat();
         const now = new Date();
 
-        const year = getYear(now);
-        const month = getMonth(now);
-        const folderName = getFolderName(now);
-        const day = getDay(now);
-        const time = getTimeForFilename(now);
-
-        const noteFolder = path.join(notesPath, year, folderName);
-        const fileName = `${year}-${month}-${day}-${time}-${sanitizedName}.${fileFormat}`;
+        // All non-daily notes go to Inbox folder
+        const noteFolder = path.join(notesPath, 'Inbox');
+        const fileName = `${sanitizedName}.${fileFormat}`;
         const filePath = path.join(noteFolder, fileName);
 
+        // Create Inbox folder if it doesn't exist
         if (!(await pathExists(noteFolder))) {
             await createDirectory(noteFolder);
         }

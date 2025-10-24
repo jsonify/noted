@@ -71,35 +71,21 @@ export async function getCategoryFolderPath(
     const fileFormat = getFileFormat();
     const now = new Date();
 
-    // Daily notes use date-based organization
+    // Daily notes use date-based organization in year/month structure
     if (shouldUseDateBasedOrganization(templateType)) {
         const year = getYear(now);
         const month = getMonth(now);
         const folderName = getFolderName(now);
         const day = getDay(now);
 
-        const folderPath = path.join(notesPath, 'Daily', year, folderName);
+        const folderPath = path.join(notesPath, year, folderName);
         const fileName = `${year}-${month}-${day}.${fileFormat}`;
 
         return { folderPath, fileName };
     }
 
-    // Template-based notes use category folders
-    const category = getCategoryForTemplate(templateType!);
-    if (!category) {
-        // Unknown template - use root level
-        return {
-            folderPath: notesPath,
-            fileName: noteName ? `${noteName}.${fileFormat}` : `note.${fileFormat}`
-        };
-    }
-
-    const config = getCategoryConfig(category);
-    if (!config) {
-        throw new Error(`Category configuration not found: ${category}`);
-    }
-
-    const folderPath = path.join(notesPath, config.folder);
+    // All non-daily notes go to Inbox folder
+    const folderPath = path.join(notesPath, 'Inbox');
 
     // Generate filename - either user-provided or timestamp-based
     let fileName: string;
