@@ -98,17 +98,23 @@ async function getGraphHtml(
     const cssPath = path.join(webviewPath, 'graph.css');
     const jsPath = path.join(webviewPath, 'graph.js');
 
-    // Find vis-network library (bundled with extension)
-    const visNetworkPath = path.join(
+    // Find force-graph and d3 libraries (bundled with extension)
+    const forceGraphPath = path.join(
         webviewPath,
         'lib',
-        'vis-network.min.js'
+        'force-graph.min.js'
+    );
+    const d3Path = path.join(
+        webviewPath,
+        'lib',
+        'd3.v6.min.js'
     );
 
     // Create webview URIs for resources
     const cssUri = webview.asWebviewUri(vscode.Uri.file(cssPath));
     const scriptUri = webview.asWebviewUri(vscode.Uri.file(jsPath));
-    const visNetworkUri = webview.asWebviewUri(vscode.Uri.file(visNetworkPath));
+    const forceGraphUri = webview.asWebviewUri(vscode.Uri.file(forceGraphPath));
+    const d3Uri = webview.asWebviewUri(vscode.Uri.file(d3Path));
 
     // Read the HTML template
     let html = fs.readFileSync(htmlPath, 'utf-8');
@@ -118,14 +124,13 @@ async function getGraphHtml(
         .replace(/{{cspSource}}/g, webview.cspSource)
         .replace(/{{cssUri}}/g, cssUri.toString())
         .replace(/{{scriptUri}}/g, scriptUri.toString())
-        .replace(/{{visNetworkUri}}/g, visNetworkUri.toString())
+        .replace(/{{forceGraphUri}}/g, forceGraphUri.toString())
+        .replace(/{{d3Uri}}/g, d3Uri.toString())
         .replace(/{{noteCount}}/g, stats.totalNotes.toString())
+        .replace(/{{tagCount}}/g, graphData.totalTags.toString())
         .replace(/{{linkCount}}/g, stats.totalLinks.toString())
         .replace(/{{orphanCount}}/g, stats.orphanNotes.toString())
-        .replace(/{{avgConnections}}/g, stats.averageConnections.toFixed(1))
-        .replace(/{{totalNotes}}/g, graphData.totalNotes.toString())
-        .replace(/{{noLinksClass}}/g, graphData.edges.length === 0 ? '' : 'hidden')
-        .replace(/{{graphDataJson}}/g, JSON.stringify({ nodes: graphData.nodes, edges: graphData.edges }));
+        .replace(/{{graphDataJson}}/g, JSON.stringify({ nodes: graphData.nodes, links: graphData.links }));
 
     return html;
 }

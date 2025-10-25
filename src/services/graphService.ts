@@ -2,32 +2,40 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { LinkService } from './linkService';
 import { readFile } from './fileSystemService';
+import { extractTagsFromContent } from '../utils/tagHelpers';
+
+/**
+ * Node type in the graph
+ */
+export type NodeType = 'note' | 'tag' | 'placeholder';
 
 /**
  * Represents a node in the graph
  */
 export interface GraphNode {
-    id: string; // file path
+    id: string; // file path or tag name
     label: string; // display name
     title: string; // tooltip
-    size: number; // visual size based on connections
+    type: NodeType; // node type
+    val: number; // node size (force-graph uses 'val' instead of 'size')
     color?: string; // node color
     group?: string; // for grouping/coloring
-    isOrphan: boolean; // has no connections
-    linkCount: number; // total links (in + out)
-    createdTime?: number; // file creation timestamp (ms since epoch)
-    modifiedTime?: number; // file modification timestamp (ms since epoch)
+    isOrphan?: boolean; // has no connections (notes only)
+    linkCount?: number; // total links (notes only)
+    createdTime?: number; // file creation timestamp (notes only)
+    modifiedTime?: number; // file modification timestamp (notes only)
+    tagCount?: number; // number of notes with this tag (tags only)
 }
 
 /**
  * Represents an edge in the graph
  */
 export interface GraphEdge {
-    from: string; // source file path
-    to: string; // target file path
-    arrows: string; // 'to' for directional
+    source: string; // source node id (force-graph uses 'source' instead of 'from')
+    target: string; // target node id (force-graph uses 'target' instead of 'to')
     title?: string; // tooltip
-    width?: number; // visual width
+    value?: number; // edge strength/width
+    type?: string; // edge type ('note-link', 'tag-link')
 }
 
 /**
@@ -35,9 +43,10 @@ export interface GraphEdge {
  */
 export interface GraphData {
     nodes: GraphNode[];
-    edges: GraphEdge[];
+    links: GraphEdge[]; // force-graph uses 'links' instead of 'edges'
     orphanCount: number;
     totalNotes: number;
+    totalTags: number;
 }
 
 /**
@@ -70,18 +79,20 @@ export class GraphService {
     }
 
     /**
-     * Build the complete graph data structure
+     * Build the complete graph data structure with note and tag nodes
      */
     async buildGraph(): Promise<GraphData> {
         // Ensure backlinks index is built
         await this.linkService.buildBacklinksIndex();
 
         const nodes: GraphNode[] = [];
-        const edges: GraphEdge[] = [];
+        const links: GraphEdge[] = [];
         const orphanNotes = await this.linkService.getOrphanNotes();
         const orphanSet = new Set(orphanNotes);
+        const tagToNotes = new Map<string, Set<string>>(); // tag -> note paths
+        const placeholderSet = new Set<string>(); // unresolved links
 
-        // Get all notes and build node/edge data
+        // Get all notes and build note nodes
         const allNotes = await this.getAllNotes();
 
         for (const notePath of allNotes) {
@@ -102,26 +113,43 @@ export class GraphService {
                 console.warn(`Could not get file stats for ${notePath}:`, error);
             }
 
-            // Create node
+            // Extract tags from note
+            try {
+                const content = await readFile(notePath);
+                const tags = extractTagsFromContent(content);
+
+                // Build tag->notes map
+                for (const tag of tags) {
+                    if (!tagToNotes.has(tag)) {
+                        tagToNotes.set(tag, new Set());
+                    }
+                    tagToNotes.get(tag)!.add(notePath);
+                }
+            } catch (error) {
+                console.warn(`Could not extract tags from ${notePath}:`, error);
+            }
+
+            // Create note node
             const basename = path.basename(notePath, path.extname(notePath));
             const node: GraphNode = {
                 id: notePath,
                 label: basename,
                 title: this.createNodeTooltip(basename, outgoingLinks.length, backlinks.length),
-                size: this.calculateNodeSize(linkCount),
+                type: 'note',
+                val: this.calculateNodeSize(linkCount),
                 isOrphan,
                 linkCount,
-                color: this.getNodeColor(isOrphan, linkCount),
+                color: this.getNodeColor('note', isOrphan, linkCount),
                 group: isOrphan ? 'orphan' : 'connected',
                 createdTime,
                 modifiedTime
             };
             nodes.push(node);
 
-            // Create edges for outgoing links
+            // Create links for outgoing note-to-note connections
             for (const link of outgoingLinks) {
                 if (link.targetPath) {
-                    // Check if reverse edge exists (bidirectional link)
+                    // Check if reverse link exists (bidirectional link)
                     const reverseLinks = this.linkService.getOutgoingLinks(link.targetPath);
                     const isBidirectional = reverseLinks.some(l => l.targetPath === notePath);
 
@@ -131,23 +159,82 @@ export class GraphService {
                         ? `Links to ${targetBasename}\n(displayed as: "${link.displayText}")`
                         : `Links to ${targetBasename}`;
 
-                    edges.push({
-                        from: notePath,
-                        to: link.targetPath,
-                        arrows: 'to',
+                    links.push({
+                        source: notePath,
+                        target: link.targetPath,
                         title: tooltip,
-                        width: isBidirectional ? 3 : 1
+                        value: isBidirectional ? 3 : 1,
+                        type: 'note-link'
+                    });
+                } else {
+                    // Track placeholders (unresolved links)
+                    const placeholderId = `placeholder:${link.linkText}`;
+                    placeholderSet.add(placeholderId);
+
+                    links.push({
+                        source: notePath,
+                        target: placeholderId,
+                        title: `Unresolved link to "${link.linkText}"`,
+                        value: 1,
+                        type: 'placeholder-link'
                     });
                 }
             }
         }
 
+        // Create tag nodes and tag-to-note links
+        for (const [tag, noteSet] of tagToNotes.entries()) {
+            const tagCount = noteSet.size;
+
+            const nodeSizeFactor = 2;
+            // Create tag node
+            const tagNode: GraphNode = {
+                id: `tag:${tag}`,
+                label: `#${tag}`,
+                title: `Tag: #${tag}\n${tagCount} note${tagCount !== 1 ? 's' : ''}`,
+                type: 'tag',
+                val: this.calculateNodeSize(tagCount * nodeSizeFactor), // Tags are slightly larger
+                tagCount,
+                color: this.getNodeColor('tag'),
+                group: 'tag'
+            };
+            nodes.push(tagNode);
+
+            // Create links from tag to each note
+            for (const notePath of noteSet) {
+                links.push({
+                    source: `tag:${tag}`,
+                    target: notePath,
+                    title: `Tagged with #${tag}`,
+                    value: 1,
+                    type: 'tag-link'
+                });
+            }
+        }
+
+        // Create placeholder nodes for unresolved links
+        for (const placeholderId of placeholderSet) {
+            const linkText = placeholderId.replace('placeholder:', '');
+            const fixedSizeValue = 15;
+            const placeholderNode: GraphNode = {
+                id: placeholderId,
+                label: linkText,
+                title: `Placeholder: "${linkText}"\n(note does not exist)`,
+                type: 'placeholder',
+                val: fixedSizeValue, // Small fixed size
+                color: this.getNodeColor('placeholder'),
+                group: 'placeholder'
+            };
+            nodes.push(placeholderNode);
+        }
+
         // Cache the built graph data
         this.graphData = {
             nodes,
-            edges,
+            links,
             orphanCount: orphanNotes.length,
-            totalNotes: allNotes.length
+            totalNotes: allNotes.length,
+            totalTags: tagToNotes.size
         };
 
         return this.graphData;
@@ -163,16 +250,23 @@ export class GraphService {
         let mostConnected: { path: string; connections: number } | null = null;
         let totalConnections = 0;
 
-        for (const node of graphData.nodes) {
-            totalConnections += node.linkCount;
-            if (!mostConnected || node.linkCount > mostConnected.connections) {
-                mostConnected = { path: node.id, connections: node.linkCount };
+        // Only count note nodes for stats
+        const noteNodes = graphData.nodes.filter(n => n.type === 'note');
+
+        for (const node of noteNodes) {
+            const linkCount = node.linkCount ?? 0;
+            totalConnections += linkCount;
+            if (!mostConnected || linkCount > mostConnected.connections) {
+                mostConnected = { path: node.id, connections: linkCount };
             }
         }
 
+        // Count only note-to-note links
+        const noteLinks = graphData.links.filter(l => l.type === 'note-link');
+
         return {
             totalNotes: graphData.totalNotes,
-            totalLinks: graphData.edges.length,
+            totalLinks: noteLinks.length,
             orphanNotes: graphData.orphanCount,
             mostConnectedNote: mostConnected,
             averageConnections: graphData.totalNotes > 0 ? totalConnections / graphData.totalNotes : 0
@@ -226,19 +320,26 @@ export class GraphService {
     }
 
     /**
-     * Get node color based on properties
+     * Get node color based on type and properties
      */
-    private getNodeColor(isOrphan: boolean, linkCount: number): string {
-        if (isOrphan) {
-            return '#cccccc'; // Gray for orphans
-        } else if (linkCount > 10) {
-            return '#ff6b6b'; // Red for highly connected
-        } else if (linkCount > 5) {
-            return '#ffa500'; // Orange for moderately connected
-        } else if (linkCount > 2) {
-            return '#4dabf7'; // Blue for somewhat connected
+    private getNodeColor(type: NodeType, isOrphan: boolean = false, linkCount: number = 0): string {
+        if (type === 'tag') {
+            return '#ff922b'; // Orange for tags
+        } else if (type === 'placeholder') {
+            return '#e599f7'; // Purple for placeholders
         } else {
-            return '#69db7c'; // Green for lightly connected
+            // Note nodes
+            if (isOrphan) {
+                return '#adb5bd'; // Gray for orphans
+            } else if (linkCount > 10) {
+                return '#ff6b6b'; // Red for highly connected
+            } else if (linkCount > 5) {
+                return '#ffa500'; // Orange for moderately connected
+            } else if (linkCount > 2) {
+                return '#4dabf7'; // Blue for somewhat connected
+            } else {
+                return '#69db7c'; // Green for lightly connected
+            }
         }
     }
 

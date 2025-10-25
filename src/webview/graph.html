@@ -6,272 +6,98 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline';">
     <title>Note Graph</title>
     <link rel="stylesheet" href="{{cssUri}}">
-    <script src="{{visNetworkUri}}"></script>
 </head>
 <body>
     <div id="container">
-        <div id="toolbar">
-            <div id="stats">
+        <!-- Stats Panel -->
+        <div id="stats-panel">
+            <div class="stat-group">
                 <div class="stat-item">
-                    <span class="stat-label">Notes:</span>
-                    <span id="noteCount">{{noteCount}}</span>
+                    <span class="stat-value" id="noteCount">{{noteCount}}</span>
+                    <span class="stat-label">Notes</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">Links:</span>
-                    <span id="linkCount">{{linkCount}}</span>
+                    <span class="stat-value" id="tagCount">{{tagCount}}</span>
+                    <span class="stat-label">Tags</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">Orphans:</span>
-                    <span id="orphanCount">{{orphanCount}}</span>
+                    <span class="stat-value" id="linkCount">{{linkCount}}</span>
+                    <span class="stat-label">Links</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">Avg Connections:</span>
-                    <span id="avgConnections">{{avgConnections}}</span>
+                    <span class="stat-value" id="orphanCount">{{orphanCount}}</span>
+                    <span class="stat-label">Orphans</span>
                 </div>
             </div>
+            <button id="refreshBtn" class="icon-btn" title="Refresh Graph">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M13.451 5.609l-.579-.939-1.068.812-.076.094c-.422.501-.827.908-1.216 1.218-.389.31-.835.602-1.338.876C8.682 7.916 8 8 7.166 8c-.889 0-1.653-.238-2.294-.714-.641-.477-1.098-1.128-1.372-1.954a4.21 4.21 0 01-.177-.765 2.22 2.22 0 00-.04-.224v-.019H3V3h2.5v2l-.724-.276c.018.12.045.246.081.379.105.39.274.744.506 1.062.232.318.548.583.947.793.4.21.87.316 1.411.316.623 0 1.091-.066 1.405-.197.314-.131.62-.325.916-.583.297-.258.553-.542.769-.853l.099-.141.081-.124a7.49 7.49 0 01-.591-.981 6.74 6.74 0 01-.472-1.156c-.188-.593-.282-1.228-.282-1.903h1.5c0 .551.071 1.037.213 1.46.142.423.335.805.579 1.145.244.34.534.637.87.89.336.254.714.457 1.136.609l.073.026.044-.08c.14-.244.306-.47.498-.677.192-.207.415-.386.669-.536.254-.15.545-.266.873-.349.328-.082.699-.124 1.113-.124v1.5c-.251 0-.467.024-.649.073a1.47 1.47 0 00-.484.217 1.56 1.56 0 00-.349.33 1.78 1.78 0 00-.224.404z"/>
+                </svg>
+            </button>
+        </div>
 
-            <div id="controls">
-                <input type="text" id="searchBox" placeholder="Search notes..." />
-
-                <select id="layoutSelect">
-                    <option value="force">Force-Directed</option>
-                    <option value="hierarchical">Hierarchical</option>
-                    <option value="circular">Circular</option>
-                </select>
-
-                <select id="filterSelect">
-                    <option value="all">All Notes</option>
-                    <option value="connected">Connected Only</option>
-                    <option value="orphans">Orphans Only</option>
-                </select>
-
-                <select id="timeFilterSelect">
-                    <option value="all">All Time</option>
-                    <option value="today">Today</option>
-                    <option value="week">Last 7 Days</option>
-                    <option value="month">Last 30 Days</option>
-                    <option value="quarter">Last 90 Days</option>
-                    <option value="year">Last Year</option>
-                    <option value="custom">Custom Range...</option>
-                </select>
-
-                <button id="refreshBtn">Refresh</button>
-                <button id="fitBtn">Fit View</button>
-                <button id="focusModeBtn" title="Toggle focus mode - right-click a node to focus">Focus Mode</button>
-                <button id="customizeBtn">Customize</button>
-            </div>
-
-            <div id="customTimeRange" class="hidden">
-                <div class="time-range-controls">
-                    <label>
-                        <span>From:</span>
-                        <input type="date" id="startDate" />
-                    </label>
-                    <label>
-                        <span>To:</span>
-                        <input type="date" id="endDate" />
-                    </label>
-                    <select id="timeFilterMode">
-                        <option value="created">Created</option>
-                        <option value="modified">Modified</option>
-                    </select>
-                    <button id="applyTimeRangeBtn">Apply</button>
-                    <button id="clearTimeRangeBtn">Clear</button>
-                </div>
+        <!-- Filter Controls -->
+        <div id="filter-controls">
+            <div class="filter-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showNotes" checked />
+                    <span>Notes</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showTags" checked />
+                    <span>Tags</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showPlaceholders" checked />
+                    <span>Placeholders</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showOrphans" checked />
+                    <span>Orphans</span>
+                </label>
             </div>
         </div>
 
+        <!-- Graph Container -->
         <div id="graph"></div>
 
-        <div id="focusModeIndicator" class="hidden">
-            <span id="focusModeText">Focus Mode: <strong id="focusedNodeName"></strong></span>
-            <button id="exitFocusModeBtn">✕ Exit Focus</button>
-        </div>
-
-        <div id="noLinksMessage" class="{{noLinksClass}}">
-            <h3>No Links Found</h3>
-            <p>Your notes are not connected yet. To create connections, add wiki-style links to your notes.</p>
-            <p>Examples:</p>
-            <ul style="text-align: left; display: inline-block;">
-                <li><code>[[note-name]]</code> - Simple link</li>
-                <li><code>[[2025-01-15]]</code> - Date-based link</li>
-                <li><code>[[note-name|Custom Text]]</code> - Link with display text</li>
-            </ul>
-            <p>All {{totalNotes}} notes are currently shown as orphans. Click any node to open that note and start adding links!</p>
-        </div>
-
+        <!-- Legend -->
         <div id="legend">
-            <h3>Node Colors</h3>
+            <div class="legend-title">Node Types</div>
             <div class="legend-item">
-                <div class="legend-color" style="background-color: #cccccc;"></div>
-                <span class="legend-label">Orphan (no links)</span>
+                <div class="legend-marker" style="background-color: var(--note-color, #69db7c);"></div>
+                <span>Note</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background-color: #69db7c;"></div>
-                <span class="legend-label">1-2 connections</span>
+                <div class="legend-marker" style="background-color: var(--tag-color, #ff922b);"></div>
+                <span>Tag</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background-color: #4dabf7;"></div>
-                <span class="legend-label">3-5 connections</span>
+                <div class="legend-marker" style="background-color: var(--placeholder-color, #e599f7);"></div>
+                <span>Placeholder</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color" style="background-color: #ffa500;"></div>
-                <span class="legend-label">6-10 connections</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #ff6b6b;"></div>
-                <span class="legend-label">10+ connections</span>
-            </div>
-            <div class="legend-divider"></div>
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #e83e8c;"></div>
-                <span class="legend-label">Links</span>
+                <div class="legend-marker" style="background-color: var(--orphan-color, #adb5bd);"></div>
+                <span>Orphan</span>
             </div>
             <div class="legend-hint">
-                💡 Click a node to highlight its connections<br>
-                💡 Right-click a node to enter focus mode<br>
-                💡 Click canvas to clear highlights
+                💡 Click node to open<br>
+                💡 Shift+Click to multi-select
             </div>
         </div>
     </div>
 
-    <div id="tooltip"></div>
+    <!-- Inject Libraries -->
+    <script src="{{d3Uri}}"></script>
+    <script src="{{forceGraphUri}}"></script>
 
-    <div id="customizePanel" class="hidden">
-        <div class="panel-header">
-            <h2>Graph Customization</h2>
-            <button id="closePanelBtn">✕</button>
-        </div>
-        <div class="panel-content">
-            <div class="setting-section">
-                <h3>Node Appearance</h3>
-
-                <div class="setting-item">
-                    <label for="nodeSize">Node Size</label>
-                    <input type="range" id="nodeSize" min="5" max="50" value="20" />
-                    <span id="nodeSizeValue">20</span>
-                </div>
-
-                <div class="setting-item">
-                    <label for="nodeBorderWidth">Border Width</label>
-                    <input type="range" id="nodeBorderWidth" min="1" max="6" value="2" />
-                    <span id="nodeBorderWidthValue">2</span>
-                </div>
-
-                <div class="setting-item">
-                    <label for="nodeShape">Node Shape</label>
-                    <select id="nodeShape">
-                        <option value="dot">Dot (Circle)</option>
-                        <option value="diamond">Diamond</option>
-                        <option value="square">Square</option>
-                        <option value="triangle">Triangle</option>
-                        <option value="star">Star</option>
-                        <option value="hexagon">Hexagon</option>
-                    </select>
-                </div>
-
-                <div class="setting-item">
-                    <label>
-                        <input type="checkbox" id="nodeShadow" checked />
-                        Enable Shadows
-                    </label>
-                </div>
-            </div>
-
-            <div class="setting-section">
-                <h3>Edge Appearance</h3>
-
-                <div class="setting-item">
-                    <label for="edgeWidth">Edge Width</label>
-                    <input type="range" id="edgeWidth" min="1" max="8" value="2" />
-                    <span id="edgeWidthValue">2</span>
-                </div>
-
-                <div class="setting-item">
-                    <label for="edgeColor">Edge Color</label>
-                    <input type="color" id="edgeColor" value="#e83e8c" />
-                </div>
-
-                <div class="setting-item">
-                    <label for="edgeStyle">Edge Style</label>
-                    <select id="edgeStyle">
-                        <option value="continuous">Smooth Curve</option>
-                        <option value="dynamic">Dynamic</option>
-                        <option value="straight">Straight Line</option>
-                        <option value="cubicBezier">Cubic Bezier</option>
-                    </select>
-                </div>
-
-                <div class="setting-item">
-                    <label>
-                        <input type="checkbox" id="edgeArrows" checked />
-                        Show Arrows
-                    </label>
-                </div>
-            </div>
-
-            <div class="setting-section">
-                <h3>Physics & Animation</h3>
-
-                <div class="setting-item">
-                    <label for="springLength">Spring Length</label>
-                    <input type="range" id="springLength" min="50" max="400" value="200" />
-                    <span id="springLengthValue">200</span>
-                </div>
-
-                <div class="setting-item">
-                    <label for="repulsion">Node Repulsion</label>
-                    <input type="range" id="repulsion" min="10000" max="50000" value="30000" />
-                    <span id="repulsionValue">30000</span>
-                </div>
-
-                <div class="setting-item">
-                    <label for="gravity">Central Gravity</label>
-                    <input type="range" id="gravity" min="0" max="100" value="30" step="5" />
-                    <span id="gravityValue">0.30</span>
-                </div>
-            </div>
-
-            <div class="setting-section">
-                <h3>Custom Node Colors</h3>
-
-                <div class="setting-item">
-                    <label for="orphanColor">Orphan Nodes</label>
-                    <input type="color" id="orphanColor" value="#cccccc" />
-                </div>
-
-                <div class="setting-item">
-                    <label for="lowConnColor">Low Connections (1-2)</label>
-                    <input type="color" id="lowConnColor" value="#69db7c" />
-                </div>
-
-                <div class="setting-item">
-                    <label for="medConnColor">Medium Connections (3-5)</label>
-                    <input type="color" id="medConnColor" value="#4dabf7" />
-                </div>
-
-                <div class="setting-item">
-                    <label for="highConnColor">High Connections (6-10)</label>
-                    <input type="color" id="highConnColor" value="#ffa500" />
-                </div>
-
-                <div class="setting-item">
-                    <label for="veryHighConnColor">Very High Connections (10+)</label>
-                    <input type="color" id="veryHighConnColor" value="#ff6b6b" />
-                </div>
-            </div>
-
-            <div class="panel-footer">
-                <button id="resetDefaultsBtn">Reset to Defaults</button>
-                <button id="applySettingsBtn" class="primary">Apply</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Inject Graph Data -->
     <script>
-        // Inject graph data
         window.graphData = {{graphDataJson}};
+        window.vscode = acquireVsCodeApi();
     </script>
+
+    <!-- Main Graph Script -->
     <script src="{{scriptUri}}"></script>
 </body>
 </html>
