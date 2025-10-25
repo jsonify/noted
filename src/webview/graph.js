@@ -26,7 +26,9 @@ const state = {
     // Transition state for smooth animations
     nodeOpacities: new Map(), // Current opacity for each node
     targetOpacities: new Map(), // Target opacity for each node
-    animating: false
+    animating: false,
+    // Track initial load to only zoom once
+    hasInitialZoom: false
 };
 
 // Colors (match CSS variables with better depth)
@@ -236,8 +238,11 @@ function initGraph() {
         .d3Force('y', d3.forceY().strength(0.02))                 // Very weak Y centering
         .cooldownTicks(SIMULATION_CONFIG.COOLDOWN_TICKS)                                        // More iterations for settling
         .onEngineStop(() => {
-            // Zoom to fit on first load with padding
-            graph.zoomToFit(400, 80);
+            // Only zoom to fit on first load, preserve zoom/pan state afterward
+            if (!state.hasInitialZoom) {
+                graph.zoomToFit(400, 80);
+                state.hasInitialZoom = true;
+            }
         });
 }
 
