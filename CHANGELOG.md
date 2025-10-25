@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.31.2](https://github.com/jsonify/noted/compare/v1.31.1...v1.31.2) (2025-10-25)
+
+
+### Bug Fixes
+
+* Register tree data providers with context subscriptions for better resource management ([6cd6ef2](https://github.com/jsonify/noted/commit/6cd6ef270e84ce1b807810208c376c4aeb07d5c7))
+
 ### [1.31.1](https://github.com/jsonify/noted/compare/v1.31.0...v1.31.1) (2025-10-25)
 
 
