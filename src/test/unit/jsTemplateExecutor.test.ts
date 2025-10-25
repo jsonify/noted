@@ -99,7 +99,7 @@ const result = items.join(', ');
         });
 
         it('should execute template with filename variable', async () => {
-            const template = 'Note: <%= filename %>';
+            const template = 'Note: <%= note.filename %>';
             const result = await executor.parseAndExecute(template, 'my-note');
 
             expect(result.error).to.be.undefined;
@@ -108,7 +108,7 @@ const result = items.join(', ');
 
         it('should execute template with date variables', async () => {
             const testDate = new Date('2024-10-15T14:30:00');
-            const template = 'Year: <%= year %>, Month: <%= month %>, Day: <%= day %>';
+            const template = 'Year: <%= note.year %>, Month: <%= note.month %>, Day: <%= note.day %>';
             const result = await executor.parseAndExecute(template, 'test', testDate);
 
             expect(result.error).to.be.undefined;
@@ -117,7 +117,7 @@ const result = items.join(', ');
 
         it('should execute template with weekday and month name', async () => {
             const testDate = new Date('2024-10-15T14:30:00'); // Tuesday
-            const template = '<%= weekday %>, <%= monthName %>';
+            const template = '<%= note.weekday %>, <%= note.monthName %>';
             const result = await executor.parseAndExecute(template, 'test', testDate);
 
             expect(result.error).to.be.undefined;
@@ -125,7 +125,7 @@ const result = items.join(', ');
         });
 
         it('should execute template with user and workspace', async () => {
-            const template = 'User: <%= user %>, Workspace: <%= workspace %>';
+            const template = 'User: <%= note.user %>, Workspace: <%= note.workspace %>';
             const result = await executor.parseAndExecute(template, 'test');
 
             expect(result.error).to.be.undefined;
@@ -233,10 +233,10 @@ if (hour < 12) {
 
         it('should execute complex real-world template', async () => {
             const testDate = new Date('2024-10-15T14:30:00');
-            const template = `# <%= filename %>
+            const template = `# <%= note.filename %>
 
-**Created:** <%= dateString %> at <%= timeString %>
-**User:** <%= user %>
+**Created:** <%= note.dateString %> at <%= note.timeString %>
+**User:** <%= note.user %>
 
 ## Tasks
 
@@ -247,8 +247,8 @@ if (hour < 12) {
 
 ## Notes
 
-Date: <%= dateHelper.format("YYYY-MM-DD HH:mm") %>
-Day of week: <%= dateHelper.getDayName() %>`;
+Date: <%= note.dateHelper.format("YYYY-MM-DD HH:mm") %>
+Day of week: <%= note.dateHelper.getDayName() %>`;
 
             const result = await executor.parseAndExecute(template, 'meeting-notes', testDate);
 
@@ -358,7 +358,7 @@ const fs = require('fs');
 
     describe('executeTemplate helper function', () => {
         it('should execute template using helper function', async () => {
-            const template = 'Hello, <%= filename %>!';
+            const template = 'Hello, <%= note.filename %>!';
             const result = await executeTemplate(template, 'world');
 
             expect(result.error).to.be.undefined;
@@ -367,7 +367,7 @@ const fs = require('fs');
 
         it('should accept custom date', async () => {
             const testDate = new Date('2024-10-15T14:30:00');
-            const template = '<%= year %>-<%= month %>-<%= day %>';
+            const template = '<%= note.year %>-<%= note.month %>-<%= note.day %>';
             const result = await executeTemplate(template, 'test', testDate);
 
             expect(result.error).to.be.undefined;
@@ -397,7 +397,7 @@ const fs = require('fs');
         });
 
         it('should handle rapid consecutive executions', async () => {
-            const template = 'Test <%= filename %>';
+            const template = 'Test <%= note.filename %>';
 
             for (let i = 0; i < 10; i++) {
                 const result = await executor.parseAndExecute(template, `note-${i}`);
@@ -424,7 +424,7 @@ const fs = require('fs');
         });
 
         it('should handle string interpolation', async () => {
-            const template = '<%= "This is a test: " + filename %>';
+            const template = '<%= "This is a test: " + note.filename %>';
             const result = await executor.parseAndExecute(template, 'my-note');
 
             expect(result.error).to.be.undefined;
