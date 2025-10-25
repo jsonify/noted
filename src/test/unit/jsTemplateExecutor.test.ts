@@ -389,7 +389,10 @@ const fs = require('fs');
             const template = 'Hello, world!';
             const result = await executor.parseAndExecute(template, 'test');
 
-            expect(result.executionTime).to.be.greaterThan(0);
+            // Execution time should be a non-negative number
+            // On fast machines, simple templates may execute in < 1ms (reported as 0)
+            expect(result.executionTime).to.be.a('number');
+            expect(result.executionTime).to.be.at.least(0);
             expect(result.executionTime).to.be.lessThan(5000); // Should be fast for simple template
         });
 
