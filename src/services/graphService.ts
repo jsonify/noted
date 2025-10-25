@@ -186,13 +186,14 @@ export class GraphService {
         for (const [tag, noteSet] of tagToNotes.entries()) {
             const tagCount = noteSet.size;
 
+            const nodeSizeFactor = 2;
             // Create tag node
             const tagNode: GraphNode = {
                 id: `tag:${tag}`,
                 label: `#${tag}`,
                 title: `Tag: #${tag}\n${tagCount} note${tagCount !== 1 ? 's' : ''}`,
                 type: 'tag',
-                val: this.calculateNodeSize(tagCount * 2), // Tags are slightly larger
+                val: this.calculateNodeSize(tagCount * nodeSizeFactor), // Tags are slightly larger
                 tagCount,
                 color: this.getNodeColor('tag'),
                 group: 'tag'
@@ -214,12 +215,13 @@ export class GraphService {
         // Create placeholder nodes for unresolved links
         for (const placeholderId of placeholderSet) {
             const linkText = placeholderId.replace('placeholder:', '');
+            const fixedSizeValue = 15;
             const placeholderNode: GraphNode = {
                 id: placeholderId,
                 label: linkText,
                 title: `Placeholder: "${linkText}"\n(note does not exist)`,
                 type: 'placeholder',
-                val: 15, // Small fixed size
+                val: fixedSizeValue, // Small fixed size
                 color: this.getNodeColor('placeholder'),
                 group: 'placeholder'
             };

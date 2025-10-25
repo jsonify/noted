@@ -240,7 +240,8 @@ function animateOpacities() {
     }
 
     let stillAnimating = false;
-    const transitionSpeed = 0.15; // How fast to transition (0-1, higher = faster)
+    const OPACITY_TRANSITION_SPEED = 0.15;
+    const transitionSpeed = OPACITY_TRANSITION_SPEED; // How fast to transition (0-1, higher = faster)
 
     // Update each node's opacity
     state.targetOpacities.forEach((targetOpacity, nodeId) => {
