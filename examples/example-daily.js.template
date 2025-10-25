@@ -1,0 +1,28 @@
+<%
+// Simple daily note template with dynamic greeting based on time of day
+const hour = new Date().getHours();
+let greeting;
+if (hour < 12) {
+    greeting = 'Good morning';
+} else if (hour < 18) {
+    greeting = 'Good afternoon';
+} else {
+    greeting = 'Good evening';
+}
+%>
+# <%= greeting %>, <%= note.user %>! 📝
+
+**Date:** <%= note.dateHelper.getDayName() %>, <%= note.monthName %> <%= note.day %>, <%= note.year %>
+**Time:** <%= note.timeHelper.format12Hour() %>
+
+## Today's Focus
+-
+
+## Notes
+
+
+## Done
+- [ ]
+
+---
+*Workspace: <%= note.workspace %>*

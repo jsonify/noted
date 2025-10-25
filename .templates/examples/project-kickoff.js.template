@@ -1,0 +1,261 @@
+/**
+ * Template: Project Kickoff
+ * Description: Comprehensive project template with auto-generated IDs and structure
+ * Features: ID generation, calculations, structure building, metadata
+ */
+
+module.exports = (note) => {
+  const { filename, dateString, timeString, year, month, day, user, workspace } = note;
+
+  let content = '';
+
+  // Generate unique project ID
+  const projectId = generateProjectId(year, month, day);
+
+  // Extract project name from filename
+  const projectName = filename
+    .replace(/\.(txt|md)$/i, '')
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  // Calculate estimated timeline (placeholder values)
+  const startDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  const estimatedEndDate = new Date(startDate);
+  estimatedEndDate.setMonth(estimatedEndDate.getMonth() + 3); // Default 3 months
+
+  // Add comprehensive frontmatter
+  content += '---\n';
+  content += 'tags: [project, kickoff, planning]\n';
+  content += `project-id: ${projectId}\n`;
+  content += `project-name: ${projectName}\n`;
+  content += `created: ${dateString} at ${timeString}\n`;
+  content += `owner: ${user}\n`;
+  content += `status: planning\n`;
+  content += `priority: high\n`;
+  content += `workspace: ${workspace}\n`;
+  content += '---\n\n';
+
+  // Header with project ID
+  content += `# Project: ${projectName}\n\n`;
+  content += `**Project ID:** \`${projectId}\`\n`;
+  content += `**Status:** 🟡 Planning\n`;
+  content += `**Created:** ${dateString}\n`;
+  content += `**Owner:** ${user}\n`;
+  content += `**Workspace:** ${workspace}\n\n`;
+
+  content += '---\n\n';
+
+  // Executive Summary
+  content += '## Executive Summary\n\n';
+  content += '**One-liner:**\n';
+  content += '\n\n';
+  content += '**Problem Statement:**\n';
+  content += '\n\n';
+  content += '**Proposed Solution:**\n';
+  content += '\n\n';
+  content += '**Expected Outcome:**\n';
+  content += '\n\n';
+
+  // Project Details
+  content += '## Project Details\n\n';
+  content += '### Objectives\n\n';
+  content += '**Primary Goals:**\n';
+  content += '1. \n';
+  content += '2. \n';
+  content += '3. \n\n';
+
+  content += '**Success Criteria:**\n';
+  content += '- [ ] \n';
+  content += '- [ ] \n';
+  content += '- [ ] \n\n';
+
+  content += '**Key Results (KRs):**\n';
+  content += '| KR | Target | Current | Progress |\n';
+  content += '|----|--------|---------|----------|\n';
+  content += '| 1. |        | 0       | 0%       |\n';
+  content += '| 2. |        | 0       | 0%       |\n';
+  content += '| 3. |        | 0       | 0%       |\n\n';
+
+  // Scope
+  content += '### Scope\n\n';
+  content += '**In Scope:**\n';
+  content += '- \n';
+  content += '- \n';
+  content += '- \n\n';
+
+  content += '**Out of Scope:**\n';
+  content += '- \n';
+  content += '- \n\n';
+
+  content += '**Future Considerations:**\n';
+  content += '- \n\n';
+
+  // Timeline
+  content += '### Timeline\n\n';
+  content += `**Start Date:** ${formatShortDate(startDate)}\n`;
+  content += `**Target End Date:** ${formatShortDate(estimatedEndDate)}\n`;
+  content += `**Duration:** ~${calculateWeeks(startDate, estimatedEndDate)} weeks\n\n`;
+
+  content += '**Milestones:**\n\n';
+  content += '| Milestone | Target Date | Status | Notes |\n';
+  content += '|-----------|-------------|--------|-------|\n';
+  content += '| Kickoff   | ' + formatShortDate(startDate) + ' | ✅ | Project initiated |\n';
+  content += '| Discovery |             | 🔲 |       |\n';
+  content += '| Design    |             | 🔲 |       |\n';
+  content += '| Development |           | 🔲 |       |\n';
+  content += '| Testing   |             | 🔲 |       |\n';
+  content += '| Launch    | ' + formatShortDate(estimatedEndDate) + ' | 🔲 |       |\n\n';
+
+  // Team
+  content += '## Team\n\n';
+  content += '**Project Lead:** ' + user + '\n\n';
+  content += '**Team Members:**\n\n';
+  content += '| Name | Role | Responsibilities | Availability |\n';
+  content += '|------|------|------------------|-------------|\n';
+  content += '|      |      |                  |             |\n';
+  content += '|      |      |                  |             |\n\n';
+
+  content += '**Stakeholders:**\n';
+  content += '- \n';
+  content += '- \n\n';
+
+  // Requirements
+  content += '## Requirements\n\n';
+  content += '### Functional Requirements\n\n';
+  content += '**Must Have:**\n';
+  content += '- [ ] \n';
+  content += '- [ ] \n';
+  content += '- [ ] \n\n';
+
+  content += '**Should Have:**\n';
+  content += '- [ ] \n';
+  content += '- [ ] \n\n';
+
+  content += '**Nice to Have:**\n';
+  content += '- [ ] \n\n';
+
+  content += '### Technical Requirements\n\n';
+  content += '**Technologies:**\n';
+  content += '- \n\n';
+
+  content += '**Infrastructure:**\n';
+  content += '- \n\n';
+
+  content += '**Dependencies:**\n';
+  content += '- \n\n';
+
+  // Architecture
+  content += '## Architecture\n\n';
+  content += '**System Design:**\n';
+  content += '```\n';
+  content += '// Add architecture diagram or description\n';
+  content += '```\n\n';
+
+  content += '**Components:**\n';
+  content += '1. \n';
+  content += '2. \n';
+  content += '3. \n\n';
+
+  // Risk Management
+  content += '## Risk Management\n\n';
+  content += '| Risk | Impact | Probability | Mitigation | Owner |\n';
+  content += '|------|--------|-------------|------------|-------|\n';
+  content += '|      | H/M/L  | H/M/L       |            |       |\n';
+  content += '|      | H/M/L  | H/M/L       |            |       |\n\n';
+
+  // Budget & Resources
+  content += '## Budget & Resources\n\n';
+  content += '**Estimated Budget:** $\n';
+  content += '**Resource Allocation:**\n';
+  content += '- Engineering: ___ hours\n';
+  content += '- Design: ___ hours\n';
+  content += '- Testing: ___ hours\n';
+  content += '- Management: ___ hours\n\n';
+
+  // Communication
+  content += '## Communication Plan\n\n';
+  content += '**Status Updates:**\n';
+  content += '- Frequency: Weekly\n';
+  content += '- Format: \n';
+  content += '- Audience: \n\n';
+
+  content += '**Meetings:**\n';
+  content += '- Daily Standup: \n';
+  content += '- Sprint Planning: \n';
+  content += '- Sprint Review: \n';
+  content += '- Retrospective: \n\n';
+
+  // Documentation
+  content += '## Documentation\n\n';
+  content += '**Project Documents:**\n';
+  content += '- [ ] Technical Specification\n';
+  content += '- [ ] API Documentation\n';
+  content += '- [ ] User Guide\n';
+  content += '- [ ] Deployment Guide\n\n';
+
+  content += '**Related Notes:**\n';
+  content += '- \n\n';
+
+  // Tasks
+  content += '## Initial Tasks\n\n';
+  content += '**Setup:**\n';
+  content += '- [ ] Create repository\n';
+  content += '- [ ] Set up development environment\n';
+  content += '- [ ] Configure CI/CD pipeline\n\n';
+
+  content += '**Phase 1 - Discovery:**\n';
+  content += '- [ ] Conduct stakeholder interviews\n';
+  content += '- [ ] Research existing solutions\n';
+  content += '- [ ] Create technical design document\n\n';
+
+  content += '**Phase 2 - Design:**\n';
+  content += '- [ ] Create wireframes\n';
+  content += '- [ ] Define API contracts\n';
+  content += '- [ ] Review with team\n\n';
+
+  // Success Metrics
+  content += '## Success Metrics\n\n';
+  content += '**Performance Metrics:**\n';
+  content += '- Response time: < ___ ms\n';
+  content += '- Uptime: > ____%\n';
+  content += '- Error rate: < ____%\n\n';
+
+  content += '**Business Metrics:**\n';
+  content += '- User adoption: ___ users\n';
+  content += '- Engagement: ___ sessions/day\n';
+  content += '- Satisfaction: ___ NPS score\n\n';
+
+  // Notes
+  content += '## Project Notes\n\n';
+  content += `[${timeString}] Project kickoff meeting\n\n`;
+  content += '\n\n';
+
+  // Footer
+  content += '---\n\n';
+  content += `**Project initiated by ${user} on ${dateString}**\n\n`;
+  content += `*Project ID: ${projectId} | Status: Planning | Last Updated: ${dateString}*\n`;
+
+  return content;
+};
+
+// Helper: Generate project ID
+function generateProjectId(year, month, day) {
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `PROJ-${year}${month}${day}-${random}`;
+}
+
+// Helper: Format short date
+function formatShortDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// Helper: Calculate weeks between dates
+function calculateWeeks(start, end) {
+  const diffTime = Math.abs(end - start);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return Math.ceil(diffDays / 7);
+}

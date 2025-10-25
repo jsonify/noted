@@ -1,0 +1,148 @@
+/**
+ * Template: Smart Daily Note
+ * Description: Context-aware daily note that adapts based on the day of week
+ * Features: Conditional logic, day-of-week detection, dynamic sections
+ */
+
+module.exports = (note) => {
+  const { dateString, timeString, weekday, monthName, day, year, user } = note;
+
+  // Parse the weekday to determine day type
+  const isMonday = weekday === 'Mon';
+  const isFriday = weekday === 'Fri';
+  const isWeekend = weekday === 'Sat' || weekday === 'Sun';
+
+  // Build the note content
+  let content = '';
+
+  // Add frontmatter with tags
+  content += '---\n';
+  content += 'tags: [daily';
+  if (isMonday) content += ', week-start, planning';
+  if (isFriday) content += ', week-end, review';
+  if (isWeekend) content += ', weekend, personal';
+  content += ']\n';
+  content += `created: ${dateString} at ${timeString}\n`;
+  content += '---\n\n';
+
+  // Add title with context
+  if (isMonday) {
+    content += `# Week Start - ${monthName} ${day}, ${year}\n\n`;
+    content += `Welcome to a new week, ${user}! Let's make it productive.\n\n`;
+  } else if (isFriday) {
+    content += `# Week End - ${monthName} ${day}, ${year}\n\n`;
+    content += `Time to wrap up the week and celebrate wins!\n\n`;
+  } else if (isWeekend) {
+    content += `# Weekend - ${monthName} ${day}, ${year}\n\n`;
+    content += `Enjoy your weekend! Time for rest and personal projects.\n\n`;
+  } else {
+    content += `# ${weekday}, ${monthName} ${day}, ${year}\n\n`;
+  }
+
+  // Monday-specific sections
+  if (isMonday) {
+    content += '## Week Overview\n\n';
+    content += '**Week Goals:**\n';
+    content += '- [ ] \n';
+    content += '- [ ] \n';
+    content += '- [ ] \n\n';
+
+    content += '**Key Priorities:**\n';
+    content += '1. \n';
+    content += '2. \n';
+    content += '3. \n\n';
+
+    content += '**This Week:**\n';
+    content += '- Monday: \n';
+    content += '- Tuesday: \n';
+    content += '- Wednesday: \n';
+    content += '- Thursday: \n';
+    content += '- Friday: \n\n';
+  }
+
+  // Friday-specific sections
+  if (isFriday) {
+    content += '## Week in Review\n\n';
+    content += '**Completed This Week:**\n';
+    content += '- \n\n';
+
+    content += '**Wins:**\n';
+    content += '- \n\n';
+
+    content += '**Challenges:**\n';
+    content += '- \n\n';
+
+    content += '**Learnings:**\n';
+    content += '- \n\n';
+
+    content += '**Next Week Preview:**\n';
+    content += '- \n\n';
+  }
+
+  // Weekend-specific sections
+  if (isWeekend) {
+    content += '## Personal Time\n\n';
+    content += '**Activities:**\n';
+    content += '- \n\n';
+
+    content += '**Projects:**\n';
+    content += '- \n\n';
+
+    content += '**Ideas:**\n';
+    content += '- \n\n';
+  }
+
+  // Standard sections for all days
+  if (!isWeekend) {
+    content += '## Today\'s Focus\n\n';
+    content += '**Top 3 Priorities:**\n';
+    content += '1. \n';
+    content += '2. \n';
+    content += '3. \n\n';
+
+    content += '## Schedule\n\n';
+    content += `**${timeString}** - \n\n`;
+
+    content += '## Tasks\n\n';
+    content += '**Must Do:**\n';
+    content += '- [ ] \n\n';
+
+    content += '**Should Do:**\n';
+    content += '- [ ] \n\n';
+
+    content += '**Could Do:**\n';
+    content += '- [ ] \n\n';
+
+    content += '## Meetings\n\n';
+    content += '- \n\n';
+  }
+
+  // Add notes section for all days
+  content += '## Notes\n\n';
+  content += `[${timeString}] \n\n`;
+
+  // Add reflection section
+  content += '## Daily Reflection\n\n';
+  content += '**What went well:**\n';
+  content += '- \n\n';
+
+  content += '**What could be improved:**\n';
+  content += '- \n\n';
+
+  content += '**Tomorrow:**\n';
+  content += '- \n\n';
+
+  // Add motivational quote based on day
+  content += '---\n\n';
+  if (isMonday) {
+    content += '*"The secret of getting ahead is getting started." - Mark Twain*\n';
+  } else if (isFriday) {
+    content += '*"The only way to do great work is to love what you do." - Steve Jobs*\n';
+  } else if (isWeekend) {
+    content += '*"Rest when you\'re weary. Refresh and renew yourself, your body, your mind, your spirit." - Ralph Marston*\n';
+  } else {
+    content += '*"Focus on being productive instead of busy." - Tim Ferriss*\n';
+  }
+
+  return content;
+};
