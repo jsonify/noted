@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { TreeItem, CategoryItem, TemplateActionItem, ActionButtonItem, SectionItem, NoteItem } from './treeItems';
 import { getAllCategories, getCategoryConfig } from '../services/categoryService';
-import { getCustomTemplates } from '../services/templateService';
+import { getCustomTemplates, isJSTemplate } from '../services/templateService';
 import { getNotesPath } from '../services/configService';
 import { readDirectoryWithTypes, getFileStats } from '../services/fileSystemService';
 import { DEFAULTS, SUPPORTED_EXTENSIONS } from '../constants';
@@ -126,14 +126,25 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                 // For now, we'll show all custom templates under each category
                 // You could enhance this with metadata in custom templates
                 for (const customTemplate of customTemplates) {
-                    items.push(
-                        new TemplateActionItem(
-                            `+ ${customTemplate}`,
-                            customTemplate,
-                            'noted.createCategoryNote',
-                            `Create a new note from ${customTemplate} template`
-                        )
+                    const isJS = await isJSTemplate(customTemplate);
+                    const label = isJS ? `+ ${customTemplate} ⚡` : `+ ${customTemplate}`;
+                    const tooltip = isJS
+                        ? `Create a new note from ${customTemplate} JavaScript template (dynamic)`
+                        : `Create a new note from ${customTemplate} template`;
+
+                    const templateItem = new TemplateActionItem(
+                        label,
+                        customTemplate,
+                        'noted.createCategoryNote',
+                        tooltip
                     );
+
+                    // Add icon indicator for JS templates
+                    if (isJS) {
+                        templateItem.iconPath = new vscode.ThemeIcon('symbol-event');
+                    }
+
+                    items.push(templateItem);
                 }
             }
 

@@ -722,6 +722,21 @@
           "type": "number",
           "default": 24,
           "description": "Maximum length for node titles in the graph view"
+        },
+        "noted.allowJavaScriptTemplates": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow execution of JavaScript templates (.js.template files). WARNING: Only enable this if you trust your template sources, as JavaScript templates can execute arbitrary code."
+        },
+        "noted.jsTemplates.maxExecutionTime": {
+          "type": "number",
+          "default": 5000,
+          "description": "Maximum execution time for JavaScript templates in milliseconds (default: 5000ms = 5 seconds)"
+        },
+        "noted.jsTemplates.maxMemory": {
+          "type": "number",
+          "default": 32,
+          "description": "Maximum memory for JavaScript templates in MB (default: 32 MB). Note: This is for documentation purposes - the Node.js VM module does not enforce hard memory limits."
         }
       }
     }
@@ -758,5 +773,7 @@
     "standard-version": "^9.5.0",
     "typescript": "^5.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "quickjs-emscripten": "^0.29.2"
+  }
 }
