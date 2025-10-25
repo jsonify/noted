@@ -113,6 +113,7 @@ For a complete list of implemented features, see [notes.md](./notes.md).
   - PlaceholdersService detects broken wiki-style links
   - Groups placeholders by target with reference counts
   - Shows all source locations for each placeholder
+  - Comprehensive test coverage: 27 unit tests in placeholdersService.test.ts
 - [x] **Orphans explorer panel**: Dedicated tree view showing all orphaned notes (v1.30.0)
   - Three expandable sections showing different orphan categories
   - Click orphan note to open and edit
@@ -328,14 +329,14 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 ### Test Infrastructure (Completed)
 
 #### CI/CD Pipeline (January 2025)
-- ✅ All 184 tests passing locally and in CI/CD
+- ✅ All 352 tests passing locally and in CI/CD
 - ✅ Tests pass on all platforms (Ubuntu, macOS, Windows)
 - ✅ Tests pass on all Node versions (18.x, 20.x)
 - ✅ Enhanced VS Code mocks (Position, Range, CompletionItem, MarkdownString, EventEmitter)
 - ✅ Test execution time: ~270ms for full suite
 
 #### Test Coverage
-- [ ] **Unit Tests**: 184 passing tests covering all core functionality
+- [ ] **Unit Tests**: 352 passing tests covering all core functionality
 - [ ] **Integration Tests**: 3 comprehensive test suites
   - `src/test/integration/commands.test.ts` - Note creation, editor, configuration, view, and search commands
   - `src/test/integration/noteManagement.test.ts` - Setup, folder management, export, and calendar commands
