@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.31.0](https://github.com/jsonify/noted/compare/v1.30.4...v1.31.0) (2025-10-25)
+
+
+### Features
+
+* Add JavaScript templates with logic, functions, and conditionals ([#32](https://github.com/jsonify/noted/issues/32)) ([19f0a92](https://github.com/jsonify/noted/commit/19f0a92fedbb8a0ff41bc49ab450cdd3d8c28a3b))
+
 ### [1.30.4](https://github.com/jsonify/noted/compare/v1.30.3...v1.30.4) (2025-10-25)
 
 
