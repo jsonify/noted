@@ -101,6 +101,15 @@ function initGraph() {
     state.graph.nodes = window.graphData.nodes || [];
     state.graph.links = window.graphData.links || [];
 
+    const SIMULATION_CONFIG = {
+        CHARGE_STRENGTH: -120,
+        LINK_DISTANCE: 50,
+        LINK_STRENGTH: 0.5,
+        CENTER_STRENGTH: 0.05,
+        COLLISION_RADIUS_MULTIPLIER: 1.5,
+        COOLDOWN_TICKS: 200
+    };
+
     // Apply initial filters
     updateFilters();
 
@@ -213,10 +222,11 @@ function initGraph() {
             state.selectedNodes.clear();
             updateFocusState();
         })
+
         // Force simulation - balanced spacing like Foam
-        .d3Force('charge', d3.forceManyBody().strength(-120))     // Good repulsion for spacing
-        .d3Force('link', d3.forceLink().distance(50).strength(0.5)) // Medium link distance
-        .d3Force('center', d3.forceCenter().strength(0.05))       // Weak center gravity
+        .d3Force('charge', d3.forceManyBody().strength(SIMULATION_CONFIG.CHARGE_STRENGTH))     // Good repulsion for spacing
+        .d3Force('link', d3.forceLink().distance(SIMULATION_CONFIG.LINK_DISTANCE).strength(SIMULATION_CONFIG.LINK_STRENGTH)) // Medium link distance
+        .d3Force('center', d3.forceCenter().strength(SIMULATION_CONFIG.CENTER_STRENGTH))       // Weak center gravity
         .d3Force('collision', d3.forceCollide(node => {
             // Collision radius based on visual node size
             const radius = Math.sqrt(node.val) * 0.8;
@@ -224,7 +234,7 @@ function initGraph() {
         }))
         .d3Force('x', d3.forceX().strength(0.02))                 // Very weak X centering
         .d3Force('y', d3.forceY().strength(0.02))                 // Very weak Y centering
-        .cooldownTicks(200)                                        // More iterations for settling
+        .cooldownTicks(SIMULATION_CONFIG.COOLDOWN_TICKS)                                        // More iterations for settling
         .onEngineStop(() => {
             // Zoom to fit on first load with padding
             graph.zoomToFit(400, 80);
