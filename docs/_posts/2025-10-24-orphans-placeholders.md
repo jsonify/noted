@@ -183,8 +183,8 @@ Both panels support these commands:
 
 - **Refresh Orphans** (`noted.refreshOrphans`) - Rebuild orphans detection
 - **Refresh Placeholders** (`noted.refreshPlaceholders`) - Rebuild placeholder tracking
-- **Create Note from Placeholder** - Create missing note from placeholder link
-- **Open Placeholder Source** - Navigate to where placeholder is referenced
+- **Create Note from Placeholder** (`noted.createNoteFromPlaceholder`) - Create missing note from placeholder link
+- **Open Placeholder Source** (`noted.openPlaceholderSource`) - Navigate to where placeholder is referenced
 
 ## Best Practices
 
