@@ -314,6 +314,32 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Bulk Archive**: Archive all notes older than specified days
 - **Safe Operations**: Confirmation dialogs for all destructive operations
 
+### Orphans & Placeholders Detection (v1.30.0)
+- **Orphan Notes Detection**: Identify notes with missing connections
+  - **Isolated Notes**: Notes with no incoming or outgoing links
+  - **No Backlinks**: Notes with outgoing links but no incoming references
+  - **No Outgoing Links**: Notes referenced by others but don't link anywhere
+  - **Real-time Tracking**: Automatically updates as links are added/removed
+- **Placeholder Tracking**: Track broken/dangling wiki-style links
+  - Detects `[[links]]` to notes that don't exist yet
+  - Groups placeholders by target with reference counts
+  - Shows all source locations for each placeholder
+  - Context snippets with line numbers for each reference
+- **Dedicated Explorer Panels**: Two sidebar panels for navigation
+  - **Orphans Panel**: Tree view showing all orphaned notes in three categories
+  - **Placeholders Panel**: Tree view grouping placeholders with expandable sources
+- **Quick Actions**:
+  - Click orphan note to open and add connections
+  - Click placeholder to create the missing note
+  - Navigate to source location where placeholder appears
+- **Commands**:
+  - `noted.refreshOrphans` - Rebuild orphans detection
+  - `noted.refreshPlaceholders` - Rebuild placeholder tracking
+  - `noted.createNoteFromPlaceholder` - Create note from placeholder link
+  - `noted.openPlaceholderSource` - Jump to source location
+- **Visual Indicators**: Icons distinguish categories (circle-slash, arrows)
+- **Tooltips**: Detailed connection status on hover
+
 ## Editor Features
 
 ### Markdown Preview (v1.12.0)
@@ -473,11 +499,11 @@ All commands are accessible via:
 
 ## Testing Infrastructure
 
-### Unit Tests (325 tests - all passing)
+### Unit Tests (352 tests - all passing)
 - **Testing Framework**: Mocha + Chai (v4 for CommonJS compatibility)
 - **Test Coverage**:
   - Utilities: validators, date helpers, folder operations (23 tests)
-  - Services: file system, templates, note service, tag service, tag completion, embed service with image support (103 tests)
+  - Services: file system, templates, note service, tag service, tag completion, embed service with image support, placeholders service (130 tests)
   - Providers: tree items, notes tree provider, tags tree provider (53 tests)
   - Commands: tag commands (4 tests)
   - Helpers: tag helpers (12 tests)
@@ -504,6 +530,7 @@ All commands are accessible via:
 - `src/test/unit/treeItems.test.ts` - Tree view item tests
 - `src/test/unit/noteService.test.ts` - Note search and tag integration tests
 - `src/test/unit/tagService.test.ts` - Tag indexing and querying tests
+- `src/test/unit/placeholdersService.test.ts` - Placeholder link detection and tracking tests (27 tests)
 - `src/test/unit/tagHelpers.test.ts` - Tag parsing and validation tests (including YAML frontmatter support)
 - `src/test/unit/tagCompletion.test.ts` - Tag autocomplete provider tests
 - `src/test/unit/tagCommands.test.ts` - Tag command handler tests
