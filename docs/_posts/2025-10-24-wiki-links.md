@@ -71,6 +71,22 @@ Each connection includes:
 - Surrounding context
 - Click to navigate
 
+## Hover Previews
+
+Hover over any wiki-style link to see a rich preview card with:
+
+- **Note Content**: First 10 lines of the note
+- **Tags**: All tags from frontmatter and inline hashtags
+- **Dates**: Created and modified dates with smart relative formatting ("Just now", "2 days ago")
+- **File Size**: Note size in KB
+- **Custom Metadata**: Up to 3 additional frontmatter fields (status, priority, etc.)
+- **Quick Actions**: Click the title to open the note instantly
+
+For broken links (notes that don't exist yet), the preview shows a "Create note" action.
+
+> Hover previews work seamlessly with both simple links `[[note-name]]` and display text syntax `[[note-name|Display Text]]`
+{: .prompt-tip }
+
 ## Link Autocomplete
 
 As you type `[[`, Noted suggests note names from your workspace:
