@@ -4,8 +4,8 @@
  * Features: ID generation, calculations, structure building, metadata
  */
 
-module.exports = async (note) => {
-  const { filename, date, time, year, month, day, user, workspace } = note.vars;
+module.exports = (note) => {
+  const { filename, dateString, timeString, year, month, day, user, workspace } = note;
 
   let content = '';
 
@@ -29,7 +29,7 @@ module.exports = async (note) => {
   content += 'tags: [project, kickoff, planning]\n';
   content += `project-id: ${projectId}\n`;
   content += `project-name: ${projectName}\n`;
-  content += `created: ${date} at ${time}\n`;
+  content += `created: ${dateString} at ${timeString}\n`;
   content += `owner: ${user}\n`;
   content += `status: planning\n`;
   content += `priority: high\n`;
@@ -40,7 +40,7 @@ module.exports = async (note) => {
   content += `# Project: ${projectName}\n\n`;
   content += `**Project ID:** \`${projectId}\`\n`;
   content += `**Status:** 🟡 Planning\n`;
-  content += `**Created:** ${date}\n`;
+  content += `**Created:** ${dateString}\n`;
   content += `**Owner:** ${user}\n`;
   content += `**Workspace:** ${workspace}\n\n`;
 
@@ -228,13 +228,13 @@ module.exports = async (note) => {
 
   // Notes
   content += '## Project Notes\n\n';
-  content += `[${time}] Project kickoff meeting\n\n`;
+  content += `[${timeString}] Project kickoff meeting\n\n`;
   content += '\n\n';
 
   // Footer
   content += '---\n\n';
-  content += `**Project initiated by ${user} on ${date}**\n\n`;
-  content += `*Project ID: ${projectId} | Status: Planning | Last Updated: ${date}*\n`;
+  content += `**Project initiated by ${user} on ${dateString}**\n\n`;
+  content += `*Project ID: ${projectId} | Status: Planning | Last Updated: ${dateString}*\n`;
 
   return content;
 };

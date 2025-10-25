@@ -4,8 +4,8 @@
  * Features: Async operations, file listing, date calculations, data aggregation
  */
 
-module.exports = async (note) => {
-  const { date, time, year, month, day, user, workspace } = note.vars;
+module.exports = (note) => {
+  const { dateString, timeString, year, month, day, user, workspace } = note;
 
   let content = '';
 
@@ -26,43 +26,27 @@ module.exports = async (note) => {
   // Add frontmatter
   content += '---\n';
   content += 'tags: [weekly-review, reflection, planning]\n';
-  content += `created: ${date} at ${time}\n`;
+  content += `created: ${dateString} at ${timeString}\n`;
   content += `week: ${weekNumber}\n`;
   content += `year: ${year}\n`;
   content += '---\n\n';
 
   // Header
   content += `# Weekly Review - Week ${weekNumber}, ${year}\n\n`;
-  content += `**Review Date:** ${date}\n`;
+  content += `**Review Date:** ${dateString}\n`;
   content += `**Period:** ${startStr} to ${endStr}\n`;
   content += `**Reviewer:** ${user}\n`;
   content += `**Workspace:** ${workspace}\n\n`;
 
   content += '---\n\n';
 
-  // Try to fetch last week's notes
-  try {
-    const lastWeekNotes = await note.notes.getRecent(7);
-
-    if (lastWeekNotes && lastWeekNotes.length > 0) {
-      content += '## Notes from Last Week\n\n';
-      content += `Found ${lastWeekNotes.length} notes from the past week:\n\n`;
-
-      for (const noteItem of lastWeekNotes) {
-        content += `- [[${noteItem.name}]] - ${noteItem.date}\n`;
-      }
-      content += '\n';
-    } else {
-      content += '## Notes from Last Week\n\n';
-      content += '*No notes found from last week. Start documenting your work!*\n\n';
-    }
-  } catch (error) {
-    // Fallback if notes API unavailable
-    content += '## Notes from Last Week\n\n';
-    content += '- \n';
-    content += '- \n';
-    content += '- \n\n';
-  }
+  // Note: Fetching recent notes would require async API access
+  // which is not supported in the current executor. This can be added
+  // when async support is implemented.
+  content += '## Notes from Last Week\n\n';
+  content += '- \n';
+  content += '- \n';
+  content += '- \n\n';
 
   // Achievements section
   content += '## Achievements\n\n';
@@ -181,7 +165,7 @@ module.exports = async (note) => {
   content += '- \n\n';
 
   content += '---\n\n';
-  content += `*Review completed by ${user} on ${date}*\n`;
+  content += `*Review completed by ${user} on ${dateString}*\n`;
 
   return content;
 };

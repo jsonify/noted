@@ -736,7 +736,7 @@
         "noted.jsTemplates.maxMemory": {
           "type": "number",
           "default": 32,
-          "description": "Maximum memory for JavaScript templates in MB (default: 32 MB). Note: This is for documentation purposes - the Node.js VM module does not enforce hard memory limits."
+          "description": "Maximum memory for JavaScript templates in MB (default: 32 MB). QuickJS enforces this limit to prevent excessive memory usage."
         }
       }
     }

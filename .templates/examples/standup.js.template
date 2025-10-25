@@ -4,15 +4,17 @@
  * Features: Helper functions, string formatting, task management, smart defaults
  */
 
-module.exports = async (note) => {
-  const { date, time, weekday, user, workspace } = note.vars;
+module.exports = (note) => {
+  const { dateString, timeString, weekday, user, workspace, date } = note;
 
   let content = '';
 
-  // Parse date components
-  const dateObj = parseDate(date);
-  const yesterday = getYesterday(dateObj);
-  const tomorrow = getTomorrow(dateObj);
+  // Use the provided Date object directly
+  const dateObj = date;
+  const yesterday = note.dateHelper.toDate();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const tomorrow = note.dateHelper.toDate();
+  tomorrow.setDate(tomorrow.getDate() + 1);
 
   // Determine if it's Monday (look back to Friday)
   const isMonday = weekday === 'Mon';
@@ -22,26 +24,28 @@ module.exports = async (note) => {
   // Add frontmatter
   content += '---\n';
   content += 'tags: [standup, daily, team]\n';
-  content += `created: ${date} at ${time}\n`;
-  content += `standup-date: ${formatISODate(dateObj)}\n`;
+  content += `created: ${dateString} at ${timeString}\n`;
+  content += `standup-date: ${note.dateHelper.format('YYYY-MM-DD')}\n`;
   content += `day-of-week: ${weekday}\n`;
   content += '---\n\n';
 
   // Header
-  content += `# Daily Standup - ${weekday}, ${date}\n\n`;
+  content += `# Daily Standup - ${weekday}, ${dateString}\n\n`;
   content += `**Team Member:** ${user}\n`;
   content += `**Project:** ${workspace}\n`;
-  content += `**Time:** ${time}\n\n`;
+  content += `**Time:** ${timeString}\n\n`;
 
   content += '---\n\n';
 
   // Yesterday section
   if (isMonday) {
     content += '## Friday (Last Working Day)\n\n';
-    content += `*${formatFullDate(getRelativeDate(dateObj, -3))}*\n\n`;
+    const friday = note.dateHelper.toDate();
+    friday.setDate(friday.getDate() - 3);
+    content += `*${note.dateHelper.getDayName()}, ${note.dateHelper.getMonthName()} ${friday.getDate()}, ${friday.getFullYear()}*\n\n`;
   } else {
     content += '## Yesterday\n\n';
-    content += `*${formatFullDate(yesterday)}*\n\n`;
+    content += `*${note.dateHelper.getDayName()}, ${note.dateHelper.getMonthName()} ${yesterday.getDate()}, ${yesterday.getFullYear()}*\n\n`;
   }
 
   content += '**Completed:**\n';
@@ -59,7 +63,7 @@ module.exports = async (note) => {
 
   // Today section
   content += '## Today\n\n';
-  content += `*${formatFullDate(dateObj)}*\n\n`;
+  content += `*${dateString}*\n\n`;
 
   content += '**Planned Tasks:**\n';
   content += createTaskList([
@@ -85,7 +89,9 @@ module.exports = async (note) => {
 
   // Tomorrow section
   content += '## Tomorrow\n\n';
-  content += `*${formatFullDate(tomorrow)}*\n\n`;
+  const tomorrowDate = note.dateHelper.toDate();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  content += `*${note.dateHelper.getDayName()}, ${note.dateHelper.getMonthName()} ${tomorrowDate.getDate()}, ${tomorrowDate.getFullYear()}*\n\n`;
 
   content += '**Planned:**\n';
   content += createTaskList([
@@ -100,7 +106,7 @@ module.exports = async (note) => {
 
   // Notes section
   content += '## Notes\n\n';
-  content += `[${time}] \n\n`;
+  content += `[${timeString}] \n\n`;
   content += '\n\n';
 
   // Team updates section
@@ -161,7 +167,7 @@ module.exports = async (note) => {
 
   // Footer
   content += '---\n\n';
-  content += createFooter(user, date);
+  content += createFooter(user, dateString);
 
   return content;
 };
@@ -204,60 +210,4 @@ function createProgressBar(label, current, total, width = 10) {
 function createFooter(user, date) {
   return `*Standup submitted by ${user} on ${date}*\n\n` +
          `#standup #daily`;
-}
-
-// Helper: Parse date string
-function parseDate(dateStr) {
-  // Parse "Sunday, October 24, 2025" format
-  const parts = dateStr.match(/\w+, (\w+) (\d+), (\d+)/);
-  if (!parts) return new Date();
-
-  const months = {
-    'January': 0, 'February': 1, 'March': 2, 'April': 3, 'May': 4, 'June': 5,
-    'July': 6, 'August': 7, 'September': 8, 'October': 9, 'November': 10, 'December': 11
-  };
-
-  const month = months[parts[1]];
-  const day = parseInt(parts[2]);
-  const year = parseInt(parts[3]);
-
-  return new Date(year, month, day);
-}
-
-// Helper: Get yesterday's date
-function getYesterday(date) {
-  const yesterday = new Date(date);
-  yesterday.setDate(yesterday.getDate() - 1);
-  return yesterday;
-}
-
-// Helper: Get tomorrow's date
-function getTomorrow(date) {
-  const tomorrow = new Date(date);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return tomorrow;
-}
-
-// Helper: Get relative date
-function getRelativeDate(date, days) {
-  const newDate = new Date(date);
-  newDate.setDate(newDate.getDate() + days);
-  return newDate;
-}
-
-// Helper: Format full date
-function formatFullDate(date) {
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const months = ['January', 'February', 'March', 'April', 'May', 'June',
-                  'July', 'August', 'September', 'October', 'November', 'December'];
-
-  return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-}
-
-// Helper: Format ISO date
-function formatISODate(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }

@@ -4,29 +4,19 @@
  * Features: File searching, pattern matching, meeting history, attendance tracking
  */
 
-module.exports = async (note) => {
-  const { filename, date, time, user, workspace } = note.vars;
+module.exports = (note) => {
+  const { filename, dateString, timeString, user, workspace } = note;
 
   let content = '';
 
   // Extract meeting name from filename
   const meetingName = filename.replace(/\.(txt|md)$/i, '').replace(/-/g, ' ');
 
-  // Check if this is a recurring meeting by searching for similar notes
+  // Note: Recurring meeting detection would require async API access
+  // which is not supported in the current executor. This can be added
+  // when async support is implemented.
   let isRecurring = false;
   let previousMeetings = [];
-
-  try {
-    // Search for notes with similar names (same meeting series)
-    const searchResults = await note.notes.search(meetingName);
-    if (searchResults && searchResults.length > 1) {
-      isRecurring = true;
-      // Get up to 3 most recent previous meetings
-      previousMeetings = searchResults.slice(0, 3).filter(m => m.name !== filename);
-    }
-  } catch (error) {
-    // Search not available, continue without recurring detection
-  }
 
   // Determine meeting type from filename
   const isStandup = /standup|daily|scrum/i.test(filename);
@@ -43,15 +33,15 @@ module.exports = async (note) => {
   if (isOneOnOne) content += ', 1-1, one-on-one';
   if (isRecurring) content += ', recurring';
   content += ']\n';
-  content += `created: ${date} at ${time}\n`;
+  content += `created: ${dateString} at ${timeString}\n`;
   content += `meeting: ${meetingName}\n`;
   if (isRecurring) content += 'recurring: true\n';
   content += '---\n\n';
 
   // Header
   content += `# ${capitalize(meetingName)}\n\n`;
-  content += `**Date:** ${date}\n`;
-  content += `**Time:** ${time}\n`;
+  content += `**Date:** ${dateString}\n`;
+  content += `**Time:** ${timeString}\n`;
   content += `**Location/Link:** \n\n`;
 
   // Recurring meeting context
@@ -171,7 +161,7 @@ module.exports = async (note) => {
     content += '4. Any other business\n\n';
 
     content += '## Discussion Notes\n\n';
-    content += `[${time}] Meeting started\n\n`;
+    content += `[${timeString}] Meeting started\n\n`;
     content += '### Topic 1:\n\n';
     content += '\n\n';
     content += '### Topic 2:\n\n';

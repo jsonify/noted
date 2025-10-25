@@ -4,8 +4,8 @@
  * Features: Conditional logic, day-of-week detection, dynamic sections
  */
 
-module.exports = async (note) => {
-  const { date, time, weekday, month_name, day, year, user } = note.vars;
+module.exports = (note) => {
+  const { dateString, timeString, weekday, monthName, day, year, user } = note;
 
   // Parse the weekday to determine day type
   const isMonday = weekday === 'Mon';
@@ -22,21 +22,21 @@ module.exports = async (note) => {
   if (isFriday) content += ', week-end, review';
   if (isWeekend) content += ', weekend, personal';
   content += ']\n';
-  content += `created: ${date} at ${time}\n`;
+  content += `created: ${dateString} at ${timeString}\n`;
   content += '---\n\n';
 
   // Add title with context
   if (isMonday) {
-    content += `# Week Start - ${month_name} ${day}, ${year}\n\n`;
+    content += `# Week Start - ${monthName} ${day}, ${year}\n\n`;
     content += `Welcome to a new week, ${user}! Let's make it productive.\n\n`;
   } else if (isFriday) {
-    content += `# Week End - ${month_name} ${day}, ${year}\n\n`;
+    content += `# Week End - ${monthName} ${day}, ${year}\n\n`;
     content += `Time to wrap up the week and celebrate wins!\n\n`;
   } else if (isWeekend) {
-    content += `# Weekend - ${month_name} ${day}, ${year}\n\n`;
+    content += `# Weekend - ${monthName} ${day}, ${year}\n\n`;
     content += `Enjoy your weekend! Time for rest and personal projects.\n\n`;
   } else {
-    content += `# ${weekday}, ${month_name} ${day}, ${year}\n\n`;
+    content += `# ${weekday}, ${monthName} ${day}, ${year}\n\n`;
   }
 
   // Monday-specific sections
@@ -101,7 +101,7 @@ module.exports = async (note) => {
     content += '3. \n\n';
 
     content += '## Schedule\n\n';
-    content += `**${time}** - \n\n`;
+    content += `**${timeString}** - \n\n`;
 
     content += '## Tasks\n\n';
     content += '**Must Do:**\n';
@@ -119,7 +119,7 @@ module.exports = async (note) => {
 
   // Add notes section for all days
   content += '## Notes\n\n';
-  content += `[${time}] \n\n`;
+  content += `[${timeString}] \n\n`;
 
   // Add reflection section
   content += '## Daily Reflection\n\n';

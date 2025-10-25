@@ -182,13 +182,19 @@ export class JSTemplateExecutor {
             // Create a new context for this execution
             vm = runtime.newContext();
 
-            // Set execution timeout
-            const timeoutHandle = setTimeout(() => {
-                if (vm) {
-                    vm.runtime.executePendingJobs();
-                    throw new Error('Template execution timeout exceeded');
+            // Set execution timeout using interrupt handler
+            // This properly handles infinite synchronous loops unlike setTimeout
+            let interrupted = false;
+            const deadline = Date.now() + this.options.timeout;
+
+            runtime.setInterruptHandler(() => {
+                const now = Date.now();
+                if (now > deadline) {
+                    interrupted = true;
+                    return true; // Interrupt execution
                 }
-            }, this.options.timeout);
+                return false; // Continue execution
+            });
 
             try {
                 // Inject context variables into the VM
@@ -207,8 +213,14 @@ export class JSTemplateExecutor {
                 // Execute the template code
                 const result = vm.evalCode(code);
 
-                // Clear timeout
-                clearTimeout(timeoutHandle);
+                // Check if execution was interrupted
+                if (interrupted) {
+                    return {
+                        output: '',
+                        executionTime: Date.now() - startTime,
+                        error: 'Template execution timeout exceeded'
+                    };
+                }
 
                 if (result.error) {
                     const errorMsg = vm.dump(result.error);
@@ -239,7 +251,8 @@ export class JSTemplateExecutor {
                     executionTime: Date.now() - startTime
                 };
             } finally {
-                clearTimeout(timeoutHandle);
+                // Clear interrupt handler
+                runtime.setInterruptHandler(null as any);
             }
         } catch (error) {
             return {
@@ -274,31 +287,34 @@ export class JSTemplateExecutor {
             user: context.user,
             workspace: context.workspace,
             dateString: context.dateString,
-            timeString: context.timeString
+            timeString: context.timeString,
+            date: context.date // Include Date object for date manipulation
         };
 
         // Build context setup code
         let code = '';
 
-        // Inject simple values
+        // Inject simple values (except date which we'll handle separately)
         for (const [key, value] of Object.entries(safeContext)) {
-            code += `const ${key} = ${JSON.stringify(value)};\n`;
+            if (key === 'date') {
+                code += `const date = new Date(${context.date.getTime()});\n`;
+            } else {
+                code += `const ${key} = ${JSON.stringify(value)};\n`;
+            }
         }
 
-        // Create note object with all context values
-        code += `const note = ${JSON.stringify(safeContext)};\n`;
-
-        // Add date helper functions
+        // Add complete date helper implementation matching DateHelper class
         code += `
 const dateHelper = {
+    _internalDate: new Date(${context.date.getTime()}),
+
     format: function(pattern) {
-        const date = new Date(${context.date.getTime()});
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        const seconds = date.getSeconds().toString().padStart(2, '0');
+        const year = this._internalDate.getFullYear();
+        const month = (this._internalDate.getMonth() + 1).toString().padStart(2, '0');
+        const day = this._internalDate.getDate().toString().padStart(2, '0');
+        const hours = this._internalDate.getHours().toString().padStart(2, '0');
+        const minutes = this._internalDate.getMinutes().toString().padStart(2, '0');
+        const seconds = this._internalDate.getSeconds().toString().padStart(2, '0');
 
         return pattern
             .replace('YYYY', year.toString())
@@ -308,16 +324,42 @@ const dateHelper = {
             .replace('mm', minutes)
             .replace('ss', seconds);
     },
+
+    addDays: function(days) {
+        const newDate = new Date(this._internalDate);
+        newDate.setDate(newDate.getDate() + days);
+        this._internalDate = newDate;
+        return this;
+    },
+
+    addMonths: function(months) {
+        const newDate = new Date(this._internalDate);
+        newDate.setMonth(newDate.getMonth() + months);
+        this._internalDate = newDate;
+        return this;
+    },
+
+    getDayOfWeek: function() {
+        return this._internalDate.getDay();
+    },
+
     getDayName: function() {
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const date = new Date(${context.date.getTime()});
-        return days[date.getDay()];
+        return days[this._internalDate.getDay()];
     },
+
     getMonthName: function() {
         const months = ['January', 'February', 'March', 'April', 'May', 'June',
                         'July', 'August', 'September', 'October', 'November', 'December'];
-        const date = new Date(${context.date.getTime()});
-        return months[date.getMonth()];
+        return months[this._internalDate.getMonth()];
+    },
+
+    toISOString: function() {
+        return this._internalDate.toISOString();
+    },
+
+    toDate: function() {
+        return new Date(this._internalDate);
     }
 };
 
@@ -339,6 +381,23 @@ const timeHelper = {
     now: function() {
         return new Date().toISOString();
     }
+};
+
+// Create note object with all context values and helpers
+const note = {
+    filename: filename,
+    year: year,
+    month: month,
+    day: day,
+    weekday: weekday,
+    monthName: monthName,
+    user: user,
+    workspace: workspace,
+    dateString: dateString,
+    timeString: timeString,
+    date: date,
+    dateHelper: dateHelper,
+    timeHelper: timeHelper
 };
 `;
 
