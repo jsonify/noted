@@ -1,846 +1,460 @@
-// Get VS Code API
-const vscode = acquireVsCodeApi();
+/**
+ * Noted Graph Visualization
+ * Based on force-graph library with custom canvas rendering
+ */
 
-// Graph data from the backend (injected via window.graphData)
-let allNodes = window.graphData.nodes;
-let allEdges = window.graphData.edges;
-let currentFilter = 'all';
-let searchQuery = '';
-let timeFilter = 'all';
-let customStartDate = null;
-let customEndDate = null;
-let timeFilterMode = 'modified'; // 'created' or 'modified'
-
-// Focus mode state
-let focusMode = false;
-let focusedNodeId = null;
-
-// Create the network
-const container = document.getElementById('graph');
-let network = null;
-let currentLayout = 'force';
-
-// Graph customization settings
-let graphSettings = {
-    nodeSize: 20,
-    nodeBorderWidth: 2,
-    nodeShape: 'dot',
-    nodeShadow: true,
-    edgeWidth: 2,
-    edgeColor: '#e83e8c',
-    edgeStyle: 'continuous',
-    edgeArrows: true,
-    springLength: 200,
-    repulsion: 30000,
-    gravity: 0.3,
-    colors: {
-        orphan: '#cccccc',
-        lowConn: '#69db7c',
-        medConn: '#4dabf7',
-        highConn: '#ffa500',
-        veryHighConn: '#ff6b6b'
-    }
+// State management
+const state = {
+    selectedNodes: new Set(),
+    hoverNode: null,
+    focusNodes: new Set(),
+    focusLinks: new Set(),
+    graph: {
+        nodes: [],
+        links: []
+    },
+    filteredData: {
+        nodes: [],
+        links: []
+    },
+    filters: {
+        showNotes: true,
+        showTags: true,
+        showPlaceholders: true,
+        showOrphans: true
+    },
+    // Transition state for smooth animations
+    nodeOpacities: new Map(), // Current opacity for each node
+    targetOpacities: new Map(), // Target opacity for each node
+    animating: false
 };
 
-// Load saved settings
-const savedState = vscode.getState();
-if (savedState && savedState.graphSettings) {
-    graphSettings = { ...graphSettings, ...savedState.graphSettings };
-}
+// Colors (match CSS variables with better depth)
+const colors = {
+    note: '#69db7c',
+    tag: '#ff922b',
+    placeholder: '#e599f7',
+    orphan: '#adb5bd',
+    link: 'rgba(180, 180, 200, 0.25)',        // Subtle but visible links
+    linkHighlight: 'rgba(255, 146, 43, 0.8)', // Brighter highlight
+    text: '#e4e4e4'                           // Slightly softer white
+};
 
-// Initialize the graph
-initGraph();
+// Graph instance
+let graph = null;
 
-// Get custom node color based on connection count
-function getCustomNodeColor(isOrphan, linkCount) {
-    if (isOrphan) {
-        return graphSettings.colors.orphan;
-    } else if (linkCount > 10) {
-        return graphSettings.colors.veryHighConn;
-    } else if (linkCount > 5) {
-        return graphSettings.colors.highConn;
-    } else if (linkCount > 2) {
-        return graphSettings.colors.medConn;
-    } else {
-        return graphSettings.colors.lowConn;
+/**
+ * Get node state based on hover/focus
+ */
+function getNodeState(nodeId) {
+    if (state.selectedNodes.has(nodeId) || state.hoverNode === nodeId) {
+        return 'highlighted';
     }
+    if (state.focusNodes.size === 0) {
+        return 'regular';
+    }
+    return state.focusNodes.has(nodeId) ? 'regular' : 'lessened';
 }
 
+/**
+ * Get current animated opacity for a node
+ */
+function getNodeOpacity(nodeId) {
+    const nodeState = getNodeState(nodeId);
+
+    // If not animating, return immediate opacity
+    if (!state.animating) {
+        return nodeState === 'lessened' ? 0.08 : 1.0;
+    }
+
+    // Return current animated opacity
+    return state.nodeOpacities.get(nodeId) || 1.0;
+}
+
+/**
+ * Get link state based on focus
+ */
+function getLinkState(linkId) {
+    if (state.focusNodes.size === 0) {
+        return 'regular';
+    }
+    return state.focusLinks.has(linkId) ? 'highlighted' : 'lessened';
+}
+
+/**
+ * Convert hex color to rgba with opacity
+ */
+function hexToRgba(hex, opacity) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
+// Painter class removed - force-graph now handles node rendering
+
+/**
+ * Initialize the graph visualization
+ */
 function initGraph() {
-    const { nodes, edges } = getFilteredData();
+    // Load graph data from window.graphData
+    state.graph.nodes = window.graphData.nodes || [];
+    state.graph.links = window.graphData.links || [];
 
-    // Apply custom colors to nodes
-    const coloredNodes = nodes.map(node => ({
-        ...node,
-        color: getCustomNodeColor(node.isOrphan, node.linkCount)
-    }));
+    // Apply initial filters
+    updateFilters();
 
-    const data = {
-        nodes: coloredNodes,
-        edges: edges
-    };
+    // Create force-graph instance
+    const container = document.getElementById('graph');
 
-    const options = getLayoutOptions(currentLayout);
-    network = new vis.Network(container, data, options);
+    graph = ForceGraph()(container)
+        .graphData(state.filteredData)
+        .nodeId('id')
+        .nodeLabel(node => node.title || node.label)
+        .nodeVal('val')
+        .nodeRelSize(1)  // Control base node size (default is 4, lower = smaller nodes)
+        .nodeColor(node => {
+            const opacity = getNodeOpacity(node.id);
+            return hexToRgba(node.color, opacity);
+        })
+        .nodeCanvasObject((node, ctx, globalScale) => {
+            // Only draw labels, let force-graph handle the nodes
+            const { x, y, val } = node;
+            const radius = Math.sqrt(val) * 0.8;
+            const nodeState = getNodeState(node.id);
 
-    // Event listeners
-    network.on('click', function(params) {
-        if (params.nodes.length > 0) {
-            const nodeId = params.nodes[0];
+            // Calculate label opacity based on zoom level
+            const minScale = 0.5;
+            const maxScale = 2.0;
+            const zoomOpacity = Math.min(1, Math.max(0, (globalScale - minScale) / (maxScale - minScale)));
 
-            // Highlight connected nodes (unless in focus mode)
-            if (!focusMode) {
-                highlightConnectedNodes(nodeId);
+            // Determine label opacity based on node state
+            let labelOpacity = zoomOpacity;
+            if (nodeState === 'highlighted') {
+                labelOpacity = 1.0;
+            } else if (nodeState === 'lessened') {
+                labelOpacity = Math.min(zoomOpacity, 0.08);
             }
 
-            vscode.postMessage({
-                command: 'openNote',
-                filePath: nodeId
-            });
-        } else {
-            // Clicked on canvas, clear highlights (unless in focus mode)
-            if (!focusMode) {
-                clearHighlights();
+            if (labelOpacity > 0.01) {
+                const label = node.label;
+                const fontSize = Math.max(10, 12 / globalScale);
+                ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.globalAlpha = labelOpacity;
+
+                // Text shadow for readability
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+                ctx.shadowBlur = 6;
+                ctx.shadowOffsetY = 1;
+
+                ctx.fillStyle = colors.text;
+                ctx.fillText(label, x, y - radius - 10);
+
+                // Reset
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                ctx.globalAlpha = 1.0;
             }
-        }
-    });
+        })
+        .nodeCanvasObjectMode(() => 'after')
+        .linkSource('source')
+        .linkTarget('target')
+        .linkColor(link => {
+            const linkId = getLinkId(link);
+            const linkState = getLinkState(linkId);
 
-    // Right-click context menu
-    network.on('oncontext', function(params) {
-        params.event.preventDefault();
-
-        const nodeId = network.getNodeAt(params.pointer.DOM);
-        if (nodeId) {
-            enterFocusMode(nodeId);
-        }
-    });
-
-    network.on('hoverNode', function(params) {
-        const node = allNodes.find(n => n.id === params.node);
-        if (node) {
-            const connections = allEdges.filter(e => e.from === node.id || e.to === node.id).length;
-            const tooltipText = `${node.title}\n${connections} connection${connections !== 1 ? 's' : ''}\nClick to open`;
-            showTooltip(params.event, tooltipText);
-        }
-    });
-
-    network.on('blurNode', function() {
-        hideTooltip();
-    });
-
-    network.on('stabilizationProgress', function(params) {
-        console.log('Stabilization progress:', Math.round(params.iterations / params.total * 100) + '%');
-    });
-
-    network.on('stabilizationIterationsDone', function() {
-        console.log('Stabilization complete, physics will stay enabled for interactive movement');
-
-        // Fit view after stabilization completes
-        network.fit({
-            animation: {
-                duration: 1000,
-                easingFunction: 'easeInOutQuad'
+            switch (linkState) {
+                case 'highlighted':
+                    return colors.linkHighlight;
+                case 'lessened':
+                    return 'rgba(180, 180, 200, 0.03)'; // Very faded
+                case 'regular':
+                default:
+                    return colors.link;
             }
-        });
-
-        // Keep physics enabled permanently for continuous interactive movement
-        // Physics will continue to run when nodes are dragged or the graph is modified
-    });
-
-    // Fit immediately so the graph is visible
-    setTimeout(() => {
-        network.fit({ animation: false });
-    }, 100);
-}
-
-function positionNodesCircularly(nodes) {
-    const nodeCount = nodes.length;
-    if (nodeCount === 0) return;
-
-    // Calculate radius based on number of nodes to ensure good spacing
-    const radius = Math.max(200, nodeCount * 30);
-    const angleStep = (2 * Math.PI) / nodeCount;
-
-    // Position each node on the circle
-    nodes.forEach((node, index) => {
-        const angle = index * angleStep;
-        node.x = radius * Math.cos(angle);
-        node.y = radius * Math.sin(angle);
-        node.fixed = { x: false, y: false };  // Allow dragging but start in circular position
-    });
-}
-
-function getLayoutOptions(layout) {
-    const { nodes, edges } = getFilteredData();
-    const hasEdges = edges.length > 0;
-
-    const baseOptions = {
-        autoResize: true,
-        height: '100%',
-        width: '100%',
-        nodes: {
-            shape: graphSettings.nodeShape,
-            size: graphSettings.nodeSize,
-            font: {
-                color: 'var(--vscode-editor-foreground)',
-                size: 14,
-                face: 'var(--vscode-font-family)'
-            },
-            borderWidth: graphSettings.nodeBorderWidth,
-            borderWidthSelected: graphSettings.nodeBorderWidth + 2,
-            shadow: graphSettings.nodeShadow ? {
-                enabled: true,
-                color: 'rgba(0,0,0,0.3)',
-                size: 10,
-                x: 2,
-                y: 2
-            } : {
-                enabled: false
-            },
-            color: {
-                border: '#666666',
-                highlight: {
-                    border: '#ff69b4',
-                    background: 'var(--vscode-list-activeSelectionBackground)'
-                },
-                hover: {
-                    border: '#ff69b4',
-                    background: 'var(--vscode-list-hoverBackground)'
+        })
+        .linkWidth(link => {
+            const isHighlighted = state.focusLinks.has(getLinkId(link));
+            return isHighlighted ? 2.5 : (link.value || 1);
+        })
+        .linkDirectionalParticles(link => {
+            const isHighlighted = state.focusLinks.has(getLinkId(link));
+            return isHighlighted ? 2 : 0;
+        })
+        .linkDirectionalParticleWidth(3)          // Slightly thicker particles
+        .linkDirectionalParticleSpeed(0.005) // Half the default speed (default is ~0.01)
+        .onNodeHover(node => {
+            state.hoverNode = node ? node.id : null;
+            updateFocusState();
+        })
+        .onNodeClick((node, event) => {
+            if (event.shiftKey) {
+                // Multi-select with Shift
+                if (state.selectedNodes.has(node.id)) {
+                    state.selectedNodes.delete(node.id);
+                } else {
+                    state.selectedNodes.add(node.id);
+                }
+                updateFocusState();
+            } else {
+                // Single click - open note
+                if (node.type === 'note') {
+                    window.vscode.postMessage({
+                        command: 'openNote',
+                        filePath: node.id
+                    });
                 }
             }
-        },
-        edges: {
-            width: graphSettings.edgeWidth,
-            color: {
-                color: graphSettings.edgeColor,
-                highlight: '#ff69b4',
-                hover: '#ff69b4',
-                opacity: 0.6
-            },
-            smooth: {
-                type: graphSettings.edgeStyle === 'straight' ? false : graphSettings.edgeStyle,
-                roundness: 0.5
-            },
-            arrows: graphSettings.edgeArrows ? {
-                to: {
-                    enabled: true,
-                    scaleFactor: 0.5
-                }
-            } : {
-                to: { enabled: false }
-            }
-        },
-        interaction: {
-            hover: true,
-            tooltipDelay: 200,
-            zoomView: true,
-            dragView: true
-        },
-        physics: {
-            enabled: hasEdges,
-            stabilization: {
-                enabled: true,
-                iterations: 1000,
-                updateInterval: 50,
-                fit: true
-            }
-        }
-    };
-
-    if (layout === 'force') {
-        if (hasEdges) {
-            baseOptions.layout = {
-                randomSeed: 42
-            };
-            baseOptions.physics = {
-                enabled: true,
-                barnesHut: {
-                    gravitationalConstant: -graphSettings.repulsion,
-                    centralGravity: graphSettings.gravity,
-                    springLength: graphSettings.springLength,
-                    springConstant: 0.04,
-                    damping: 0.2,
-                    avoidOverlap: 0.5
-                },
-                stabilization: {
-                    enabled: true,
-                    iterations: 300,  // Moderate iterations for visible animation
-                    updateInterval: 1,  // Update visual every iteration for smooth animation
-                    fit: false  // Don't fit during stabilization so we can see it
-                },
-                solver: 'barnesHut',
-                adaptiveTimestep: true,
-                timestep: 0.5  // Slower timestep for more visible physics
-            };
-        } else {
-            // For orphan nodes without edges, use random layout without physics
-            baseOptions.layout = {
-                randomSeed: 42,
-                improvedLayout: true
-            };
-            baseOptions.physics = {
-                enabled: false
-            };
-        }
-    } else if (layout === 'hierarchical') {
-        baseOptions.layout = {
-            hierarchical: {
-                direction: 'UD',  // Up-down for more compact vertical layout
-                sortMethod: 'hubsize',  // Sort by number of connections instead of directed
-                nodeSpacing: 150,  // Horizontal spacing between nodes
-                levelSeparation: 150,  // Vertical separation between levels
-                treeSpacing: 150,  // Spacing between separate trees
-                blockShifting: true,  // Allow shifting blocks to reduce whitespace
-                edgeMinimization: true,  // Minimize edge crossings
-                parentCentralization: true,  // Center parent nodes over children
-                shakeTowards: 'leaves'  // Compact layout towards leaf nodes
-            }
-        };
-        baseOptions.physics = {
-            enabled: false
-        };
-    } else if (layout === 'circular') {
-        // Manually position nodes in a circular layout
-        positionNodesCircularly(nodes);
-
-        baseOptions.layout = {
-            randomSeed: 42
-        };
-        baseOptions.physics = {
-            enabled: false  // Disable physics to keep circular positions
-        };
-    }
-
-    return baseOptions;
-}
-
-function getFilteredData() {
-    let nodes = allNodes;
-    let edges = allEdges;
-
-    // Apply connection filter
-    if (currentFilter === 'connected') {
-        nodes = nodes.filter(n => !n.isOrphan);
-        const nodeIds = new Set(nodes.map(n => n.id));
-        edges = edges.filter(e => nodeIds.has(e.from) && nodeIds.has(e.to));
-    } else if (currentFilter === 'orphans') {
-        nodes = nodes.filter(n => n.isOrphan);
-        edges = [];
-    }
-
-    // Apply time filter
-    if (timeFilter !== 'all') {
-        const now = Date.now();
-        let startTime, endTime;
-
-        if (timeFilter === 'custom') {
-            // Custom date range
-            if (customStartDate) {
-                startTime = new Date(customStartDate).getTime();
-            }
-            if (customEndDate) {
-                endTime = new Date(customEndDate).getTime() + 86400000; // Add 24 hours to include entire end date
-            }
-        } else {
-            // Preset time ranges
-            endTime = now;
-            switch (timeFilter) {
-                case 'today':
-                    const todayStart = new Date();
-                    todayStart.setHours(0, 0, 0, 0);
-                    startTime = todayStart.getTime();
-                    break;
-                case 'week':
-                    startTime = now - (7 * 24 * 60 * 60 * 1000);
-                    break;
-                case 'month':
-                    startTime = now - (30 * 24 * 60 * 60 * 1000);
-                    break;
-                case 'quarter':
-                    startTime = now - (90 * 24 * 60 * 60 * 1000);
-                    break;
-                case 'year':
-                    startTime = now - (365 * 24 * 60 * 60 * 1000);
-                    break;
-            }
-        }
-
-        // Filter nodes by time
-        nodes = nodes.filter(node => {
-            const timestamp = timeFilterMode === 'created' ? node.createdTime : node.modifiedTime;
-            if (!timestamp) return true; // Include nodes without timestamp info
-
-            if (startTime && timestamp < startTime) return false;
-            if (endTime && timestamp > endTime) return false;
-            return true;
+        })
+        .onBackgroundClick(() => {
+            // Clear selection on background click
+            state.selectedNodes.clear();
+            updateFocusState();
+        })
+        // Force simulation - balanced spacing like Foam
+        .d3Force('charge', d3.forceManyBody().strength(-120))     // Good repulsion for spacing
+        .d3Force('link', d3.forceLink().distance(50).strength(0.5)) // Medium link distance
+        .d3Force('center', d3.forceCenter().strength(0.05))       // Weak center gravity
+        .d3Force('collision', d3.forceCollide(node => {
+            // Collision radius based on visual node size
+            const radius = Math.sqrt(node.val) * 0.8;
+            return radius * 1.5; // Add padding between nodes
+        }))
+        .d3Force('x', d3.forceX().strength(0.02))                 // Very weak X centering
+        .d3Force('y', d3.forceY().strength(0.02))                 // Very weak Y centering
+        .cooldownTicks(200)                                        // More iterations for settling
+        .onEngineStop(() => {
+            // Zoom to fit on first load with padding
+            graph.zoomToFit(400, 80);
         });
-
-        const nodeIds = new Set(nodes.map(n => n.id));
-        edges = edges.filter(e => nodeIds.has(e.from) && nodeIds.has(e.to));
-    }
-
-    // Apply search
-    if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        nodes = nodes.filter(n => n.label.toLowerCase().includes(query));
-        const nodeIds = new Set(nodes.map(n => n.id));
-        edges = edges.filter(e => nodeIds.has(e.from) && nodeIds.has(e.to));
-    }
-
-    return { nodes, edges };
 }
 
-function updateGraph(skipFit = false) {
-    const { nodes, edges } = getFilteredData();
-
-    // Apply custom colors to nodes
-    const coloredNodes = nodes.map(node => ({
-        ...node,
-        color: getCustomNodeColor(node.isOrphan, node.linkCount)
-    }));
-
-    // Update network data and options efficiently without destroying
-    const options = getLayoutOptions(currentLayout);
-    network.setOptions(options);
-    network.setData({ nodes: coloredNodes, edges });
-
-    // Manually fit if physics is disabled, as stabilization events won't fire
-    // Skip fitting if requested (to avoid zoom on hover after focus mode exit)
-    if (!skipFit && options.physics && options.physics.enabled === false) {
-        network.fit();
-    }
-
-    // Update no links message visibility
-    updateNoLinksMessage();
-}
-
-function updateNoLinksMessage() {
-    const message = document.getElementById('noLinksMessage');
-    if (allEdges.length === 0) {
-        message.classList.remove('hidden');
-    } else {
-        message.classList.add('hidden');
-    }
-}
-
-function showTooltip(event, text) {
-    const tooltip = document.getElementById('tooltip');
-    tooltip.textContent = text;
-    tooltip.style.left = event.pageX + 10 + 'px';
-    tooltip.style.top = event.pageY + 10 + 'px';
-    tooltip.style.display = 'block';
-}
-
-function hideTooltip() {
-    document.getElementById('tooltip').style.display = 'none';
-}
-
-// Event listeners
-document.getElementById('searchBox').addEventListener('input', (e) => {
-    searchQuery = e.target.value;
-    updateGraph();
-});
-
-document.getElementById('layoutSelect').addEventListener('change', (e) => {
-    currentLayout = e.target.value;
-    network.destroy();
-    initGraph();
-});
-
-document.getElementById('filterSelect').addEventListener('change', (e) => {
-    currentFilter = e.target.value;
-    updateGraph();
-});
-
-document.getElementById('timeFilterSelect').addEventListener('change', (e) => {
-    timeFilter = e.target.value;
-
-    // Show/hide custom time range controls
-    const customTimeRange = document.getElementById('customTimeRange');
-    if (timeFilter === 'custom') {
-        customTimeRange.classList.remove('hidden');
-
-        // Set default dates if not already set
-        if (!customStartDate || !customEndDate) {
-            const today = new Date();
-            const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
-
-            document.getElementById('endDate').valueAsDate = today;
-            document.getElementById('startDate').valueAsDate = thirtyDaysAgo;
-
-            customEndDate = today.toISOString().split('T')[0];
-            customStartDate = thirtyDaysAgo.toISOString().split('T')[0];
-        }
-    } else {
-        customTimeRange.classList.add('hidden');
-        updateGraph();
-    }
-});
-
-document.getElementById('timeFilterMode').addEventListener('change', (e) => {
-    timeFilterMode = e.target.value;
-    if (timeFilter !== 'all') {
-        updateGraph();
-    }
-});
-
-document.getElementById('applyTimeRangeBtn').addEventListener('click', () => {
-    customStartDate = document.getElementById('startDate').value;
-    customEndDate = document.getElementById('endDate').value;
-
-    if (!customStartDate && !customEndDate) {
-        alert('Please select at least a start or end date');
+/**
+ * Animate opacity transitions
+ */
+function animateOpacities() {
+    if (!state.animating || !graph) {
         return;
     }
 
-    updateGraph();
-});
+    let stillAnimating = false;
+    const transitionSpeed = 0.15; // How fast to transition (0-1, higher = faster)
 
-document.getElementById('clearTimeRangeBtn').addEventListener('click', () => {
-    customStartDate = null;
-    customEndDate = null;
-    document.getElementById('startDate').value = '';
-    document.getElementById('endDate').value = '';
-    timeFilter = 'all';
-    document.getElementById('timeFilterSelect').value = 'all';
-    document.getElementById('customTimeRange').classList.add('hidden');
-    updateGraph();
-});
+    // Update each node's opacity
+    state.targetOpacities.forEach((targetOpacity, nodeId) => {
+        const currentOpacity = state.nodeOpacities.get(nodeId) || 1.0;
+        const diff = targetOpacity - currentOpacity;
 
-document.getElementById('refreshBtn').addEventListener('click', () => {
-    vscode.postMessage({ command: 'refresh' });
-});
-
-document.getElementById('fitBtn').addEventListener('click', () => {
-    network.fit({
-        animation: {
-            duration: 500,
-            easingFunction: 'easeInOutQuad'
+        if (Math.abs(diff) > 0.001) {
+            // Lerp toward target
+            const newOpacity = currentOpacity + (diff * transitionSpeed);
+            state.nodeOpacities.set(nodeId, newOpacity);
+            stillAnimating = true;
+        } else {
+            // Close enough, snap to target
+            state.nodeOpacities.set(nodeId, targetOpacity);
         }
     });
-});
 
-// Handle messages from the extension
-window.addEventListener('message', event => {
-    const message = event.data;
-    switch (message.command) {
-        case 'updateGraph':
-            allNodes = message.graphData.nodes;
-            allEdges = message.graphData.edges;
+    if (stillAnimating) {
+        // Trigger re-render by updating node colors
+        graph.nodeColor(graph.nodeColor());
 
-            // Update stats
-            document.getElementById('noteCount').textContent = message.stats.totalNotes;
-            document.getElementById('linkCount').textContent = message.stats.totalLinks;
-            document.getElementById('orphanCount').textContent = message.stats.orphanNotes;
-            document.getElementById('avgConnections').textContent = message.stats.averageConnections.toFixed(1);
-
-            updateGraph();
-            break;
+        // Continue animation
+        requestAnimationFrame(animateOpacities);
+    } else {
+        state.animating = false;
     }
-});
-
-// Highlight connected nodes
-function highlightConnectedNodes(nodeId) {
-    const connectedNodeIds = new Set();
-    connectedNodeIds.add(nodeId);
-
-    // Find all edges connected to this node
-    const connectedEdges = allEdges.filter(e => e.from === nodeId || e.to === nodeId);
-
-    // Add all connected nodes
-    connectedEdges.forEach(edge => {
-        connectedNodeIds.add(edge.from);
-        connectedNodeIds.add(edge.to);
-    });
-
-    // Update node opacity based on connection
-    const updateNodes = allNodes.map(node => {
-        const customColor = getCustomNodeColor(node.isOrphan, node.linkCount);
-        if (connectedNodeIds.has(node.id)) {
-            return { ...node, color: customColor, opacity: 1.0 };
-        } else {
-            return { ...node, color: customColor, opacity: 0.2 };
-        }
-    });
-
-    // Update edge opacity
-    const updateEdges = allEdges.map(edge => {
-        if (edge.from === nodeId || edge.to === nodeId) {
-            return { ...edge, color: { color: '#ff69b4', opacity: 1.0 }, width: 3 };
-        } else {
-            return { ...edge, color: { color: graphSettings.edgeColor, opacity: 0.1 }, width: 1 };
-        }
-    });
-
-    network.setData({ nodes: updateNodes, edges: updateEdges });
 }
 
-// Clear all highlights
-function clearHighlights() {
-    const { nodes, edges } = getFilteredData();
+/**
+ * Update focus state (highlighted nodes and links)
+ */
+function updateFocusState() {
+    state.focusNodes.clear();
+    state.focusLinks.clear();
 
-    // Apply custom colors to nodes
-    const coloredNodes = nodes.map(node => ({
-        ...node,
-        color: getCustomNodeColor(node.isOrphan, node.linkCount)
-    }));
+    // Build focus set from hover and selections
+    const focusIds = new Set();
+    if (state.hoverNode) {
+        focusIds.add(state.hoverNode);
+    }
+    state.selectedNodes.forEach(id => focusIds.add(id));
 
-    network.setData({ nodes: coloredNodes, edges });
-}
+    // Add neighbors to focus
+    focusIds.forEach(nodeId => {
+        state.focusNodes.add(nodeId);
 
-// Focus Mode Functions
-function enterFocusMode(nodeId) {
-    focusMode = true;
-    focusedNodeId = nodeId;
-
-    // Get the focused node
-    const focusedNode = allNodes.find(n => n.id === nodeId);
-    if (!focusedNode) return;
-
-    // Show focus mode indicator
-    const indicator = document.getElementById('focusModeIndicator');
-    const focusedNodeName = document.getElementById('focusedNodeName');
-    focusedNodeName.textContent = focusedNode.label;
-    indicator.classList.remove('hidden');
-
-    // Update focus mode button style
-    const focusModeBtn = document.getElementById('focusModeBtn');
-    focusModeBtn.classList.add('active');
-
-    // Get connected nodes (1-hop neighbors)
-    const connectedNodeIds = new Set();
-    connectedNodeIds.add(nodeId);
-
-    // Find all edges connected to this node
-    const connectedEdges = allEdges.filter(e => e.from === nodeId || e.to === nodeId);
-
-    // Add all connected nodes
-    connectedEdges.forEach(edge => {
-        connectedNodeIds.add(edge.from);
-        connectedNodeIds.add(edge.to);
-    });
-
-    // Filter to only show focused node and its immediate connections
-    const focusedNodes = allNodes.filter(node => connectedNodeIds.has(node.id));
-    const focusedEdges = allEdges.filter(edge =>
-        connectedNodeIds.has(edge.from) && connectedNodeIds.has(edge.to)
-    );
-
-    // Apply custom colors to focused nodes
-    const coloredNodes = focusedNodes.map(node => {
-        const customColor = getCustomNodeColor(node.isOrphan, node.linkCount);
-        // Make the focused node more prominent
-        if (node.id === nodeId) {
-            return {
-                ...node,
-                color: {
-                    background: customColor,
-                    border: '#ff69b4',
-                    highlight: {
-                        background: customColor,
-                        border: '#ff69b4'
-                    }
-                },
-                borderWidth: 4,
-                size: node.size * 1.3
-            };
-        }
-        return { ...node, color: customColor };
-    });
-
-    // Highlight edges connected to focused node
-    const highlightedEdges = focusedEdges.map(edge => {
-        if (edge.from === nodeId || edge.to === nodeId) {
-            return { ...edge, color: { color: '#ff69b4', opacity: 1.0 }, width: 3 };
-        }
-        return edge;
-    });
-
-    // Update the network
-    network.setData({ nodes: coloredNodes, edges: highlightedEdges });
-
-    // Fit the view to show the focused subgraph
-    setTimeout(() => {
-        network.fit({
-            animation: {
-                duration: 500,
-                easingFunction: 'easeInOutQuad'
+        // Find connected nodes and links
+        state.graph.links.forEach(link => {
+            if (link.source.id === nodeId || link.source === nodeId) {
+                const targetId = link.target.id || link.target;
+                state.focusNodes.add(targetId);
+                state.focusLinks.add(getLinkId(link));
+            }
+            if (link.target.id === nodeId || link.target === nodeId) {
+                const sourceId = link.source.id || link.source;
+                state.focusNodes.add(sourceId);
+                state.focusLinks.add(getLinkId(link));
             }
         });
-    }, 100);
-}
+    });
 
-function exitFocusMode() {
-    focusMode = false;
-    focusedNodeId = null;
+    // Set target opacities for all nodes
+    state.targetOpacities.clear();
+    state.filteredData.nodes.forEach(node => {
+        const nodeState = getNodeState(node.id);
+        const targetOpacity = nodeState === 'lessened' ? 0.08 : 1.0;
+        state.targetOpacities.set(node.id, targetOpacity);
 
-    // Hide focus mode indicator
-    const indicator = document.getElementById('focusModeIndicator');
-    indicator.classList.add('hidden');
+        // Initialize current opacity if not set
+        if (!state.nodeOpacities.has(node.id)) {
+            state.nodeOpacities.set(node.id, 1.0);
+        }
+    });
 
-    // Update focus mode button style
-    const focusModeBtn = document.getElementById('focusModeBtn');
-    focusModeBtn.classList.remove('active');
+    // Start animation if not already running
+    if (!state.animating) {
+        state.animating = true;
+        requestAnimationFrame(animateOpacities);
+    }
 
-    // Restore full graph by rebuilding it to avoid stabilization issues
-    network.destroy();
-    initGraph();
-}
-
-function toggleFocusMode() {
-    if (focusMode) {
-        exitFocusMode();
-    } else {
-        // Show message to right-click a node
-        alert('Right-click on any node to enter focus mode and see only that note and its immediate connections.');
+    // Update links immediately (no animation for links)
+    if (graph) {
+        graph.linkColor(graph.linkColor());
+        graph.linkWidth(graph.linkWidth());
+        graph.linkDirectionalParticles(graph.linkDirectionalParticles());
     }
 }
 
-// Customization Panel Functions
-function initializeCustomizationPanel() {
-    // Load current settings into UI
-    document.getElementById('nodeSize').value = graphSettings.nodeSize;
-    document.getElementById('nodeSizeValue').textContent = graphSettings.nodeSize;
-    document.getElementById('nodeBorderWidth').value = graphSettings.nodeBorderWidth;
-    document.getElementById('nodeBorderWidthValue').textContent = graphSettings.nodeBorderWidth;
-    document.getElementById('nodeShape').value = graphSettings.nodeShape;
-    document.getElementById('nodeShadow').checked = graphSettings.nodeShadow;
-
-    document.getElementById('edgeWidth').value = graphSettings.edgeWidth;
-    document.getElementById('edgeWidthValue').textContent = graphSettings.edgeWidth;
-    document.getElementById('edgeColor').value = graphSettings.edgeColor;
-    document.getElementById('edgeStyle').value = graphSettings.edgeStyle;
-    document.getElementById('edgeArrows').checked = graphSettings.edgeArrows;
-
-    document.getElementById('springLength').value = graphSettings.springLength;
-    document.getElementById('springLengthValue').textContent = graphSettings.springLength;
-    document.getElementById('repulsion').value = graphSettings.repulsion;
-    document.getElementById('repulsionValue').textContent = graphSettings.repulsion;
-    document.getElementById('gravity').value = Math.round(graphSettings.gravity * 100);
-    document.getElementById('gravityValue').textContent = graphSettings.gravity.toFixed(2);
-
-    document.getElementById('orphanColor').value = graphSettings.colors.orphan;
-    document.getElementById('lowConnColor').value = graphSettings.colors.lowConn;
-    document.getElementById('medConnColor').value = graphSettings.colors.medConn;
-    document.getElementById('highConnColor').value = graphSettings.colors.highConn;
-    document.getElementById('veryHighConnColor').value = graphSettings.colors.veryHighConn;
-
-    // Add live preview for range sliders
-    document.getElementById('nodeSize').addEventListener('input', (e) => {
-        document.getElementById('nodeSizeValue').textContent = e.target.value;
-    });
-    document.getElementById('nodeBorderWidth').addEventListener('input', (e) => {
-        document.getElementById('nodeBorderWidthValue').textContent = e.target.value;
-    });
-    document.getElementById('edgeWidth').addEventListener('input', (e) => {
-        document.getElementById('edgeWidthValue').textContent = e.target.value;
-    });
-    document.getElementById('springLength').addEventListener('input', (e) => {
-        document.getElementById('springLengthValue').textContent = e.target.value;
-    });
-    document.getElementById('repulsion').addEventListener('input', (e) => {
-        document.getElementById('repulsionValue').textContent = e.target.value;
-    });
-    document.getElementById('gravity').addEventListener('input', (e) => {
-        document.getElementById('gravityValue').textContent = (e.target.value / 100).toFixed(2);
-    });
+/**
+ * Get unique link ID
+ */
+function getLinkId(link) {
+    const sourceId = link.source.id || link.source;
+    const targetId = link.target.id || link.target;
+    return `${sourceId}->${targetId}`;
 }
 
-function applyCustomizations() {
-    // Read values from UI
-    graphSettings.nodeSize = parseInt(document.getElementById('nodeSize').value);
-    graphSettings.nodeBorderWidth = parseInt(document.getElementById('nodeBorderWidth').value);
-    graphSettings.nodeShape = document.getElementById('nodeShape').value;
-    graphSettings.nodeShadow = document.getElementById('nodeShadow').checked;
+/**
+ * Update filters and refresh graph
+ */
+function updateFilters() {
+    const filteredNodes = state.graph.nodes.filter(node => {
+        // Filter by type
+        if (node.type === 'note' && !state.filters.showNotes) return false;
+        if (node.type === 'tag' && !state.filters.showTags) return false;
+        if (node.type === 'placeholder' && !state.filters.showPlaceholders) return false;
 
-    graphSettings.edgeWidth = parseInt(document.getElementById('edgeWidth').value);
-    graphSettings.edgeColor = document.getElementById('edgeColor').value;
-    graphSettings.edgeStyle = document.getElementById('edgeStyle').value;
-    graphSettings.edgeArrows = document.getElementById('edgeArrows').checked;
+        // Filter orphans
+        if (node.isOrphan && !state.filters.showOrphans) return false;
 
-    graphSettings.springLength = parseInt(document.getElementById('springLength').value);
-    graphSettings.repulsion = parseInt(document.getElementById('repulsion').value);
-    graphSettings.gravity = parseInt(document.getElementById('gravity').value) / 100;
+        return true;
+    });
 
-    graphSettings.colors.orphan = document.getElementById('orphanColor').value;
-    graphSettings.colors.lowConn = document.getElementById('lowConnColor').value;
-    graphSettings.colors.medConn = document.getElementById('medConnColor').value;
-    graphSettings.colors.highConn = document.getElementById('highConnColor').value;
-    graphSettings.colors.veryHighConn = document.getElementById('veryHighConnColor').value;
+    // Create a set of visible node IDs
+    const visibleNodeIds = new Set(filteredNodes.map(n => n.id));
 
-    // Save settings to state
-    vscode.setState({ ...vscode.getState(), graphSettings });
+    // Filter links - only show if both source and target are visible
+    const filteredLinks = state.graph.links.filter(link => {
+        const sourceId = link.source.id || link.source;
+        const targetId = link.target.id || link.target;
+        return visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId);
+    });
 
-    // Rebuild graph with new settings
-    network.destroy();
-    initGraph();
-
-    // Update legend colors
-    updateLegendColors();
-
-    // Close panel
-    document.getElementById('customizePanel').classList.add('hidden');
-}
-
-function resetToDefaults() {
-    graphSettings = {
-        nodeSize: 20,
-        nodeBorderWidth: 2,
-        nodeShape: 'dot',
-        nodeShadow: true,
-        edgeWidth: 2,
-        edgeColor: '#e83e8c',
-        edgeStyle: 'continuous',
-        edgeArrows: true,
-        springLength: 200,
-        repulsion: 30000,
-        gravity: 0.3,
-        colors: {
-            orphan: '#cccccc',
-            lowConn: '#69db7c',
-            medConn: '#4dabf7',
-            highConn: '#ffa500',
-            veryHighConn: '#ff6b6b'
-        }
+    state.filteredData = {
+        nodes: filteredNodes,
+        links: filteredLinks
     };
 
-    // Update UI
-    initializeCustomizationPanel();
-
-    // Save and apply
-    vscode.setState({ ...vscode.getState(), graphSettings });
-    network.destroy();
-    initGraph();
-    updateLegendColors();
-}
-
-function updateLegendColors() {
-    const legendItems = document.querySelectorAll('.legend-color');
-    if (legendItems.length >= 6) {
-        legendItems[0].style.backgroundColor = graphSettings.colors.orphan;
-        legendItems[1].style.backgroundColor = graphSettings.colors.lowConn;
-        legendItems[2].style.backgroundColor = graphSettings.colors.medConn;
-        legendItems[3].style.backgroundColor = graphSettings.colors.highConn;
-        legendItems[4].style.backgroundColor = graphSettings.colors.veryHighConn;
-        legendItems[5].style.backgroundColor = graphSettings.edgeColor;
+    // Update graph if initialized
+    if (graph) {
+        graph.graphData(state.filteredData);
     }
+
+    // Update stats
+    updateStats();
 }
 
-// Initialize customization panel on load
-initializeCustomizationPanel();
+/**
+ * Update statistics display
+ */
+function updateStats() {
+    const noteNodes = state.filteredData.nodes.filter(n => n.type === 'note');
+    const tagNodes = state.filteredData.nodes.filter(n => n.type === 'tag');
+    const orphanNodes = noteNodes.filter(n => n.isOrphan);
+    const noteLinks = state.filteredData.links.filter(l => l.type === 'note-link');
 
-// Customization panel event listeners
-document.getElementById('customizeBtn').addEventListener('click', () => {
-    document.getElementById('customizePanel').classList.remove('hidden');
-});
+    document.getElementById('noteCount').textContent = noteNodes.length;
+    document.getElementById('tagCount').textContent = tagNodes.length;
+    document.getElementById('linkCount').textContent = noteLinks.length;
+    document.getElementById('orphanCount').textContent = orphanNodes.length;
+}
 
-document.getElementById('closePanelBtn').addEventListener('click', () => {
-    document.getElementById('customizePanel').classList.add('hidden');
-});
+/**
+ * Handle refresh button
+ */
+function handleRefresh() {
+    window.vscode.postMessage({ command: 'refresh' });
+}
 
-document.getElementById('applySettingsBtn').addEventListener('click', applyCustomizations);
-document.getElementById('resetDefaultsBtn').addEventListener('click', resetToDefaults);
+/**
+ * Setup event listeners
+ */
+function setupEventListeners() {
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', handleRefresh);
 
-// Focus mode event listeners
-document.getElementById('focusModeBtn').addEventListener('click', toggleFocusMode);
-document.getElementById('exitFocusModeBtn').addEventListener('click', exitFocusMode);
+    // Filter checkboxes
+    document.getElementById('showNotes').addEventListener('change', (e) => {
+        state.filters.showNotes = e.target.checked;
+        updateFilters();
+    });
+
+    document.getElementById('showTags').addEventListener('change', (e) => {
+        state.filters.showTags = e.target.checked;
+        updateFilters();
+    });
+
+    document.getElementById('showPlaceholders').addEventListener('change', (e) => {
+        state.filters.showPlaceholders = e.target.checked;
+        updateFilters();
+    });
+
+    document.getElementById('showOrphans').addEventListener('change', (e) => {
+        state.filters.showOrphans = e.target.checked;
+        updateFilters();
+    });
+
+    // Listen for messages from extension
+    window.addEventListener('message', (event) => {
+        const message = event.data;
+
+        switch (message.command) {
+            case 'updateGraph':
+                // Rebuild graph with new data
+                state.graph.nodes = message.graphData.nodes || [];
+                state.graph.links = message.graphData.links || [];
+                updateFilters();
+                break;
+        }
+    });
+}
+
+/**
+ * Initialize application
+ */
+function init() {
+    initGraph();
+    setupEventListeners();
+    updateStats();
+}
+
+// Start when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
