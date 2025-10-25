@@ -10,10 +10,10 @@ if (hour < 12) {
     greeting = 'Good evening';
 }
 %>
-# <%= greeting %>, <%= user %>! 📝
+# <%= greeting %>, <%= note.user %>! 📝
 
-**Date:** <%= dateHelper.getDayName() %>, <%= monthName %> <%= day %>, <%= year %>
-**Time:** <%= timeHelper.format12Hour() %>
+**Date:** <%= note.dateHelper.getDayName() %>, <%= note.monthName %> <%= note.day %>, <%= note.year %>
+**Time:** <%= note.timeHelper.format12Hour() %>
 
 ## Today's Focus
 -
@@ -25,4 +25,4 @@ if (hour < 12) {
 - [ ]
 
 ---
-*Workspace: <%= workspace %>*
+*Workspace: <%= note.workspace %>*

@@ -275,33 +275,9 @@ export class JSTemplateExecutor {
      * @returns JavaScript code string
      */
     private buildContextCode(context: NoteContext): string {
-        // Create safe serializable version of context
-        // We can't pass functions or complex objects, so we create helper objects
-        const safeContext = {
-            filename: context.filename,
-            year: context.year,
-            month: context.month,
-            day: context.day,
-            weekday: context.weekday,
-            monthName: context.monthName,
-            user: context.user,
-            workspace: context.workspace,
-            dateString: context.dateString,
-            timeString: context.timeString,
-            date: context.date // Include Date object for date manipulation
-        };
-
-        // Build context setup code
+        // Build context setup code that only provides a single 'note' object
+        // No top-level variables to avoid redundancy and confusion
         let code = '';
-
-        // Inject simple values (except date which we'll handle separately)
-        for (const [key, value] of Object.entries(safeContext)) {
-            if (key === 'date') {
-                code += `const date = new Date(${context.date.getTime()});\n`;
-            } else {
-                code += `const ${key} = ${JSON.stringify(value)};\n`;
-            }
-        }
 
         // Add complete date helper implementation matching DateHelper class
         code += `
@@ -383,19 +359,20 @@ const timeHelper = {
     }
 };
 
-// Create note object with all context values and helpers
+// Create the single note object with all context values and helpers
+// This is the ONLY variable available to templates - no top-level consts
 const note = {
-    filename: filename,
-    year: year,
-    month: month,
-    day: day,
-    weekday: weekday,
-    monthName: monthName,
-    user: user,
-    workspace: workspace,
-    dateString: dateString,
-    timeString: timeString,
-    date: date,
+    filename: ${JSON.stringify(context.filename)},
+    year: ${JSON.stringify(context.year)},
+    month: ${JSON.stringify(context.month)},
+    day: ${JSON.stringify(context.day)},
+    weekday: ${JSON.stringify(context.weekday)},
+    monthName: ${JSON.stringify(context.monthName)},
+    user: ${JSON.stringify(context.user)},
+    workspace: ${JSON.stringify(context.workspace)},
+    dateString: ${JSON.stringify(context.dateString)},
+    timeString: ${JSON.stringify(context.timeString)},
+    date: new Date(${context.date.getTime()}),
     dateHelper: dateHelper,
     timeHelper: timeHelper
 };
