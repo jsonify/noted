@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+dependencies:
+  quickjs-emscripten:
+    specifier: ^0.29.2
+    version: 0.29.2
+
 devDependencies:
   '@types/chai':
     specifier: '4'
@@ -240,6 +245,34 @@ packages:
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: /wrap-ansi@7.0.0
     dev: true
+
+  /@jitl/quickjs-ffi-types@0.29.2:
+    resolution: {integrity: sha512-069uQTiEla2PphXg6UpyyJ4QXHkTj3S9TeXgaMCd8NDYz3ODBw5U/rkg6fhuU8SMpoDrWjEzybmV5Mi2Pafb5w==}
+    dev: false
+
+  /@jitl/quickjs-wasmfile-debug-asyncify@0.29.2:
+    resolution: {integrity: sha512-YdRw2414pFkxzyyoJGv81Grbo9THp/5athDMKipaSBNNQvFE9FGRrgE9tt2DT2mhNnBx1kamtOGj0dX84Yy9bg==}
+    dependencies:
+      '@jitl/quickjs-ffi-types': 0.29.2
+    dev: false
+
+  /@jitl/quickjs-wasmfile-debug-sync@0.29.2:
+    resolution: {integrity: sha512-VgisubjyPMWEr44g+OU0QWGyIxu7VkApkLHMxdORX351cw22aLTJ+Z79DJ8IVrTWc7jh4CBPsaK71RBQDuVB7w==}
+    dependencies:
+      '@jitl/quickjs-ffi-types': 0.29.2
+    dev: false
+
+  /@jitl/quickjs-wasmfile-release-asyncify@0.29.2:
+    resolution: {integrity: sha512-sf3luCPr8wBVmGV6UV8Set+ie8wcO6mz5wMvDVO0b90UVCKfgnx65A1JfeA+zaSGoaFyTZ3sEpXSGJU+6qJmLw==}
+    dependencies:
+      '@jitl/quickjs-ffi-types': 0.29.2
+    dev: false
+
+  /@jitl/quickjs-wasmfile-release-sync@0.29.2:
+    resolution: {integrity: sha512-UFIcbY3LxBRUjEqCHq3Oa6bgX5znt51V5NQck8L2US4u989ErasiMLUjmhq6UPC837Sjqu37letEK/ZpqlJ7aA==}
+    dependencies:
+      '@jitl/quickjs-ffi-types': 0.29.2
+    dev: false
 
   /@nodelib/fs.scandir@2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -3010,6 +3043,23 @@ packages:
     resolution: {integrity: sha512-ARhCpm70fzdcvNQfPoy49IaanKkTlRWF2JMzqhcJbhSFRZv7nPTvZJdcY7301IPmvW+/p0RgIWnQDLJxifsQ7g==}
     engines: {node: '>=8'}
     dev: true
+
+  /quickjs-emscripten-core@0.29.2:
+    resolution: {integrity: sha512-jEAiURW4jGqwO/fW01VwlWqa2G0AJxnN5FBy1xnVu8VIVhVhiaxUfCe+bHqS6zWzfjFm86HoO40lzpteusvyJA==}
+    dependencies:
+      '@jitl/quickjs-ffi-types': 0.29.2
+    dev: false
+
+  /quickjs-emscripten@0.29.2:
+    resolution: {integrity: sha512-SlvkvyZgarReu2nr4rkf+xz1vN0YDUz7sx4WHz8LFtK6RNg4/vzAGcFjE7nfHYBEbKrzfIWvKnMnxZkctQ898w==}
+    engines: {node: '>=16.0.0'}
+    dependencies:
+      '@jitl/quickjs-wasmfile-debug-asyncify': 0.29.2
+      '@jitl/quickjs-wasmfile-debug-sync': 0.29.2
+      '@jitl/quickjs-wasmfile-release-asyncify': 0.29.2
+      '@jitl/quickjs-wasmfile-release-sync': 0.29.2
+      quickjs-emscripten-core: 0.29.2
+    dev: false
 
   /randombytes@2.1.0:
     resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}

@@ -1,0 +1,263 @@
+/**
+ * Template: Daily Standup
+ * Description: Smart daily standup with task formatting helpers
+ * Features: Helper functions, string formatting, task management, smart defaults
+ */
+
+module.exports = async (note) => {
+  const { date, time, weekday, user, workspace } = note.vars;
+
+  let content = '';
+
+  // Parse date components
+  const dateObj = parseDate(date);
+  const yesterday = getYesterday(dateObj);
+  const tomorrow = getTomorrow(dateObj);
+
+  // Determine if it's Monday (look back to Friday)
+  const isMonday = weekday === 'Mon';
+  const lookbackDay = isMonday ? 'Friday' : 'Yesterday';
+  const lookforwardDay = 'Tomorrow';
+
+  // Add frontmatter
+  content += '---\n';
+  content += 'tags: [standup, daily, team]\n';
+  content += `created: ${date} at ${time}\n`;
+  content += `standup-date: ${formatISODate(dateObj)}\n`;
+  content += `day-of-week: ${weekday}\n`;
+  content += '---\n\n';
+
+  // Header
+  content += `# Daily Standup - ${weekday}, ${date}\n\n`;
+  content += `**Team Member:** ${user}\n`;
+  content += `**Project:** ${workspace}\n`;
+  content += `**Time:** ${time}\n\n`;
+
+  content += '---\n\n';
+
+  // Yesterday section
+  if (isMonday) {
+    content += '## Friday (Last Working Day)\n\n';
+    content += `*${formatFullDate(getRelativeDate(dateObj, -3))}*\n\n`;
+  } else {
+    content += '## Yesterday\n\n';
+    content += `*${formatFullDate(yesterday)}*\n\n`;
+  }
+
+  content += '**Completed:**\n';
+  content += createTaskList([
+    'Task completed yesterday',
+    'Another completed task'
+  ], false);
+  content += '\n';
+
+  content += '**Progress Made:**\n';
+  content += createTaskList([
+    'Progress on ongoing task'
+  ], false);
+  content += '\n';
+
+  // Today section
+  content += '## Today\n\n';
+  content += `*${formatFullDate(dateObj)}*\n\n`;
+
+  content += '**Planned Tasks:**\n';
+  content += createTaskList([
+    'Primary task for today',
+    'Secondary task',
+    'Quick win task'
+  ], true);
+  content += '\n';
+
+  content += '**Focus:**\n';
+  content += '> \n\n';
+
+  content += '**Time Allocation:**\n';
+  content += '```\n';
+  content += '09:00 - 10:30  Deep Work: \n';
+  content += '10:30 - 11:00  \n';
+  content += '11:00 - 12:00  \n';
+  content += '12:00 - 13:00  Lunch\n';
+  content += '13:00 - 15:00  \n';
+  content += '15:00 - 16:00  \n';
+  content += '16:00 - 17:00  \n';
+  content += '```\n\n';
+
+  // Tomorrow section
+  content += '## Tomorrow\n\n';
+  content += `*${formatFullDate(tomorrow)}*\n\n`;
+
+  content += '**Planned:**\n';
+  content += createTaskList([
+    'Preview of tomorrow\'s work'
+  ], false);
+  content += '\n';
+
+  // Blockers section
+  content += '## Blockers\n\n';
+  content += createBlockerSection();
+  content += '\n';
+
+  // Notes section
+  content += '## Notes\n\n';
+  content += `[${time}] \n\n`;
+  content += '\n\n';
+
+  // Team updates section
+  content += '## Team Updates\n\n';
+  content += '**Mentions:**\n';
+  content += '- @teammate: \n\n';
+
+  content += '**Helping:**\n';
+  content += '- \n\n';
+
+  content += '**Need Help With:**\n';
+  content += '- \n\n';
+
+  // Progress tracking
+  content += '## Progress Tracking\n\n';
+  content += '**Current Sprint:**\n';
+  content += createProgressBar('Sprint Progress', 0, 10, 7) + '\n';
+  content += '\n';
+
+  content += '**Personal Velocity:**\n';
+  content += '- Story Points Today: ___\n';
+  content += '- Week Total: ___\n';
+  content += '- Sprint Total: ___\n\n';
+
+  // Links & references
+  content += '## Links & References\n\n';
+  content += '**Related Tasks:**\n';
+  content += '- \n\n';
+
+  content += '**PRs/Issues:**\n';
+  content += '- \n\n';
+
+  content += '**Documentation:**\n';
+  content += '- \n\n';
+
+  // Quick stats
+  content += '## Quick Stats\n\n';
+  const stats = {
+    'Tasks Completed': '___',
+    'Code Reviews': '___',
+    'Meetings': '___',
+    'Focus Time': '___ hours'
+  };
+
+  content += '| Metric | Count |\n';
+  content += '|--------|-------|\n';
+  for (const [metric, value] of Object.entries(stats)) {
+    content += `| ${metric} | ${value} |\n`;
+  }
+  content += '\n';
+
+  // Mood & energy
+  content += '## Mood & Energy\n\n';
+  content += '**Energy Level:** ⚡⚡⚡⚡⚡ (1-5)\n\n';
+  content += '**Mood:** 😊 Great | 😐 Okay | 😟 Struggling\n\n';
+  content += '**Notes:**\n';
+  content += '\n\n';
+
+  // Footer
+  content += '---\n\n';
+  content += createFooter(user, date);
+
+  return content;
+};
+
+// Helper: Create task list
+function createTaskList(tasks, withCheckbox) {
+  if (!tasks || tasks.length === 0) {
+    return '- \n';
+  }
+
+  return tasks.map(task => {
+    if (withCheckbox) {
+      return `- [ ] ${task}`;
+    }
+    return `- ${task}`;
+  }).join('\n');
+}
+
+// Helper: Create blocker section
+function createBlockerSection() {
+  return `**Current Blockers:**\n` +
+         `- ⛔ None\n\n` +
+         `**Potential Blockers:**\n` +
+         `- \n\n` +
+         `**Resolution Needed:**\n` +
+         `- `;
+}
+
+// Helper: Create progress bar
+function createProgressBar(label, current, total, width = 10) {
+  const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+  const filled = Math.round((current / total) * width);
+  const empty = width - filled;
+
+  const bar = '█'.repeat(filled) + '░'.repeat(empty);
+  return `**${label}:** [${bar}] ${current}/${total} (${percentage}%)`;
+}
+
+// Helper: Create footer
+function createFooter(user, date) {
+  return `*Standup submitted by ${user} on ${date}*\n\n` +
+         `#standup #daily`;
+}
+
+// Helper: Parse date string
+function parseDate(dateStr) {
+  // Parse "Sunday, October 24, 2025" format
+  const parts = dateStr.match(/\w+, (\w+) (\d+), (\d+)/);
+  if (!parts) return new Date();
+
+  const months = {
+    'January': 0, 'February': 1, 'March': 2, 'April': 3, 'May': 4, 'June': 5,
+    'July': 6, 'August': 7, 'September': 8, 'October': 9, 'November': 10, 'December': 11
+  };
+
+  const month = months[parts[1]];
+  const day = parseInt(parts[2]);
+  const year = parseInt(parts[3]);
+
+  return new Date(year, month, day);
+}
+
+// Helper: Get yesterday's date
+function getYesterday(date) {
+  const yesterday = new Date(date);
+  yesterday.setDate(yesterday.getDate() - 1);
+  return yesterday;
+}
+
+// Helper: Get tomorrow's date
+function getTomorrow(date) {
+  const tomorrow = new Date(date);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow;
+}
+
+// Helper: Get relative date
+function getRelativeDate(date, days) {
+  const newDate = new Date(date);
+  newDate.setDate(newDate.getDate() + days);
+  return newDate;
+}
+
+// Helper: Format full date
+function formatFullDate(date) {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+
+  return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}
+
+// Helper: Format ISO date
+function formatISODate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}

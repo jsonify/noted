@@ -1,0 +1,205 @@
+/**
+ * Template: Weekly Review
+ * Description: Comprehensive weekly review that fetches and analyzes last week's notes
+ * Features: Async operations, file listing, date calculations, data aggregation
+ */
+
+module.exports = async (note) => {
+  const { date, time, year, month, day, user, workspace } = note.vars;
+
+  let content = '';
+
+  // Calculate week number
+  const currentDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  const weekNumber = getWeekNumber(currentDate);
+
+  // Calculate date range for last week
+  const lastWeekStart = new Date(currentDate);
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const lastWeekEnd = new Date(currentDate);
+  lastWeekEnd.setDate(lastWeekEnd.getDate() - 1);
+
+  // Format dates
+  const startStr = formatDate(lastWeekStart);
+  const endStr = formatDate(lastWeekEnd);
+
+  // Add frontmatter
+  content += '---\n';
+  content += 'tags: [weekly-review, reflection, planning]\n';
+  content += `created: ${date} at ${time}\n`;
+  content += `week: ${weekNumber}\n`;
+  content += `year: ${year}\n`;
+  content += '---\n\n';
+
+  // Header
+  content += `# Weekly Review - Week ${weekNumber}, ${year}\n\n`;
+  content += `**Review Date:** ${date}\n`;
+  content += `**Period:** ${startStr} to ${endStr}\n`;
+  content += `**Reviewer:** ${user}\n`;
+  content += `**Workspace:** ${workspace}\n\n`;
+
+  content += '---\n\n';
+
+  // Try to fetch last week's notes
+  try {
+    const lastWeekNotes = await note.notes.getRecent(7);
+
+    if (lastWeekNotes && lastWeekNotes.length > 0) {
+      content += '## Notes from Last Week\n\n';
+      content += `Found ${lastWeekNotes.length} notes from the past week:\n\n`;
+
+      for (const noteItem of lastWeekNotes) {
+        content += `- [[${noteItem.name}]] - ${noteItem.date}\n`;
+      }
+      content += '\n';
+    } else {
+      content += '## Notes from Last Week\n\n';
+      content += '*No notes found from last week. Start documenting your work!*\n\n';
+    }
+  } catch (error) {
+    // Fallback if notes API unavailable
+    content += '## Notes from Last Week\n\n';
+    content += '- \n';
+    content += '- \n';
+    content += '- \n\n';
+  }
+
+  // Achievements section
+  content += '## Achievements\n\n';
+  content += '**Major Wins:**\n';
+  content += '- [ ] \n';
+  content += '- [ ] \n';
+  content += '- [ ] \n\n';
+
+  content += '**Small Wins:**\n';
+  content += '- \n';
+  content += '- \n';
+  content += '- \n\n';
+
+  // Progress tracking
+  content += '## Progress Tracking\n\n';
+  content += '**Goals Status:**\n\n';
+  content += '| Goal | Status | Progress | Notes |\n';
+  content += '|------|--------|----------|-------|\n';
+  content += '|      | 🟢/🟡/🔴 |    %   |       |\n';
+  content += '|      | 🟢/🟡/🔴 |    %   |       |\n';
+  content += '|      | 🟢/🟡/🔴 |    %   |       |\n\n';
+
+  content += '*Legend: 🟢 On Track | 🟡 At Risk | 🔴 Blocked*\n\n';
+
+  // Challenges
+  content += '## Challenges\n\n';
+  content += '**Obstacles Encountered:**\n';
+  content += '1. \n';
+  content += '   - *Impact:* \n';
+  content += '   - *Resolution:* \n\n';
+
+  content += '**Blockers:**\n';
+  content += '- \n\n';
+
+  // Learnings
+  content += '## Learnings\n\n';
+  content += '**Key Insights:**\n';
+  content += '- \n';
+  content += '- \n';
+  content += '- \n\n';
+
+  content += '**Skills Developed:**\n';
+  content += '- \n';
+  content += '- \n\n';
+
+  content += '**Resources Discovered:**\n';
+  content += '- \n';
+  content += '- \n\n';
+
+  // Metrics
+  content += '## Metrics\n\n';
+  content += '**Time Allocation:**\n';
+  content += '- Deep Work: ___ hours\n';
+  content += '- Meetings: ___ hours\n';
+  content += '- Learning: ___ hours\n';
+  content += '- Admin: ___ hours\n\n';
+
+  content += '**Productivity:**\n';
+  content += '- Tasks Completed: ___\n';
+  content += '- Projects Advanced: ___\n';
+  content += '- PRs/Issues Closed: ___\n\n';
+
+  // Relationships & collaboration
+  content += '## Collaboration\n\n';
+  content += '**Team Interactions:**\n';
+  content += '- \n\n';
+
+  content += '**Feedback Given:**\n';
+  content += '- \n\n';
+
+  content += '**Feedback Received:**\n';
+  content += '- \n\n';
+
+  // Next week planning
+  content += `## Next Week - Week ${weekNumber + 1}\n\n`;
+  content += '**Primary Goals:**\n';
+  content += '1. \n';
+  content += '2. \n';
+  content += '3. \n\n';
+
+  content += '**Key Projects:**\n';
+  content += '- [ ] \n';
+  content += '- [ ] \n';
+  content += '- [ ] \n\n';
+
+  content += '**Focus Areas:**\n';
+  content += '- \n';
+  content += '- \n\n';
+
+  content += '**Meetings & Deadlines:**\n';
+  content += '- Monday: \n';
+  content += '- Wednesday: \n';
+  content += '- Friday: \n\n';
+
+  // Personal development
+  content += '## Personal Development\n\n';
+  content += '**Growth This Week:**\n';
+  content += '- \n\n';
+
+  content += '**Areas to Improve:**\n';
+  content += '- \n\n';
+
+  content += '**Next Week Focus:**\n';
+  content += '- \n\n';
+
+  // Closing
+  content += '---\n\n';
+  content += '## Summary\n\n';
+  content += '**Overall Rating:** ⭐⭐⭐⭐⭐ (1-5 stars)\n\n';
+  content += '**Week in One Sentence:**\n';
+  content += '\n\n';
+
+  content += '**Gratitude:**\n';
+  content += '- \n';
+  content += '- \n';
+  content += '- \n\n';
+
+  content += '---\n\n';
+  content += `*Review completed by ${user} on ${date}*\n`;
+
+  return content;
+};
+
+// Helper function to get ISO week number
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+// Helper function to format date
+function formatDate(date) {
+  const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}
