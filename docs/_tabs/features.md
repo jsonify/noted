@@ -27,6 +27,7 @@ Connect your notes with `[[note-name]]` syntax. Build your personal knowledge ba
 - **Autocomplete**: Suggestions appear as you type
 - **Section Links**: Link to specific sections with `[[note#section]]`
 - **Automatic Backlinks**: See what notes link to your current note
+- **Rich Hover Previews**: See content, tags, dates, and metadata on hover
 
 [Learn more →](/noted/posts/wiki-links/)
 
@@ -155,6 +156,18 @@ Archive completed or old notes to keep your workspace clean.
 - **Bulk Archive**: Archive multiple notes at once
 
 [Learn more →](/noted/posts/archive/)
+
+## 🔍 Orphans & Placeholders
+
+Maintain a healthy knowledge base by tracking disconnected notes and broken links.
+
+- **Orphan Detection**: Find notes with no connections to your knowledge network
+- **Three Categories**: Isolated, source-only, and sink-only orphans
+- **Placeholder Tracking**: Track all broken wiki-style links
+- **One-Click Creation**: Create missing notes directly from placeholders
+- **Context Snippets**: See where each placeholder is referenced
+
+[Learn more →](/noted/posts/orphans-placeholders/)
 
 ---
 
