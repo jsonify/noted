@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.31.3](https://github.com/jsonify/noted/compare/v1.31.2...v1.31.3) (2025-10-26)
+
+
+### Bug Fixes
+
+* Update JavaScript template execution to handle optional QuickJS runtime ([b346535](https://github.com/jsonify/noted/commit/b3465353e5c7e716ec3f8b4ec5a346f32210a54f))
+
 ### [1.31.2](https://github.com/jsonify/noted/compare/v1.31.1...v1.31.2) (2025-10-25)
 
 
