@@ -13,7 +13,16 @@
  * - Output size limits (default 1MB)
  */
 
-import { getQuickJS, QuickJSRuntime, QuickJSContext } from 'quickjs-emscripten';
+// Import types for TypeScript, but use dynamic require for runtime
+import type { QuickJSRuntime, QuickJSContext } from 'quickjs-emscripten';
+
+// Dynamic import to make quickjs-emscripten optional at runtime
+let getQuickJS: any = null;
+try {
+    getQuickJS = require('quickjs-emscripten').getQuickJS;
+} catch (error) {
+    console.warn('[NOTED] quickjs-emscripten not available. JavaScript templates will not work.');
+}
 import {
     NoteContext,
     TemplateExecutionOptions,
@@ -54,16 +63,21 @@ export class JSTemplateExecutor {
     /**
      * Initialize the QuickJS runtime
      */
-    private async initializeRuntime(): Promise<QuickJSRuntime> {
+    private async initializeRuntime(): Promise<QuickJSRuntime | null> {
+        if (!getQuickJS) {
+            return null;
+        }
         if (!this.runtime) {
             const QuickJS = await getQuickJS();
-            this.runtime = QuickJS.newRuntime();
+            const newRuntime = QuickJS.newRuntime();
 
             // Set memory limit
-            this.runtime.setMemoryLimit(this.options.memoryLimit);
+            newRuntime.setMemoryLimit(this.options.memoryLimit);
 
             // Set max stack size (helps prevent infinite recursion)
-            this.runtime.setMaxStackSize(1024 * 1024); // 1MB stack
+            newRuntime.setMaxStackSize(1024 * 1024); // 1MB stack
+
+            this.runtime = newRuntime;
         }
         return this.runtime;
     }
@@ -178,6 +192,13 @@ export class JSTemplateExecutor {
         try {
             // Initialize runtime
             const runtime = await this.initializeRuntime();
+            if (!runtime) {
+                return {
+                    output: '',
+                    executionTime: 0,
+                    error: 'Failed to initialize QuickJS runtime'
+                };
+            }
 
             // Create a new context for this execution
             vm = runtime.newContext();
@@ -394,6 +415,15 @@ const note = {
         filename: string,
         date: Date = new Date()
     ): Promise<TemplateExecutionResult> {
+        // Check if quickjs-emscripten is available
+        if (!getQuickJS) {
+            return {
+                output: '',
+                executionTime: 0,
+                error: 'JavaScript template execution is not available. The quickjs-emscripten module is not installed.'
+            };
+        }
+
         try {
             // Parse the template
             const parsed = this.parseTemplate(templateSource);
