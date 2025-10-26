@@ -23,20 +23,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8.15.9
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Compile TypeScript
-        run: pnpm run compile
+        run: npm run compile
 
       - name: Run unit tests
-        run: pnpm run test:unit
+        run: npm run test:unit
 
   # Build and publish to VS Code Marketplace
   publish:
@@ -54,25 +50,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8.15.9
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Compile TypeScript
-        run: pnpm run compile
+        run: npm run compile
 
       - name: Package extension
-        run: pnpm run package
+        run: npm run package
 
       - name: Publish to VS Code Marketplace
         run: |
-          pnpm add -g @vscode/vsce
-          vsce publish --packagePath $(ls *.vsix) --no-dependencies
+          npm install -g @vscode/vsce
+          vsce publish --packagePath $(ls *.vsix)
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 

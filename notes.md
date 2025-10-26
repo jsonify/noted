@@ -651,5 +651,18 @@ pnpm run test
   - Automatic VSIX package building and artifact upload
   - Status badges in README showing build status
   - All CI/CD tests passing after VS Code mock enhancements
-- **Dependencies**: Using pnpm@8.15.9 with committed lockfile for reproducible builds
+- **Dependencies**: Using npm with package-lock.json for reproducible builds (v1.31.2+)
 - **Documentation**: AUTOMATED_TESTING.md with comprehensive troubleshooting guides
+
+### Package Manager Migration (v1.31.2)
+- **Switched from pnpm to npm**: For better VS Code extension packaging compatibility
+- **Native vsce Support**: Extension dependencies now properly included in .vsix packages
+- **JavaScript Templates Now Work**: `quickjs-emscripten` dependency successfully bundled
+- **Package Scripts Updated**: All `pnpm run` commands changed to `npm run`
+- **Simplified Packaging**: Removed `--no-dependencies` flag, now uses standard `vsce package`
+- **Package Size**: 5.4MB (includes ~14MB of compressed runtime dependencies)
+- **Benefits**:
+  - No more manual workarounds for dependency bundling
+  - Standard VS Code extension development workflow
+  - JavaScript template execution fully functional
+  - Better tooling compatibility

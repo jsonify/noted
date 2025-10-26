@@ -745,21 +745,20 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "pnpm run compile",
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "pnpm run compile",
+    "pretest": "npm run compile",
     "test": "node ./out/test/runTest.js",
     "test:unit": "mocha --require out/test/setup.js out/test/unit/**/*.test.js",
-    "package": "vsce package --no-dependencies",
+    "package": "vsce package",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
-    "release:patch": "standard-version --release-as patch && pnpm run package",
-    "release:minor": "standard-version --release-as minor && pnpm run package",
-    "release:major": "standard-version --release-as major && pnpm run package",
-    "release": "standard-version && pnpm run package",
+    "release:patch": "standard-version --release-as patch && npm run package",
+    "release:minor": "standard-version --release-as minor && npm run package",
+    "release:major": "standard-version --release-as major && npm run package",
+    "release": "standard-version && npm run package",
     "publish:release": "git push --follow-tags origin main"
   },
-  "packageManager": "pnpm@8.15.9",
   "devDependencies": {
     "@types/chai": "4",
     "@types/mocha": "^10.0.10",
