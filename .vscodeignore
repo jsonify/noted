@@ -1,4 +1,5 @@
 .vscode/**
+.vscode-package-temp/**
 .gitignore
 tsconfig.json
 src/**
@@ -7,3 +8,6 @@ src/**
 pnpm-lock.yaml
 .DS_Store
 node_modules/**
+!node_modules/quickjs-emscripten/**
+!node_modules/@jitl/**
+!node_modules/quickjs-emscripten-core/**
