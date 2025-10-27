@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.30.5](https://github.com/jsonify/noted/compare/v1.31.4...v1.30.5) (2025-10-27)
+
+### Reverts
+
+* Remove JavaScript template system and restore pnpm ([#35](https://github.com/jsonify/noted/pull/35)) ([423a055](https://github.com/jsonify/noted/commit/423a055))
+
 **BREAKING CHANGE**: JavaScript templates (.js.template files) are no longer supported. The extension has reverted to the simple {variable} placeholder template system from v1.30.3. The JavaScript template feature (v1.31.0-v1.31.4) required 15+ debugging commits and had numerous reliability issues. This revert also restores pnpm as the package manager.
 
 ### [1.30.3](https://github.com/jsonify/noted/compare/v1.30.2...v1.30.3) (2025-10-25)
