@@ -1,45 +1,38 @@
 import * as path from 'path';
-import Mocha from 'mocha';
 import { glob } from 'glob';
 
 export async function run(): Promise<void> {
-  // Create the mocha test with increased timeout for extension host tests
+  // Create the mocha test - use require to ensure proper loading
+  const Mocha = require('mocha');
   const mocha = new Mocha({
+    ui: 'bdd',
     color: true,
-    timeout: 30000, // Increased timeout for extension tests
+    timeout: 30000,
     slow: 10000,
     reporter: 'spec'
   });
 
-  // Explicitly set up BDD interface to ensure globals are available
-  mocha.ui('bdd');
-
   const testsRoot = path.resolve(__dirname, '..');
 
-  // Set up the BDD globals (suite, test, etc.) in the global scope
-  // This ensures they're available when test files are loaded
-  mocha.suite.emit('pre-require', global, '', mocha);
+  // CRITICAL: Set up BDD interface globals (suite, test, etc.) in the global scope
+  // before any test files are loaded. This is necessary because when Mocha requires
+  // the test files, they immediately call suite() which must be defined.
+  const bddInterface = require('mocha/lib/interfaces/bdd');
+  const interfaceSetup = bddInterface(mocha.suite);
+
+  // Call the interface setup function with the global context to inject globals
+  interfaceSetup(global);
 
   // Find all test files
-  const files = await glob('integration/**/*.test.js', { cwd: testsRoot });
-
-  console.log('[NOTED TEST] Found test files:', `(${files.length})`, files);
+  const files = await glob('**/**.test.js', { cwd: testsRoot });
 
   // Add files to the test suite
-  files.forEach(f => {
-    const fullPath = path.resolve(testsRoot, f);
-    console.log('[NOTED TEST] Adding file:', fullPath);
-    mocha.addFile(fullPath);
-  });
-
-  console.log('[NOTED TEST] Starting test run...');
+  files.forEach((f: string) => mocha.addFile(path.resolve(testsRoot, f)));
 
   // Run the tests
   return new Promise<void>((resolve, reject) => {
     try {
-      console.log('[NOTED TEST] Starting mocha.run()');
       mocha.run((failures: number) => {
-        console.log('[NOTED TEST] Test run completed with failures:', failures);
         if (failures > 0) {
           reject(new Error(`${failures} tests failed.`));
         } else {
@@ -47,7 +40,7 @@ export async function run(): Promise<void> {
         }
       });
     } catch (err) {
-      console.error('[NOTED TEST] Error running tests:', err);
+      console.error(err);
       reject(err);
     }
   });
