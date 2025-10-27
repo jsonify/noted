@@ -133,7 +133,6 @@ For a complete list of implemented features, see [notes.md](./notes.md).
   - Available in hover previews and placeholders panel
 
 ### Advanced Template System (inspired by Foam)
-- [ ] **JavaScript templates**: Support templates with logic, functions, and conditionals
 - [ ] **Enhanced template variables**: Add `FOAM_SLUG` (URL-friendly title), more date format options
 - [ ] **Template selection on creation**: Choose template when creating note from placeholder link
 - [ ] **Note creation from selection**: Select text in editor and create new linked note with it
