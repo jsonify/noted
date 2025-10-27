@@ -24,6 +24,9 @@ import { OrphansService } from './services/orphansService';
 import { PlaceholdersService } from './services/placeholdersService';
 import { EmbedService } from './services/embedService';
 import { FileWatcherService } from './services/fileWatcherService';
+import { DiagramService } from './services/diagramService';
+import { DiagramsTreeProvider } from './providers/diagramsTreeProvider';
+import { registerDiagramCommands } from './commands/diagramCommands';
 import { NoteLinkProvider } from './providers/noteLinkProvider';
 import { BacklinkHoverProvider } from './providers/backlinkHoverProvider';
 import { NotePreviewHoverProvider } from './providers/notePreviewHoverProvider';
@@ -313,6 +316,25 @@ export function activate(context: vscode.ExtensionContext) {
     const placeholdersService = new PlaceholdersService(linkService);
     const placeholdersProvider = new PlaceholdersTreeProvider(placeholdersService);
     vscode.window.registerTreeDataProvider('notedPlaceholdersView', placeholdersProvider);
+
+    // Initialize diagram service and diagrams tree provider
+    let diagramService: DiagramService | undefined;
+    let diagramsProvider: DiagramsTreeProvider | undefined;
+    try {
+        diagramService = new DiagramService();
+        diagramsProvider = new DiagramsTreeProvider(diagramService);
+        vscode.window.registerTreeDataProvider('notedDiagramsView', diagramsProvider);
+        console.log('[NOTED] DiagramService initialized successfully');
+
+        // Register diagram commands
+        registerDiagramCommands(context, diagramService, diagramsProvider);
+    } catch (error) {
+        console.error('[NOTED] Failed to initialize DiagramService:', error);
+        vscode.window.showWarningMessage(
+            'Noted: Failed to initialize diagram service. Diagram management features may not work correctly.'
+        );
+        // diagram features will gracefully degrade
+    }
 
     // Update connections panel when active editor changes
     const updateConnectionsPanel = async (editor: vscode.TextEditor | undefined) => {
