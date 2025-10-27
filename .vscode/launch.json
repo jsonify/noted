@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Extension",
+      "name": "▶️  Run Extension (Use This One!)",
       "type": "extensionHost",
       "request": "launch",
       "args": [
@@ -14,7 +14,7 @@
       "preLaunchTask": "${defaultBuildTask}"
     },
     {
-      "name": "Extension Tests",
+      "name": "⚠️  Extension Tests (Disabled - Do Not Use)",
       "type": "extensionHost",
       "request": "launch",
       "args": [
