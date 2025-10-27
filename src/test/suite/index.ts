@@ -8,11 +8,17 @@ export async function run(): Promise<void> {
     color: true,
     timeout: 30000, // Increased timeout for extension tests
     slow: 10000,
-    reporter: 'spec',
-    ui: 'bdd' // Set BDD interface
+    reporter: 'spec'
   });
 
+  // Explicitly set up BDD interface to ensure globals are available
+  mocha.ui('bdd');
+
   const testsRoot = path.resolve(__dirname, '..');
+
+  // Set up the BDD globals (suite, test, etc.) in the global scope
+  // This ensures they're available when test files are loaded
+  mocha.suite.emit('pre-require', global, '', mocha);
 
   // Find all test files
   const files = await glob('integration/**/*.test.js', { cwd: testsRoot });
@@ -25,6 +31,8 @@ export async function run(): Promise<void> {
     console.log('[NOTED TEST] Adding file:', fullPath);
     mocha.addFile(fullPath);
   });
+
+  console.log('[NOTED TEST] Starting test run...');
 
   // Run the tests
   return new Promise<void>((resolve, reject) => {
