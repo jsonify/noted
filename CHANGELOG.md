@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.30.6](https://github.com/jsonify/noted/compare/v1.31.4...v1.30.6) (2025-10-27)
+
+
+### Chores
+
+* **release:** 1.30.5 ([#37](https://github.com/jsonify/noted/issues/37)) ([c93688d](https://github.com/jsonify/noted/commit/c93688df91aa9e7b46d37258ac1c2aa690e2477c))
+
+
+### Documentation
+
+* remove JavaScript templates from planned features ([#38](https://github.com/jsonify/noted/issues/38)) ([12298eb](https://github.com/jsonify/noted/commit/12298eb712ca1f12f545cf0310a10cc99eb7179c))
+
 ### [1.30.5](https://github.com/jsonify/noted/compare/v1.31.4...v1.30.5) (2025-10-27)
 
 ### Reverts
