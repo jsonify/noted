@@ -15,7 +15,6 @@ A comprehensive VS Code extension for organized workspace notes with templates, 
 - **🔍 Advanced Search**: Regex patterns, date filters, tag filtering, and quick switcher
 - **📅 Calendar View**: Visual monthly calendar for navigating and creating daily notes
 - **📋 Templates**: Built-in and custom templates with 10 dynamic variables
-- **🔧 JavaScript Templates**: Programmable templates with logic, loops, and data fetching
 - **⚡ Bulk Operations**: Multi-select notes for batch move, delete, or archive
 - **↩️ Undo/Redo**: Full undo/redo support for all destructive operations
 - **📌 Pinned Notes**: Pin frequently accessed notes for instant access
@@ -219,18 +218,8 @@ Create personalized templates with 10 dynamic variables:
 - `{user}` - System username
 - `{workspace}` - VS Code workspace name
 
-**JavaScript Templates:**
-Advanced programmable templates with JavaScript:
-- Execute conditional logic and loops
-- Fetch recent notes and metadata
-- Generate dynamic content based on context
-- Auto-detect recurring meetings
-- Calculate dates and generate IDs
-- See `.templates/examples/` for 5 example templates
-
 **Template Management:**
 - Create, edit, duplicate, delete templates
-- Convert static templates to JavaScript
 - Template variables reference viewer
 - Open templates folder in system
 
@@ -499,7 +488,6 @@ Full documentation available at: [https://jsonify.github.io/noted](https://jsoni
 - Bulk Operations
 - Undo/Redo
 - Templates Guide
-- JavaScript Templates (Advanced)
 - Pinned Notes & Archive
 
 ## 📝 License

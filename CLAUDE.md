@@ -14,13 +14,10 @@ This is a VS Code extension called "Noted" (published as "noted" by jsonify) tha
 
 ## Build & Development Commands
 
-- **Install dependencies**: `npm install`
-- **Compile TypeScript**: `npm run compile`
-- **Watch mode for development**: `npm run watch`
-- **Package extension**: `npm run package` (creates .vsix file with dependencies)
+- **Install dependencies**: `pnpm install`
+- **Compile TypeScript**: `pnpm run compile`
+- **Watch mode for development**: `pnpm run watch`
 - **Test extension**: Press F5 in VS Code to open Extension Development Host
-
-**Note**: As of v1.31.2, this project uses npm instead of pnpm for better compatibility with VS Code extension packaging tools (vsce).
 
 ## Architecture
 

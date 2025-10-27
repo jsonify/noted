@@ -2,7 +2,7 @@
   "name": "noted",
   "displayName": "Noted",
   "description": "Organized workspace notes with templates, search, and daily tracking",
-  "version": "1.31.4",
+  "version": "1.30.3",
   "icon": "icon.png",
   "publisher": "jsonify",
   "repository": {
@@ -28,10 +28,7 @@
     "knowledge base"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onView:notedView",
-    "onView:notedTemplatesView",
-    "onView:notedJournalView"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -725,40 +722,26 @@
           "type": "number",
           "default": 24,
           "description": "Maximum length for node titles in the graph view"
-        },
-        "noted.allowJavaScriptTemplates": {
-          "type": "boolean",
-          "default": false,
-          "description": "Allow execution of JavaScript templates (.js.template files). WARNING: Only enable this if you trust your template sources, as JavaScript templates can execute arbitrary code."
-        },
-        "noted.jsTemplates.maxExecutionTime": {
-          "type": "number",
-          "default": 5000,
-          "description": "Maximum execution time for JavaScript templates in milliseconds (default: 5000ms = 5 seconds)"
-        },
-        "noted.jsTemplates.maxMemory": {
-          "type": "number",
-          "default": 32,
-          "description": "Maximum memory for JavaScript templates in MB (default: 32 MB). QuickJS enforces this limit to prevent excessive memory usage."
         }
       }
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "pnpm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile",
+    "pretest": "pnpm run compile",
     "test": "node ./out/test/runTest.js",
     "test:unit": "mocha --require out/test/setup.js out/test/unit/**/*.test.js",
-    "package": "vsce package",
+    "package": "vsce package --no-dependencies",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
-    "release:patch": "standard-version --release-as patch && npm run package",
-    "release:minor": "standard-version --release-as minor && npm run package",
-    "release:major": "standard-version --release-as major && npm run package",
-    "release": "standard-version && npm run package",
+    "release:patch": "standard-version --release-as patch && pnpm run package",
+    "release:minor": "standard-version --release-as minor && pnpm run package",
+    "release:major": "standard-version --release-as major && pnpm run package",
+    "release": "standard-version && pnpm run package",
     "publish:release": "git push --follow-tags origin main"
   },
+  "packageManager": "pnpm@8.15.9",
   "devDependencies": {
     "@types/chai": "4",
     "@types/mocha": "^10.0.10",
@@ -776,6 +759,5 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "quickjs-emscripten": "^0.29.2"
   }
 }

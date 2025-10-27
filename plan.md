@@ -244,14 +244,6 @@ For a complete list of implemented features, see [notes.md](./notes.md).
 
 ## Technical Debt
 
-- [x] **Switch from pnpm to npm** (v1.31.2): Better VS Code extension packaging compatibility
-  - Resolved vsce dependency packaging issues
-  - JavaScript templates now work with bundled quickjs-emscripten
-  - Standard VS Code extension development workflow
-- [ ] **Bundle extension with webpack/esbuild**: Consider bundling for performance
-  - Note: Less urgent now that dependencies package correctly with npm
-  - Would reduce package size from 5.4MB to ~2-3MB
-  - Would improve extension startup time
 - [ ] Improve TypeScript types (reduce use of `any`)
 - [ ] Add JSDoc comments for public APIs
 - [ ] Performance optimization for large note collections
