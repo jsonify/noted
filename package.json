@@ -1,7 +1,7 @@
 {
   "name": "noted",
   "displayName": "Noted",
-  "description": "Organized workspace notes with templates, search, and daily tracking",
+  "description": "Comprehensive workspace notes with wiki-style links, diagram embeds (Draw.io & Excalidraw), graph visualization, templates, advanced search, and daily tracking",
   "version": "1.30.6",
   "icon": "icon.png",
   "publisher": "jsonify",
@@ -25,7 +25,12 @@
     "templates",
     "tags",
     "wiki",
-    "knowledge base"
+    "knowledge base",
+    "diagrams",
+    "drawio",
+    "excalidraw",
+    "graph",
+    "embeds"
   ],
   "activationEvents": [
     "onStartupFinished"

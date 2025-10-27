@@ -9,7 +9,8 @@ A comprehensive VS Code extension for organized workspace notes with templates, 
 - **📝 Daily Notes**: Instantly open today's note with automatic year/month organization
 - **🔗 Wiki-Style Links**: Connect notes with `[[note-name]]` syntax, see backlinks, and navigate your knowledge graph
 - **🔄 Connections Panel**: Always-visible sidebar showing incoming backlinks and outgoing links with context
-- **📄 Note, Image & Diagram Embeds**: Embed notes, images, Draw.io & Excalidraw diagrams inline with `![[embed]]` syntax
+- **📐 Diagrams Panel**: Centralized Draw.io & Excalidraw diagram management with quick creation and auto-embed
+- **📄 Note, Image & Diagram Embeds**: Embed notes, images, and diagrams inline with `![[embed]]` syntax
 - **🕸️ Interactive Graph View**: Visualize your entire note network with customizable, interactive graph
 - **🏷️ Powerful Tag System**: Organize with inline `#tags` or YAML frontmatter, filter, autocomplete, and manage
 - **🔍 Advanced Search**: Regex patterns, date filters, tag filtering, and quick switcher
@@ -82,6 +83,37 @@ Always-visible sidebar showing all note relationships:
 - "Open Connection Source" to jump to exact line
 
 **Real-Time Updates**: Panel refreshes as you edit and save notes
+
+### Diagrams Panel 🆕
+
+Centralized diagram management with quick creation and embedding:
+
+**Quick Creation:**
+- Create Draw.io diagrams (`.drawio` files)
+- Create Excalidraw diagrams (`.excalidraw` files)
+- Embed syntax automatically copied to clipboard
+- Open directly in their respective editors
+
+**Organization:**
+- All diagrams stored in centralized `Diagrams` folder
+- Grouped by type (Draw.io / Excalidraw)
+- Visual file metadata and usage tracking
+- Quick insert picker for existing diagrams
+
+**Workflow:**
+1. Click **+** icon in Diagrams panel
+2. Choose diagram type (Draw.io or Excalidraw)
+3. Name your diagram
+4. Embed syntax `![[diagram-name.drawio]]` copied to clipboard
+5. Paste into any note and start editing diagram
+
+**Commands:**
+- **Create Draw.io Diagram**: New diagram with auto-embed copy
+- **Create Excalidraw Diagram**: New diagram with auto-embed copy
+- **Insert Diagram**: Picker showing all available diagrams
+- **Open Diagram**: Launch in appropriate editor
+
+**Requirements**: Install [Draw.io Integration](https://marketplace.visualstudio.com/items?itemName=hediet.vscode-drawio) and/or [Excalidraw](https://marketplace.visualstudio.com/items?itemName=pomdtr.excalidraw-editor) extensions
 
 ### Note, Image & Diagram Embeds 🆕
 
@@ -300,6 +332,7 @@ Live preview for markdown files:
 Access via VS Code Settings (search for "Noted"):
 
 - **noted.notesFolder**: Where notes are stored (default: "Notes")
+- **noted.diagramsFolder**: Where diagrams are stored (default: "Diagrams")
 - **noted.fileFormat**: File format - "txt" or "md" (default: "md")
 - **noted.tagAutoComplete**: Tag suggestions when typing # (default: true)
 - **noted.autoBacklinks**: Auto-append backlinks sections (default: true)
@@ -458,10 +491,17 @@ src/
 │   ├── graphService.ts
 │   ├── connectionsService.ts
 │   ├── embedService.ts
+│   ├── diagramService.ts
 │   ├── bulkOperationsService.ts
 │   └── undoService.ts
 ├── providers/                # Tree view providers
+│   ├── notesTreeProvider.ts
+│   ├── diagramsTreeProvider.ts
+│   └── connectionsTreeProvider.ts
 ├── commands/                 # Command handlers
+│   ├── commands.ts
+│   ├── diagramCommands.ts
+│   └── tagCommands.ts
 ├── calendar/                 # Calendar view
 └── graph/                    # Graph visualization
 ```
@@ -474,6 +514,10 @@ Notes are automatically organized:
 Notes/
 ├── .templates/              # Custom templates
 ├── .archive/               # Archived notes
+├── Diagrams/               # Centralized diagrams (Draw.io & Excalidraw)
+│   ├── architecture.drawio
+│   ├── wireframe.excalidraw
+│   └── system-design.excalidraw.svg
 └── 2025/
     ├── 10-October/
     │   ├── 2025-10-01.md
@@ -491,7 +535,8 @@ Full documentation available at: [https://jsonify.github.io/noted](https://jsoni
 - Getting Started Guide
 - Daily Notes Workflow
 - Wiki-Style Links & Connections
-- Note & Image Embeds
+- Diagrams Panel & Management
+- Note, Image & Diagram Embeds
 - Graph View Tutorial
 - Tags System
 - Advanced Search

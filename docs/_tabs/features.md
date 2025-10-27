@@ -42,13 +42,26 @@ Always-visible sidebar showing all incoming backlinks and outgoing links with ri
 
 [Learn more →](/noted/posts/connections/)
 
-## 📄 Note Embeds
+## 📐 Diagrams Panel
 
-Embed entire notes or specific sections inline with `![[note#section]]` syntax. Perfect for reusable content.
+Centralized Draw.io and Excalidraw diagram management with quick creation and seamless embedding.
+
+- **Quick Creation**: Create diagrams with one click from sidebar
+- **Auto-Embed**: Embed syntax automatically copied to clipboard
+- **Dual Support**: Both Draw.io and Excalidraw diagrams
+- **Visual Organization**: Diagrams grouped by type with metadata
+- **Easy Insertion**: Quick picker to insert existing diagrams
+
+[Learn more →](/noted/posts/diagrams/)
+
+## 📄 Note, Image & Diagram Embeds
+
+Embed notes, images, and diagrams inline with `![[embed]]` syntax. Perfect for reusable content and visual documentation.
 
 - **Full Note Embeds**: Include entire notes with `![[note-name]]`
 - **Section Embeds**: Embed specific sections with `![[note#section]]`
 - **Image Embeds**: Display images inline with `![[image.png]]`
+- **Diagram Embeds**: Embed Draw.io and Excalidraw diagrams with `![[diagram.drawio]]`
 - **Live Updates**: Embedded content updates when source changes
 
 [Learn more →](/noted/posts/embeds/)
