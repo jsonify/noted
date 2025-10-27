@@ -101,13 +101,18 @@ The extension now uses a fully modular architecture with clear separation of con
   - Calculates node sizes using logarithmic scaling for better visual distribution
   - Identifies bidirectional links (notes that link to each other)
 
-- **EmbedService** (v1.5.0): Manages note and image embeds
-  - Extracts embeds using `![[note-name]]` and `![[image.png]]` syntax
+- **EmbedService** (v1.5.0, diagram support v1.31.0): Manages note, image, and diagram embeds
+  - Extracts embeds using `![[note-name]]`, `![[image.png]]`, and `![[diagram.drawio]]` syntax
   - Supports section-specific embeds: `![[note#section]]`
   - Supports custom display text: `![[note|Display Text]]`
   - Image resolution: Supports relative, absolute, and workspace-relative paths
   - Section extraction: Supports both markdown headers and text-style headings
   - Transclusion support: Live-updating embeds when source files change
+  - Diagram support (v1.31.0): Embeds Draw.io and Excalidraw diagram files
+    - Supported formats: `.drawio`, `.excalidraw`, `.excalidraw.svg`, `.excalidraw.png`
+    - Raw diagram files (`.drawio`, `.excalidraw`) show clickable links to open in their editors
+    - Exported formats (`.svg`, `.png`) render inline as images
+    - Requires Draw.io Integration (hediet.vscode-drawio) or Excalidraw (pomdtr.excalidraw-editor) extensions
 
 - **ConnectionsService** (v1.22.0): Manages connection data for the connections panel
   - Builds on `LinkService` to provide enriched connection information

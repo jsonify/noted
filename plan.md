@@ -4,6 +4,120 @@ This document tracks planned features, improvements, and ideas for the Noted VS 
 
 For a complete list of implemented features, see [notes.md](./notes.md).
 
+## 🔥 Top Priority: Diagram Management System
+
+**Status**: 🚧 In Development
+
+Comprehensive diagram management system for Draw.io and Excalidraw files with centralized organization and seamless integration.
+
+### Phase 1: Essential Features ✅
+- [x] **Basic diagram embed support** (v1.31.0)
+  - Support for `.drawio`, `.excalidraw`, `.excalidraw.svg`, `.excalidraw.png` files
+  - Raw diagram files show as clickable links to open in editors
+  - Exported formats render inline as images
+  - Hover previews with diagram metadata
+  - Visual indicators (📊 icon) in decorations
+
+### Phase 2: Diagram Organization & Quick Access 🚧
+- [ ] **Centralized Diagrams folder**
+  - Configuration: `noted.diagramsFolder` (default: "Diagrams")
+  - Auto-create folder structure if missing
+  - Organize by type: `Diagrams/drawio/`, `Diagrams/excalidraw/`, `Diagrams/exported/`
+  - DiagramService for centralized diagram file management
+
+- [ ] **Diagrams tree view panel** ⭐ Core Feature
+  - New collapsible "Diagrams" section in NOTED EXPLORER
+  - Grouped by type: Draw.io and Excalidraw sections
+  - [+] Create button in panel header with dropdown menu
+  - Click diagrams to open in respective editors
+  - Show usage count (how many notes reference each diagram)
+  - "Orphaned Diagrams" section for unused diagrams
+  - Drag-and-drop to reorder/organize
+
+- [ ] **Quick creation commands**
+  - "Noted: Create Draw.io Diagram" - Creates .drawio file in Diagrams folder
+  - "Noted: Create Excalidraw Diagram" - Creates .excalidraw file in Diagrams folder
+  - Prompts for diagram name with validation
+  - Opens diagram in editor immediately
+  - Auto-copies embed syntax to clipboard: `![[diagram-name.drawio]]`
+  - Shows notification: "📋 Embed syntax copied! Press Cmd+V to insert"
+
+- [ ] **Insert Diagram command** 🎯 Key UX Feature
+  - "Noted: Insert Diagram" - Quick picker showing all available diagrams
+  - Preview thumbnails in picker (if available)
+  - Shows diagram type (Draw.io/Excalidraw) and usage count
+  - Inserts `![[selected-diagram]]` at cursor position
+  - Available via command palette and context menu
+
+- [ ] **Context menu integration**
+  - Right-click in editor: "Insert Diagram..." option
+  - Shows diagram picker with preview
+  - Quick access to "Create New Diagram" submenu
+
+### Phase 3: Power Features 🚀
+- [ ] **Diagram templates**
+  - Templates folder: `Diagrams/.templates/`
+  - Built-in templates: flowchart, architecture, wireframe, mindmap
+  - "Noted: New Diagram from Template" command
+  - Template picker with preview
+  - Creates copy with custom name in Diagrams folder
+
+- [ ] **Auto-export on save**
+  - Configuration: `noted.autoExportDiagrams` (default: false)
+  - Configuration: `noted.exportFormat` ("svg" or "png")
+  - Configuration: `noted.exportFolder` (default: "Diagrams/exported")
+  - Automatically exports diagrams to image format on save
+  - Updates embeds to use exported version automatically
+
+- [ ] **Diagram browser with preview**
+  - Dedicated webview panel for browsing diagrams
+  - Grid layout with preview thumbnails
+  - Shows usage statistics (referenced in X notes)
+  - Last modified date
+  - Quick actions: Edit, Export, Insert, Delete
+  - Search and filter by type, name, usage
+
+- [ ] **Orphan diagram detection**
+  - Automatically detect diagrams not referenced in any notes
+  - Show in "Orphaned Diagrams" section of tree view
+  - Option to archive or delete unused diagrams
+  - Weekly cleanup suggestions
+
+- [ ] **Diagram statistics**
+  - Add to "Noted: Show Stats" command
+  - Total diagrams count by type
+  - Referenced vs orphaned count
+  - Total size with breakdown by type
+  - Most-used diagrams list
+
+- [ ] **External diagram references**
+  - Support path aliases: `![[shared:architecture.drawio]]`
+  - Configuration: `noted.diagramPaths` for alias mapping
+  - Support symbolic links to external diagram folders
+  - Absolute path fallback
+
+### Implementation Architecture
+```
+src/
+├── services/
+│   └── diagramService.ts         # Diagram CRUD, organization, metadata
+├── providers/
+│   └── diagramsTreeProvider.ts   # Tree view with grouped diagrams
+├── commands/
+│   └── diagramCommands.ts        # Create, insert, export commands
+├── constants.ts                   # Diagram paths, templates
+└── extension.ts                   # Command registration
+```
+
+### User Experience Goals
+1. **2-click diagram creation**: Click [+] → Select type → Start editing
+2. **Instant embed insertion**: Create diagram → Auto-copy syntax → Paste in note
+3. **Visual organization**: See all diagrams grouped by type in sidebar
+4. **Usage awareness**: Know which diagrams are used and where
+5. **Zero friction**: No manual path configuration or folder management
+
+---
+
 ## Planned Features & Ideas
 
 ### Enhanced Link Features (inspired by Markdown Memo)

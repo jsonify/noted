@@ -1,7 +1,7 @@
 {
   "name": "noted",
   "displayName": "Noted",
-  "description": "Organized workspace notes with templates, search, and daily tracking",
+  "description": "Comprehensive workspace notes with wiki-style links, diagram embeds (Draw.io & Excalidraw), graph visualization, templates, advanced search, and daily tracking",
   "version": "1.30.6",
   "icon": "icon.png",
   "publisher": "jsonify",
@@ -25,7 +25,12 @@
     "templates",
     "tags",
     "wiki",
-    "knowledge base"
+    "knowledge base",
+    "diagrams",
+    "drawio",
+    "excalidraw",
+    "graph",
+    "embeds"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -50,6 +55,10 @@
         {
           "id": "notedView",
           "name": "My Notes"
+        },
+        {
+          "id": "notedDiagramsView",
+          "name": "Diagrams"
         },
         {
           "id": "notedJournalView",
@@ -82,6 +91,10 @@
       {
         "view": "notedView",
         "contents": "Welcome to Noted! 📝\n\nYour digital scratch pad for tracking solutions, bugs, and daily progress.\n\nTo get started, choose where to store your notes:\n[Use Default Location](command:noted.setupDefaultFolder)\nNotes will be stored in your workspace under 'Notes/'\n\n[Choose Custom Location](command:noted.setupCustomFolder)\nSelect a different folder for your notes\n\nOnce set up, you can:\n• Press Cmd+Shift+N to open today's note\n• Use templates for structured notes\n• Search across all your notes\n• Track your daily progress"
+      },
+      {
+        "view": "notedDiagramsView",
+        "contents": "No diagrams yet! 📊\n\nCreate diagrams to visualize your ideas and embed them in your notes.\n\n[Create Draw.io Diagram](command:noted.createDrawioDiagram)\nFlowcharts, UML, architecture diagrams\n\n[Create Excalidraw Diagram](command:noted.createExcalidrawDiagram)\nHand-drawn sketches and wireframes\n\nAfter creating a diagram:\n• Embed syntax is automatically copied to clipboard\n• Use `![[diagram-name.drawio]]` to embed in notes\n• Click diagrams here to open and edit them"
       }
     ],
     "commands": [
@@ -405,6 +418,31 @@
         "command": "noted.openPlaceholderSource",
         "title": "Noted: Open Placeholder Source",
         "icon": "$(go-to-file)"
+      },
+      {
+        "command": "noted.createDrawioDiagram",
+        "title": "Noted: Create Draw.io Diagram",
+        "icon": "$(add)"
+      },
+      {
+        "command": "noted.createExcalidrawDiagram",
+        "title": "Noted: Create Excalidraw Diagram",
+        "icon": "$(add)"
+      },
+      {
+        "command": "noted.insertDiagram",
+        "title": "Noted: Insert Diagram",
+        "icon": "$(insert)"
+      },
+      {
+        "command": "noted.openDiagram",
+        "title": "Noted: Open Diagram",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "noted.refreshDiagrams",
+        "title": "Noted: Refresh Diagrams",
+        "icon": "$(refresh)"
       }
     ],
     "menus": {
@@ -560,6 +598,21 @@
           "command": "noted.refreshPlaceholders",
           "when": "view == notedPlaceholdersView",
           "group": "navigation@1"
+        },
+        {
+          "command": "noted.createDrawioDiagram",
+          "when": "view == notedDiagramsView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "noted.createExcalidrawDiagram",
+          "when": "view == notedDiagramsView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "noted.refreshDiagrams",
+          "when": "view == notedDiagramsView",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
@@ -652,6 +705,11 @@
           "command": "noted.openPlaceholderSource",
           "when": "view == notedPlaceholdersView && viewItem == placeholder-source",
           "group": "navigation@1"
+        },
+        {
+          "command": "noted.openDiagram",
+          "when": "view == notedDiagramsView && viewItem == diagram",
+          "group": "navigation@1"
         }
       ]
     },
@@ -692,6 +750,11 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically append backlinks section to notes when other notes link to them"
+        },
+        "noted.diagramsFolder": {
+          "type": "string",
+          "default": "Diagrams",
+          "description": "Folder name for storing diagrams (Draw.io and Excalidraw files)"
         },
         "noted.graph.style.fontSize": {
           "type": "number",

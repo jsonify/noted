@@ -7,7 +7,9 @@ node_modules/
 
 # IDE
 .vscode-test/
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
 
 # Logs
 *.log
