@@ -3,6 +3,36 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 
 /**
+ * Template for new Draw.io diagram files
+ */
+const NEW_DRAWIO_XML_TEMPLATE = (id: string) => `<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="65bd71144e">
+    <diagram id="${id}" name="Page-1">
+        <mxGraphModel dx="800" dy="450" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>`;
+
+/**
+ * Template for new Excalidraw diagram files
+ */
+const NEW_EXCALIDRAW_JSON_TEMPLATE = () => ({
+    type: "excalidraw",
+    version: 2,
+    source: "https://excalidraw.com",
+    elements: [],
+    appState: {
+        gridSize: null,
+        viewBackgroundColor: "#ffffff"
+    },
+    files: {}
+});
+
+/**
  * Represents a diagram file
  */
 export interface DiagramFile {
@@ -182,14 +212,19 @@ export class DiagramService {
     }
 
     /**
-     * Create a new Draw.io diagram
+     * Generic helper to create a diagram file
+     * @private
      */
-    async createDrawioDiagram(name: string): Promise<string> {
+    private async createDiagram(
+        name: string,
+        type: 'drawio' | 'excalidraw'
+    ): Promise<string> {
         await this.ensureDiagramsFolder();
 
-        // Sanitize name
+        // Sanitize name and build file path
         const sanitizedName = this.sanitizeDiagramName(name);
-        const fileName = `${sanitizedName}.drawio`;
+        const extension = type === 'drawio' ? '.drawio' : '.excalidraw';
+        const fileName = `${sanitizedName}${extension}`;
         const filePath = path.join(this.getDiagramsFolder(), fileName);
 
         // Check if file already exists
@@ -202,63 +237,33 @@ export class DiagramService {
             }
         }
 
-        // Create empty Draw.io XML structure
-        const drawioContent = `<?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="65bd71144e">
-    <diagram id="${this.generateId()}" name="Page-1">
-        <mxGraphModel dx="800" dy="450" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
-            <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
-            </root>
-        </mxGraphModel>
-    </diagram>
-</mxfile>`;
+        // Generate content based on type
+        let content: string;
+        if (type === 'drawio') {
+            content = NEW_DRAWIO_XML_TEMPLATE(this.generateId());
+        } else {
+            content = JSON.stringify(NEW_EXCALIDRAW_JSON_TEMPLATE(), null, 2);
+        }
 
-        await fs.writeFile(filePath, drawioContent, 'utf-8');
-        console.log('[NOTED] Created Draw.io diagram:', filePath);
+        // Write file
+        await fs.writeFile(filePath, content, 'utf-8');
+        console.log(`[NOTED] Created ${type} diagram:`, filePath);
 
         return filePath;
+    }
+
+    /**
+     * Create a new Draw.io diagram
+     */
+    async createDrawioDiagram(name: string): Promise<string> {
+        return this.createDiagram(name, 'drawio');
     }
 
     /**
      * Create a new Excalidraw diagram
      */
     async createExcalidrawDiagram(name: string): Promise<string> {
-        await this.ensureDiagramsFolder();
-
-        // Sanitize name
-        const sanitizedName = this.sanitizeDiagramName(name);
-        const fileName = `${sanitizedName}.excalidraw`;
-        const filePath = path.join(this.getDiagramsFolder(), fileName);
-
-        // Check if file already exists
-        try {
-            await fs.access(filePath);
-            throw new Error(`Diagram "${fileName}" already exists`);
-        } catch (error: any) {
-            if (error.code !== 'ENOENT') {
-                throw error;
-            }
-        }
-
-        // Create empty Excalidraw JSON structure
-        const excalidrawContent = {
-            type: "excalidraw",
-            version: 2,
-            source: "https://excalidraw.com",
-            elements: [],
-            appState: {
-                gridSize: null,
-                viewBackgroundColor: "#ffffff"
-            },
-            files: {}
-        };
-
-        await fs.writeFile(filePath, JSON.stringify(excalidrawContent, null, 2), 'utf-8');
-        console.log('[NOTED] Created Excalidraw diagram:', filePath);
-
-        return filePath;
+        return this.createDiagram(name, 'excalidraw');
     }
 
     /**

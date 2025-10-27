@@ -48,22 +48,30 @@ export function registerDiagramCommands(
 }
 
 /**
- * Create a new Draw.io diagram
+ * Generic helper to create a diagram with validation and workflow
+ * @private
  */
-async function createDrawioDiagram(
+async function createDiagramCommand(
     diagramService: DiagramService,
-    diagramsTreeProvider: DiagramsTreeProvider
+    diagramsTreeProvider: DiagramsTreeProvider,
+    type: 'drawio' | 'excalidraw',
+    config: {
+        extensionCheck: () => boolean;
+        placeholder: string;
+        displayName: string;
+        createFn: (name: string) => Promise<string>;
+    }
 ): Promise<void> {
-    // Check if Draw.io extension is installed
-    if (!diagramService.isDrawioExtensionInstalled()) {
-        diagramService.showExtensionWarning('drawio');
+    // Check if required extension is installed
+    if (!config.extensionCheck()) {
+        diagramService.showExtensionWarning(type);
         return;
     }
 
-    // Prompt for diagram name
+    // Prompt for diagram name with validation
     const name = await vscode.window.showInputBox({
         prompt: 'Enter diagram name',
-        placeHolder: 'architecture-diagram',
+        placeHolder: config.placeholder,
         validateInput: (value) => {
             if (!value || value.trim().length === 0) {
                 return 'Diagram name cannot be empty';
@@ -81,7 +89,7 @@ async function createDrawioDiagram(
 
     try {
         // Create the diagram file
-        const filePath = await diagramService.createDrawioDiagram(name);
+        const filePath = await config.createFn(name);
         const diagramFile = await diagramService.getDiagramInfo(filePath);
 
         if (!diagramFile) {
@@ -99,7 +107,7 @@ async function createDrawioDiagram(
 
         // Show success message
         vscode.window.showInformationMessage(
-            `✨ Created Draw.io diagram: ${diagramFile.name}\n📋 Embed syntax copied to clipboard!`,
+            `✨ Created ${config.displayName} diagram: ${diagramFile.name}\n📋 Embed syntax copied to clipboard!`,
             'Insert in Note'
         ).then(selection => {
             if (selection === 'Insert in Note') {
@@ -109,8 +117,23 @@ async function createDrawioDiagram(
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(`Failed to create Draw.io diagram: ${errorMessage}`);
+        vscode.window.showErrorMessage(`Failed to create ${config.displayName} diagram: ${errorMessage}`);
     }
+}
+
+/**
+ * Create a new Draw.io diagram
+ */
+async function createDrawioDiagram(
+    diagramService: DiagramService,
+    diagramsTreeProvider: DiagramsTreeProvider
+): Promise<void> {
+    return createDiagramCommand(diagramService, diagramsTreeProvider, 'drawio', {
+        extensionCheck: () => diagramService.isDrawioExtensionInstalled(),
+        placeholder: 'architecture-diagram',
+        displayName: 'Draw.io',
+        createFn: (name) => diagramService.createDrawioDiagram(name)
+    });
 }
 
 /**
@@ -120,63 +143,12 @@ async function createExcalidrawDiagram(
     diagramService: DiagramService,
     diagramsTreeProvider: DiagramsTreeProvider
 ): Promise<void> {
-    // Check if Excalidraw extension is installed
-    if (!diagramService.isExcalidrawExtensionInstalled()) {
-        diagramService.showExtensionWarning('excalidraw');
-        return;
-    }
-
-    // Prompt for diagram name
-    const name = await vscode.window.showInputBox({
-        prompt: 'Enter diagram name',
-        placeHolder: 'wireframe-sketch',
-        validateInput: (value) => {
-            if (!value || value.trim().length === 0) {
-                return 'Diagram name cannot be empty';
-            }
-            if (!/^[a-zA-Z0-9-_ ]+$/.test(value)) {
-                return 'Diagram name can only contain letters, numbers, spaces, hyphens, and underscores';
-            }
-            return null;
-        }
+    return createDiagramCommand(diagramService, diagramsTreeProvider, 'excalidraw', {
+        extensionCheck: () => diagramService.isExcalidrawExtensionInstalled(),
+        placeholder: 'wireframe-sketch',
+        displayName: 'Excalidraw',
+        createFn: (name) => diagramService.createExcalidrawDiagram(name)
     });
-
-    if (!name) {
-        return; // User cancelled
-    }
-
-    try {
-        // Create the diagram file
-        const filePath = await diagramService.createExcalidrawDiagram(name);
-        const diagramFile = await diagramService.getDiagramInfo(filePath);
-
-        if (!diagramFile) {
-            throw new Error('Failed to get diagram info');
-        }
-
-        // Copy embed syntax to clipboard
-        await diagramService.copyEmbedSyntaxToClipboard(diagramFile);
-
-        // Open the diagram
-        await diagramService.openDiagram(diagramFile);
-
-        // Refresh tree view
-        diagramsTreeProvider.refresh();
-
-        // Show success message
-        vscode.window.showInformationMessage(
-            `✨ Created Excalidraw diagram: ${diagramFile.name}\n📋 Embed syntax copied to clipboard!`,
-            'Insert in Note'
-        ).then(selection => {
-            if (selection === 'Insert in Note') {
-                vscode.commands.executeCommand('noted.insertDiagram');
-            }
-        });
-
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(`Failed to create Excalidraw diagram: ${errorMessage}`);
-    }
 }
 
 /**
