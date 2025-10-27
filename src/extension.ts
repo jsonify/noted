@@ -318,23 +318,14 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerTreeDataProvider('notedPlaceholdersView', placeholdersProvider);
 
     // Initialize diagram service and diagrams tree provider
-    let diagramService: DiagramService | undefined;
-    let diagramsProvider: DiagramsTreeProvider | undefined;
-    try {
-        diagramService = new DiagramService();
-        diagramsProvider = new DiagramsTreeProvider(diagramService);
-        vscode.window.registerTreeDataProvider('notedDiagramsView', diagramsProvider);
-        console.log('[NOTED] DiagramService initialized successfully');
+    // DiagramService now checks for workspace availability on-demand
+    const diagramService = new DiagramService();
+    const diagramsProvider = new DiagramsTreeProvider(diagramService);
+    vscode.window.registerTreeDataProvider('notedDiagramsView', diagramsProvider);
+    console.log('[NOTED] DiagramService initialized successfully');
 
-        // Register diagram commands
-        registerDiagramCommands(context, diagramService, diagramsProvider);
-    } catch (error) {
-        console.error('[NOTED] Failed to initialize DiagramService:', error);
-        vscode.window.showWarningMessage(
-            'Noted: Failed to initialize diagram service. Diagram management features may not work correctly.'
-        );
-        // diagram features will gracefully degrade
-    }
+    // Register diagram commands
+    registerDiagramCommands(context, diagramService, diagramsProvider);
 
     // Update connections panel when active editor changes
     const updateConnectionsPanel = async (editor: vscode.TextEditor | undefined) => {

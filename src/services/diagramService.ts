@@ -28,24 +28,40 @@ export interface DiagramFile {
  * Service for managing diagram files (Draw.io and Excalidraw)
  */
 export class DiagramService {
-    private workspaceRoot: string;
-
     constructor() {
-        // Get workspace root
+        // No initialization needed - we'll check for workspace on-demand
+    }
+
+    /**
+     * Get the workspace root, or null if no workspace is open
+     */
+    private getWorkspaceRoot(): string | null {
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders || workspaceFolders.length === 0) {
-            throw new Error('No workspace folder found');
+            return null;
         }
-        this.workspaceRoot = workspaceFolders[0].uri.fsPath;
+        return workspaceFolders[0].uri.fsPath;
+    }
+
+    /**
+     * Check if workspace is available
+     */
+    private ensureWorkspace(): string {
+        const workspaceRoot = this.getWorkspaceRoot();
+        if (!workspaceRoot) {
+            throw new Error('No workspace folder is open. Please open a workspace to use diagram features.');
+        }
+        return workspaceRoot;
     }
 
     /**
      * Get the diagrams folder path
      */
     getDiagramsFolder(): string {
+        const workspaceRoot = this.ensureWorkspace();
         const config = vscode.workspace.getConfiguration('noted');
         const diagramsFolderName = config.get<string>('diagramsFolder', 'Diagrams');
-        return path.join(this.workspaceRoot, diagramsFolderName);
+        return path.join(workspaceRoot, diagramsFolderName);
     }
 
     /**
@@ -268,9 +284,9 @@ export class DiagramService {
      * Get embed syntax for a diagram
      */
     getEmbedSyntax(diagramFile: DiagramFile): string {
+        const workspaceRoot = this.ensureWorkspace();
         // Use workspace-relative path
-        const diagramsFolder = this.getDiagramsFolder();
-        const relativePath = path.relative(this.workspaceRoot, diagramFile.path);
+        const relativePath = path.relative(workspaceRoot, diagramFile.path);
 
         return `![[${relativePath}]]`;
     }
