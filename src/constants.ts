@@ -115,28 +115,9 @@ export const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export const SUPPORTED_EXTENSIONS = ['.txt', '.md'];
 
 /**
- * JavaScript template extension
- */
-export const JS_TEMPLATE_EXTENSION = '.js.template';
-
-/**
- * Template file extensions (in priority order: .js.template > .md > .txt)
- */
-export const TEMPLATE_EXTENSIONS = [JS_TEMPLATE_EXTENSION, '.md', '.txt'];
-
-/**
  * Image file extensions supported for embedding
  */
 export const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.ico'];
-
-/**
- * JavaScript template defaults
- */
-export const JS_TEMPLATE_DEFAULTS = {
-    MAX_EXECUTION_TIME: 5000,  // 5 seconds
-    MAX_MEMORY: 32,             // 32 MB (for documentation)
-    ALLOW_JS_TEMPLATES: false   // Disabled by default for security
-};
 
 /**
  * Category configuration for organizing notes

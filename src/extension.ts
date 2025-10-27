@@ -81,19 +81,14 @@ export function activate(context: vscode.ExtensionContext) {
         treeDataProvider: notesProvider,
         dragAndDropController: notesProvider
     });
-    context.subscriptions.push(treeView);
 
     // Create tree data provider for journal view (daily notes)
     const journalProvider = new JournalTreeProvider();
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('notedJournalView', journalProvider)
-    );
+    vscode.window.registerTreeDataProvider('notedJournalView', journalProvider);
 
     // Create tree data provider for templates view (empty, uses viewsWelcome)
     const templatesProvider = new TemplatesTreeProvider();
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('notedTemplatesView', templatesProvider)
-    );
+    vscode.window.registerTreeDataProvider('notedTemplatesView', templatesProvider);
 
     // Initialize tag service for tag filtering
     const notesPath = getNotesPath();
@@ -108,9 +103,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Create tree data provider for tags view
     const tagsProvider = new TagsTreeProvider(tagService);
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('notedTagsView', tagsProvider)
-    );
+    vscode.window.registerTreeDataProvider('notedTagsView', tagsProvider);
 
     // Register tag completion provider
     const tagAutoComplete = config.get<boolean>('tagAutoComplete', true);
@@ -309,23 +302,17 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize connections service and provider
     const connectionsService = new ConnectionsService(linkService);
     const connectionsProvider = new ConnectionsTreeProvider(connectionsService);
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('notedConnectionsView', connectionsProvider)
-    );
+    vscode.window.registerTreeDataProvider('notedConnectionsView', connectionsProvider);
 
     // Initialize orphans service and provider
     const orphansService = new OrphansService(linkService);
     const orphansProvider = new OrphansTreeProvider(orphansService);
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('notedOrphansView', orphansProvider)
-    );
+    vscode.window.registerTreeDataProvider('notedOrphansView', orphansProvider);
 
     // Initialize placeholders service and provider
     const placeholdersService = new PlaceholdersService(linkService);
     const placeholdersProvider = new PlaceholdersTreeProvider(placeholdersService);
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('notedPlaceholdersView', placeholdersProvider)
-    );
+    vscode.window.registerTreeDataProvider('notedPlaceholdersView', placeholdersProvider);
 
     // Update connections panel when active editor changes
     const updateConnectionsPanel = async (editor: vscode.TextEditor | undefined) => {

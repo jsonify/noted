@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { DEFAULTS, JS_TEMPLATE_DEFAULTS } from '../constants';
+import { DEFAULTS } from '../constants';
 
 /**
  * Get the resolved notes folder path
@@ -54,32 +54,4 @@ export function getTemplatesPath(): string | null {
 export function getFileFormat(): string {
     const config = vscode.workspace.getConfiguration('noted');
     return config.get<string>('fileFormat', DEFAULTS.FILE_FORMAT);
-}
-
-/**
- * Get whether JavaScript templates are allowed
- * Default: false (disabled for security)
- */
-export function getAllowJavaScriptTemplates(): boolean {
-    const config = vscode.workspace.getConfiguration('noted');
-    return config.get<boolean>('allowJavaScriptTemplates', JS_TEMPLATE_DEFAULTS.ALLOW_JS_TEMPLATES);
-}
-
-/**
- * Get the maximum execution time for JavaScript templates (in milliseconds)
- * Default: 5000ms (5 seconds)
- */
-export function getJSTemplateMaxExecutionTime(): number {
-    const config = vscode.workspace.getConfiguration('noted');
-    return config.get<number>('jsTemplates.maxExecutionTime', JS_TEMPLATE_DEFAULTS.MAX_EXECUTION_TIME);
-}
-
-/**
- * Get the maximum memory for JavaScript templates (in MB)
- * Note: This is for documentation purposes - Node.js VM doesn't enforce memory limits
- * Default: 32 MB
- */
-export function getJSTemplateMaxMemory(): number {
-    const config = vscode.workspace.getConfiguration('noted');
-    return config.get<number>('jsTemplates.maxMemory', JS_TEMPLATE_DEFAULTS.MAX_MEMORY);
 }

@@ -2,42 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### [1.31.4](https://github.com/jsonify/noted/compare/v1.31.3...v1.31.4) (2025-10-26)
+### [1.31.5](https://github.com/jsonify/noted/compare/v1.31.4...v1.31.5) (2025-10-27)
 
-### [1.31.3](https://github.com/jsonify/noted/compare/v1.31.2...v1.31.3) (2025-10-26)
+### Reverts
 
+* Remove JavaScript template system and restore pnpm ([df4ee5a](https://github.com/jsonify/noted/commit/df4ee5a))
 
-### Bug Fixes
-
-* Update JavaScript template execution to handle optional QuickJS runtime ([b346535](https://github.com/jsonify/noted/commit/b3465353e5c7e716ec3f8b4ec5a346f32210a54f))
-
-### [1.31.2](https://github.com/jsonify/noted/compare/v1.31.1...v1.31.2) (2025-10-25)
-
-
-### Bug Fixes
-
-* Register tree data providers with context subscriptions for better resource management ([6cd6ef2](https://github.com/jsonify/noted/commit/6cd6ef270e84ce1b807810208c376c4aeb07d5c7))
-
-### [1.31.1](https://github.com/jsonify/noted/compare/v1.31.0...v1.31.1) (2025-10-25)
-
-
-### Bug Fixes
-
-* Preserve zoom level in graph view after node movement ([#33](https://github.com/jsonify/noted/issues/33)) ([f84b855](https://github.com/jsonify/noted/commit/f84b855263053d09b37115e41b8fbc9a22106220))
-
-## [1.31.0](https://github.com/jsonify/noted/compare/v1.30.4...v1.31.0) (2025-10-25)
-
-
-### Features
-
-* Add JavaScript templates with logic, functions, and conditionals ([#32](https://github.com/jsonify/noted/issues/32)) ([19f0a92](https://github.com/jsonify/noted/commit/19f0a92fedbb8a0ff41bc49ab450cdd3d8c28a3b))
-
-### [1.30.4](https://github.com/jsonify/noted/compare/v1.30.3...v1.30.4) (2025-10-25)
-
-
-### Bug Fixes
-
-* Refactor code structure for improved readability and maintainabi… ([#31](https://github.com/jsonify/noted/issues/31)) ([a874978](https://github.com/jsonify/noted/commit/a8749788cd957c4d1a216b194a8822e191d55b46))
+**BREAKING CHANGE**: JavaScript templates (.js.template files) are no longer supported. The extension has reverted to the simple {variable} placeholder template system from v1.30.3. The JavaScript template feature (v1.31.0-v1.31.4) required 15+ debugging commits and had numerous reliability issues. This revert also restores pnpm as the package manager.
 
 ### [1.30.3](https://github.com/jsonify/noted/compare/v1.30.2...v1.30.3) (2025-10-25)
 

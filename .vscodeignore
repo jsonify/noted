@@ -3,6 +3,7 @@
 tsconfig.json
 src/**
 !src/webview/**
+node_modules/**
 *.vsix
-package-lock.json
+pnpm-lock.yaml
 .DS_Store
