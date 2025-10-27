@@ -120,6 +120,15 @@ export const SUPPORTED_EXTENSIONS = ['.txt', '.md'];
 export const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.ico'];
 
 /**
+ * Diagram file extensions supported for embedding
+ * - .drawio: Draw.io diagram files
+ * - .excalidraw: Excalidraw diagram files (JSON format)
+ * - .excalidraw.svg: Excalidraw diagrams exported as SVG
+ * - .excalidraw.png: Excalidraw diagrams exported as PNG
+ */
+export const DIAGRAM_EXTENSIONS = ['.drawio', '.excalidraw', '.excalidraw.svg', '.excalidraw.png'];
+
+/**
  * Category configuration for organizing notes
  * Maps template types to category folders with icons
  */

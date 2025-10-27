@@ -101,6 +101,11 @@ export class EmbedDecoratorProvider {
                 return this.createImageDecoration(embed, targetPath);
             }
 
+            // Handle diagram embeds
+            if (embed.type === 'diagram') {
+                return this.createDiagramDecoration(embed, targetPath);
+            }
+
             // Handle note embeds
             // Get the content to embed
             const content = await this.embedService.getEmbedContent(targetPath, embed.section);
@@ -154,6 +159,65 @@ export class EmbedDecoratorProvider {
             renderOptions: {
                 after: {
                     contentText: ` 🖼️`,
+                    color: new vscode.ThemeColor('textLink.foreground'),
+                    margin: '0 0 0 0.5em',
+                }
+            }
+        };
+    }
+
+    /**
+     * Create a decoration for a diagram embed
+     */
+    private async createDiagramDecoration(
+        embed: NoteEmbed,
+        targetPath: string
+    ): Promise<vscode.DecorationOptions> {
+        const filename = path.basename(targetPath);
+        const lowerPath = targetPath.toLowerCase();
+        const metadata = await this.embedService.getImageMetadata(targetPath);
+
+        // Create a markdown string for the decoration hover
+        const markdownContent = new vscode.MarkdownString();
+        markdownContent.isTrusted = true;
+        markdownContent.supportHtml = true;
+
+        // Determine diagram type
+        let diagramType = '📊 Diagram';
+        let diagramIcon = '📊';
+        if (lowerPath.endsWith('.drawio')) {
+            diagramType = '📊 Draw.io Diagram';
+        } else if (lowerPath.includes('.excalidraw')) {
+            diagramType = '📊 Excalidraw Diagram';
+        }
+
+        markdownContent.appendMarkdown(`**${diagramType}: ${filename}**\n\n`);
+
+        // Check if it's an exported image format (.svg, .png)
+        const isImageFormat = lowerPath.endsWith('.svg') || lowerPath.endsWith('.png');
+
+        if (isImageFormat) {
+            // Show diagram image in hover
+            const imageUri = vscode.Uri.file(targetPath);
+            markdownContent.appendMarkdown(`![${filename}](${imageUri.toString()})\n\n`);
+        } else {
+            // Raw diagram file - show instructions
+            markdownContent.appendMarkdown('_Click to open in editor_\n\n');
+        }
+
+        // Show metadata
+        if (metadata) {
+            markdownContent.appendMarkdown(`---\n\n`);
+            const sizeKB = (metadata.size / 1024).toFixed(2);
+            markdownContent.appendMarkdown(`Size: ${sizeKB} KB`);
+        }
+
+        return {
+            range: embed.range,
+            hoverMessage: markdownContent,
+            renderOptions: {
+                after: {
+                    contentText: ` ${diagramIcon}`,
                     color: new vscode.ThemeColor('textLink.foreground'),
                     margin: '0 0 0 0.5em',
                 }

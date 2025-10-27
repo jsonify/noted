@@ -9,7 +9,7 @@ A comprehensive VS Code extension for organized workspace notes with templates, 
 - **📝 Daily Notes**: Instantly open today's note with automatic year/month organization
 - **🔗 Wiki-Style Links**: Connect notes with `[[note-name]]` syntax, see backlinks, and navigate your knowledge graph
 - **🔄 Connections Panel**: Always-visible sidebar showing incoming backlinks and outgoing links with context
-- **📄 Note & Image Embeds**: Embed entire notes or sections inline with `![[embed]]` syntax
+- **📄 Note, Image & Diagram Embeds**: Embed notes, images, Draw.io & Excalidraw diagrams inline with `![[embed]]` syntax
 - **🕸️ Interactive Graph View**: Visualize your entire note network with customizable, interactive graph
 - **🏷️ Powerful Tag System**: Organize with inline `#tags` or YAML frontmatter, filter, autocomplete, and manage
 - **🔍 Advanced Search**: Regex patterns, date filters, tag filtering, and quick switcher
@@ -83,9 +83,9 @@ Always-visible sidebar showing all note relationships:
 
 **Real-Time Updates**: Panel refreshes as you edit and save notes
 
-### Note & Image Embeds 🆕
+### Note, Image & Diagram Embeds 🆕
 
-Include content from other notes or display images inline:
+Include content from other notes, display images, and embed diagrams inline:
 
 **Embed Notes:**
 ```markdown
@@ -101,7 +101,18 @@ Include content from other notes or display images inline:
 ![[/path/to/photo.jpg]]              # Absolute path
 ```
 
-**Supported Formats**: PNG, JPG, JPEG, GIF, SVG, WebP, BMP, ICO
+**Embed Diagrams:**
+```markdown
+![[architecture.drawio]]              # Draw.io diagram (clickable link)
+![[wireframe.excalidraw]]             # Excalidraw diagram (clickable link)
+![[diagram.excalidraw.svg|System]]   # Exported diagram (renders inline)
+```
+
+**Supported Formats**:
+- **Images**: PNG, JPG, JPEG, GIF, SVG, WebP, BMP, ICO
+- **Diagrams**: Draw.io (.drawio), Excalidraw (.excalidraw, .excalidraw.svg, .excalidraw.png)
+
+**Diagram Support**: Requires [Draw.io Integration](https://marketplace.visualstudio.com/items?itemName=hediet.vscode-drawio) or [Excalidraw](https://marketplace.visualstudio.com/items?itemName=pomdtr.excalidraw-editor) extensions
 
 **Live Updates**: Embedded content updates automatically when source changes
 

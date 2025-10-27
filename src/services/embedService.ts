@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import { readFile } from './fileSystemService';
 import { LinkService } from './linkService';
-import { IMAGE_EXTENSIONS } from '../constants';
+import { IMAGE_EXTENSIONS, DIAGRAM_EXTENSIONS } from '../constants';
 
 /**
  * Regular expression to match embed syntax: ![[note-name]] or ![[note-name#section]]
@@ -25,8 +25,8 @@ export interface NoteEmbed {
     range: vscode.Range;
     /** The resolved file path if found */
     targetPath?: string;
-    /** Type of embed: 'note' or 'image' */
-    type?: 'note' | 'image';
+    /** Type of embed: 'note', 'image', or 'diagram' */
+    type?: 'note' | 'image' | 'diagram';
 }
 
 /**
@@ -43,8 +43,8 @@ export interface EmbedMatch {
     displayText?: string;
     /** Character index where the match starts in the content */
     index: number;
-    /** Type of embed: 'note' or 'image' */
-    type: 'note' | 'image';
+    /** Type of embed: 'note', 'image', or 'diagram' */
+    type: 'note' | 'image' | 'diagram';
 }
 
 /**
@@ -68,11 +68,27 @@ export class EmbedService {
     }
 
     /**
-     * Resolve an image path relative to the current document or workspace
+     * Check if a file path is a diagram file based on extension
+     * Supports Draw.io (.drawio) and Excalidraw (.excalidraw, .excalidraw.svg, .excalidraw.png)
+     */
+    isDiagramFile(filePath: string): boolean {
+        const lowerPath = filePath.toLowerCase();
+        // Check for composite extensions first (.excalidraw.svg, .excalidraw.png)
+        if (lowerPath.endsWith('.excalidraw.svg') || lowerPath.endsWith('.excalidraw.png')) {
+            return true;
+        }
+        // Check for single extensions (.drawio, .excalidraw)
+        const ext = path.extname(filePath).toLowerCase();
+        return DIAGRAM_EXTENSIONS.includes(ext);
+    }
+
+    /**
+     * Resolve an image or diagram path relative to the current document or workspace
      * Supports:
-     * - Relative paths: ./images/photo.png or images/photo.png
+     * - Relative paths: ./images/photo.png or diagrams/chart.drawio
      * - Absolute paths: /Users/name/photos/image.png
      * - Workspace-relative paths: images/photo.png (searches workspace)
+     * - Diagram files: .drawio, .excalidraw, .excalidraw.svg, .excalidraw.png
      */
     async resolveImagePath(imagePath: string, currentDocumentPath?: string): Promise<string | undefined> {
         // If it's an absolute path and exists, return it
@@ -151,8 +167,13 @@ export class EmbedService {
             const endPos = document.positionAt(match.index + match[0].length);
             const range = new vscode.Range(startPos, endPos);
 
-            // Determine if this is an image or note embed based on file extension
-            const type = this.isImageFile(noteName) ? 'image' : 'note';
+            // Determine embed type based on file extension
+            let type: 'note' | 'image' | 'diagram' = 'note';
+            if (this.isDiagramFile(noteName)) {
+                type = 'diagram';
+            } else if (this.isImageFile(noteName)) {
+                type = 'image';
+            }
 
             embeds.push({
                 noteName,
@@ -186,8 +207,13 @@ export class EmbedService {
                     const startCol = match.index;
                     const endCol = match.index + match[0].length;
 
-                    // Determine if this is an image or note embed
-                    const type = this.isImageFile(noteName) ? 'image' : 'note';
+                    // Determine embed type based on file extension
+                    let type: 'note' | 'image' | 'diagram' = 'note';
+                    if (this.isDiagramFile(noteName)) {
+                        type = 'diagram';
+                    } else if (this.isImageFile(noteName)) {
+                        type = 'image';
+                    }
 
                     embeds.push({
                         noteName,
@@ -476,7 +502,14 @@ export class EmbedService {
             const noteName = match[1].trim();
             const section = match[2] ? match[2].trim() : undefined;
             const displayText = match[3] ? match[3].trim() : undefined;
-            const type = this.isImageFile(noteName) ? 'image' : 'note';
+
+            // Determine embed type based on file extension
+            let type: 'note' | 'image' | 'diagram' = 'note';
+            if (this.isDiagramFile(noteName)) {
+                type = 'diagram';
+            } else if (this.isImageFile(noteName)) {
+                type = 'image';
+            }
 
             embedMatches.push({
                 match: match[0],
@@ -503,12 +536,14 @@ export class EmbedService {
             let replacement: string;
 
             try {
-                if (embed.type === 'image') {
-                    // Process as embedded image
+                if (embed.type === 'image' || embed.type === 'diagram') {
+                    // Process as embedded image or diagram (both use image rendering)
+                    // Diagrams with .svg or .png extensions can be embedded directly
                     replacement = await this.renderEmbeddedImageForWebview(
                         embed.noteName,
                         webview,
-                        currentDocumentUri?.fsPath
+                        currentDocumentUri?.fsPath,
+                        embed.type === 'diagram'
                     );
                 } else {
                     // Process as embedded note
@@ -568,25 +603,40 @@ export class EmbedService {
     private async renderEmbeddedImageForWebview(
         imagePath: string,
         webview: vscode.Webview,
-        currentDocumentPath?: string
+        currentDocumentPath?: string,
+        isDiagram: boolean = false
     ): Promise<string> {
         const resolvedPath = await this.resolveImagePath(imagePath, currentDocumentPath);
 
         if (!resolvedPath) {
-            // Image not found, render a placeholder
-            return `\n\n> 📷 **Image not found:** \`${imagePath}\`\n\n`;
+            // Image/diagram not found, render a placeholder
+            const icon = isDiagram ? '📊' : '📷';
+            const type = isDiagram ? 'Diagram' : 'Image';
+            return `\n\n> ${icon} **${type} not found:** \`${imagePath}\`\n\n`;
         }
 
         try {
-            // Convert to webview URI
+            // Check if this is a raw diagram file (not exported as .svg or .png)
+            const lowerPath = resolvedPath.toLowerCase();
+            const isRawDiagram = (lowerPath.endsWith('.drawio') || lowerPath.endsWith('.excalidraw'))
+                && !lowerPath.endsWith('.svg') && !lowerPath.endsWith('.png');
+
+            if (isRawDiagram) {
+                // Raw diagram files need to be opened in their respective editors
+                const filename = path.basename(resolvedPath);
+                const diagramType = lowerPath.endsWith('.drawio') ? 'Draw.io' : 'Excalidraw';
+                return `\n\n> 📊 **${diagramType} diagram:** [\`${filename}\`](command:vscode.open?${encodeURIComponent(JSON.stringify(vscode.Uri.file(resolvedPath)))})\n> _Click to open in ${diagramType} editor_\n\n`;
+            }
+
+            // Convert to webview URI for images and exported diagram files (.svg, .png)
             const imageUri = webview.asWebviewUri(vscode.Uri.file(resolvedPath));
             const filename = path.basename(resolvedPath);
 
             // Return markdown image syntax
             return `\n\n![${filename}](${imageUri.toString()})\n\n`;
         } catch (error) {
-            console.error('[NOTED] Error processing embedded image:', imagePath, error);
-            return `\n\n> ⚠️ **Error loading image:** \`${imagePath}\`\n\n`;
+            console.error('[NOTED] Error processing embedded image/diagram:', imagePath, error);
+            return `\n\n> ⚠️ **Error loading:** \`${imagePath}\`\n\n`;
         }
     }
 
