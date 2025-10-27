@@ -18,10 +18,13 @@ export async function run(): Promise<void> {
   // before any test files are loaded. This is necessary because when Mocha requires
   // the test files, they immediately call suite() which must be defined.
   const bddInterface = require('mocha/lib/interfaces/bdd');
-  const interfaceSetup = bddInterface(mocha.suite);
 
-  // Call the interface setup function with the global context to inject globals
-  interfaceSetup(global);
+  // Initialize the BDD interface - this sets up event listeners on the suite
+  bddInterface(mocha.suite);
+
+  // Emit the 'pre-require' event to trigger global injection
+  // This is what Mocha does internally when loading test files
+  mocha.suite.emit('pre-require', global, null, mocha);
 
   // Find all test files
   const files = await glob('**/**.test.js', { cwd: testsRoot });
