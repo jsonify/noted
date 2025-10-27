@@ -312,7 +312,6 @@ All notable changes to this project will be documented in this file. See [standa
 ### Features
 
 * Add automated publishing workflow and documentation for VS Code Marketplace ([cba6312](https://github.com/jsonify/noted/commit/cba6312dcb5ca049f554a210eb6d8da0d8eca6dc))
-<<<<<<< HEAD
 * add calendar view command and integrate with notes management ([4699418](https://github.com/jsonify/noted/commit/46994189a6c2022c4be619c0df9b9f4ea1976a41))
 * Add clear tag filters button to Notes view ([fddd38f](https://github.com/jsonify/noted/commit/fddd38f6200aac1e2b3c36dfd56384b29f3433dd))
 * Add comprehensive integration tests for note and tag management commands, enhancing test coverage and reliability ([0f7e1b6](https://github.com/jsonify/noted/commit/0f7e1b6b2a4f582d1a54c10faf1072b2abd1c266))
@@ -339,14 +338,10 @@ All notable changes to this project will be documented in this file. See [standa
 * refactor file operations to async with comprehensive error handling ([b3729fa](https://github.com/jsonify/noted/commit/b3729fa2d427ff2ddd8ad9f097c8f9fd2d782d50))
 * refactored the Noted extension to use asynchronous file operations with comprehensive error handling ([e9001ea](https://github.com/jsonify/noted/commit/e9001ea848e036610dfacb72c69d89df8c544de3))
 * replace conventional-changelog workflow with standard-version for reliable changelog generation ([90df5ea](https://github.com/jsonify/noted/commit/90df5ea9edfe17e67026d223c59c12b6f025c59c))
-=======
-* Add clear tag filters button to Notes view ([fddd38f](https://github.com/jsonify/noted/commit/fddd38f6200aac1e2b3c36dfd56384b29f3433dd))
->>>>>>> 4ccf706 (chore(release): 1.6.1)
 
 
 ### Bug Fixes
 
-<<<<<<< HEAD
 * Add explicit type definitions to tsconfig ([23fa65f](https://github.com/jsonify/noted/commit/23fa65fdb653204106de3d8602e2411e631ce894))
 * change duplicate note error message from error to warning for better UX ([309dfdd](https://github.com/jsonify/noted/commit/309dfdd2bacebbac41267e040c3b9866aee2366b))
 * downgrade chai to v4 for CommonJS compatibility ([f2f3fd9](https://github.com/jsonify/noted/commit/f2f3fd924fd7353b1b36a87c2857dc9bb95aca05))
@@ -376,9 +371,6 @@ All notable changes to this project will be documented in this file. See [standa
 * **release:** 1.5.0 ([4f63ece](https://github.com/jsonify/noted/commit/4f63ecea305c21d6828a17a9bc2ae148b59f22dc))
 * **release:** 1.6.0 ([5ee48a1](https://github.com/jsonify/noted/commit/5ee48a175da1f902deb09538fd87f6e501b95615))
 * remove pnpm version specification in CI workflows and update documentation ([e6b4717](https://github.com/jsonify/noted/commit/e6b47175342431bb49b2e0bd3f33a9ebf9d91c6b))
-=======
-* Specify package path for VS Code Marketplace publishing ([268b5e5](https://github.com/jsonify/noted/commit/268b5e5cc8039a0c343f14b324f68ed1c21baeaf))
->>>>>>> 4ccf706 (chore(release): 1.6.1)
 
 
 ### Tests
