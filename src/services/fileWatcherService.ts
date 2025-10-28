@@ -36,21 +36,18 @@ export class FileWatcherService {
 
         // Listen for changes to the file
         watcher.onDidChange(uri => {
-            console.log('[NOTED] File changed:', uri.fsPath);
             this._onDidChangeFile.fire(uri);
             this.notifyListeners(filePath, uri);
         });
 
         // Listen for file creation (in case file was deleted and recreated)
         watcher.onDidCreate(uri => {
-            console.log('[NOTED] File created:', uri.fsPath);
             this._onDidChangeFile.fire(uri);
             this.notifyListeners(filePath, uri);
         });
 
         // Listen for file deletion
         watcher.onDidDelete(uri => {
-            console.log('[NOTED] File deleted:', uri.fsPath);
             this._onDidChangeFile.fire(uri);
             this.notifyListeners(filePath, uri);
         });
@@ -60,8 +57,6 @@ export class FileWatcherService {
         if (callback) {
             this.addListener(filePath, callback);
         }
-
-        console.log('[NOTED] Now watching file:', filePath);
     }
 
     /**
@@ -74,7 +69,6 @@ export class FileWatcherService {
             watcher.dispose();
             this.watchers.delete(filePath);
             this.listeners.delete(filePath);
-            console.log('[NOTED] Stopped watching file:', filePath);
         }
     }
 
@@ -105,7 +99,6 @@ export class FileWatcherService {
     unwatchAll(): void {
         for (const [filePath, watcher] of this.watchers) {
             watcher.dispose();
-            console.log('[NOTED] Stopped watching file:', filePath);
         }
         this.watchers.clear();
         this.listeners.clear();
@@ -145,7 +138,7 @@ export class FileWatcherService {
                 try {
                     listener(uri);
                 } catch (error) {
-                    console.error('[NOTED] Error in file watcher listener:', error);
+                    // Error in listener
                 }
             }
         }

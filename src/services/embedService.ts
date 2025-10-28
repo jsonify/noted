@@ -508,7 +508,6 @@ export class EmbedService {
 
         // Update cache
         this.embedSourcesCache.set(documentUri, sources);
-        console.log(`[NOTED] Tracking ${sources.size} embedded sources for ${documentUri}`);
     }
 
     /**

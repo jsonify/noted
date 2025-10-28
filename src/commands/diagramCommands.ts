@@ -64,8 +64,11 @@ async function createDiagramCommand(
 ): Promise<void> {
     // Check if required extension is installed
     if (!config.extensionCheck()) {
-        diagramService.showExtensionWarning(type);
-        return;
+        const userChoice = await diagramService.showExtensionWarning(type);
+        if (userChoice !== 'proceed') {
+            return; // User chose to install or dismiss
+        }
+        // User chose "Create Anyway" - continue with diagram creation
     }
 
     // Prompt for diagram name with validation
