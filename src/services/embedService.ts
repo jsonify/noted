@@ -83,12 +83,54 @@ export class EmbedService {
     }
 
     /**
+     * Recursively search for a file by name in a directory
+     */
+    private async findFileRecursively(directory: string, filename: string, depth: number = 0): Promise<string | undefined> {
+        try {
+            const entries = await fs.readdir(directory, { withFileTypes: true });
+
+            // First check files in current directory
+            for (const entry of entries) {
+                if (entry.isFile()) {
+                    if (entry.name.toLowerCase() === filename.toLowerCase()) {
+                        const fullPath = path.join(directory, entry.name);
+                        console.log(`[NOTED] Found file: ${fullPath}`);
+                        return fullPath;
+                    }
+                }
+            }
+
+            // Then recurse into subdirectories
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    // Skip common ignore directories
+                    if (['node_modules', '.git', '.vscode', 'out', 'dist', '.noted-templates', '.build'].includes(entry.name)) {
+                        continue;
+                    }
+
+                    const fullPath = path.join(directory, entry.name);
+                    const found = await this.findFileRecursively(fullPath, filename, depth + 1);
+                    if (found) {
+                        return found;
+                    }
+                }
+            }
+        } catch (error) {
+            // Silently fail for directories we can't read
+            return undefined;
+        }
+
+        return undefined;
+    }
+
+    /**
      * Resolve an image or diagram path relative to the current document or workspace
      * Supports:
      * - Relative paths: ./images/photo.png or diagrams/chart.drawio
      * - Absolute paths: /Users/name/photos/image.png
      * - Workspace-relative paths: images/photo.png (searches workspace)
      * - Diagram files: .drawio, .excalidraw, .excalidraw.svg, .excalidraw.png
+     * - Recursive search: Searches entire workspace for files by name
      */
     async resolveImagePath(imagePath: string, currentDocumentPath?: string): Promise<string | undefined> {
         // If it's an absolute path and exists, return it
@@ -111,11 +153,65 @@ export class EmbedService {
             } catch {
                 // Continue to try other methods
             }
+
+            // Try sibling Diagrams folder
+            // If document is in Notes/, check for Diagrams/ at the same level
+            const config = vscode.workspace.getConfiguration('noted');
+            let notesFolder = config.get<string>('notesFolder', 'Notes');
+
+            // If notesFolder is a full path, extract just the folder name
+            if (notesFolder.includes(path.sep)) {
+                notesFolder = path.basename(notesFolder);
+            }
+
+            // Split path and look for the notes folder name
+            const pathParts = currentDocumentPath.split(path.sep);
+            const notesFolderIndex = pathParts.indexOf(notesFolder);
+
+            if (notesFolderIndex !== -1) {
+                // Build path to Diagrams folder at the same level as Notes
+                const diagramsBasePath = pathParts.slice(0, notesFolderIndex).join(path.sep) + path.sep + 'Diagrams';
+                const diagramPath = path.join(diagramsBasePath, imagePath);
+
+                try {
+                    await fs.access(diagramPath);
+                    return diagramPath;
+                } catch {
+                    // Not found in Diagrams folder, continue
+                }
+            }
         }
 
         // Try relative to workspace folders
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (workspaceFolders) {
+            // If we have a current document, search in its workspace folder first
+            if (currentDocumentPath) {
+                const docWorkspaceFolder = workspaceFolders.find(folder =>
+                    currentDocumentPath.startsWith(folder.uri.fsPath)
+                );
+
+                if (docWorkspaceFolder) {
+                    // Try direct path in document's workspace
+                    const workspacePath = path.join(docWorkspaceFolder.uri.fsPath, imagePath);
+                    try {
+                        await fs.access(workspacePath);
+                        return workspacePath;
+                    } catch {
+                        // Continue to recursive search
+                    }
+
+                    // If no path separators, do recursive search in document's workspace
+                    if (!imagePath.includes('/') && !imagePath.includes('\\')) {
+                        const found = await this.findFileRecursively(docWorkspaceFolder.uri.fsPath, imagePath);
+                        if (found) {
+                            return found;
+                        }
+                    }
+                }
+            }
+
+            // Search in all workspace folders as fallback
             for (const folder of workspaceFolders) {
                 const workspacePath = path.join(folder.uri.fsPath, imagePath);
                 try {
@@ -123,6 +219,16 @@ export class EmbedService {
                     return workspacePath;
                 } catch {
                     // Continue to next workspace folder
+                }
+            }
+
+            // If no path separators in imagePath, try recursive search in all workspaces
+            if (!imagePath.includes('/') && !imagePath.includes('\\')) {
+                for (const folder of workspaceFolders) {
+                    const found = await this.findFileRecursively(folder.uri.fsPath, imagePath);
+                    if (found) {
+                        return found;
+                    }
                 }
             }
         }
@@ -237,12 +343,12 @@ export class EmbedService {
 
     /**
      * Resolve an embed to get the target file path
-     * For images, uses image path resolution
+     * For images and diagrams, uses image path resolution
      * For notes, uses link service resolution
      */
     async resolveEmbed(embed: NoteEmbed, currentDocumentPath?: string): Promise<string | undefined> {
-        // For image embeds, use image path resolution
-        if (embed.type === 'image') {
+        // For image and diagram embeds, use image path resolution
+        if (embed.type === 'image' || embed.type === 'diagram') {
             return await this.resolveImagePath(embed.noteName, currentDocumentPath);
         }
 

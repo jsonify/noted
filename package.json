@@ -37,6 +37,10 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "markdown.markdownItPlugins": true,
+    "markdown.previewStyles": [
+      "./static/preview/style.css"
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -250,6 +254,11 @@
         "command": "noted.showGraph",
         "title": "Noted: Show Graph View",
         "icon": "$(graph)"
+      },
+      {
+        "command": "noted.showPreview",
+        "title": "Noted: Open Preview (with Diagram Support)",
+        "icon": "$(open-preview)"
       },
       {
         "command": "noted.filterByTag",
@@ -807,6 +816,8 @@
   "packageManager": "pnpm@8.15.9",
   "devDependencies": {
     "@types/chai": "4",
+    "@types/markdown-it": "^14.1.2",
+    "@types/marked": "^6.0.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^18.0.0",
     "@types/sinon": "^17.0.4",
@@ -821,5 +832,8 @@
     "standard-version": "^9.5.0",
     "typescript": "^5.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "markdown-it-regex": "^0.2.2",
+    "marked": "^16.4.1"
+  }
 }

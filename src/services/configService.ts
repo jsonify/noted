@@ -10,29 +10,21 @@ export function getNotesPath(): string | null {
     const config = vscode.workspace.getConfiguration('noted');
     const notesFolder = config.get<string>('notesFolder', DEFAULTS.NOTES_FOLDER);
 
-    console.log('[NOTED DEBUG] getNotesPath() called:');
-    console.log('[NOTED DEBUG] - notesFolder config:', notesFolder);
-    console.log('[NOTED DEBUG] - is absolute:', path.isAbsolute(notesFolder));
-
     // If absolute path, use it directly (this is the preferred approach for global configuration)
     if (path.isAbsolute(notesFolder)) {
-        console.log('[NOTED DEBUG] - returning absolute path:', notesFolder);
         return notesFolder;
     }
 
     // For relative paths, try to resolve against workspace first, then fall back to current folder
     const workspaceFolders = vscode.workspace.workspaceFolders;
-    console.log('[NOTED DEBUG] - workspaceFolders exist:', !!workspaceFolders);
 
     if (workspaceFolders) {
         const rootPath = workspaceFolders[0].uri.fsPath;
         const resolvedPath = path.join(rootPath, notesFolder);
-        console.log('[NOTED DEBUG] - returning workspace-relative path:', resolvedPath);
         return resolvedPath;
     }
 
     // No workspace and relative path - this means user hasn't configured a default location yet
-    console.log('[NOTED DEBUG] - no workspace and relative path, returning null');
     return null;
 }
 

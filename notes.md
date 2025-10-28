@@ -254,7 +254,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Document Link Provider**: VS Code integration for seamless navigation
 - **Auto-Activation** (v1.17.1): Extension activates automatically on startup for immediate link functionality
 
-### Note and Image Embedding (v1.16.0-v1.17.0)
+### Note and Image Embedding (v1.16.0-v1.17.0, Enhanced v1.31.7)
 - **Embed Notes** (v1.16.0): Include entire notes or sections inline using `![[note-name]]` syntax
   - **Full Note Embed**: `![[my-note]]` - embeds entire note content
   - **Section Embed**: `![[my-note#Section]]` - embeds specific sections only
@@ -274,6 +274,20 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - **Image Metadata**: Shows file size and dimensions (when available)
   - **Inline Icons**: Shows 🖼️ icon next to image embeds
   - **Smart Resolution**: Automatically searches document folder, then workspace folders
+- **Embed Diagrams** (v1.31.0, Enhanced v1.31.7): Display diagrams inline using `![[diagram.drawio]]` syntax
+  - **Diagram Formats**: Supports Draw.io (.drawio), Excalidraw (.excalidraw, .excalidraw.svg, .excalidraw.png)
+  - **Automatic Sibling Folder Search** (v1.31.7): Automatically finds diagrams in sibling `Diagrams/` folder
+    - If note is in `Notes/2025/10-October/`, automatically checks `Diagrams/`
+    - Works without adding parent directory to workspace
+    - Configurable via `noted.diagramsFolder` setting (default: "Diagrams")
+  - **Custom Preview**: Use `Noted: Open Preview (with Diagram Support)` command
+    - Renders exported diagrams (.svg, .png) inline as images
+    - Shows clickable links for raw diagrams (.drawio, .excalidraw) to open in editors
+    - Proper webview permissions for files outside workspace
+    - Live updates as you edit
+  - **Path Resolution Order**: Same folder → Sibling Diagrams → Workspace → Recursive search
+  - **Hover Previews**: Hover to see diagram with metadata
+  - **Inline Icons**: Shows 📊 icon next to diagram embeds
 
 ### Backlinks System (v1.5.0)
 - **Automatic Detection**: All links to current note are automatically tracked
@@ -552,6 +566,22 @@ pnpm run test
 ```
 
 ## Recent Updates
+
+### Diagram Embed Enhancements (v1.31.7)
+- **Automatic Sibling Folder Search**: Diagrams in `Diagrams/` folder automatically discovered
+  - No need to add parent directory to workspace
+  - Works for deeply nested notes (e.g., `Notes/2025/10-October/note.md` finds `Diagrams/diagram.drawio`)
+  - Configurable folder name via `noted.diagramsFolder` setting
+- **Custom Preview with Webview Permissions**: Enhanced preview panel for diagram rendering
+  - Proper resource permissions for files outside workspace
+  - Renders exported diagrams (.svg, .png) inline
+  - Shows helpful messages for raw diagrams with export instructions
+  - Multi-level parent directory access for flexible folder structures
+- **Smart Path Resolution**: Improved path resolution logic
+  - Checks sibling Diagrams folder before workspace search
+  - Handles both folder name and full path configurations
+  - Extracts folder name from paths automatically
+- **Command**: `Noted: Open Preview (with Diagram Support)` for custom preview
 
 ### YAML Frontmatter Tag Support (v1.25.0)
 - **Frontmatter Tags**: Add tags using standard YAML frontmatter array format: `tags: [tag1, tag2, tag3]`

@@ -62,18 +62,15 @@ import {
     handleShowUndoHistory,
     handleClearUndoHistory
 } from './commands/undoCommands';
+import { markdownItWikilinkEmbed, warmUpPathCache, clearPathResolutionCache } from './features/preview/wikilink-embed';
+import { showMarkdownPreview } from './preview/markdownPreview';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
-    
+
     const config = vscode.workspace.getConfiguration('noted');
     const notesFolder = config.get<string>('notesFolder', 'Notes');
     const workspaceFolders = vscode.workspace.workspaceFolders;
-    console.log('[NOTED DEBUG] Extension activated with:');
-    console.log('[NOTED DEBUG] - notesFolder config:', notesFolder);
-    console.log('[NOTED DEBUG] - is absolute path:', path.isAbsolute(notesFolder));
-    console.log('[NOTED DEBUG] - workspace folders:', workspaceFolders?.length || 0);
-    console.log('[NOTED DEBUG] - resolved notes path:', getNotesPath());
 
     // Check if notes folder is configured
     initializeNotesFolder();
@@ -171,6 +168,13 @@ export function activate(context: vscode.ExtensionContext) {
         }
         embedService = new EmbedService(linkService);
         console.log('[NOTED] EmbedService initialized successfully');
+
+        // Warm up path cache for markdown preview
+        warmUpPathCache(embedService).then(() => {
+            console.log('[NOTED] Markdown preview path cache initialized');
+        }).catch(err => {
+            console.warn('[NOTED] Failed to warm up path cache:', err);
+        });
     } catch (error) {
         console.error('[NOTED] Failed to initialize EmbedService:', error);
         vscode.window.showWarningMessage(
@@ -226,6 +230,11 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(
             fileWatcherService.onDidChangeFile(async (uri) => {
                 console.log('[NOTED] Source file changed, updating embeds:', uri.fsPath);
+
+                // Clear markdown preview path cache for this file
+                const fileName = path.basename(uri.fsPath);
+                clearPathResolutionCache();
+                console.log('[NOTED] Cleared markdown preview path cache due to file change');
 
                 // Find all documents that embed this source file
                 const documentsToRefresh = embedService.getDocumentsEmbeddingSource(uri.fsPath);
@@ -1412,7 +1421,6 @@ export function activate(context: vscode.ExtensionContext) {
             // Always save absolute path to global configuration so it works across all windows
             await config.update('notesFolder', defaultNotesPath, vscode.ConfigurationTarget.Global);
 
-            console.log('[NOTED DEBUG] Setup default folder:', defaultNotesPath);
             vscode.window.showInformationMessage(`Notes folder created at: ${defaultNotesPath}`);
             refreshAllProviders();
         } catch (error) {
@@ -1499,7 +1507,6 @@ export function activate(context: vscode.ExtensionContext) {
                 // Always save absolute path to global configuration
                 await config.update('notesFolder', selectedPath, vscode.ConfigurationTarget.Global);
 
-                console.log('[NOTED DEBUG] Setup custom folder:', selectedPath);
                 vscode.window.showInformationMessage(`Notes folder set to: ${selectedPath}`);
                 refreshAllProviders();
             }
@@ -1548,6 +1555,18 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // ============================================================================
+    // Markdown Preview Command
+    // ============================================================================
+
+    let showPreview = vscode.commands.registerCommand('noted.showPreview', async () => {
+        if (embedService) {
+            await showMarkdownPreview(embedService);
+        } else {
+            vscode.window.showErrorMessage('Embed service not available');
+        }
+    });
+
+    // ============================================================================
     // Markdown Formatting Commands (Visual Toolbar)
     // ============================================================================
 
@@ -1593,11 +1612,36 @@ export function activate(context: vscode.ExtensionContext) {
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive,
-        showMarkdownToolbar,
+        showPreview, showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol,
         refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource
     );
+
+    // Return API for markdown-it plugin registration
+    let callCount = 0;
+    return {
+        extendMarkdownIt(md: any) {
+            callCount++;
+            console.log('[NOTED] extendMarkdownIt called by VS Code (call #' + callCount + ')');
+            console.log('[NOTED] embedService available:', !!embedService);
+            console.log('[NOTED] linkService available:', !!linkService);
+            console.log('[NOTED] markdown-it instance:', !!md);
+            console.log('[NOTED] markdown-it instance id:', md._noted_id || 'untracked');
+
+            if (embedService && linkService) {
+                // Mark this instance so we can track it
+                md._noted_id = 'noted-' + Date.now();
+                console.log('[NOTED] Marked markdown-it instance with id:', md._noted_id);
+
+                const result = markdownItWikilinkEmbed(md, embedService, linkService);
+                console.log('[NOTED] Returning extended markdown-it instance with id:', result._noted_id);
+                return result;
+            }
+            console.log('[NOTED] Returning unmodified markdown-it (missing services)');
+            return md;
+        }
+    };
 }
 
 async function initializeNotesFolder() {
@@ -1672,29 +1716,21 @@ function getNotesPath(): string | null {
     const config = vscode.workspace.getConfiguration('noted');
     const notesFolder = config.get<string>('notesFolder', 'Notes');
 
-    console.log('[NOTED DEBUG] getNotesPath() called:');
-    console.log('[NOTED DEBUG] - notesFolder config:', notesFolder);
-    console.log('[NOTED DEBUG] - is absolute:', path.isAbsolute(notesFolder));
-
     // If absolute path, use it directly (this is the preferred approach for global configuration)
     if (path.isAbsolute(notesFolder)) {
-        console.log('[NOTED DEBUG] - returning absolute path:', notesFolder);
         return notesFolder;
     }
 
     // For relative paths, try to resolve against workspace first, then fall back to current folder
     const workspaceFolders = vscode.workspace.workspaceFolders;
-    console.log('[NOTED DEBUG] - workspaceFolders exist:', !!workspaceFolders);
 
     if (workspaceFolders) {
         const rootPath = workspaceFolders[0].uri.fsPath;
         const resolvedPath = path.join(rootPath, notesFolder);
-        console.log('[NOTED DEBUG] - returning workspace-relative path:', resolvedPath);
         return resolvedPath;
     }
 
     // No workspace and relative path - this means user hasn't configured a default location yet
-    console.log('[NOTED DEBUG] - no workspace and relative path, returning null');
     return null;
 }
 
