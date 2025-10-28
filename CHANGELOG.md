@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.32.0](https://github.com/jsonify/noted/compare/v1.31.10...v1.32.0) (2025-10-28)
+
+
+### Features
+
+* enhance graph visualization with particle background and improv… ([#44](https://github.com/jsonify/noted/issues/44)) ([61ba543](https://github.com/jsonify/noted/commit/61ba5430c81b36a6a4523f7e8178cedb266a8db5))
+
 ### [1.31.10](https://github.com/jsonify/noted/compare/v1.31.8...v1.31.10) (2025-10-28)
 
 
