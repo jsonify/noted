@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.31.10](https://github.com/jsonify/noted/compare/v1.31.8...v1.31.10) (2025-10-28)
+
+
+### Bug Fixes
+
+* bundle production dependencies to resolve 'marked' module error ([2237f95](https://github.com/jsonify/noted/commit/2237f95794734515384a8a485d1327fc4855d1da))
+* prevent extension activation failure when no workspace configured ([d02a055](https://github.com/jsonify/noted/commit/d02a055fb27cbf3a41a6789a6c36f4fbf40eab35))
+
 ### [1.31.9](https://github.com/jsonify/noted/compare/v1.31.8...v1.31.9) (2025-10-28)
 
 
