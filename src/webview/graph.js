@@ -65,16 +65,9 @@ function initParticles() {
         return;
     }
 
-    // Create canvas for particles
+    // Create canvas for particles (styles applied via CSS)
     particleSystem.canvas = document.createElement('canvas');
     particleSystem.canvas.id = 'particle-canvas';
-    particleSystem.canvas.style.position = 'absolute';
-    particleSystem.canvas.style.top = '0';
-    particleSystem.canvas.style.left = '0';
-    particleSystem.canvas.style.pointerEvents = 'none';
-    particleSystem.canvas.style.zIndex = '1';
-    particleSystem.canvas.style.width = '100%';
-    particleSystem.canvas.style.height = '100%';
 
     // Append after all other children to be on top
     container.appendChild(particleSystem.canvas);
@@ -83,28 +76,10 @@ function initParticles() {
     // Set canvas size
     resizeParticleCanvas();
 
-    console.log('Particles initialized:', {
-        canvasWidth: particleSystem.canvas.width,
-        canvasHeight: particleSystem.canvas.height,
-        containerWidth: container.clientWidth,
-        containerHeight: container.clientHeight
-    });
-
     // Create particles
-    const particleCount = 200; // Number of particles (increased for better visibility)
+    const particleCount = 200; // Number of particles
     for (let i = 0; i < particleCount; i++) {
         particleSystem.particles.push(createParticle());
-    }
-
-    console.log(`Created ${particleCount} particles`);
-
-    // Draw a test circle to verify canvas is working
-    if (particleSystem.ctx) {
-        particleSystem.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-        particleSystem.ctx.fillRect(10, 10, 50, 50);
-        setTimeout(() => {
-            particleSystem.ctx.clearRect(0, 0, particleSystem.canvas.width, particleSystem.canvas.height);
-        }, 2000);
     }
 
     // Start animation
@@ -149,26 +124,13 @@ function createParticle() {
 /**
  * Animate particles
  */
-let animationFrameCount = 0;
 function animateParticles() {
     if (!particleSystem.ctx || !particleSystem.canvas) {
-        console.error('Cannot animate - context or canvas missing');
         return;
     }
 
     const ctx = particleSystem.ctx;
     const canvas = particleSystem.canvas;
-
-    // Log first few frames for debugging
-    if (animationFrameCount < 3) {
-        console.log(`Animation frame ${animationFrameCount}:`, {
-            canvasWidth: canvas.width,
-            canvasHeight: canvas.height,
-            particleCount: particleSystem.particles.length,
-            firstParticle: particleSystem.particles[0]
-        });
-        animationFrameCount++;
-    }
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -308,6 +270,9 @@ function initGraph() {
     state.graph.nodes = window.graphData.nodes || [];
     state.graph.links = window.graphData.links || [];
 
+    // Node size scaling factor
+    const NODE_REL_SIZE = 0.7;
+
     const SIMULATION_CONFIG = {
         CHARGE_STRENGTH: -120,
         LINK_DISTANCE: 50,
@@ -328,7 +293,7 @@ function initGraph() {
         .nodeId('id')
         .nodeLabel(node => node.title || node.label)
         .nodeVal('val')
-        .nodeRelSize(0.7)  // Reduced from 1 to 0.7 for smaller nodes overall
+        .nodeRelSize(NODE_REL_SIZE)
         .nodeColor(node => {
             const opacity = getNodeOpacity(node.id);
             return hexToRgba(node.color, opacity);
@@ -336,7 +301,7 @@ function initGraph() {
         .nodeCanvasObject((node, ctx, globalScale) => {
             // Only draw labels, let force-graph handle the nodes
             const { x, y, val } = node;
-            const radius = Math.sqrt(val) * 0.7 * 0.8;  // Multiply by 0.7 to match nodeRelSize
+            const radius = Math.sqrt(val) * NODE_REL_SIZE * 0.8;
             const nodeState = getNodeState(node.id);
 
             // Calculate label opacity based on zoom level
@@ -436,8 +401,8 @@ function initGraph() {
         .d3Force('center', d3.forceCenter().strength(SIMULATION_CONFIG.CENTER_STRENGTH))       // Weak center gravity
         .d3Force('collision', d3.forceCollide(node => {
             // Collision radius based on visual node size
-            const radius = Math.sqrt(node.val) * 0.7 * 0.8;  // Match nodeRelSize of 0.7
-            return radius * 1.5; // Add padding between nodes
+            const radius = Math.sqrt(node.val) * NODE_REL_SIZE * 0.8;
+            return radius * SIMULATION_CONFIG.COLLISION_RADIUS_MULTIPLIER;
         }))
         .d3Force('x', d3.forceX().strength(0.02))                 // Very weak X centering
         .d3Force('y', d3.forceY().strength(0.02))                 // Very weak Y centering
@@ -634,17 +599,16 @@ function handleRecenter() {
  * Handle clear filters button - reset all checkboxes to checked
  */
 function handleClearFilters() {
-    // Reset all filter states to true
-    state.filters.showNotes = true;
-    state.filters.showTags = true;
-    state.filters.showPlaceholders = true;
-    state.filters.showOrphans = true;
-
-    // Update checkboxes in UI
-    document.getElementById('showNotes').checked = true;
-    document.getElementById('showTags').checked = true;
-    document.getElementById('showPlaceholders').checked = true;
-    document.getElementById('showOrphans').checked = true;
+    // Reset all filter states to true and update UI
+    for (const filterKey in state.filters) {
+        if (Object.prototype.hasOwnProperty.call(state.filters, filterKey)) {
+            state.filters[filterKey] = true;
+            const checkbox = document.getElementById(filterKey);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        }
+    }
 
     // Update graph with all filters enabled
     updateFilters();

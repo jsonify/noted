@@ -61,6 +61,17 @@ export interface GraphStats {
 }
 
 /**
+ * Node sizing configuration
+ */
+const NODE_SIZING_CONFIG = {
+    TAG_NODE_SIZE_FACTOR: 1.5,
+    PLACEHOLDER_FIXED_SIZE: 8,
+    BASE_SIZE: 10,
+    MAX_SIZE: 30,
+    LOG_MULTIPLIER: 8,
+};
+
+/**
  * Service for building and analyzing note graphs
  */
 export class GraphService {
@@ -186,14 +197,13 @@ export class GraphService {
         for (const [tag, noteSet] of tagToNotes.entries()) {
             const tagCount = noteSet.size;
 
-            const nodeSizeFactor = 1.5;  // Reduced from 2 to 1.5
             // Create tag node
             const tagNode: GraphNode = {
                 id: `tag:${tag}`,
                 label: `#${tag}`,
                 title: `Tag: #${tag}\n${tagCount} note${tagCount !== 1 ? 's' : ''}`,
                 type: 'tag',
-                val: this.calculateNodeSize(tagCount * nodeSizeFactor), // Tags are slightly larger
+                val: this.calculateNodeSize(tagCount * NODE_SIZING_CONFIG.TAG_NODE_SIZE_FACTOR), // Tags are slightly larger
                 tagCount,
                 color: this.getNodeColor('tag'),
                 group: 'tag'
@@ -215,13 +225,12 @@ export class GraphService {
         // Create placeholder nodes for unresolved links
         for (const placeholderId of placeholderSet) {
             const linkText = placeholderId.replace('placeholder:', '');
-            const fixedSizeValue = 8;  // Reduced from 15 to 8
             const placeholderNode: GraphNode = {
                 id: placeholderId,
                 label: linkText,
                 title: `Placeholder: "${linkText}"\n(note does not exist)`,
                 type: 'placeholder',
-                val: fixedSizeValue, // Small fixed size
+                val: NODE_SIZING_CONFIG.PLACEHOLDER_FIXED_SIZE, // Small fixed size
                 color: this.getNodeColor('placeholder'),
                 group: 'placeholder'
             };
@@ -313,10 +322,11 @@ export class GraphService {
      * Calculate node size based on connection count
      */
     private calculateNodeSize(linkCount: number): number {
-        const baseSize = 10;  // Reduced from 20 to 10
-        const maxSize = 30;   // Reduced from 50 to 30
         // Logarithmic scaling for better visual distribution
-        return Math.min(baseSize + Math.log(linkCount + 1) * 8, maxSize);  // Reduced multiplier from 10 to 8
+        return Math.min(
+            NODE_SIZING_CONFIG.BASE_SIZE + Math.log(linkCount + 1) * NODE_SIZING_CONFIG.LOG_MULTIPLIER,
+            NODE_SIZING_CONFIG.MAX_SIZE
+        );
     }
 
     /**
