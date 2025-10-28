@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.31.8](https://github.com/jsonify/noted/compare/v1.31.7...v1.31.8) (2025-10-28)
+
+
+### Bug Fixes
+
+* streamline error handling and user prompts in diagram and embed services ([#43](https://github.com/jsonify/noted/issues/43)) ([ca46891](https://github.com/jsonify/noted/commit/ca4689161799fa8aced1ed311967c3c9691c8993))
+
 ### [1.31.7](https://github.com/jsonify/noted/compare/v1.31.6...v1.31.7) (2025-10-28)
 
 ### [1.31.6](https://github.com/jsonify/noted/compare/v1.30.7...v1.31.6) (2025-10-28)
