@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { LinkService, LINK_PATTERN } from '../services/linkService';
+import { IMAGE_EXTENSIONS, DIAGRAM_EXTENSIONS } from '../constants';
 
 /**
  * Provides clickable document links for wiki-style [[note-name]] syntax
@@ -9,6 +11,22 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
 
     constructor(linkService: LinkService) {
         this.linkService = linkService;
+    }
+
+    /**
+     * Check if a link is to an image or diagram file based on extension
+     */
+    private isImageOrDiagramLink(linkText: string): boolean {
+        const lowerLink = linkText.toLowerCase();
+
+        // Check for composite extensions first (.excalidraw.svg, .excalidraw.png)
+        if (lowerLink.endsWith('.excalidraw.svg') || lowerLink.endsWith('.excalidraw.png')) {
+            return true;
+        }
+
+        // Check single extensions
+        const ext = path.extname(linkText).toLowerCase();
+        return IMAGE_EXTENSIONS.includes(ext) || DIAGRAM_EXTENSIONS.includes(ext);
     }
 
     async provideDocumentLinks(
@@ -28,6 +46,11 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
             const startPos = document.positionAt(match.index);
             const endPos = document.positionAt(match.index + match[0].length);
             const range = new vscode.Range(startPos, endPos);
+
+            // Skip image and diagram links (handled by embed system)
+            if (this.isImageOrDiagramLink(linkText)) {
+                continue;
+            }
 
             // Try to resolve the link
             const targetPath = await this.linkService.resolveLink(linkText);

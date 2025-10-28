@@ -62,6 +62,7 @@ import {
     handleShowUndoHistory,
     handleClearUndoHistory
 } from './commands/undoCommands';
+import { markdownItWikilinkEmbed, warmUpPathCache, clearPathResolutionCache } from './features/preview/wikilink-embed';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
@@ -171,6 +172,13 @@ export function activate(context: vscode.ExtensionContext) {
         }
         embedService = new EmbedService(linkService);
         console.log('[NOTED] EmbedService initialized successfully');
+
+        // Warm up path cache for markdown preview
+        warmUpPathCache(embedService).then(() => {
+            console.log('[NOTED] Markdown preview path cache initialized');
+        }).catch(err => {
+            console.warn('[NOTED] Failed to warm up path cache:', err);
+        });
     } catch (error) {
         console.error('[NOTED] Failed to initialize EmbedService:', error);
         vscode.window.showWarningMessage(
@@ -226,6 +234,11 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(
             fileWatcherService.onDidChangeFile(async (uri) => {
                 console.log('[NOTED] Source file changed, updating embeds:', uri.fsPath);
+
+                // Clear markdown preview path cache for this file
+                const fileName = path.basename(uri.fsPath);
+                clearPathResolutionCache();
+                console.log('[NOTED] Cleared markdown preview path cache due to file change');
 
                 // Find all documents that embed this source file
                 const documentsToRefresh = embedService.getDocumentsEmbeddingSource(uri.fsPath);
@@ -1598,6 +1611,16 @@ export function activate(context: vscode.ExtensionContext) {
         renameSymbol,
         refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource
     );
+
+    // Return API for markdown-it plugin registration
+    return {
+        extendMarkdownIt(md: any) {
+            if (embedService && linkService) {
+                return markdownItWikilinkEmbed(md, embedService, linkService);
+            }
+            return md;
+        }
+    };
 }
 
 async function initializeNotesFolder() {

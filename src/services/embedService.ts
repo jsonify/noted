@@ -83,18 +83,72 @@ export class EmbedService {
     }
 
     /**
+     * Recursively search for a file by name in a directory
+     */
+    private async findFileRecursively(directory: string, filename: string, depth: number = 0): Promise<string | undefined> {
+        const indent = '  '.repeat(depth);
+        console.log(`${indent}[NOTED] Searching in: ${directory}`);
+
+        try {
+            const entries = await fs.readdir(directory, { withFileTypes: true });
+            console.log(`${indent}[NOTED] Found ${entries.length} entries`);
+
+            // First check files in current directory
+            for (const entry of entries) {
+                if (entry.isFile()) {
+                    console.log(`${indent}[NOTED]   File: ${entry.name} (looking for: ${filename})`);
+                    if (entry.name.toLowerCase() === filename.toLowerCase()) {
+                        const fullPath = path.join(directory, entry.name);
+                        console.log(`${indent}[NOTED] ✓ Found file recursively: ${fullPath}`);
+                        return fullPath;
+                    }
+                }
+            }
+
+            // Then recurse into subdirectories
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    console.log(`${indent}[NOTED]   Dir: ${entry.name}`);
+
+                    // Skip common ignore directories
+                    if (['node_modules', '.git', '.vscode', 'out', 'dist', '.noted-templates'].includes(entry.name)) {
+                        console.log(`${indent}[NOTED]     (skipping ignore directory)`);
+                        continue;
+                    }
+
+                    const fullPath = path.join(directory, entry.name);
+                    const found = await this.findFileRecursively(fullPath, filename, depth + 1);
+                    if (found) {
+                        return found;
+                    }
+                }
+            }
+        } catch (error) {
+            // Silently fail for directories we can't read
+            console.log(`${indent}[NOTED] Error reading directory ${directory}:`, error);
+            return undefined;
+        }
+
+        return undefined;
+    }
+
+    /**
      * Resolve an image or diagram path relative to the current document or workspace
      * Supports:
      * - Relative paths: ./images/photo.png or diagrams/chart.drawio
      * - Absolute paths: /Users/name/photos/image.png
      * - Workspace-relative paths: images/photo.png (searches workspace)
      * - Diagram files: .drawio, .excalidraw, .excalidraw.svg, .excalidraw.png
+     * - Recursive search: Searches entire workspace for files by name
      */
     async resolveImagePath(imagePath: string, currentDocumentPath?: string): Promise<string | undefined> {
+        console.log(`[NOTED] Resolving image path: "${imagePath}", currentDoc: "${currentDocumentPath}"`);
+
         // If it's an absolute path and exists, return it
         if (path.isAbsolute(imagePath)) {
             try {
                 await fs.access(imagePath);
+                console.log(`[NOTED] Found as absolute path: ${imagePath}`);
                 return imagePath;
             } catch {
                 return undefined;
@@ -107,9 +161,11 @@ export class EmbedService {
             const relativePath = path.resolve(documentDir, imagePath);
             try {
                 await fs.access(relativePath);
+                console.log(`[NOTED] Found relative to document: ${relativePath}`);
                 return relativePath;
             } catch {
                 // Continue to try other methods
+                console.log(`[NOTED] Not found relative to document: ${relativePath}`);
             }
         }
 
@@ -120,13 +176,31 @@ export class EmbedService {
                 const workspacePath = path.join(folder.uri.fsPath, imagePath);
                 try {
                     await fs.access(workspacePath);
+                    console.log(`[NOTED] Found in workspace folder: ${workspacePath}`);
                     return workspacePath;
                 } catch {
                     // Continue to next workspace folder
                 }
             }
+
+            // If no path separators in imagePath, try recursive search
+            // This allows [[diagram.drawio]] to find Diagrams/diagram.drawio
+            if (!imagePath.includes('/') && !imagePath.includes('\\')) {
+                console.log(`[NOTED] Starting recursive search for: ${imagePath}`);
+                console.log(`[NOTED] Workspace folders: ${workspaceFolders.map(f => f.uri.fsPath).join(', ')}`);
+                for (const folder of workspaceFolders) {
+                    console.log(`[NOTED] Searching workspace folder: ${folder.uri.fsPath}`);
+                    const found = await this.findFileRecursively(folder.uri.fsPath, imagePath);
+                    if (found) {
+                        console.log(`[NOTED] Found via recursive search: ${found}`);
+                        return found;
+                    }
+                }
+                console.log(`[NOTED] Recursive search completed, file not found`);
+            }
         }
 
+        console.log(`[NOTED] Image path resolution failed for: ${imagePath}`);
         return undefined;
     }
 
@@ -237,12 +311,12 @@ export class EmbedService {
 
     /**
      * Resolve an embed to get the target file path
-     * For images, uses image path resolution
+     * For images and diagrams, uses image path resolution
      * For notes, uses link service resolution
      */
     async resolveEmbed(embed: NoteEmbed, currentDocumentPath?: string): Promise<string | undefined> {
-        // For image embeds, use image path resolution
-        if (embed.type === 'image') {
+        // For image and diagram embeds, use image path resolution
+        if (embed.type === 'image' || embed.type === 'diagram') {
             return await this.resolveImagePath(embed.noteName, currentDocumentPath);
         }
 
