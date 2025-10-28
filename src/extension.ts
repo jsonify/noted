@@ -87,11 +87,15 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Create tree data provider for journal view (daily notes)
     const journalProvider = new JournalTreeProvider();
-    vscode.window.registerTreeDataProvider('notedJournalView', journalProvider);
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('notedJournalView', journalProvider)
+    );
 
     // Create tree data provider for templates view (empty, uses viewsWelcome)
     const templatesProvider = new TemplatesTreeProvider();
-    vscode.window.registerTreeDataProvider('notedTemplatesView', templatesProvider);
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('notedTemplatesView', templatesProvider)
+    );
 
     // Initialize tag service for tag filtering
     const notesPath = getNotesPath();
@@ -106,7 +110,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Create tree data provider for tags view
     const tagsProvider = new TagsTreeProvider(tagService);
-    vscode.window.registerTreeDataProvider('notedTagsView', tagsProvider);
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('notedTagsView', tagsProvider)
+    );
 
     // Register tag completion provider
     const tagAutoComplete = config.get<boolean>('tagAutoComplete', true);
@@ -305,23 +311,31 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize connections service and provider
     const connectionsService = new ConnectionsService(linkService);
     const connectionsProvider = new ConnectionsTreeProvider(connectionsService);
-    vscode.window.registerTreeDataProvider('notedConnectionsView', connectionsProvider);
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('notedConnectionsView', connectionsProvider)
+    );
 
     // Initialize orphans service and provider
     const orphansService = new OrphansService(linkService);
     const orphansProvider = new OrphansTreeProvider(orphansService);
-    vscode.window.registerTreeDataProvider('notedOrphansView', orphansProvider);
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('notedOrphansView', orphansProvider)
+    );
 
     // Initialize placeholders service and provider
     const placeholdersService = new PlaceholdersService(linkService);
     const placeholdersProvider = new PlaceholdersTreeProvider(placeholdersService);
-    vscode.window.registerTreeDataProvider('notedPlaceholdersView', placeholdersProvider);
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('notedPlaceholdersView', placeholdersProvider)
+    );
 
     // Initialize diagram service and diagrams tree provider
     // DiagramService now checks for workspace availability on-demand
     const diagramService = new DiagramService();
     const diagramsProvider = new DiagramsTreeProvider(diagramService);
-    vscode.window.registerTreeDataProvider('notedDiagramsView', diagramsProvider);
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('notedDiagramsView', diagramsProvider)
+    );
     console.log('[NOTED] DiagramService initialized successfully');
 
     // Register diagram commands

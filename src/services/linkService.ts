@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { readFile, pathExists, readDirectoryWithTypes } from './fileSystemService';
-import { SUPPORTED_EXTENSIONS } from '../constants';
+import { SUPPORTED_EXTENSIONS, DIAGRAM_EXTENSIONS } from '../constants';
+import { getNotesPath } from './configService';
 
 /**
  * Regular expression to match wiki-style links: [[note-name]] or [[note-name|Display Text]]
@@ -144,7 +145,7 @@ export class LinkService {
      * Returns the first match or undefined
      */
     private async resolveSimpleLink(normalizedLinkText: string, linkText: string): Promise<string | undefined> {
-        // Try exact filename match first (with extensions)
+        // Try exact filename match first (with note extensions)
         for (const ext of SUPPORTED_EXTENSIONS) {
             const exactPath = await this.findNoteByName(`${linkText}${ext}`);
             if (exactPath) {
@@ -152,7 +153,15 @@ export class LinkService {
             }
         }
 
-        // Search for partial matches
+        // Try exact filename match for diagram extensions
+        for (const ext of DIAGRAM_EXTENSIONS) {
+            const exactPath = await this.findNoteByName(`${linkText}${ext}`);
+            if (exactPath) {
+                return exactPath;
+            }
+        }
+
+        // Search for partial matches (now includes both notes and diagrams)
         const allNotes = await this.getAllNotes();
 
         // Find by filename without extension
@@ -183,11 +192,22 @@ export class LinkService {
         const normalizedPath = linkText.replace(/\\/g, '/');
         const allNotes = await this.getAllNotes();
 
-        // Try exact path match first (with each supported extension)
+        // Try exact path match first (with each supported note extension)
         for (const ext of SUPPORTED_EXTENSIONS) {
             const fullPath = path.join(this.notesPath, normalizedPath + ext);
             if (allNotes.includes(fullPath)) {
                 return fullPath;
+            }
+        }
+
+        // Try exact path match for diagrams (diagrams folder)
+        const diagramsFolder = this.getDiagramsFolder();
+        if (diagramsFolder) {
+            for (const ext of DIAGRAM_EXTENSIONS) {
+                const fullPath = path.join(diagramsFolder, normalizedPath + ext);
+                if (allNotes.includes(fullPath)) {
+                    return fullPath;
+                }
             }
         }
 
@@ -199,8 +219,8 @@ export class LinkService {
             const relativePath = path.relative(this.notesPath, notePath);
             const relativePathNormalized = relativePath.toLowerCase().replace(/\\/g, '/');
 
-            // Remove extension for comparison
-            const relativePathNoExt = relativePathNormalized.replace(/\.(txt|md)$/i, '');
+            // Remove extension for comparison (handle both note and diagram extensions)
+            const relativePathNoExt = relativePathNormalized.replace(/\.(txt|md|drawio|excalidraw|excalidraw\.svg|excalidraw\.png)$/i, '');
 
             // Check if the note path ends with the link path
             if (relativePathNoExt.endsWith(normalizedPath.toLowerCase())) {
@@ -292,12 +312,29 @@ export class LinkService {
     }
 
     /**
-     * Get all note files in the notes directory
+     * Get the diagrams folder path (sibling to notes folder)
+     */
+    private getDiagramsFolder(): string | null {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            return null;
+        }
+
+        const config = vscode.workspace.getConfiguration('noted');
+        const diagramsFolderName = config.get<string>('diagramsFolder', 'Diagrams');
+        const notesParentDir = path.dirname(notesPath);
+
+        return path.join(notesParentDir, diagramsFolderName);
+    }
+
+    /**
+     * Get all note files in the notes directory and diagram files in diagrams directory
      */
     async getAllNotes(): Promise<string[]> {
-        const notes: string[] = [];
+        const files: string[] = [];
 
-        async function findNotes(dir: string) {
+        // Helper function to recursively find files with specific extensions
+        async function findFiles(dir: string, extensions: string[]) {
             try {
                 if (!(await pathExists(dir))) {
                     return;
@@ -307,9 +344,9 @@ export class LinkService {
                 for (const entry of entries) {
                     const fullPath = path.join(dir, entry.name);
                     if (entry.isDirectory()) {
-                        await findNotes(fullPath);
-                    } else if (SUPPORTED_EXTENSIONS.some(ext => entry.name.endsWith(ext))) {
-                        notes.push(fullPath);
+                        await findFiles(fullPath, extensions);
+                    } else if (extensions.some(ext => entry.name.endsWith(ext))) {
+                        files.push(fullPath);
                     }
                 }
             } catch (error) {
@@ -317,8 +354,16 @@ export class LinkService {
             }
         }
 
-        await findNotes(this.notesPath);
-        return notes;
+        // Search notes folder for note files (.txt, .md)
+        await findFiles(this.notesPath, SUPPORTED_EXTENSIONS);
+
+        // Search diagrams folder for diagram files (.drawio, .excalidraw, etc.)
+        const diagramsFolder = this.getDiagramsFolder();
+        if (diagramsFolder) {
+            await findFiles(diagramsFolder, DIAGRAM_EXTENSIONS);
+        }
+
+        return files;
     }
 
     /**

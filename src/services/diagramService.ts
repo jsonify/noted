@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { getNotesPath } from './configService';
 
 /**
  * Template for new Draw.io diagram files
@@ -86,12 +87,28 @@ export class DiagramService {
 
     /**
      * Get the diagrams folder path
+     * Creates diagrams folder as a sibling to the Notes folder
      */
     getDiagramsFolder(): string {
-        const workspaceRoot = this.ensureWorkspace();
+        const notesPath = getNotesPath();
+
+        if (!notesPath) {
+            // Fallback to workspace root if notes path is not configured
+            const workspaceRoot = this.ensureWorkspace();
+            const config = vscode.workspace.getConfiguration('noted');
+            const diagramsFolderName = config.get<string>('diagramsFolder', 'Diagrams');
+            return path.join(workspaceRoot, diagramsFolderName);
+        }
+
+        // Get parent directory of notes folder (e.g., /Users/jruecke/WorkNotes)
+        const notesParentDir = path.dirname(notesPath);
+
+        // Get diagrams folder name from config
         const config = vscode.workspace.getConfiguration('noted');
         const diagramsFolderName = config.get<string>('diagramsFolder', 'Diagrams');
-        return path.join(workspaceRoot, diagramsFolderName);
+
+        // Create diagrams folder as sibling to Notes folder
+        return path.join(notesParentDir, diagramsFolderName);
     }
 
     /**
