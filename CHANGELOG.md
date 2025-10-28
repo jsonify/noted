@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.31.9](https://github.com/jsonify/noted/compare/v1.31.8...v1.31.9) (2025-10-28)
+
+
+### Bug Fixes
+
+* **diagrams**: Fix critical bug where extension fails to activate when no workspace or notes folder is configured ([#44](https://github.com/jsonify/noted/issues/44))
+  - Changed `getDiagramsFolder()` to return `null` instead of throwing error
+  - Updated `getAllDiagrams()` to gracefully handle null diagrams folder
+  - Prevents extension activation failure that caused "no data provider" errors
+  - Fixes issue where tree views (notes, templates, diagrams) failed to load after v1.31.8 update
+
 ### [1.31.8](https://github.com/jsonify/noted/compare/v1.31.7...v1.31.8) (2025-10-28)
 
 

@@ -90,13 +90,18 @@ export class DiagramService {
     /**
      * Get the diagrams folder path
      * Creates diagrams folder as a sibling to the Notes folder
+     * Returns null if neither notes path nor workspace is configured
      */
-    getDiagramsFolder(): string {
+    getDiagramsFolder(): string | null {
         const notesPath = getNotesPath();
 
         if (!notesPath) {
             // Fallback to workspace root if notes path is not configured
-            const workspaceRoot = this.ensureWorkspace();
+            const workspaceRoot = this.getWorkspaceRoot();
+            if (!workspaceRoot) {
+                // No notes path and no workspace - can't determine diagrams folder
+                return null;
+            }
             const config = vscode.workspace.getConfiguration('noted');
             const diagramsFolderName = config.get<string>('diagramsFolder', 'Diagrams');
             return path.join(workspaceRoot, diagramsFolderName);
@@ -118,6 +123,9 @@ export class DiagramService {
      */
     async ensureDiagramsFolder(): Promise<void> {
         const diagramsFolder = this.getDiagramsFolder();
+        if (!diagramsFolder) {
+            throw new Error('Cannot determine diagrams folder location. Please configure a notes folder or open a workspace.');
+        }
         try {
             await fs.access(diagramsFolder);
         } catch {
@@ -131,6 +139,11 @@ export class DiagramService {
      */
     async getAllDiagrams(): Promise<DiagramFile[]> {
         const diagramsFolder = this.getDiagramsFolder();
+
+        if (!diagramsFolder) {
+            // No workspace or notes folder configured - return empty array
+            return [];
+        }
 
         try {
             await fs.access(diagramsFolder);
@@ -238,11 +251,16 @@ export class DiagramService {
     ): Promise<string> {
         await this.ensureDiagramsFolder();
 
+        const diagramsFolder = this.getDiagramsFolder();
+        if (!diagramsFolder) {
+            throw new Error('Cannot determine diagrams folder location. Please configure a notes folder or open a workspace.');
+        }
+
         // Sanitize name and build file path
         const sanitizedName = this.sanitizeDiagramName(name);
         const extension = type === 'drawio' ? '.drawio' : '.excalidraw';
         const fileName = `${sanitizedName}${extension}`;
-        const filePath = path.join(this.getDiagramsFolder(), fileName);
+        const filePath = path.join(diagramsFolder, fileName);
 
         // Check if file already exists
         try {
