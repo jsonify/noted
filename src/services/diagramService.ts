@@ -59,8 +59,10 @@ export interface DiagramFile {
  * Service for managing diagram files (Draw.io and Excalidraw)
  */
 export class DiagramService {
-    constructor() {
-        // No initialization needed - we'll check for workspace on-demand
+    private context: vscode.ExtensionContext;
+
+    constructor(context: vscode.ExtensionContext) {
+        this.context = context;
     }
 
     /**
@@ -121,7 +123,6 @@ export class DiagramService {
         } catch {
             // Folder doesn't exist, create it
             await fs.mkdir(diagramsFolder, { recursive: true });
-            console.log('[NOTED] Created diagrams folder:', diagramsFolder);
         }
     }
 
@@ -157,7 +158,7 @@ export class DiagramService {
                 }
             }
         } catch (error) {
-            console.error('[NOTED] Error reading diagrams folder:', error);
+            // Error reading diagrams folder
         }
 
         return diagrams;
@@ -207,7 +208,6 @@ export class DiagramService {
                 size: stats.size
             };
         } catch (error) {
-            console.error('[NOTED] Error getting diagram info:', filePath, error);
             return null;
         }
     }
@@ -264,7 +264,6 @@ export class DiagramService {
 
         // Write file
         await fs.writeFile(filePath, content, 'utf-8');
-        console.log(`[NOTED] Created ${type} diagram:`, filePath);
 
         return filePath;
     }
@@ -326,7 +325,6 @@ export class DiagramService {
     async copyEmbedSyntaxToClipboard(diagramFile: DiagramFile): Promise<void> {
         const embedSyntax = this.getSimpleEmbedSyntax(diagramFile);
         await vscode.env.clipboard.writeText(embedSyntax);
-        console.log('[NOTED] Copied to clipboard:', embedSyntax);
     }
 
     /**
@@ -350,31 +348,76 @@ export class DiagramService {
      * Check if required editor extension is installed
      */
     isDrawioExtensionInstalled(): boolean {
-        return vscode.extensions.getExtension('hediet.vscode-drawio') !== undefined;
+        const extension = vscode.extensions.getExtension('hediet.vscode-drawio');
+        // Check if extension exists in the extensions list
+        if (extension !== undefined) {
+            return true;
+        }
+        // Fallback: Check all extensions (sometimes getExtension fails to find it)
+        return vscode.extensions.all.some(ext => ext.id === 'hediet.vscode-drawio');
     }
 
     /**
      * Check if Excalidraw extension is installed
      */
     isExcalidrawExtensionInstalled(): boolean {
-        return vscode.extensions.getExtension('pomdtr.excalidraw-editor') !== undefined;
+        const extensionId = 'pomdtr.excalidraw-editor';
+        const extension = vscode.extensions.getExtension(extensionId);
+
+        // Check if extension exists in the extensions list
+        if (extension !== undefined) {
+            return true;
+        }
+
+        // Fallback: Check all extensions (sometimes getExtension fails to find it)
+        return vscode.extensions.all.some(ext => ext.id === extensionId);
+    }
+
+    /**
+     * Check if user has chosen to suppress extension warnings
+     */
+    private shouldSuppressWarning(type: 'drawio' | 'excalidraw'): boolean {
+        const key = `noted.suppressExtensionWarning.${type}`;
+        return this.context.globalState.get<boolean>(key, false);
+    }
+
+    /**
+     * Set whether to suppress extension warnings
+     */
+    private setSuppressWarning(type: 'drawio' | 'excalidraw', suppress: boolean): void {
+        const key = `noted.suppressExtensionWarning.${type}`;
+        this.context.globalState.update(key, suppress);
     }
 
     /**
      * Show warning if required extension is not installed
      */
-    showExtensionWarning(type: 'drawio' | 'excalidraw'): void {
+    async showExtensionWarning(type: 'drawio' | 'excalidraw'): Promise<'install' | 'proceed' | 'dismiss'> {
+        // Check if user has previously chosen to suppress this warning
+        if (this.shouldSuppressWarning(type)) {
+            return 'proceed'; // Automatically proceed without showing warning
+        }
+
         const extensionName = type === 'drawio' ? 'Draw.io Integration' : 'Excalidraw';
         const extensionId = type === 'drawio' ? 'hediet.vscode-drawio' : 'pomdtr.excalidraw-editor';
 
-        vscode.window.showWarningMessage(
-            `${extensionName} extension is not installed. Install it to create and edit ${type} diagrams.`,
+        const selection = await vscode.window.showWarningMessage(
+            `${extensionName} extension is not available. Install or enable it to edit ${type} diagrams.`,
             'Install Extension',
+            'Create Anyway',
+            "Don't Ask Again",
             'Dismiss'
-        ).then(selection => {
-            if (selection === 'Install Extension') {
-                vscode.commands.executeCommand('workbench.extensions.installExtension', extensionId);
-            }
-        });
+        );
+
+        if (selection === 'Install Extension') {
+            await vscode.commands.executeCommand('workbench.extensions.installExtension', extensionId);
+            return 'install';
+        } else if (selection === 'Create Anyway') {
+            return 'proceed';
+        } else if (selection === "Don't Ask Again") {
+            this.setSuppressWarning(type, true);
+            return 'proceed';
+        }
+        return 'dismiss';
     }
 }

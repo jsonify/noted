@@ -100,8 +100,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Build tag index on activation (async, non-blocking)
     if (notesPath) {
-        tagService.buildTagIndex().catch(err => {
-            console.error('[NOTED] Error building tag index:', err);
+        tagService.buildTagIndex().catch(() => {
+            // Error building tag index
         });
     }
 
@@ -128,8 +128,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Build backlinks index on activation (async, non-blocking)
     if (notesPath) {
-        linkService.buildBacklinksIndex().catch(err => {
-            console.error('[NOTED] Error building backlinks index:', err);
+        linkService.buildBacklinksIndex().catch(() => {
+            // Error building backlinks index
         });
     }
 
@@ -167,16 +167,12 @@ export function activate(context: vscode.ExtensionContext) {
             throw new Error('LinkService is not initialized');
         }
         embedService = new EmbedService(linkService);
-        console.log('[NOTED] EmbedService initialized successfully');
 
         // Warm up path cache for markdown preview
-        warmUpPathCache(embedService).then(() => {
-            console.log('[NOTED] Markdown preview path cache initialized');
-        }).catch(err => {
-            console.warn('[NOTED] Failed to warm up path cache:', err);
+        warmUpPathCache(embedService).catch(() => {
+            // Failed to warm up path cache
         });
     } catch (error) {
-        console.error('[NOTED] Failed to initialize EmbedService:', error);
         vscode.window.showWarningMessage(
             'Noted: Failed to initialize embed service. Embedded content features may not work correctly.'
         );
@@ -217,11 +213,10 @@ export function activate(context: vscode.ExtensionContext) {
                         if (!watchedFilesForTransclusion.has(sourcePath)) {
                             fileWatcherService.watchFile(sourcePath);
                             watchedFilesForTransclusion.add(sourcePath);
-                            console.log('[NOTED] Started watching for transclusion:', sourcePath);
                         }
                     }
                 } catch (err) {
-                    console.error('[NOTED] Error updating embed decorations:', err);
+                    // Error updating embed decorations
                 }
             }
         };
@@ -229,12 +224,8 @@ export function activate(context: vscode.ExtensionContext) {
         // Listen for changes to watched source files (transclusion)
         context.subscriptions.push(
             fileWatcherService.onDidChangeFile(async (uri) => {
-                console.log('[NOTED] Source file changed, updating embeds:', uri.fsPath);
-
                 // Clear markdown preview path cache for this file
-                const fileName = path.basename(uri.fsPath);
                 clearPathResolutionCache();
-                console.log('[NOTED] Cleared markdown preview path cache due to file change');
 
                 // Find all documents that embed this source file
                 const documentsToRefresh = embedService.getDocumentsEmbeddingSource(uri.fsPath);
@@ -288,8 +279,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Update diagnostics when document is opened or changed
     const updateDiagnostics = (document: vscode.TextDocument) => {
-        linkDiagnosticsProvider.updateDiagnostics(document).catch(err => {
-            console.error('[NOTED] Error updating link diagnostics:', err);
+        linkDiagnosticsProvider.updateDiagnostics(document).catch(() => {
+            // Error updating link diagnostics
         });
     };
 
@@ -340,12 +331,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Initialize diagram service and diagrams tree provider
     // DiagramService now checks for workspace availability on-demand
-    const diagramService = new DiagramService();
+    const diagramService = new DiagramService(context);
     const diagramsProvider = new DiagramsTreeProvider(diagramService);
     context.subscriptions.push(
         vscode.window.registerTreeDataProvider('notedDiagramsView', diagramsProvider)
     );
-    console.log('[NOTED] DiagramService initialized successfully');
 
     // Register diagram commands
     registerDiagramCommands(context, diagramService, diagramsProvider);
@@ -731,7 +721,6 @@ export function activate(context: vscode.ExtensionContext) {
 
             vscode.window.showInformationMessage(`Created note: ${sanitizedName}`);
         } catch (error) {
-            console.error('[NOTED] Error creating note from link:', error);
             vscode.window.showErrorMessage(`Failed to create note: ${error}`);
         }
     });
@@ -827,7 +816,6 @@ export function activate(context: vscode.ExtensionContext) {
                     // Track operation for undo AFTER archiving (since we need the destination path)
                     await trackArchiveNote(undoService, item.filePath, destinationPath);
                 } else {
-                    console.error('[NOTED] archiveService.archiveNote failed to return a destination path for', item.filePath);
                     vscode.window.showErrorMessage(`Failed to archive ${item.label}`);
                     return;
                 }
@@ -1619,26 +1607,12 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     // Return API for markdown-it plugin registration
-    let callCount = 0;
     return {
         extendMarkdownIt(md: any) {
-            callCount++;
-            console.log('[NOTED] extendMarkdownIt called by VS Code (call #' + callCount + ')');
-            console.log('[NOTED] embedService available:', !!embedService);
-            console.log('[NOTED] linkService available:', !!linkService);
-            console.log('[NOTED] markdown-it instance:', !!md);
-            console.log('[NOTED] markdown-it instance id:', md._noted_id || 'untracked');
-
             if (embedService && linkService) {
-                // Mark this instance so we can track it
-                md._noted_id = 'noted-' + Date.now();
-                console.log('[NOTED] Marked markdown-it instance with id:', md._noted_id);
-
                 const result = markdownItWikilinkEmbed(md, embedService, linkService);
-                console.log('[NOTED] Returning extended markdown-it instance with id:', result._noted_id);
                 return result;
             }
-            console.log('[NOTED] Returning unmodified markdown-it (missing services)');
             return md;
         }
     };
@@ -1704,7 +1678,7 @@ async function getAllFolders(rootPath: string): Promise<Array<{name: string, pat
                 }
             }
         } catch (error) {
-            console.error('[NOTED] Error scanning directory:', dir, error);
+            // Error scanning directory
         }
     }
 
@@ -2140,12 +2114,12 @@ async function searchInNotes(query: string): Promise<Array<{file: string, previe
                             });
                         }
                     } catch (error) {
-                        console.error('[NOTED] Error reading file:', fullPath, error);
+                        // Error reading file
                     }
                 }
             }
         } catch (error) {
-            console.error('[NOTED] Error reading directory:', dir, error);
+            // Error reading directory
         }
     }
 
@@ -2187,12 +2161,12 @@ async function getNoteStats(): Promise<{total: number, thisWeek: number, thisMon
                         if (stat.mtime >= weekAgo) {thisWeek++;}
                         if (stat.mtime >= monthStart) {thisMonth++;}
                     } catch (error) {
-                        console.error('[NOTED] Error stating file:', fullPath, error);
+                        // Error stating file
                     }
                 }
             }
         } catch (error) {
-            console.error('[NOTED] Error reading directory:', dir, error);
+            // Error reading directory
         }
     }
 
@@ -2248,12 +2222,12 @@ async function exportNotesToFile(range: string) {
                             combinedContent += `\n\n--- ${entry.name} ---\n\n${content}`;
                         }
                     } catch (error) {
-                        console.error('[NOTED] Error processing file:', fullPath, error);
+                        // Error processing file
                     }
                 }
             }
         } catch (error) {
-            console.error('[NOTED] Error reading directory:', dir, error);
+            // Error reading directory
         }
     }
 

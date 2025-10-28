@@ -112,7 +112,6 @@ export class LinkService {
 
             return links;
         } catch (error) {
-            console.error('[NOTED] Error extracting links from file:', filePath, error);
             return [];
         }
     }
@@ -350,7 +349,7 @@ export class LinkService {
                     }
                 }
             } catch (error) {
-                console.error('[NOTED] Error reading directory:', dir, error);
+                // Error reading directory
             }
         }
 
@@ -403,8 +402,6 @@ export class LinkService {
                 }
             }
         }
-
-        console.log('[NOTED] Backlinks index built:', this.backlinksCache.size, 'target notes with backlinks');
     }
 
     /**
@@ -455,8 +452,6 @@ export class LinkService {
                 });
             }
         }
-
-        console.log('[NOTED] Backlinks index updated for:', filePath);
     }
 
     /**
@@ -526,12 +521,10 @@ export class LinkService {
             if (updateCount > 0) {
                 const { writeFile } = await import('./fileSystemService');
                 await writeFile(filePath, updatedContent);
-                console.log(`[NOTED] Updated ${updateCount} link(s) in ${filePath}`);
             }
 
             return updateCount;
         } catch (error) {
-            console.error('[NOTED] Error updating links in file:', filePath, error);
             return 0;
         }
     }
@@ -631,10 +624,9 @@ export class LinkService {
                     affectedFiles.push(notePath);
                     filesUpdated++;
                     totalLinksUpdated += updateCount;
-                    console.log(`[NOTED] Renamed ${updateCount} link(s) in ${notePath}`);
                 }
             } catch (error) {
-                console.error('[NOTED] Error renaming links in file:', notePath, error);
+                // Error renaming links in file
             }
         }
 
@@ -669,7 +661,7 @@ export class LinkService {
                     });
                 }
             } catch (error) {
-                console.error('[NOTED] Error reading file:', notePath, error);
+                // Error reading file
             }
         }
 
