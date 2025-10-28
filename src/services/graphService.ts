@@ -186,7 +186,7 @@ export class GraphService {
         for (const [tag, noteSet] of tagToNotes.entries()) {
             const tagCount = noteSet.size;
 
-            const nodeSizeFactor = 2;
+            const nodeSizeFactor = 1.5;  // Reduced from 2 to 1.5
             // Create tag node
             const tagNode: GraphNode = {
                 id: `tag:${tag}`,
@@ -215,7 +215,7 @@ export class GraphService {
         // Create placeholder nodes for unresolved links
         for (const placeholderId of placeholderSet) {
             const linkText = placeholderId.replace('placeholder:', '');
-            const fixedSizeValue = 15;
+            const fixedSizeValue = 8;  // Reduced from 15 to 8
             const placeholderNode: GraphNode = {
                 id: placeholderId,
                 label: linkText,
@@ -313,10 +313,10 @@ export class GraphService {
      * Calculate node size based on connection count
      */
     private calculateNodeSize(linkCount: number): number {
-        const baseSize = 20;
-        const maxSize = 50;
+        const baseSize = 10;  // Reduced from 20 to 10
+        const maxSize = 30;   // Reduced from 50 to 30
         // Logarithmic scaling for better visual distribution
-        return Math.min(baseSize + Math.log(linkCount + 1) * 10, maxSize);
+        return Math.min(baseSize + Math.log(linkCount + 1) * 8, maxSize);  // Reduced multiplier from 10 to 8
     }
 
     /**
