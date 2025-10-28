@@ -86,20 +86,15 @@ export class EmbedService {
      * Recursively search for a file by name in a directory
      */
     private async findFileRecursively(directory: string, filename: string, depth: number = 0): Promise<string | undefined> {
-        const indent = '  '.repeat(depth);
-        console.log(`${indent}[NOTED] Searching in: ${directory}`);
-
         try {
             const entries = await fs.readdir(directory, { withFileTypes: true });
-            console.log(`${indent}[NOTED] Found ${entries.length} entries`);
 
             // First check files in current directory
             for (const entry of entries) {
                 if (entry.isFile()) {
-                    console.log(`${indent}[NOTED]   File: ${entry.name} (looking for: ${filename})`);
                     if (entry.name.toLowerCase() === filename.toLowerCase()) {
                         const fullPath = path.join(directory, entry.name);
-                        console.log(`${indent}[NOTED] ✓ Found file recursively: ${fullPath}`);
+                        console.log(`[NOTED] Found file: ${fullPath}`);
                         return fullPath;
                     }
                 }
@@ -108,11 +103,8 @@ export class EmbedService {
             // Then recurse into subdirectories
             for (const entry of entries) {
                 if (entry.isDirectory()) {
-                    console.log(`${indent}[NOTED]   Dir: ${entry.name}`);
-
                     // Skip common ignore directories
-                    if (['node_modules', '.git', '.vscode', 'out', 'dist', '.noted-templates'].includes(entry.name)) {
-                        console.log(`${indent}[NOTED]     (skipping ignore directory)`);
+                    if (['node_modules', '.git', '.vscode', 'out', 'dist', '.noted-templates', '.build'].includes(entry.name)) {
                         continue;
                     }
 
@@ -125,7 +117,6 @@ export class EmbedService {
             }
         } catch (error) {
             // Silently fail for directories we can't read
-            console.log(`${indent}[NOTED] Error reading directory ${directory}:`, error);
             return undefined;
         }
 
@@ -142,13 +133,10 @@ export class EmbedService {
      * - Recursive search: Searches entire workspace for files by name
      */
     async resolveImagePath(imagePath: string, currentDocumentPath?: string): Promise<string | undefined> {
-        console.log(`[NOTED] Resolving image path: "${imagePath}", currentDoc: "${currentDocumentPath}"`);
-
         // If it's an absolute path and exists, return it
         if (path.isAbsolute(imagePath)) {
             try {
                 await fs.access(imagePath);
-                console.log(`[NOTED] Found as absolute path: ${imagePath}`);
                 return imagePath;
             } catch {
                 return undefined;
@@ -161,46 +149,90 @@ export class EmbedService {
             const relativePath = path.resolve(documentDir, imagePath);
             try {
                 await fs.access(relativePath);
-                console.log(`[NOTED] Found relative to document: ${relativePath}`);
                 return relativePath;
             } catch {
                 // Continue to try other methods
-                console.log(`[NOTED] Not found relative to document: ${relativePath}`);
+            }
+
+            // Try sibling Diagrams folder
+            // If document is in Notes/, check for Diagrams/ at the same level
+            const config = vscode.workspace.getConfiguration('noted');
+            let notesFolder = config.get<string>('notesFolder', 'Notes');
+
+            // If notesFolder is a full path, extract just the folder name
+            if (notesFolder.includes(path.sep)) {
+                notesFolder = path.basename(notesFolder);
+            }
+
+            // Split path and look for the notes folder name
+            const pathParts = currentDocumentPath.split(path.sep);
+            const notesFolderIndex = pathParts.indexOf(notesFolder);
+
+            if (notesFolderIndex !== -1) {
+                // Build path to Diagrams folder at the same level as Notes
+                const diagramsBasePath = pathParts.slice(0, notesFolderIndex).join(path.sep) + path.sep + 'Diagrams';
+                const diagramPath = path.join(diagramsBasePath, imagePath);
+
+                try {
+                    await fs.access(diagramPath);
+                    return diagramPath;
+                } catch {
+                    // Not found in Diagrams folder, continue
+                }
             }
         }
 
         // Try relative to workspace folders
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (workspaceFolders) {
+            // If we have a current document, search in its workspace folder first
+            if (currentDocumentPath) {
+                const docWorkspaceFolder = workspaceFolders.find(folder =>
+                    currentDocumentPath.startsWith(folder.uri.fsPath)
+                );
+
+                if (docWorkspaceFolder) {
+                    // Try direct path in document's workspace
+                    const workspacePath = path.join(docWorkspaceFolder.uri.fsPath, imagePath);
+                    try {
+                        await fs.access(workspacePath);
+                        return workspacePath;
+                    } catch {
+                        // Continue to recursive search
+                    }
+
+                    // If no path separators, do recursive search in document's workspace
+                    if (!imagePath.includes('/') && !imagePath.includes('\\')) {
+                        const found = await this.findFileRecursively(docWorkspaceFolder.uri.fsPath, imagePath);
+                        if (found) {
+                            return found;
+                        }
+                    }
+                }
+            }
+
+            // Search in all workspace folders as fallback
             for (const folder of workspaceFolders) {
                 const workspacePath = path.join(folder.uri.fsPath, imagePath);
                 try {
                     await fs.access(workspacePath);
-                    console.log(`[NOTED] Found in workspace folder: ${workspacePath}`);
                     return workspacePath;
                 } catch {
                     // Continue to next workspace folder
                 }
             }
 
-            // If no path separators in imagePath, try recursive search
-            // This allows [[diagram.drawio]] to find Diagrams/diagram.drawio
+            // If no path separators in imagePath, try recursive search in all workspaces
             if (!imagePath.includes('/') && !imagePath.includes('\\')) {
-                console.log(`[NOTED] Starting recursive search for: ${imagePath}`);
-                console.log(`[NOTED] Workspace folders: ${workspaceFolders.map(f => f.uri.fsPath).join(', ')}`);
                 for (const folder of workspaceFolders) {
-                    console.log(`[NOTED] Searching workspace folder: ${folder.uri.fsPath}`);
                     const found = await this.findFileRecursively(folder.uri.fsPath, imagePath);
                     if (found) {
-                        console.log(`[NOTED] Found via recursive search: ${found}`);
                         return found;
                     }
                 }
-                console.log(`[NOTED] Recursive search completed, file not found`);
             }
         }
 
-        console.log(`[NOTED] Image path resolution failed for: ${imagePath}`);
         return undefined;
     }
 

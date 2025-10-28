@@ -1,56 +1,105 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { readFileSync } from 'fs';
-import markdownItRegex from 'markdown-it-regex';
 import { EmbedService } from '../../services/embedService';
 import { LinkService } from '../../services/linkService';
 
 /**
- * Regex to match wiki-style embed syntax: ![[file-name]]
- * Captures the entire embed including optional parameters
+ * Regex to match wiki-style embed syntax: ![[file-name]] or ![[file-name|display]]
  */
-export const WIKILINK_EMBED_REGEX = /!\[\[([^\]]+?)\]\]/;
+const WIKILINK_EMBED_REGEX = /!\[\[([^\]]+?)\]\]/;
 
 /**
  * Markdown-it plugin to handle wiki-style embeds in markdown preview
  * Supports images, diagrams (.drawio, .excalidraw), and note embeds
+ * Uses markdown-it's inline parser instead of markdown-it-regex
  */
 export const markdownItWikilinkEmbed = (
     md: any,
     embedService: EmbedService,
     linkService: LinkService
 ) => {
-    return md.use(markdownItRegex, {
-        name: 'embed-wikilinks',
-        regex: WIKILINK_EMBED_REGEX,
-        replace: (embedMatch: string) => {
-            try {
-                // Extract the file/note name from ![[filename]]
-                const match = embedMatch.match(/!\[\[([^|\]]+)(?:\|([^\]]+))?\]\]/);
-                if (!match) {
+    console.log('[NOTED] Registering markdown-it wikilink embed plugin (inline parser approach)');
+    console.log('[NOTED] markdown-it has render method:', typeof md.render);
+    console.log('[NOTED] markdown-it has renderer:', typeof md.renderer);
+
+    // Test: Just replace content directly in the source before markdown-it processes it
+    const instanceId = md._noted_id || 'unknown';
+    const originalRender = md.render;
+    if (typeof originalRender === 'function') {
+        md.render = function(this: any, src: string, env: any) {
+            console.log(`[NOTED Instance ${instanceId}] *** RENDER CALLED *** Source length:`, src.length);
+            console.log(`[NOTED Instance ${instanceId}] Source preview:`, src.substring(0, 200));
+            console.log(`[NOTED Instance ${instanceId}] this._noted_id:`, this._noted_id);
+
+            // Replace ![[...]] BEFORE markdown-it processes it
+            if (src.includes('![[')) {
+                console.log(`[NOTED Instance ${instanceId}] Found ![[  in source, preprocessing...`);
+                src = src.replace(/!\[\[([^\]]+?)\]\]/g, (match, innerContent) => {
+                    console.log(`[NOTED Instance ${instanceId}] Preprocessing embed:`, match);
+                    return `<span style="color:red;font-weight:bold;">EMBED FOUND: ${innerContent}</span>`;
+                });
+            }
+
+            const result = originalRender.call(this, src, env);
+            console.log(`[NOTED Instance ${instanceId}] Render complete, result length:`, result.length);
+            return result;
+        };
+        console.log(`[NOTED] Successfully wrapped md.render for instance ${instanceId}`);
+    } else {
+        console.log(`[NOTED] ERROR: md.render is not a function for instance ${instanceId}!`);
+    }
+
+    // Store old rule
+    const defaultRender = md.renderer.rules.text || function(tokens: any, idx: any, options: any, env: any, self: any) {
+        return self.renderToken(tokens, idx, options);
+    };
+
+    // Override text rendering to process embeds
+    md.renderer.rules.text = function(tokens: any, idx: any, options: any, env: any, self: any) {
+        let content = tokens[idx].content;
+        console.log('[NOTED] Processing text token:', content.substring(0, 100));
+
+        // Look for embed syntax
+        if (content.includes('![[')) {
+            console.log('[NOTED] Found embed syntax in text');
+            content = content.replace(WIKILINK_EMBED_REGEX, (embedMatch: string, innerContent: string) => {
+                console.log('[NOTED] Processing embed:', embedMatch);
+                try {
+                    // Split by | to get filename and optional display text
+                    const parts = innerContent.split('|');
+                    const fileName = parts[0].trim();
+                    const displayText = parts[1] ? parts[1].trim() : undefined;
+
+                    console.log('[NOTED] Embed filename:', fileName, 'displayText:', displayText);
+
+                    // Determine the type of embed
+                    const isImage = embedService.isImageFile(fileName);
+                    const isDiagram = embedService.isDiagramFile(fileName);
+
+                    console.log('[NOTED] Embed type - isImage:', isImage, 'isDiagram:', isDiagram);
+
+                    if (isImage || isDiagram) {
+                        // Handle image and diagram embeds
+                        return renderImageOrDiagramEmbed(fileName, displayText, embedService, md);
+                    } else {
+                        // Handle note embeds
+                        return renderNoteEmbed(fileName, displayText, linkService, md);
+                    }
+                } catch (error) {
+                    console.error('[NOTED] Error processing embed in markdown preview:', embedMatch, error);
                     return embedMatch;
                 }
-
-                const fileName = match[1].trim();
-                const displayText = match[2] ? match[2].trim() : undefined;
-
-                // Determine the type of embed
-                const isImage = embedService.isImageFile(fileName);
-                const isDiagram = embedService.isDiagramFile(fileName);
-
-                if (isImage || isDiagram) {
-                    // Handle image and diagram embeds
-                    return renderImageOrDiagramEmbed(fileName, displayText, embedService, md);
-                } else {
-                    // Handle note embeds
-                    return renderNoteEmbed(fileName, displayText, linkService, md);
-                }
-            } catch (error) {
-                console.error('[NOTED] Error processing embed in markdown preview:', embedMatch, error);
-                return embedMatch;
-            }
+            });
         }
-    });
+
+        // Update token content
+        tokens[idx].content = content;
+        return defaultRender(tokens, idx, options, env, self);
+    };
+
+    console.log('[NOTED] markdown-it plugin registered successfully');
+    return md;
 };
 
 /**
@@ -62,14 +111,20 @@ function renderImageOrDiagramEmbed(
     embedService: EmbedService,
     md: any
 ): string {
+    console.log('[NOTED] renderImageOrDiagramEmbed called for:', fileName);
+
     // Get the current active document to use as context for path resolution
     const activeEditor = vscode.window.activeTextEditor;
     const currentDocPath = activeEditor?.document.uri.fsPath;
+
+    console.log('[NOTED] Current document path:', currentDocPath);
 
     // Try to resolve the path synchronously
     // Note: This is a limitation - we can't do async resolution during markdown rendering
     // We'll need to use a synchronous path resolution strategy
     const resolvedPath = resolvePathSync(fileName, currentDocPath, embedService);
+
+    console.log('[NOTED] Resolved path:', resolvedPath);
 
     if (!resolvedPath) {
         // File not found - show a placeholder
@@ -131,18 +186,48 @@ function resolvePathSync(
     currentDocPath: string | undefined,
     embedService: EmbedService
 ): string | undefined {
+    console.log('[NOTED] resolvePathSync called for:', fileName, 'currentDocPath:', currentDocPath);
+
     // Check cache first
     const cached = pathResolutionCache.get(fileName);
     if (cached) {
+        console.log('[NOTED] Found in cache:', cached);
         return cached;
     }
+
+    console.log('[NOTED] Not in cache, searching filesystem...');
 
     // Try to resolve synchronously by scanning workspace
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) {
+        console.log('[NOTED] No workspace folders found');
         return undefined;
     }
 
+    console.log('[NOTED] Workspace folders:', workspaceFolders.map(f => f.uri.fsPath));
+
+    // If we have a current document path, prioritize searching in its workspace folder first
+    if (currentDocPath) {
+        // Find the workspace folder that contains the current document
+        const docWorkspaceFolder = workspaceFolders.find(folder =>
+            currentDocPath.startsWith(folder.uri.fsPath)
+        );
+
+        console.log('[NOTED] Document workspace folder:', docWorkspaceFolder?.uri.fsPath);
+
+        if (docWorkspaceFolder) {
+            console.log('[NOTED] Searching in document workspace folder:', docWorkspaceFolder.uri.fsPath);
+            // Search in the document's workspace folder first
+            const resolved = findFileSync(docWorkspaceFolder.uri.fsPath, fileName);
+            if (resolved) {
+                console.log('[NOTED] Found file in document workspace:', resolved);
+                pathResolutionCache.set(fileName, resolved);
+                return resolved;
+            }
+        }
+    }
+
+    // Search in all workspace folders as fallback
     for (const folder of workspaceFolders) {
         const resolved = findFileSync(folder.uri.fsPath, fileName);
         if (resolved) {

@@ -252,11 +252,8 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
 
     async getChildren(element?: TreeItem): Promise<TreeItem[]> {
         const notesPath = getNotesPath();
-        console.log('[NOTED DEBUG] TreeProvider.getChildren() called:');
-        console.log('[NOTED DEBUG] - notesPath:', notesPath);
 
         if (!notesPath) {
-            console.log('[NOTED DEBUG] - showing welcome screen (no notesPath)');
             return [];
         }
 
@@ -264,23 +261,17 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
         if (!(await pathExists(notesPath))) {
             const config = vscode.workspace.getConfiguration('noted');
             const notesFolder = config.get<string>('notesFolder', 'Notes');
-            console.log('[NOTED DEBUG] - notes folder does not exist, checking if should auto-create');
-            console.log('[NOTED DEBUG] - notesFolder config:', notesFolder);
-            console.log('[NOTED DEBUG] - is absolute:', path.isAbsolute(notesFolder));
 
             // Auto-create if it's an absolute path (user has configured it)
             if (path.isAbsolute(notesFolder)) {
-                console.log('[NOTED DEBUG] - auto-creating configured absolute path folder');
                 try {
                     await createDirectory(notesPath);
-                    console.log('[NOTED DEBUG] - successfully created notes folder');
                 } catch (error) {
-                    console.error('[NOTED DEBUG] Failed to create notes folder:', error);
+                    console.error('[NOTED] Failed to create notes folder:', error);
                     vscode.window.showErrorMessage(`Failed to create notes folder: ${error instanceof Error ? error.message : String(error)}`);
                     return [];
                 }
             } else {
-                console.log('[NOTED DEBUG] - relative path without workspace, showing welcome screen');
                 // Not properly configured yet, show welcome screen
                 return [];
             }

@@ -256,6 +256,11 @@
         "icon": "$(graph)"
       },
       {
+        "command": "noted.showPreview",
+        "title": "Noted: Open Preview (with Diagram Support)",
+        "icon": "$(open-preview)"
+      },
+      {
         "command": "noted.filterByTag",
         "title": "Noted: Filter Notes by Tag",
         "icon": "$(tag)"
@@ -812,6 +817,7 @@
   "devDependencies": {
     "@types/chai": "4",
     "@types/markdown-it": "^14.1.2",
+    "@types/marked": "^6.0.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^18.0.0",
     "@types/sinon": "^17.0.4",
@@ -827,6 +833,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "markdown-it-regex": "^0.2.2"
+    "markdown-it-regex": "^0.2.2",
+    "marked": "^16.4.1"
   }
 }
