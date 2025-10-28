@@ -26,7 +26,10 @@ const state = {
     // Transition state for smooth animations
     nodeOpacities: new Map(), // Current opacity for each node
     targetOpacities: new Map(), // Target opacity for each node
-    animating: false
+    animating: false,
+    // View state for preserving zoom/pan
+    viewState: null,
+    isInitialLoad: true
 };
 
 // Colors (match CSS variables with better depth)
@@ -42,6 +45,172 @@ const colors = {
 
 // Graph instance
 let graph = null;
+
+// Particle system for background
+const particleSystem = {
+    particles: [],
+    canvas: null,
+    ctx: null,
+    animationId: null,
+    transform: { k: 1, x: 0, y: 0 } // Camera transform (zoom and pan)
+};
+
+/**
+ * Initialize particle system for background universe effect
+ */
+function initParticles() {
+    const container = document.getElementById('graph');
+    if (!container) {
+        console.warn('Graph container not found, particles not initialized');
+        return;
+    }
+
+    // Create canvas for particles (styles applied via CSS)
+    particleSystem.canvas = document.createElement('canvas');
+    particleSystem.canvas.id = 'particle-canvas';
+
+    // Append after all other children to be on top
+    container.appendChild(particleSystem.canvas);
+    particleSystem.ctx = particleSystem.canvas.getContext('2d');
+
+    // Set canvas size
+    resizeParticleCanvas();
+
+    // Create particles
+    const particleCount = 200; // Number of particles
+    for (let i = 0; i < particleCount; i++) {
+        particleSystem.particles.push(createParticle());
+    }
+
+    // Start animation
+    animateParticles();
+
+    // Handle resize
+    window.addEventListener('resize', resizeParticleCanvas);
+}
+
+/**
+ * Resize particle canvas to match container
+ */
+function resizeParticleCanvas() {
+    if (!particleSystem.canvas) return;
+
+    const container = document.getElementById('graph');
+    particleSystem.canvas.width = container.clientWidth;
+    particleSystem.canvas.height = container.clientHeight;
+}
+
+/**
+ * Create a single particle in world coordinates
+ */
+function createParticle() {
+    // Create particles in a large world space (-2000 to 2000 in each direction)
+    // This matches the typical scale of the force-graph coordinate system
+    const worldSize = 4000;
+    const worldOffset = -2000;
+
+    return {
+        x: Math.random() * worldSize + worldOffset, // World X coordinate
+        y: Math.random() * worldSize + worldOffset, // World Y coordinate
+        size: Math.random() * 2 + 1, // Size between 1 and 3
+        vx: (Math.random() - 0.5) * 0.5, // Horizontal velocity in world space
+        vy: (Math.random() - 0.5) * 0.5, // Vertical velocity in world space
+        opacity: Math.random() * 0.6 + 0.2, // Opacity between 0.2 and 0.8
+        twinkleSpeed: Math.random() * 0.02 + 0.01, // Twinkle speed
+        twinklePhase: Math.random() * Math.PI * 2 // Random starting phase
+    };
+}
+
+/**
+ * Animate particles
+ */
+function animateParticles() {
+    if (!particleSystem.ctx || !particleSystem.canvas) {
+        return;
+    }
+
+    const ctx = particleSystem.ctx;
+    const canvas = particleSystem.canvas;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Get current graph transform
+    if (graph) {
+        const zoom = graph.zoom();
+        const centerPos = graph.centerAt();
+        if (centerPos && zoom) {
+            particleSystem.transform.k = zoom;
+            particleSystem.transform.x = centerPos.x;
+            particleSystem.transform.y = centerPos.y;
+        }
+    }
+
+    // Save context state
+    ctx.save();
+
+    // Apply camera transformation to match graph view
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const k = particleSystem.transform.k;
+    const tx = particleSystem.transform.x;
+    const ty = particleSystem.transform.y;
+
+    // Transform: translate to center, scale, translate by camera offset
+    ctx.translate(centerX, centerY);
+    ctx.scale(k, k);
+    ctx.translate(-tx, -ty);
+
+    // Update and draw each particle
+    particleSystem.particles.forEach(particle => {
+        // Update position in world space
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+
+        // Wrap around edges in world space
+        const worldBounds = 2000;
+        if (particle.x < -worldBounds) particle.x = worldBounds;
+        if (particle.x > worldBounds) particle.x = -worldBounds;
+        if (particle.y < -worldBounds) particle.y = worldBounds;
+        if (particle.y > worldBounds) particle.y = -worldBounds;
+
+        // Update twinkle effect
+        particle.twinklePhase += particle.twinkleSpeed;
+        const twinkle = Math.sin(particle.twinklePhase) * 0.3 + 0.7; // Oscillate between 0.4 and 1.0
+
+        // Draw particle with glow effect
+        const finalOpacity = particle.opacity * twinkle;
+
+        // Outer glow (scale with zoom for consistency)
+        ctx.shadowBlur = 4 / k;
+        ctx.shadowColor = `rgba(150, 180, 255, ${finalOpacity * 0.8})`;
+
+        // Draw particle (size scaled for zoom)
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size / k, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(220, 235, 255, ${finalOpacity})`;
+        ctx.fill();
+
+        // Reset shadow
+        ctx.shadowBlur = 0;
+    });
+
+    // Restore context state
+    ctx.restore();
+
+    // Continue animation
+    particleSystem.animationId = requestAnimationFrame(animateParticles);
+}
+
+/**
+ * Stop particle animation
+ */
+function stopParticles() {
+    if (particleSystem.animationId) {
+        cancelAnimationFrame(particleSystem.animationId);
+        particleSystem.animationId = null;
+    }
+}
 
 /**
  * Get node state based on hover/focus
@@ -101,6 +270,9 @@ function initGraph() {
     state.graph.nodes = window.graphData.nodes || [];
     state.graph.links = window.graphData.links || [];
 
+    // Node size scaling factor
+    const NODE_REL_SIZE = 0.7;
+
     const SIMULATION_CONFIG = {
         CHARGE_STRENGTH: -120,
         LINK_DISTANCE: 50,
@@ -121,7 +293,7 @@ function initGraph() {
         .nodeId('id')
         .nodeLabel(node => node.title || node.label)
         .nodeVal('val')
-        .nodeRelSize(1)  // Control base node size (default is 4, lower = smaller nodes)
+        .nodeRelSize(NODE_REL_SIZE)
         .nodeColor(node => {
             const opacity = getNodeOpacity(node.id);
             return hexToRgba(node.color, opacity);
@@ -129,7 +301,7 @@ function initGraph() {
         .nodeCanvasObject((node, ctx, globalScale) => {
             // Only draw labels, let force-graph handle the nodes
             const { x, y, val } = node;
-            const radius = Math.sqrt(val) * 0.8;
+            const radius = Math.sqrt(val) * NODE_REL_SIZE * 0.8;
             const nodeState = getNodeState(node.id);
 
             // Calculate label opacity based on zoom level
@@ -229,15 +401,18 @@ function initGraph() {
         .d3Force('center', d3.forceCenter().strength(SIMULATION_CONFIG.CENTER_STRENGTH))       // Weak center gravity
         .d3Force('collision', d3.forceCollide(node => {
             // Collision radius based on visual node size
-            const radius = Math.sqrt(node.val) * 0.8;
-            return radius * 1.5; // Add padding between nodes
+            const radius = Math.sqrt(node.val) * NODE_REL_SIZE * 0.8;
+            return radius * SIMULATION_CONFIG.COLLISION_RADIUS_MULTIPLIER;
         }))
         .d3Force('x', d3.forceX().strength(0.02))                 // Very weak X centering
         .d3Force('y', d3.forceY().strength(0.02))                 // Very weak Y centering
         .cooldownTicks(SIMULATION_CONFIG.COOLDOWN_TICKS)                                        // More iterations for settling
         .onEngineStop(() => {
-            // Zoom to fit on first load with padding
-            graph.zoomToFit(400, 80);
+            // Zoom to fit only on initial load
+            if (state.isInitialLoad) {
+                graph.zoomToFit(400, 80);
+                state.isInitialLoad = false;
+            }
         });
 }
 
@@ -412,11 +587,41 @@ function handleRefresh() {
 }
 
 /**
+ * Handle re-center button - fit all nodes in view
+ */
+function handleRecenter() {
+    if (graph) {
+        graph.zoomToFit(400, 80);
+    }
+}
+
+/**
+ * Handle clear filters button - reset all checkboxes to checked
+ */
+function handleClearFilters() {
+    // Reset all filter states to true and update UI
+    for (const filterKey in state.filters) {
+        if (Object.prototype.hasOwnProperty.call(state.filters, filterKey)) {
+            state.filters[filterKey] = true;
+            const checkbox = document.getElementById(filterKey);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        }
+    }
+
+    // Update graph with all filters enabled
+    updateFilters();
+}
+
+/**
  * Setup event listeners
  */
 function setupEventListeners() {
-    // Refresh button
+    // Action buttons
+    document.getElementById('recenterBtn').addEventListener('click', handleRecenter);
     document.getElementById('refreshBtn').addEventListener('click', handleRefresh);
+    document.getElementById('clearFiltersBtn').addEventListener('click', handleClearFilters);
 
     // Filter checkboxes
     document.getElementById('showNotes').addEventListener('change', (e) => {
@@ -445,10 +650,29 @@ function setupEventListeners() {
 
         switch (message.command) {
             case 'updateGraph':
+                // Save current zoom/pan state before updating
+                if (graph) {
+                    state.viewState = {
+                        zoom: graph.zoom(),
+                        centerPos: graph.centerAt()
+                    };
+                }
+
                 // Rebuild graph with new data
                 state.graph.nodes = message.graphData.nodes || [];
                 state.graph.links = message.graphData.links || [];
                 updateFilters();
+
+                // Restore zoom/pan state after graph updates
+                if (graph && state.viewState) {
+                    // Give the graph a moment to update, then restore view
+                    setTimeout(() => {
+                        if (state.viewState.centerPos) {
+                            graph.centerAt(state.viewState.centerPos.x, state.viewState.centerPos.y, 0);
+                        }
+                        graph.zoom(state.viewState.zoom, 0);
+                    }, 100);
+                }
                 break;
         }
     });
@@ -461,6 +685,11 @@ function init() {
     initGraph();
     setupEventListeners();
     updateStats();
+
+    // Initialize particles after graph to ensure proper layering
+    setTimeout(() => {
+        initParticles();
+    }, 100);
 }
 
 // Start when DOM is ready
