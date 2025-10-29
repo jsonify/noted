@@ -798,17 +798,17 @@
         "noted.graph.physics.chargeStrength": {
           "type": "number",
           "default": -120,
-          "description": "Node repulsion strength (more negative = more spacing). Default: -120, Dense graphs: -200"
+          "description": "Node repulsion strength (more negative = more spacing). Adaptive: -180 for dense graphs (50+ nodes)"
         },
         "noted.graph.physics.linkDistance": {
           "type": "number",
           "default": 50,
-          "description": "Target distance between connected nodes. Default: 50, Dense graphs: 80"
+          "description": "Target distance between connected nodes. Adaptive: 70 for dense graphs (50+ nodes)"
         },
         "noted.graph.physics.collisionPadding": {
           "type": "number",
           "default": 1.5,
-          "description": "Collision padding multiplier for node spacing. Default: 1.5, Dense graphs: 2.5"
+          "description": "Collision padding multiplier for node spacing. Adaptive: 2.5 for dense graphs (50+ nodes)"
         }
       }
     }

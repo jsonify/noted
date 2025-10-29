@@ -6,6 +6,28 @@ import { GraphService } from '../services/graphService';
 import { LinkService } from '../services/linkService';
 
 /**
+ * Graph configuration interface
+ */
+interface GraphConfig {
+    fontSize: number;
+    titleMaxLength: number;
+    chargeStrength: number;
+    linkDistance: number;
+    collisionPadding: number;
+}
+
+/**
+ * Graph statistics interface
+ */
+interface GraphStats {
+    totalNotes: number;
+    totalLinks: number;
+    orphanNotes: number;
+    mostConnectedNote: { path: string; connections: number } | null;
+    averageConnections: number;
+}
+
+/**
  * Show the graph view webview
  */
 export async function showGraphView(context: vscode.ExtensionContext, linkService: LinkService): Promise<void> {
@@ -23,8 +45,8 @@ export async function showGraphView(context: vscode.ExtensionContext, linkServic
 
     // Get user configuration settings
     const config = vscode.workspace.getConfiguration('noted');
-    const graphConfig = {
-        fontSize: config.get('graph.style.fontSize', 12),
+    const graphConfig: GraphConfig = {
+        fontSize: config.get('graph.style.fontSize', 11),
         titleMaxLength: config.get('graph.titleMaxLength', 24),
         chargeStrength: config.get('graph.physics.chargeStrength', -120),
         linkDistance: config.get('graph.physics.linkDistance', 50),
@@ -99,9 +121,9 @@ export async function showGraphView(context: vscode.ExtensionContext, linkServic
 async function getGraphHtml(
     context: vscode.ExtensionContext,
     webview: vscode.Webview,
-    graphData: any,
-    stats: any,
-    graphConfig: any
+    graphData: any,  // GraphData from graphService - already typed there
+    stats: GraphStats,
+    graphConfig: GraphConfig
 ): Promise<string> {
     // Get file paths
     const webviewPath = path.join(context.extensionPath, 'src', 'webview');

@@ -149,7 +149,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - **Enhanced Readability**: Optimized text shadows and contrast
 - **Adaptive Physics** (v1.32.0):
   - **Density-Based Spacing**: Graph automatically adjusts node spacing based on density
-    - Small graphs (< 50 nodes): Comfortable spacing (charge: -120, distance: 50)
+    - Small graphs (< 50 nodes): Comfortable spacing (charge: -120, distance: 50, padding: 1.5x)
     - Dense graphs (50+ nodes): Wider spacing (charge: -180, distance: 70, padding: 2.5x)
   - **Configurable Physics**: User can override automatic settings with manual configuration
   - **Collision Detection**: Enhanced collision radius for better visual separation
@@ -438,9 +438,9 @@ All commands are accessible via:
 #### Graph View Settings (v1.32.0)
 - `noted.graph.style.fontSize`: Font size for node labels in pixels, constant at all zoom levels (default: 11)
 - `noted.graph.titleMaxLength`: Maximum label length before truncation (default: 24)
-- `noted.graph.physics.chargeStrength`: Node repulsion strength, more negative = more spacing (default: -120, dense graphs: -200)
-- `noted.graph.physics.linkDistance`: Target distance between connected nodes (default: 50, dense graphs: 80)
-- `noted.graph.physics.collisionPadding`: Collision padding multiplier for node spacing (default: 1.5, dense graphs: 2.5)
+- `noted.graph.physics.chargeStrength`: Node repulsion strength, more negative = more spacing (default: -120, adaptive: -180 for dense graphs)
+- `noted.graph.physics.linkDistance`: Target distance between connected nodes (default: 50, adaptive: 70 for dense graphs)
+- `noted.graph.physics.collisionPadding`: Collision padding multiplier for node spacing (default: 1.5, adaptive: 2.5 for dense graphs)
 - `noted.graph.style.node.note`: Color for note nodes (default: #69db7c)
 - `noted.graph.style.node.tag`: Color for tag nodes (default: #ff922b)
 - `noted.graph.style.node.placeholder`: Color for placeholder nodes (default: #e599f7)
