@@ -6,6 +6,28 @@ import { GraphService } from '../services/graphService';
 import { LinkService } from '../services/linkService';
 
 /**
+ * Graph configuration interface
+ */
+interface GraphConfig {
+    fontSize: number;
+    titleMaxLength: number;
+    chargeStrength: number;
+    linkDistance: number;
+    collisionPadding: number;
+}
+
+/**
+ * Graph statistics interface
+ */
+interface GraphStats {
+    totalNotes: number;
+    totalLinks: number;
+    orphanNotes: number;
+    mostConnectedNote: { path: string; connections: number } | null;
+    averageConnections: number;
+}
+
+/**
  * Show the graph view webview
  */
 export async function showGraphView(context: vscode.ExtensionContext, linkService: LinkService): Promise<void> {
@@ -21,6 +43,16 @@ export async function showGraphView(context: vscode.ExtensionContext, linkServic
     const graphData = await graphService.buildGraph();
     const stats = await graphService.getGraphStats();
 
+    // Get user configuration settings
+    const config = vscode.workspace.getConfiguration('noted');
+    const graphConfig: GraphConfig = {
+        fontSize: config.get('graph.style.fontSize', 11),
+        titleMaxLength: config.get('graph.titleMaxLength', 24),
+        chargeStrength: config.get('graph.physics.chargeStrength', -120),
+        linkDistance: config.get('graph.physics.linkDistance', 50),
+        collisionPadding: config.get('graph.physics.collisionPadding', 1.5)
+    };
+
     const panel = vscode.window.createWebviewPanel(
         'notedGraph',
         'Note Graph',
@@ -35,7 +67,7 @@ export async function showGraphView(context: vscode.ExtensionContext, linkServic
     );
 
     // Set the initial HTML
-    panel.webview.html = await getGraphHtml(context, panel.webview, graphData, stats);
+    panel.webview.html = await getGraphHtml(context, panel.webview, graphData, stats, graphConfig);
 
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
@@ -89,8 +121,9 @@ export async function showGraphView(context: vscode.ExtensionContext, linkServic
 async function getGraphHtml(
     context: vscode.ExtensionContext,
     webview: vscode.Webview,
-    graphData: any,
-    stats: any
+    graphData: any,  // GraphData from graphService - already typed there
+    stats: GraphStats,
+    graphConfig: GraphConfig
 ): Promise<string> {
     // Get file paths
     const webviewPath = path.join(context.extensionPath, 'src', 'webview');
@@ -130,7 +163,8 @@ async function getGraphHtml(
         .replace(/{{tagCount}}/g, graphData.totalTags.toString())
         .replace(/{{linkCount}}/g, stats.totalLinks.toString())
         .replace(/{{orphanCount}}/g, stats.orphanNotes.toString())
-        .replace(/{{graphDataJson}}/g, JSON.stringify({ nodes: graphData.nodes, links: graphData.links }));
+        .replace(/{{graphDataJson}}/g, JSON.stringify({ nodes: graphData.nodes, links: graphData.links }))
+        .replace(/{{graphConfigJson}}/g, JSON.stringify(graphConfig));
 
     return html;
 }

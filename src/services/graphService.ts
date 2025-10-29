@@ -62,13 +62,14 @@ export interface GraphStats {
 
 /**
  * Node sizing configuration
+ * Foam-like sizing: smaller overall, tags/placeholders smaller than notes
  */
 const NODE_SIZING_CONFIG = {
-    TAG_NODE_SIZE_FACTOR: 1.5,
-    PLACEHOLDER_FIXED_SIZE: 8,
-    BASE_SIZE: 10,
-    MAX_SIZE: 30,
-    LOG_MULTIPLIER: 8,
+    TAG_NODE_SIZE_FACTOR: 0.7,      // Tags 30% smaller than equivalent notes
+    PLACEHOLDER_FIXED_SIZE: 5,       // Smaller placeholder nodes
+    BASE_SIZE: 6,                    // Smaller base size (was 10)
+    MAX_SIZE: 18,                    // Smaller max size (was 30)
+    LOG_MULTIPLIER: 6,               // Adjusted for smaller range
 };
 
 /**
