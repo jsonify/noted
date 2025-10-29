@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.33.0](https://github.com/jsonify/noted/compare/v1.32.0...v1.33.0) (2025-10-29)
+
+
+### Features
+
+* enhance graph view with adaptive physics, improved node sizing,… ([#45](https://github.com/jsonify/noted/issues/45)) ([42e3c7d](https://github.com/jsonify/noted/commit/42e3c7ddab443948f4ac72ed79a46dcfdc7806b9))
+
 ## [1.32.0](https://github.com/jsonify/noted/compare/v1.31.10...v1.32.0) (2025-10-28)
 
 
