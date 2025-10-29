@@ -110,7 +110,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Month Navigation**: Previous/Next month buttons and "Today" quick jump
 - **Multi-note Support**: Handles multiple notes per day (daily notes + templated notes)
 
-### Graph View (v1.14.0, Enhanced v1.17.1, v1.19.1, v1.20.1)
+### Graph View (v1.14.0, Enhanced v1.17.1, v1.19.1, v1.20.1, v1.32.0)
 - **Show Graph View**: Interactive visualization of note connections via wiki-style links
 - **Interactive Graph Features**:
   - **Click nodes** to open notes instantly
@@ -128,10 +128,31 @@ Templates support powerful variable substitution with 10 built-in placeholders:
     - "Focus Mode" button in toolbar turns pink when active
     - Exit via button click or toolbar toggle
     - Best for exploring local neighborhoods, reducing clutter, and creating clean screenshots
-- **Layout Options**:
-  - **Force-Directed** (default): Natural physics-based layout showing organic clusters
-  - **Hierarchical**: Top-down tree structure showing clear relationships
-  - **Circular**: Ring arrangement for alternative perspective
+- **Layout**: Force-Directed physics-based layout showing organic clusters
+- **Foam-Inspired Design** (v1.32.0):
+  - **Constant Font Size**: Labels maintain consistent pixel size regardless of zoom level (like Foam)
+  - **Smaller, Cleaner Nodes**:
+    - Overall node sizes reduced by 40% for less clutter
+    - Tags are 30% smaller than note nodes
+    - Placeholders are smallest (fixed size)
+  - **Aggressive Focus Mode**: When clicking a node, unconnected nodes dim to 2% opacity (nearly invisible)
+  - **Better Visual Hierarchy**: Node and label sizes clearly indicate importance
+- **Hover-to-Reveal Label System** (v1.32.0):
+  - **Default State**: All labels visible for easy browsing
+  - **On Hover/Click**: Labels hide for unconnected nodes, showing only:
+    - Hovered/clicked node label
+    - Connected nodes' labels
+    - Links remain visible even when nodes are dimmed
+  - **Consistent Small Font**: All labels use same small font size (11px default, configurable)
+  - **Truly Constant Size**: Labels maintain exact pixel size at all zoom levels (canvas counter-scaling)
+  - **Label Truncation**: Long labels automatically truncated based on `titleMaxLength` setting
+  - **Enhanced Readability**: Optimized text shadows and contrast
+- **Adaptive Physics** (v1.32.0):
+  - **Density-Based Spacing**: Graph automatically adjusts node spacing based on density
+    - Small graphs (< 50 nodes): Comfortable spacing (charge: -120, distance: 50)
+    - Dense graphs (50+ nodes): Wider spacing (charge: -180, distance: 70, padding: 2.5x)
+  - **Configurable Physics**: User can override automatic settings with manual configuration
+  - **Collision Detection**: Enhanced collision radius for better visual separation
 - **Filters and Search**:
   - **Search box**: Find specific notes by name (live filtering)
   - **Filter by connection**: Show all notes, connected only, or orphans only
@@ -413,6 +434,17 @@ All commands are accessible via:
 - `noted.useTemplate`: Enable custom template (not currently implemented)
 - `noted.template`: Custom template string (not currently implemented)
 - `noted.tagAutoComplete`: Enable tag autocomplete suggestions when typing # (default: true)
+
+#### Graph View Settings (v1.32.0)
+- `noted.graph.style.fontSize`: Font size for node labels in pixels, constant at all zoom levels (default: 11)
+- `noted.graph.titleMaxLength`: Maximum label length before truncation (default: 24)
+- `noted.graph.physics.chargeStrength`: Node repulsion strength, more negative = more spacing (default: -120, dense graphs: -200)
+- `noted.graph.physics.linkDistance`: Target distance between connected nodes (default: 50, dense graphs: 80)
+- `noted.graph.physics.collisionPadding`: Collision padding multiplier for node spacing (default: 1.5, dense graphs: 2.5)
+- `noted.graph.style.node.note`: Color for note nodes (default: #69db7c)
+- `noted.graph.style.node.tag`: Color for tag nodes (default: #ff922b)
+- `noted.graph.style.node.placeholder`: Color for placeholder nodes (default: #e599f7)
+- `noted.graph.style.node.orphan`: Color for orphan nodes (default: #adb5bd)
 
 ## Tree View
 

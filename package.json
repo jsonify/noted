@@ -767,8 +767,8 @@
         },
         "noted.graph.style.fontSize": {
           "type": "number",
-          "default": 12,
-          "description": "Font size for node labels in the graph view"
+          "default": 11,
+          "description": "Font size for node labels in the graph view (constant pixel size, doesn't scale with zoom)"
         },
         "noted.graph.style.node.note": {
           "type": "string",
@@ -794,6 +794,21 @@
           "type": "number",
           "default": 24,
           "description": "Maximum length for node titles in the graph view"
+        },
+        "noted.graph.physics.chargeStrength": {
+          "type": "number",
+          "default": -120,
+          "description": "Node repulsion strength (more negative = more spacing). Default: -120, Dense graphs: -200"
+        },
+        "noted.graph.physics.linkDistance": {
+          "type": "number",
+          "default": 50,
+          "description": "Target distance between connected nodes. Default: 50, Dense graphs: 80"
+        },
+        "noted.graph.physics.collisionPadding": {
+          "type": "number",
+          "default": 1.5,
+          "description": "Collision padding multiplier for node spacing. Default: 1.5, Dense graphs: 2.5"
         }
       }
     }

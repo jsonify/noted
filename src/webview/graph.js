@@ -233,7 +233,8 @@ function getNodeOpacity(nodeId) {
 
     // If not animating, return immediate opacity
     if (!state.animating) {
-        return nodeState === 'lessened' ? 0.08 : 1.0;
+        // Foam-like aggressive dimming: almost invisible when not in focus
+        return nodeState === 'lessened' ? 0.02 : 1.0;
     }
 
     // Return current animated opacity
@@ -260,6 +261,38 @@ function hexToRgba(hex, opacity) {
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 }
 
+/**
+ * Get connection count for a node
+ */
+function getNodeConnectionCount(nodeId) {
+    let count = 0;
+    state.graph.links.forEach(link => {
+        const sourceId = link.source.id || link.source;
+        const targetId = link.target.id || link.target;
+        if (sourceId === nodeId || targetId === nodeId) {
+            count++;
+        }
+    });
+    return count;
+}
+
+/**
+ * Check if a node should show its label
+ * Default: show all labels
+ * On hover: only show hovered node + connected nodes
+ */
+function shouldShowLabel(nodeId) {
+    const nodeState = getNodeState(nodeId);
+
+    // If nothing is hovered or selected, show all labels
+    if (state.focusNodes.size === 0) {
+        return true;
+    }
+
+    // Something is hovered/selected - only show labels for nodes in focus
+    return state.focusNodes.has(nodeId) || nodeState === 'highlighted';
+}
+
 // Painter class removed - force-graph now handles node rendering
 
 /**
@@ -270,16 +303,33 @@ function initGraph() {
     state.graph.nodes = window.graphData.nodes || [];
     state.graph.links = window.graphData.links || [];
 
-    // Node size scaling factor
-    const NODE_REL_SIZE = 0.7;
+    // Load user configuration
+    const userConfig = window.graphConfig || {};
+    const fontSize = userConfig.fontSize || 11;  // Small, constant size like Foam
+    const titleMaxLength = userConfig.titleMaxLength || 24;
 
+    // Node size scaling factor (Foam-like: smaller nodes)
+    const NODE_REL_SIZE = 0.5;
+
+    // Calculate adaptive physics based on graph density
+    const nodeCount = state.graph.nodes.length;
+    const isDenseGraph = nodeCount > 50;
+
+    // Use user config with adaptive defaults
     const SIMULATION_CONFIG = {
-        CHARGE_STRENGTH: -120,
-        LINK_DISTANCE: 50,
+        CHARGE_STRENGTH: userConfig.chargeStrength || (isDenseGraph ? -180 : -120),
+        LINK_DISTANCE: userConfig.linkDistance || (isDenseGraph ? 70 : 50),
         LINK_STRENGTH: 0.5,
         CENTER_STRENGTH: 0.05,
-        COLLISION_RADIUS_MULTIPLIER: 1.5,
+        COLLISION_RADIUS_MULTIPLIER: userConfig.collisionPadding || (isDenseGraph ? 2.5 : 1.5),
         COOLDOWN_TICKS: 200
+    };
+
+    // Store config in state for later use
+    state.config = {
+        fontSize,
+        titleMaxLength,
+        simulation: SIMULATION_CONFIG
     };
 
     // Apply initial filters
@@ -304,40 +354,56 @@ function initGraph() {
             const radius = Math.sqrt(val) * NODE_REL_SIZE * 0.8;
             const nodeState = getNodeState(node.id);
 
-            // Calculate label opacity based on zoom level
-            const minScale = 0.5;
-            const maxScale = 2.0;
-            const zoomOpacity = Math.min(1, Math.max(0, (globalScale - minScale) / (maxScale - minScale)));
+            // Check if this label should be shown (hover-to-reveal system)
+            if (!shouldShowLabel(node.id)) {
+                return; // Don't render label
+            }
 
             // Determine label opacity based on node state
-            let labelOpacity = zoomOpacity;
-            if (nodeState === 'highlighted') {
-                labelOpacity = 1.0;
-            } else if (nodeState === 'lessened') {
-                labelOpacity = Math.min(zoomOpacity, 0.08);
+            let labelOpacity = 1.0;
+            if (nodeState === 'lessened') {
+                labelOpacity = 0.15; // Very dimmed in lessened state (Foam-like)
             }
 
-            if (labelOpacity > 0.01) {
-                const label = node.label;
-                const fontSize = Math.max(10, 12 / globalScale);
-                ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.globalAlpha = labelOpacity;
-
-                // Text shadow for readability
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-                ctx.shadowBlur = 6;
-                ctx.shadowOffsetY = 1;
-
-                ctx.fillStyle = colors.text;
-                ctx.fillText(label, x, y - radius - 10);
-
-                // Reset
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetY = 0;
-                ctx.globalAlpha = 1.0;
+            // Truncate label based on config
+            let label = node.label;
+            const maxLength = state.config.titleMaxLength;
+            if (label.length > maxLength) {
+                label = label.substring(0, maxLength) + '...';
             }
+
+            // Use small, constant font size for all labels (Foam-like)
+            const fontSize = state.config.fontSize;
+
+            // Calculate label position offset from node center (in world coordinates)
+            const labelOffsetY = radius + 10;
+
+            // Save canvas state
+            ctx.save();
+
+            // Translate to label position in world coordinates
+            ctx.translate(x, y - labelOffsetY);
+
+            // Counter-scale to screen space so text stays constant size
+            ctx.scale(1 / globalScale, 1 / globalScale);
+
+            // Set font - normal weight for all labels
+            ctx.font = `400 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.globalAlpha = labelOpacity;
+
+            // Enhanced text shadow for better readability
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetY = 1;
+
+            // Draw the label at origin (we already translated)
+            ctx.fillStyle = colors.text;
+            ctx.fillText(label, 0, 0);
+
+            // Restore canvas state
+            ctx.restore();
         })
         .nodeCanvasObjectMode(() => 'after')
         .linkSource('source')
@@ -395,18 +461,18 @@ function initGraph() {
             updateFocusState();
         })
 
-        // Force simulation - balanced spacing like Foam
-        .d3Force('charge', d3.forceManyBody().strength(SIMULATION_CONFIG.CHARGE_STRENGTH))     // Good repulsion for spacing
-        .d3Force('link', d3.forceLink().distance(SIMULATION_CONFIG.LINK_DISTANCE).strength(SIMULATION_CONFIG.LINK_STRENGTH)) // Medium link distance
-        .d3Force('center', d3.forceCenter().strength(SIMULATION_CONFIG.CENTER_STRENGTH))       // Weak center gravity
+        // Force simulation - adaptive spacing based on graph density
+        .d3Force('charge', d3.forceManyBody().strength(SIMULATION_CONFIG.CHARGE_STRENGTH))
+        .d3Force('link', d3.forceLink().distance(SIMULATION_CONFIG.LINK_DISTANCE).strength(SIMULATION_CONFIG.LINK_STRENGTH))
+        .d3Force('center', d3.forceCenter().strength(SIMULATION_CONFIG.CENTER_STRENGTH))
         .d3Force('collision', d3.forceCollide(node => {
-            // Collision radius based on visual node size
+            // Collision radius based on visual node size with adaptive padding
             const radius = Math.sqrt(node.val) * NODE_REL_SIZE * 0.8;
             return radius * SIMULATION_CONFIG.COLLISION_RADIUS_MULTIPLIER;
         }))
-        .d3Force('x', d3.forceX().strength(0.02))                 // Very weak X centering
-        .d3Force('y', d3.forceY().strength(0.02))                 // Very weak Y centering
-        .cooldownTicks(SIMULATION_CONFIG.COOLDOWN_TICKS)                                        // More iterations for settling
+        .d3Force('x', d3.forceX().strength(0.02))
+        .d3Force('y', d3.forceY().strength(0.02))
+        .cooldownTicks(SIMULATION_CONFIG.COOLDOWN_TICKS)
         .onEngineStop(() => {
             // Zoom to fit only on initial load
             if (state.isInitialLoad) {
@@ -492,7 +558,8 @@ function updateFocusState() {
     state.targetOpacities.clear();
     state.filteredData.nodes.forEach(node => {
         const nodeState = getNodeState(node.id);
-        const targetOpacity = nodeState === 'lessened' ? 0.08 : 1.0;
+        // Foam-like aggressive dimming: almost invisible when not in focus
+        const targetOpacity = nodeState === 'lessened' ? 0.02 : 1.0;
         state.targetOpacities.set(node.id, targetOpacity);
 
         // Initialize current opacity if not set

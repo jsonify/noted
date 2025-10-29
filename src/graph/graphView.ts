@@ -21,6 +21,16 @@ export async function showGraphView(context: vscode.ExtensionContext, linkServic
     const graphData = await graphService.buildGraph();
     const stats = await graphService.getGraphStats();
 
+    // Get user configuration settings
+    const config = vscode.workspace.getConfiguration('noted');
+    const graphConfig = {
+        fontSize: config.get('graph.style.fontSize', 12),
+        titleMaxLength: config.get('graph.titleMaxLength', 24),
+        chargeStrength: config.get('graph.physics.chargeStrength', -120),
+        linkDistance: config.get('graph.physics.linkDistance', 50),
+        collisionPadding: config.get('graph.physics.collisionPadding', 1.5)
+    };
+
     const panel = vscode.window.createWebviewPanel(
         'notedGraph',
         'Note Graph',
@@ -35,7 +45,7 @@ export async function showGraphView(context: vscode.ExtensionContext, linkServic
     );
 
     // Set the initial HTML
-    panel.webview.html = await getGraphHtml(context, panel.webview, graphData, stats);
+    panel.webview.html = await getGraphHtml(context, panel.webview, graphData, stats, graphConfig);
 
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
@@ -90,7 +100,8 @@ async function getGraphHtml(
     context: vscode.ExtensionContext,
     webview: vscode.Webview,
     graphData: any,
-    stats: any
+    stats: any,
+    graphConfig: any
 ): Promise<string> {
     // Get file paths
     const webviewPath = path.join(context.extensionPath, 'src', 'webview');
@@ -130,7 +141,8 @@ async function getGraphHtml(
         .replace(/{{tagCount}}/g, graphData.totalTags.toString())
         .replace(/{{linkCount}}/g, stats.totalLinks.toString())
         .replace(/{{orphanCount}}/g, stats.orphanNotes.toString())
-        .replace(/{{graphDataJson}}/g, JSON.stringify({ nodes: graphData.nodes, links: graphData.links }));
+        .replace(/{{graphDataJson}}/g, JSON.stringify({ nodes: graphData.nodes, links: graphData.links }))
+        .replace(/{{graphConfigJson}}/g, JSON.stringify(graphConfig));
 
     return html;
 }
