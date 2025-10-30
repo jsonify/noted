@@ -136,16 +136,12 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize backlinks append service for automatic backlink sections
     const backlinksAppendService = new BacklinksAppendService(linkService);
 
-    // Register document link provider for clickable [[note-name]] links
-    const linkProvider = new NoteLinkProvider(linkService);
-    const linkProviderDisposable = vscode.languages.registerDocumentLinkProvider(
-        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
-        linkProvider
-    );
-    context.subscriptions.push(linkProviderDisposable);
+    // NOTE: We do NOT register DocumentLinkProvider because it conflicts with VS Code's
+    // built-in markdown wikilink handler. Instead, we only use DefinitionProvider which
+    // handles Cmd+Click directly and has higher priority.
 
-    // Register definition provider to handle Cmd+Click with higher priority
-    // This prevents VS Code's built-in markdown link handler from interfering
+    // Register definition provider to handle Cmd+Click on [[note-name]] links
+    // This works for both "hover + cmd + click" and "direct cmd + click"
     const { NoteDefinitionProvider } = require('./providers/noteDefinitionProvider');
     const definitionProvider = new NoteDefinitionProvider(linkService);
     const definitionProviderDisposable = vscode.languages.registerDefinitionProvider(
