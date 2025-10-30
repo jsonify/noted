@@ -63,6 +63,43 @@
                     <span>Orphans</span>
                 </label>
             </div>
+
+            <!-- Time-based Filter -->
+            <div class="filter-section">
+                <div class="filter-section-header">Time Filter</div>
+                <div class="filter-group">
+                    <label class="radio-label">
+                        <input type="radio" name="timeMode" value="created" checked />
+                        <span>Created</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="timeMode" value="modified" />
+                        <span>Modified</span>
+                    </label>
+                </div>
+                <div class="filter-group">
+                    <select id="timeRangeSelect" class="time-select">
+                        <option value="all">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="7">Last 7 Days</option>
+                        <option value="30">Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
+                        <option value="365">Last 365 Days</option>
+                        <option value="custom">Custom Range...</option>
+                    </select>
+                </div>
+                <div id="customDateRange" class="custom-date-range" style="display: none;">
+                    <div class="date-input-group">
+                        <label for="startDate">From:</label>
+                        <input type="date" id="startDate" class="date-input" />
+                    </div>
+                    <div class="date-input-group">
+                        <label for="endDate">To:</label>
+                        <input type="date" id="endDate" class="date-input" />
+                    </div>
+                </div>
+            </div>
+
             <button id="clearFiltersBtn" class="text-btn" title="Reset All Filters">
                 Clear Filters
             </button>

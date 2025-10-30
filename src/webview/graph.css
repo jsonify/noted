@@ -120,18 +120,20 @@ body {
 /* Filter Controls */
 #filter-controls {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     padding: 12px 20px;
     background-color: var(--vscode-sideBar-background);
     border-bottom: 1px solid var(--vscode-panel-border);
     flex-shrink: 0;
+    gap: 20px;
 }
 
 .filter-group {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .checkbox-label {
@@ -152,6 +154,95 @@ body {
 
 .checkbox-label:hover {
     color: var(--vscode-textLink-foreground);
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--vscode-foreground);
+    user-select: none;
+}
+
+.radio-label input[type="radio"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.radio-label:hover {
+    color: var(--vscode-textLink-foreground);
+}
+
+/* Time Filter Section */
+.filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+}
+
+.filter-section-header {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--vscode-descriptionForeground);
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.time-select {
+    background-color: var(--vscode-dropdown-background);
+    color: var(--vscode-dropdown-foreground);
+    border: 1px solid var(--vscode-dropdown-border);
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.time-select:hover {
+    background-color: var(--vscode-dropdown-listBackground);
+}
+
+.custom-date-range {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.date-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-input-group label {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    min-width: 40px;
+}
+
+.date-input {
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+    padding: 4px 6px;
+    font-size: 12px;
+    flex: 1;
+}
+
+.date-input:focus {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: -1px;
 }
 
 /* Graph Container */

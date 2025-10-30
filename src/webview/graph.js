@@ -23,6 +23,12 @@ const state = {
         showPlaceholders: true,
         showOrphans: true
     },
+    timeFilter: {
+        mode: 'created', // 'created' or 'modified'
+        range: 'all', // 'all', 'today', '7', '30', '90', '365', 'custom'
+        customStart: null, // Date object or null
+        customEnd: null // Date object or null
+    },
     // Transition state for smooth animations
     nodeOpacities: new Map(), // Current opacity for each node
     targetOpacities: new Map(), // Target opacity for each node
@@ -592,17 +598,135 @@ function getLinkId(link) {
 }
 
 /**
+ * Get the start date for a time range preset
+ */
+function getTimeRangeStart(range) {
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
+
+    switch (range) {
+        case 'today':
+            return today.getTime();
+        case '7':
+            return today.getTime() - (7 * MS_PER_DAY);
+        case '30':
+            return today.getTime() - (30 * MS_PER_DAY);
+        case '90':
+            return today.getTime() - (90 * MS_PER_DAY);
+        case '365':
+            return today.getTime() - (365 * MS_PER_DAY);
+        case 'all':
+        default:
+            return 0; // No filter
+    }
+}
+
+/**
+ * Check if a node passes the time filter
+ */
+function passesTimeFilter(node) {
+    // Time filter only applies to notes
+    if (node.type !== 'note') {
+        return true;
+    }
+
+    // If no time filter, pass all nodes
+    if (state.timeFilter.range === 'all') {
+        return true;
+    }
+
+    // Get the timestamp to check based on mode
+    const timestamp = state.timeFilter.mode === 'created'
+        ? node.createdTime
+        : node.modifiedTime;
+
+    // If node doesn't have timestamp, include it (avoid hiding notes without metadata)
+    if (!timestamp) {
+        return true;
+    }
+
+    // For custom range
+    if (state.timeFilter.range === 'custom') {
+        const start = state.timeFilter.customStart;
+        const end = state.timeFilter.customEnd;
+
+        if (start && end) {
+            return timestamp >= start.getTime() && timestamp <= end.getTime();
+        } else if (start) {
+            return timestamp >= start.getTime();
+        } else if (end) {
+            return timestamp <= end.getTime();
+        }
+        return true; // No custom dates set
+    }
+
+    // For preset ranges
+    const rangeStart = getTimeRangeStart(state.timeFilter.range);
+    return timestamp >= rangeStart;
+}
+
+/**
  * Update filters and refresh graph
  */
 function updateFilters() {
+    // Step 1: Apply time filter to notes first
+    const timeFilteredNoteIds = new Set();
+    state.graph.nodes.forEach(node => {
+        if (node.type === 'note' && passesTimeFilter(node)) {
+            timeFilteredNoteIds.add(node.id);
+        }
+    });
+
+    // Step 2: Build set of tags/placeholders connected to time-filtered notes
+    const connectedTagsAndPlaceholders = new Set();
+    if (state.timeFilter.range !== 'all') {
+        // Only filter tags/placeholders if time filtering is active
+        // Create node lookup map for O(1) access (performance optimization)
+        const nodeMap = new Map(state.graph.nodes.map(n => [n.id, n]));
+
+        state.graph.links.forEach(link => {
+            const sourceId = link.source.id || link.source;
+            const targetId = link.target.id || link.target;
+
+            // If source is a time-filtered note, include the target tag/placeholder
+            if (timeFilteredNoteIds.has(sourceId)) {
+                const targetNode = nodeMap.get(targetId);
+                if (targetNode && (targetNode.type === 'tag' || targetNode.type === 'placeholder')) {
+                    connectedTagsAndPlaceholders.add(targetId);
+                }
+            }
+
+            // If target is a time-filtered note, include the source tag/placeholder
+            if (timeFilteredNoteIds.has(targetId)) {
+                const sourceNode = nodeMap.get(sourceId);
+                if (sourceNode && (sourceNode.type === 'tag' || sourceNode.type === 'placeholder')) {
+                    connectedTagsAndPlaceholders.add(sourceId);
+                }
+            }
+        });
+    }
+
+    // Step 3: Filter all nodes
     const filteredNodes = state.graph.nodes.filter(node => {
-        // Filter by type
+        // Apply type visibility filters
         if (node.type === 'note' && !state.filters.showNotes) return false;
         if (node.type === 'tag' && !state.filters.showTags) return false;
         if (node.type === 'placeholder' && !state.filters.showPlaceholders) return false;
 
         // Filter orphans
         if (node.isOrphan && !state.filters.showOrphans) return false;
+
+        // Apply time filter cascading logic
+        if (state.timeFilter.range !== 'all') {
+            if (node.type === 'note') {
+                // Notes must pass time filter
+                if (!timeFilteredNoteIds.has(node.id)) return false;
+            } else if (node.type === 'tag' || node.type === 'placeholder') {
+                // Tags/placeholders must be connected to time-filtered notes
+                if (!connectedTagsAndPlaceholders.has(node.id)) return false;
+            }
+        }
 
         return true;
     });
@@ -663,7 +787,7 @@ function handleRecenter() {
 }
 
 /**
- * Handle clear filters button - reset all checkboxes to checked
+ * Handle clear filters button - reset all checkboxes to checked and time filter
  */
 function handleClearFilters() {
     // Reset all filter states to true and update UI
@@ -676,6 +800,19 @@ function handleClearFilters() {
             }
         }
     }
+
+    // Reset time filter
+    state.timeFilter.mode = 'created';
+    state.timeFilter.range = 'all';
+    state.timeFilter.customStart = null;
+    state.timeFilter.customEnd = null;
+
+    // Update UI
+    document.querySelector('input[name="timeMode"][value="created"]').checked = true;
+    document.getElementById('timeRangeSelect').value = 'all';
+    document.getElementById('customDateRange').style.display = 'none';
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
 
     // Update graph with all filters enabled
     updateFilters();
@@ -708,6 +845,62 @@ function setupEventListeners() {
 
     document.getElementById('showOrphans').addEventListener('change', (e) => {
         state.filters.showOrphans = e.target.checked;
+        updateFilters();
+    });
+
+    // Time filter - mode (created/modified)
+    document.querySelectorAll('input[name="timeMode"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            state.timeFilter.mode = e.target.value;
+            updateFilters();
+        });
+    });
+
+    // Time filter - range selector
+    document.getElementById('timeRangeSelect').addEventListener('change', (e) => {
+        const range = e.target.value;
+        state.timeFilter.range = range;
+
+        // Show/hide custom date range inputs
+        const customDateRange = document.getElementById('customDateRange');
+        if (range === 'custom') {
+            customDateRange.style.display = 'flex';
+        } else {
+            customDateRange.style.display = 'none';
+            // Clear custom dates when switching away from custom
+            state.timeFilter.customStart = null;
+            state.timeFilter.customEnd = null;
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+        }
+
+        updateFilters();
+    });
+
+    // Time filter - custom start date
+    document.getElementById('startDate').addEventListener('change', (e) => {
+        if (e.target.value) {
+            // Parse date parts to avoid timezone issues. new Date('YYYY-MM-DD') is UTC.
+            const [year, month, day] = e.target.value.split('-').map(Number);
+            state.timeFilter.customStart = new Date(year, month - 1, day);
+        } else {
+            state.timeFilter.customStart = null;
+        }
+        updateFilters();
+    });
+
+    // Time filter - custom end date
+    document.getElementById('endDate').addEventListener('change', (e) => {
+        if (e.target.value) {
+            // Parse date parts to avoid timezone issues. new Date('YYYY-MM-DD') is UTC.
+            const [year, month, day] = e.target.value.split('-').map(Number);
+            // Set to end of day in local time
+            const endDate = new Date(year, month - 1, day);
+            endDate.setHours(23, 59, 59, 999);
+            state.timeFilter.customEnd = endDate;
+        } else {
+            state.timeFilter.customEnd = null;
+        }
         updateFilters();
     });
 
