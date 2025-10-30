@@ -33,7 +33,6 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
         document: vscode.TextDocument,
         token: vscode.CancellationToken
     ): Promise<vscode.DocumentLink[]> {
-        console.log('[NoteLinkProvider] provideDocumentLinks called for:', document.fileName);
         const links: vscode.DocumentLink[] = [];
         const text = document.getText();
 
@@ -48,30 +47,15 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
             const endPos = document.positionAt(match.index + match[0].length);
             const range = new vscode.Range(startPos, endPos);
 
-            console.log('[NoteLinkProvider] Found link:', linkText);
-
             // Skip image and diagram links (handled by embed system)
             if (this.isImageOrDiagramLink(linkText)) {
-                console.log('[NoteLinkProvider] Skipping image/diagram link:', linkText);
                 continue;
             }
 
             // Try to resolve the link
             const targetPath = await this.linkService.resolveLink(linkText);
-            console.log('[NoteLinkProvider] Resolved path for', linkText, ':', targetPath);
 
             if (targetPath) {
-                // Check if file actually exists
-                const fs = require('fs').promises;
-                let fileExists = false;
-                try {
-                    await fs.access(targetPath);
-                    fileExists = true;
-                    console.log('[NoteLinkProvider] File exists check PASSED');
-                } catch {
-                    console.log('[NoteLinkProvider] WARNING: File does not exist on disk!');
-                }
-
                 // Use a command URI instead of direct file URI to prevent VS Code's default link handling
                 // from interfering with path-based links like [[Platform/note]]
                 const commandUri = vscode.Uri.parse(
@@ -87,26 +71,15 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
                     ? `Open ${linkText} (displayed as: "${displayText}")`
                     : `Open ${linkText}`;
                 links.push(documentLink);
-
-                // Use JSON.stringify to avoid console truncation
-                console.log('[NoteLinkProvider] FULL DETAILS:', JSON.stringify({
-                    linkText: linkText,
-                    targetPath: targetPath,
-                    targetPathLength: targetPath.length,
-                    commandUri: commandUri.toString(),
-                    fileExists: fileExists
-                }, null, 2));
             } else {
                 // Create a link with custom URI that will prompt to create the note
                 const createUri = vscode.Uri.parse(`command:noted.createNoteFromLink?${encodeURIComponent(JSON.stringify([linkText]))}`);
                 const documentLink = new vscode.DocumentLink(range, createUri);
                 documentLink.tooltip = `Note not found: ${linkText} (click to create)`;
                 links.push(documentLink);
-                console.log('[NoteLinkProvider] Link not resolved, creating "create note" command for:', linkText);
             }
         }
 
-        console.log('[NoteLinkProvider] Returning', links.length, 'links');
         return links;
     }
 }

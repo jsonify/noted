@@ -49,24 +49,19 @@ export class NoteDefinitionProvider implements vscode.DefinitionProvider {
             if (position.character >= linkStart && position.character <= linkEnd) {
                 const linkText = match[1].trim();
 
-                console.log('[NoteDefinitionProvider] Clicked on link:', linkText);
-
                 // Skip image and diagram links
                 if (this.isImageOrDiagramLink(linkText)) {
-                    console.log('[NoteDefinitionProvider] Skipping image/diagram link');
                     return undefined;
                 }
 
                 // Resolve the link
                 const targetPath = await this.linkService.resolveLink(linkText);
-                console.log('[NoteDefinitionProvider] Resolved to:', targetPath);
 
                 if (targetPath) {
                     const targetUri = vscode.Uri.file(targetPath);
                     return new vscode.Location(targetUri, new vscode.Position(0, 0));
                 } else {
                     // Link not found - trigger createNoteFromLink command
-                    console.log('[NoteDefinitionProvider] Link not found, triggering create command');
                     await vscode.commands.executeCommand('noted.createNoteFromLink', linkText);
                     return undefined;
                 }
