@@ -669,6 +669,48 @@ export function activate(context: vscode.ExtensionContext) {
         await vscode.window.showTextDocument(document);
     });
 
+    // Command to follow wiki link at cursor (triggered by Shift+Click)
+    let followLinkAtCursor = vscode.commands.registerCommand('noted.followLinkAtCursor', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return;
+        }
+
+        const document = editor.document;
+        const position = editor.selection.active;
+        const line = document.lineAt(position.line);
+        const text = line.text;
+
+        // Find if cursor is within a [[link]]
+        const LINK_PATTERN_LOCAL = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+        LINK_PATTERN_LOCAL.lastIndex = 0;
+        let match;
+
+        while ((match = LINK_PATTERN_LOCAL.exec(text)) !== null) {
+            const linkStart = match.index;
+            const linkEnd = match.index + match[0].length;
+
+            // Check if cursor is within this link
+            if (position.character >= linkStart && position.character <= linkEnd) {
+                const linkText = match[1].trim();
+
+                // Resolve the link
+                const targetPath = await linkService.resolveLink(linkText);
+
+                if (targetPath) {
+                    // Open the file
+                    const targetUri = vscode.Uri.file(targetPath);
+                    const targetDoc = await vscode.workspace.openTextDocument(targetUri);
+                    await vscode.window.showTextDocument(targetDoc);
+                } else {
+                    // Link not found - trigger createNoteFromLink command
+                    await vscode.commands.executeCommand('noted.createNoteFromLink', linkText);
+                }
+                return;
+            }
+        }
+    });
+
     // Command to create a note from a link (used in hover preview for broken links)
     let createNoteFromLink = vscode.commands.registerCommand('noted.createNoteFromLink', async (linkText: string) => {
         const notesPath = getNotesPath();
@@ -1606,7 +1648,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         openTodayNote, openWithTemplate, createQuickNote, createCategoryNote, insertTimestamp, extractSelectionToNote, changeFormat,
-        refreshNotes, refreshConnections, openNote, openConnection, openConnectionSource, createNoteFromLink, deleteNote, renameNote, copyPath, revealInExplorer,
+        refreshNotes, refreshConnections, openNote, openConnection, openConnectionSource, followLinkAtCursor, createNoteFromLink, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, quickSwitcher, filterByTag, clearTagFilters, sortTagsByName, sortTagsByFrequency, refreshTags,
         renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,
         showStats, exportNotes, duplicateNote, moveNotesFolder,

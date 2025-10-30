@@ -409,6 +409,11 @@
         "icon": "$(go-to-file)"
       },
       {
+        "command": "noted.followLinkAtCursor",
+        "title": "Noted: Follow Link at Cursor",
+        "icon": "$(link)"
+      },
+      {
         "command": "noted.refreshOrphans",
         "title": "Noted: Refresh Orphans",
         "icon": "$(refresh)"
@@ -722,6 +727,13 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "noted.followLinkAtCursor",
+        "key": "shift+enter",
+        "when": "editorTextFocus && (resourceExtname == .txt || resourceExtname == .md)"
+      }
+    ],
     "configuration": {
       "title": "Noted",
       "properties": {
