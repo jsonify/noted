@@ -880,7 +880,9 @@ function setupEventListeners() {
     // Time filter - custom start date
     document.getElementById('startDate').addEventListener('change', (e) => {
         if (e.target.value) {
-            state.timeFilter.customStart = new Date(e.target.value);
+            // Parse date parts to avoid timezone issues. new Date('YYYY-MM-DD') is UTC.
+            const [year, month, day] = e.target.value.split('-').map(Number);
+            state.timeFilter.customStart = new Date(year, month - 1, day);
         } else {
             state.timeFilter.customStart = null;
         }
@@ -890,8 +892,10 @@ function setupEventListeners() {
     // Time filter - custom end date
     document.getElementById('endDate').addEventListener('change', (e) => {
         if (e.target.value) {
-            // Set to end of day
-            const endDate = new Date(e.target.value);
+            // Parse date parts to avoid timezone issues. new Date('YYYY-MM-DD') is UTC.
+            const [year, month, day] = e.target.value.split('-').map(Number);
+            // Set to end of day in local time
+            const endDate = new Date(year, month - 1, day);
             endDate.setHours(23, 59, 59, 999);
             state.timeFilter.customEnd = endDate;
         } else {
