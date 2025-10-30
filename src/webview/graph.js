@@ -601,6 +601,7 @@ function getLinkId(link) {
  * Get the start date for a time range preset
  */
 function getTimeRangeStart(range) {
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
 
@@ -608,13 +609,13 @@ function getTimeRangeStart(range) {
         case 'today':
             return today.getTime();
         case '7':
-            return today.getTime() - (7 * 24 * 60 * 60 * 1000);
+            return today.getTime() - (7 * MS_PER_DAY);
         case '30':
-            return today.getTime() - (30 * 24 * 60 * 60 * 1000);
+            return today.getTime() - (30 * MS_PER_DAY);
         case '90':
-            return today.getTime() - (90 * 24 * 60 * 60 * 1000);
+            return today.getTime() - (90 * MS_PER_DAY);
         case '365':
-            return today.getTime() - (365 * 24 * 60 * 60 * 1000);
+            return today.getTime() - (365 * MS_PER_DAY);
         case 'all':
         default:
             return 0; // No filter
@@ -681,13 +682,16 @@ function updateFilters() {
     const connectedTagsAndPlaceholders = new Set();
     if (state.timeFilter.range !== 'all') {
         // Only filter tags/placeholders if time filtering is active
+        // Create node lookup map for O(1) access (performance optimization)
+        const nodeMap = new Map(state.graph.nodes.map(n => [n.id, n]));
+
         state.graph.links.forEach(link => {
             const sourceId = link.source.id || link.source;
             const targetId = link.target.id || link.target;
 
             // If source is a time-filtered note, include the target tag/placeholder
             if (timeFilteredNoteIds.has(sourceId)) {
-                const targetNode = state.graph.nodes.find(n => n.id === targetId);
+                const targetNode = nodeMap.get(targetId);
                 if (targetNode && (targetNode.type === 'tag' || targetNode.type === 'placeholder')) {
                     connectedTagsAndPlaceholders.add(targetId);
                 }
@@ -695,7 +699,7 @@ function updateFilters() {
 
             // If target is a time-filtered note, include the source tag/placeholder
             if (timeFilteredNoteIds.has(targetId)) {
-                const sourceNode = state.graph.nodes.find(n => n.id === sourceId);
+                const sourceNode = nodeMap.get(sourceId);
                 if (sourceNode && (sourceNode.type === 'tag' || sourceNode.type === 'placeholder')) {
                     connectedTagsAndPlaceholders.add(sourceId);
                 }
