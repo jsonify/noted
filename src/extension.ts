@@ -144,6 +144,16 @@ export function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(linkProviderDisposable);
 
+    // Register definition provider to handle Cmd+Click with higher priority
+    // This prevents VS Code's built-in markdown link handler from interfering
+    const { NoteDefinitionProvider } = require('./providers/noteDefinitionProvider');
+    const definitionProvider = new NoteDefinitionProvider(linkService);
+    const definitionProviderDisposable = vscode.languages.registerDefinitionProvider(
+        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        definitionProvider
+    );
+    context.subscriptions.push(definitionProviderDisposable);
+
     // Register hover provider for backlinks
     const backlinkHoverProvider = new BacklinkHoverProvider(linkService);
     const hoverProviderDisposable = vscode.languages.registerHoverProvider(
