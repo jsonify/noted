@@ -669,8 +669,43 @@ function passesTimeFilter(node) {
  * Update filters and refresh graph
  */
 function updateFilters() {
+    // Step 1: Apply time filter to notes first
+    const timeFilteredNoteIds = new Set();
+    state.graph.nodes.forEach(node => {
+        if (node.type === 'note' && passesTimeFilter(node)) {
+            timeFilteredNoteIds.add(node.id);
+        }
+    });
+
+    // Step 2: Build set of tags/placeholders connected to time-filtered notes
+    const connectedTagsAndPlaceholders = new Set();
+    if (state.timeFilter.range !== 'all') {
+        // Only filter tags/placeholders if time filtering is active
+        state.graph.links.forEach(link => {
+            const sourceId = link.source.id || link.source;
+            const targetId = link.target.id || link.target;
+
+            // If source is a time-filtered note, include the target tag/placeholder
+            if (timeFilteredNoteIds.has(sourceId)) {
+                const targetNode = state.graph.nodes.find(n => n.id === targetId);
+                if (targetNode && (targetNode.type === 'tag' || targetNode.type === 'placeholder')) {
+                    connectedTagsAndPlaceholders.add(targetId);
+                }
+            }
+
+            // If target is a time-filtered note, include the source tag/placeholder
+            if (timeFilteredNoteIds.has(targetId)) {
+                const sourceNode = state.graph.nodes.find(n => n.id === sourceId);
+                if (sourceNode && (sourceNode.type === 'tag' || sourceNode.type === 'placeholder')) {
+                    connectedTagsAndPlaceholders.add(sourceId);
+                }
+            }
+        });
+    }
+
+    // Step 3: Filter all nodes
     const filteredNodes = state.graph.nodes.filter(node => {
-        // Filter by type
+        // Apply type visibility filters
         if (node.type === 'note' && !state.filters.showNotes) return false;
         if (node.type === 'tag' && !state.filters.showTags) return false;
         if (node.type === 'placeholder' && !state.filters.showPlaceholders) return false;
@@ -678,8 +713,16 @@ function updateFilters() {
         // Filter orphans
         if (node.isOrphan && !state.filters.showOrphans) return false;
 
-        // Apply time filter
-        if (!passesTimeFilter(node)) return false;
+        // Apply time filter cascading logic
+        if (state.timeFilter.range !== 'all') {
+            if (node.type === 'note') {
+                // Notes must pass time filter
+                if (!timeFilteredNoteIds.has(node.id)) return false;
+            } else if (node.type === 'tag' || node.type === 'placeholder') {
+                // Tags/placeholders must be connected to time-filtered notes
+                if (!connectedTagsAndPlaceholders.has(node.id)) return false;
+            }
+        }
 
         return true;
     });
