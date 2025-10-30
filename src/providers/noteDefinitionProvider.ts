@@ -35,6 +35,8 @@ export class NoteDefinitionProvider implements vscode.DefinitionProvider {
         position: vscode.Position,
         token: vscode.CancellationToken
     ): Promise<vscode.Definition | undefined> {
+        console.log('[NoteDefinitionProvider] provideDefinition called at position:', position.line, position.character);
+
         const line = document.lineAt(position.line);
         const text = line.text;
 
@@ -48,26 +50,32 @@ export class NoteDefinitionProvider implements vscode.DefinitionProvider {
             // Check if cursor is within this link
             if (position.character >= linkStart && position.character <= linkEnd) {
                 const linkText = match[1].trim();
+                console.log('[NoteDefinitionProvider] Found link at cursor:', linkText);
 
                 // Skip image and diagram links
                 if (this.isImageOrDiagramLink(linkText)) {
+                    console.log('[NoteDefinitionProvider] Skipping image/diagram link');
                     return undefined;
                 }
 
                 // Resolve the link
                 const targetPath = await this.linkService.resolveLink(linkText);
+                console.log('[NoteDefinitionProvider] Resolved to:', targetPath);
 
                 if (targetPath) {
                     const targetUri = vscode.Uri.file(targetPath);
+                    console.log('[NoteDefinitionProvider] Returning location:', targetUri.toString());
                     return new vscode.Location(targetUri, new vscode.Position(0, 0));
                 } else {
                     // Link not found - trigger createNoteFromLink command
+                    console.log('[NoteDefinitionProvider] Link not found, triggering create command');
                     await vscode.commands.executeCommand('noted.createNoteFromLink', linkText);
                     return undefined;
                 }
             }
         }
 
+        console.log('[NoteDefinitionProvider] No link found at cursor position');
         return undefined;
     }
 }
