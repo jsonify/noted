@@ -72,11 +72,16 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
                     console.log('[NoteLinkProvider] WARNING: File does not exist on disk!');
                 }
 
-                const fileUri = vscode.Uri.file(targetPath);
+                // Use a command URI instead of direct file URI to prevent VS Code's default link handling
+                // from interfering with path-based links like [[Platform/note]]
+                const commandUri = vscode.Uri.parse(
+                    `command:vscode.open?${encodeURIComponent(JSON.stringify([vscode.Uri.file(targetPath)]))}`
+                );
                 const documentLink = new vscode.DocumentLink(
                     range,
-                    fileUri
+                    commandUri
                 );
+
                 // Show the target if display text is used, otherwise just show the link text
                 documentLink.tooltip = displayText
                     ? `Open ${linkText} (displayed as: "${displayText}")`
@@ -88,10 +93,7 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
                     linkText: linkText,
                     targetPath: targetPath,
                     targetPathLength: targetPath.length,
-                    uriScheme: fileUri.scheme,
-                    uriPath: fileUri.path,
-                    uriFsPath: fileUri.fsPath,
-                    uriToString: fileUri.toString(),
+                    commandUri: commandUri.toString(),
                     fileExists: fileExists
                 }, null, 2));
             } else {
