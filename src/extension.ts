@@ -665,14 +665,29 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command to create a note from a link (used in hover preview for broken links)
     let createNoteFromLink = vscode.commands.registerCommand('noted.createNoteFromLink', async (linkText: string) => {
+        console.log('[createNoteFromLink] Command triggered for:', linkText);
+
         const notesPath = getNotesPath();
         if (!notesPath) {
             vscode.window.showErrorMessage('Notes folder not configured.');
             return;
         }
 
+        // First, try to find if the note already exists anywhere in the workspace
+        const existingPath = await linkService.resolveLink(linkText);
+        console.log('[createNoteFromLink] Checked for existing note:', existingPath);
+
+        if (existingPath) {
+            // Note exists, open it
+            console.log('[createNoteFromLink] Opening existing note at:', existingPath);
+            const document = await vscode.workspace.openTextDocument(existingPath);
+            await vscode.window.showTextDocument(document);
+            return;
+        }
+
         // Sanitize the link text for use as a filename
         const sanitizedName = linkText.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+        console.log('[createNoteFromLink] No existing note found, creating new one:', sanitizedName);
 
         // Use the configured file format
         const config = vscode.workspace.getConfiguration('noted');

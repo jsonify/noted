@@ -129,18 +129,26 @@ export class LinkService {
      *   - [[work/meeting]] - looks for meeting in work folder
      */
     async resolveLink(linkText: string): Promise<string | undefined> {
+        console.log('[LinkService] Resolving link:', linkText);
+        console.log('[LinkService] Cache populated:', this.cachePopulated);
+        console.log('[LinkService] Cache size:', this.allNotesCache.length);
+
         const normalizedLinkText = linkText.toLowerCase().trim();
 
         // Check if link contains path separators (/, \)
         const hasPathSeparator = linkText.includes('/') || linkText.includes('\\');
 
+        let result: string | undefined;
         if (hasPathSeparator) {
             // Path-based link: try to resolve relative to notes root
-            return await this.resolvePathBasedLink(linkText);
+            result = await this.resolvePathBasedLink(linkText);
         } else {
             // Simple name link: use existing resolution logic
-            return await this.resolveSimpleLink(normalizedLinkText, linkText);
+            result = await this.resolveSimpleLink(normalizedLinkText, linkText);
         }
+
+        console.log('[LinkService] Resolved to:', result);
+        return result;
     }
 
     /**
@@ -148,10 +156,15 @@ export class LinkService {
      * Returns the first match or undefined
      */
     private async resolveSimpleLink(normalizedLinkText: string, linkText: string): Promise<string | undefined> {
+        console.log('[LinkService] Trying exact filename matches for:', linkText);
+
         // Try exact filename match first (with note extensions)
         for (const ext of SUPPORTED_EXTENSIONS) {
-            const exactPath = await this.findNoteByName(`${linkText}${ext}`);
+            const searchName = `${linkText}${ext}`;
+            console.log('[LinkService] Searching for exact match:', searchName);
+            const exactPath = await this.findNoteByName(searchName);
             if (exactPath) {
+                console.log('[LinkService] Found exact match:', exactPath);
                 return exactPath;
             }
         }
@@ -165,7 +178,9 @@ export class LinkService {
         }
 
         // Search for partial matches (now includes both notes and diagrams)
+        console.log('[LinkService] No exact match, trying partial matches');
         const allNotes = await this.getAllNotes();
+        console.log('[LinkService] Total notes to search:', allNotes.length);
 
         // Find by filename without extension
         for (const notePath of allNotes) {
@@ -312,7 +327,11 @@ export class LinkService {
     private async findNoteByName(filename: string): Promise<string | undefined> {
         const allNotes = await this.getAllNotes();
         const filenameLower = filename.toLowerCase();
-        return allNotes.find(notePath => path.basename(notePath).toLowerCase() === filenameLower);
+        console.log('[LinkService] findNoteByName searching for:', filenameLower);
+        console.log('[LinkService] Sample files in cache:', allNotes.slice(0, 5).map(p => path.basename(p)));
+        const result = allNotes.find(notePath => path.basename(notePath).toLowerCase() === filenameLower);
+        console.log('[LinkService] findNoteByName result:', result);
+        return result;
     }
 
     /**
