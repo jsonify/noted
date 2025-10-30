@@ -61,9 +61,21 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
             console.log('[NoteLinkProvider] Resolved path for', linkText, ':', targetPath);
 
             if (targetPath) {
+                // Check if file actually exists
+                const fs = require('fs').promises;
+                let fileExists = false;
+                try {
+                    await fs.access(targetPath);
+                    fileExists = true;
+                    console.log('[NoteLinkProvider] File exists on disk:', targetPath);
+                } catch {
+                    console.log('[NoteLinkProvider] WARNING: File does not exist on disk:', targetPath);
+                }
+
+                const fileUri = vscode.Uri.file(targetPath);
                 const documentLink = new vscode.DocumentLink(
                     range,
-                    vscode.Uri.file(targetPath)
+                    fileUri
                 );
                 // Show the target if display text is used, otherwise just show the link text
                 documentLink.tooltip = displayText
@@ -71,6 +83,10 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
                     : `Open ${linkText}`;
                 links.push(documentLink);
                 console.log('[NoteLinkProvider] Created link to:', targetPath);
+                console.log('[NoteLinkProvider] URI scheme:', fileUri.scheme);
+                console.log('[NoteLinkProvider] URI path:', fileUri.path);
+                console.log('[NoteLinkProvider] URI fsPath:', fileUri.fsPath);
+                console.log('[NoteLinkProvider] URI toString:', fileUri.toString());
             } else {
                 // Create a link with custom URI that will prompt to create the note
                 const createUri = vscode.Uri.parse(`command:noted.createNoteFromLink?${encodeURIComponent(JSON.stringify([linkText]))}`);
