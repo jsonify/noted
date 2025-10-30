@@ -63,9 +63,15 @@ export class NoteDefinitionProvider implements vscode.DefinitionProvider {
                 console.log('[NoteDefinitionProvider] Resolved to:', targetPath);
 
                 if (targetPath) {
+                    // Open the file ourselves instead of returning a location
+                    // This prevents VS Code from using other handlers
+                    console.log('[NoteDefinitionProvider] Opening file directly:', targetPath);
                     const targetUri = vscode.Uri.file(targetPath);
-                    console.log('[NoteDefinitionProvider] Returning location:', targetUri.toString());
-                    return new vscode.Location(targetUri, new vscode.Position(0, 0));
+                    const document = await vscode.workspace.openTextDocument(targetUri);
+                    await vscode.window.showTextDocument(document);
+
+                    // Return undefined to signal we've handled it
+                    return undefined;
                 } else {
                     // Link not found - trigger createNoteFromLink command
                     console.log('[NoteDefinitionProvider] Link not found, triggering create command');
