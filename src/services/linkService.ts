@@ -47,6 +47,10 @@ export class LinkService {
     private backlinksCache: Map<string, Backlink[]> = new Map();
     /** Cache: source file path -> array of outgoing links */
     private linksCache: Map<string, NoteLink[]> = new Map();
+    /** Cache: all note files (refreshed when index is built) */
+    private allNotesCache: string[] = [];
+    /** Flag to track if cache is populated */
+    private cachePopulated: boolean = false;
 
     constructor(notesPath: string) {
         this.notesPath = notesPath;
@@ -303,11 +307,32 @@ export class LinkService {
     }
 
     /**
-     * Find a note by its exact filename
+     * Find a note by its exact filename (case-insensitive)
      */
     private async findNoteByName(filename: string): Promise<string | undefined> {
         const allNotes = await this.getAllNotes();
-        return allNotes.find(notePath => path.basename(notePath) === filename);
+        const filenameLower = filename.toLowerCase();
+        return allNotes.find(notePath => path.basename(notePath).toLowerCase() === filenameLower);
+    }
+
+    /**
+     * Remove a file from the cache (called when a file is deleted)
+     */
+    removeFileFromCache(filePath: string): void {
+        if (this.cachePopulated) {
+            const index = this.allNotesCache.indexOf(filePath);
+            if (index > -1) {
+                this.allNotesCache.splice(index, 1);
+            }
+        }
+    }
+
+    /**
+     * Invalidate the cache (force a fresh scan on next getAllNotes call)
+     */
+    invalidateCache(): void {
+        this.cachePopulated = false;
+        this.allNotesCache = [];
     }
 
     /**
@@ -328,8 +353,15 @@ export class LinkService {
 
     /**
      * Get all note files in the notes directory and diagram files in diagrams directory
+     * Uses cache if available, otherwise scans the file system
      */
     async getAllNotes(): Promise<string[]> {
+        // Return cached results if available
+        if (this.cachePopulated && this.allNotesCache.length > 0) {
+            return this.allNotesCache;
+        }
+
+        // Otherwise scan the file system
         const files: string[] = [];
 
         // Helper function to recursively find files with specific extensions
@@ -367,12 +399,19 @@ export class LinkService {
 
     /**
      * Build an index of all backlinks in the notes directory
+     * Also populates the all notes cache
      */
     async buildBacklinksIndex(): Promise<void> {
         this.backlinksCache.clear();
         this.linksCache.clear();
 
+        // Scan file system to get all notes (bypassing cache)
+        this.cachePopulated = false;
         const allNotes = await this.getAllNotes();
+
+        // Populate cache with fresh results
+        this.allNotesCache = allNotes;
+        this.cachePopulated = true;
 
         for (const sourceFile of allNotes) {
             const links = await this.extractLinksFromFile(sourceFile);
@@ -410,6 +449,11 @@ export class LinkService {
      * @param filePath Path to the file that was modified
      */
     async updateIndexForFile(filePath: string): Promise<void> {
+        // Add the file to the cache if it's not already there
+        if (this.cachePopulated && !this.allNotesCache.includes(filePath)) {
+            this.allNotesCache.push(filePath);
+        }
+
         // Step 1: Remove old backlinks that originated from this file
         // We need to remove entries from backlinksCache where sourceFile === filePath
         for (const [targetPath, backlinks] of this.backlinksCache.entries()) {
