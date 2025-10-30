@@ -67,9 +67,9 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
                 try {
                     await fs.access(targetPath);
                     fileExists = true;
-                    console.log('[NoteLinkProvider] File exists on disk:', targetPath);
+                    console.log('[NoteLinkProvider] File exists check PASSED');
                 } catch {
-                    console.log('[NoteLinkProvider] WARNING: File does not exist on disk:', targetPath);
+                    console.log('[NoteLinkProvider] WARNING: File does not exist on disk!');
                 }
 
                 const fileUri = vscode.Uri.file(targetPath);
@@ -82,11 +82,18 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
                     ? `Open ${linkText} (displayed as: "${displayText}")`
                     : `Open ${linkText}`;
                 links.push(documentLink);
-                console.log('[NoteLinkProvider] Created link to:', targetPath);
-                console.log('[NoteLinkProvider] URI scheme:', fileUri.scheme);
-                console.log('[NoteLinkProvider] URI path:', fileUri.path);
-                console.log('[NoteLinkProvider] URI fsPath:', fileUri.fsPath);
-                console.log('[NoteLinkProvider] URI toString:', fileUri.toString());
+
+                // Use JSON.stringify to avoid console truncation
+                console.log('[NoteLinkProvider] FULL DETAILS:', JSON.stringify({
+                    linkText: linkText,
+                    targetPath: targetPath,
+                    targetPathLength: targetPath.length,
+                    uriScheme: fileUri.scheme,
+                    uriPath: fileUri.path,
+                    uriFsPath: fileUri.fsPath,
+                    uriToString: fileUri.toString(),
+                    fileExists: fileExists
+                }, null, 2));
             } else {
                 // Create a link with custom URI that will prompt to create the note
                 const createUri = vscode.Uri.parse(`command:noted.createNoteFromLink?${encodeURIComponent(JSON.stringify([linkText]))}`);
