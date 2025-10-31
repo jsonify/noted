@@ -71,6 +71,11 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Rename Note**: Rename individual notes
 - **Duplicate Note**: Create a copy of any note
 - **Delete Note**: Delete notes with confirmation
+  - **Keyboard Shortcuts** (v1.34.0):
+    - **Tree View**: Select note with arrow keys, press `Delete` or `Backspace`
+    - **Editor**: Open note in editor, press `Cmd+Shift+Delete` (Mac) or `Ctrl+Shift+Delete` (Windows/Linux)
+    - Both methods show confirmation dialog and support undo
+  - **Focus Preservation** (v1.34.0): Clicking notes keeps focus in panel for quick keyboard navigation
 - **Copy Path**: Copy note file path to clipboard
 
 ### Bulk Operations (v1.10.0-1.11.0)
@@ -388,6 +393,22 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Visual Indicators**: Icons distinguish categories (circle-slash, arrows)
 - **Tooltips**: Detailed connection status on hover
 
+## Navigation & Keyboard Shortcuts
+
+### Keyboard Navigation (v1.34.0)
+- **Focus Preservation**: Clicking notes in tree views keeps focus in the panel (like VS Code's file explorer)
+  - Click a note to preview it in the editor
+  - Focus stays in the panel for continued keyboard navigation
+  - Use arrow keys (↑↓) to browse through notes without clicking
+- **Quick Delete**: Delete notes directly from keyboard
+  - **Tree View Method**: Navigate with arrow keys, press `Delete` or `Backspace`
+  - **Editor Method**: With note open, press `Cmd+Shift+Delete` (Mac) or `Ctrl+Shift+Delete` (Windows/Linux)
+  - Both show confirmation dialog and support undo (Cmd/Ctrl+Alt+Z)
+- **Efficient Workflow**: Browse and manage notes without touching the mouse
+  - Navigate between notes with arrow keys
+  - Preview notes instantly by selecting them
+  - Delete unwanted notes with a single keypress
+
 ## Editor Features
 
 ### Markdown Preview (v1.12.0)
@@ -432,7 +453,10 @@ All commands are accessible via:
 - **Command Palette**: Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux) and search for "Noted"
 - **Sidebar Toolbar**: Icon buttons in the Notes, Templates, and Tags panels
 - **Context Menus**: Right-click on notes, folders, and tags for quick actions
-- **Keyboard Shortcuts**: Users can assign custom keyboard shortcuts in VS Code settings (File > Preferences > Keyboard Shortcuts)
+- **Keyboard Shortcuts** (v1.34.0): Built-in shortcuts for common operations
+  - **Delete Note from Tree View**: `Delete` or `Backspace` (when tree view has focus)
+  - **Delete Currently Open Note**: `Cmd+Shift+Delete` (Mac) or `Ctrl+Shift+Delete` (Windows/Linux)
+  - **Custom Shortcuts**: Users can assign additional custom keyboard shortcuts in VS Code settings (File > Preferences > Keyboard Shortcuts)
 
 ## Configuration
 

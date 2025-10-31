@@ -179,6 +179,10 @@
         "title": "Noted: Delete Note"
       },
       {
+        "command": "noted.deleteCurrentNote",
+        "title": "Noted: Delete Current Note"
+      },
+      {
         "command": "noted.renameNote",
         "title": "Noted: Rename Note"
       },
@@ -452,6 +456,32 @@
         "command": "noted.refreshDiagrams",
         "title": "Noted: Refresh Diagrams",
         "icon": "$(refresh)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "noted.deleteNote",
+        "key": "delete",
+        "mac": "delete",
+        "when": "focusedView == notedView || focusedView == notedTemplatesView || focusedView == notedJournalView || focusedView == notedConnectionsView || focusedView == notedOrphansView || focusedView == notedPlaceholdersView"
+      },
+      {
+        "command": "noted.deleteNote",
+        "key": "backspace",
+        "mac": "backspace",
+        "when": "focusedView == notedView || focusedView == notedTemplatesView || focusedView == notedJournalView || focusedView == notedConnectionsView || focusedView == notedOrphansView || focusedView == notedPlaceholdersView"
+      },
+      {
+        "command": "noted.deleteCurrentNote",
+        "key": "ctrl+shift+backspace",
+        "mac": "cmd+shift+backspace",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "noted.deleteCurrentNote",
+        "key": "ctrl+shift+delete",
+        "mac": "cmd+shift+delete",
+        "when": "editorTextFocus"
       }
     ],
     "menus": {

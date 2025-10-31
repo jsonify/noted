@@ -320,7 +320,7 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                 for (const entry of allEntries) {
                     // Only include custom folders (not year folders, not archive, not inbox, not templates)
                     if (entry.isDirectory() &&
-                        entry.name !== '.archive' &&
+                        entry.name !== SPECIAL_FOLDERS.ARCHIVE &&
                         entry.name !== SPECIAL_FOLDERS.INBOX &&
                         entry.name !== SPECIAL_FOLDERS.TEMPLATES &&
                         !isYearFolder(entry.name)) {
@@ -484,37 +484,7 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
 
         return pinnedPaths
             .filter(note => this.isNoteFiltered(note))
-            .map(notePath => {
-                const item = new NoteItem(
-                    path.basename(notePath),
-                    notePath,
-                    vscode.TreeItemCollapsibleState.None,
-                    'note'
-                );
-
-                // Set command based on whether select mode is active
-                if (this.bulkOperationsService?.isSelectModeActive()) {
-                    item.command = {
-                        command: 'noted.toggleNoteSelection',
-                        title: 'Toggle Selection',
-                        arguments: [item]
-                    };
-                } else {
-                    item.command = {
-                        command: 'noted.openNote',
-                        title: 'Open Note',
-                        arguments: [notePath]
-                    };
-                }
-
-                item.contextValue = 'note';
-                item.setPinned(true);
-
-                // Apply selection state if bulk operations is active
-                this.applySelectionState(item);
-
-                return item;
-            });
+            .map(notePath => this.createNoteItemForSection(notePath, { isPinned: true }));
     }
 
     /**
@@ -529,37 +499,7 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
 
         return archivedPaths
             .filter(note => this.isNoteFiltered(note))
-            .map(notePath => {
-                const item = new NoteItem(
-                    path.basename(notePath),
-                    notePath,
-                    vscode.TreeItemCollapsibleState.None,
-                    'note'
-                );
-
-                // Set command based on whether select mode is active
-                if (this.bulkOperationsService?.isSelectModeActive()) {
-                    item.command = {
-                        command: 'noted.toggleNoteSelection',
-                        title: 'Toggle Selection',
-                        arguments: [item]
-                    };
-                } else {
-                    item.command = {
-                        command: 'noted.openNote',
-                        title: 'Open Note',
-                        arguments: [notePath]
-                    };
-                }
-
-                item.contextValue = 'note';
-                item.description = '📦'; // Archive icon
-
-                // Apply selection state if bulk operations is active
-                this.applySelectionState(item);
-
-                return item;
-            });
+            .map(notePath => this.createNoteItemForSection(notePath, { description: '📦' }));
     }
 
     /**
@@ -581,11 +521,10 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
         try {
             const entries = await readDirectoryWithTypes(inboxPath);
 
-            // Get all note files (not daily notes)
+            // Get all note files in Inbox (including invalid date-formatted names)
             const noteFiles = entries
                 .filter(e => !e.isDirectory() &&
-                       SUPPORTED_EXTENSIONS.some(ext => e.name.endsWith(ext)) &&
-                       !isDailyNote(e.name))
+                       SUPPORTED_EXTENSIONS.some(ext => e.name.endsWith(ext)))
                 .map(e => e.name);
 
             // Get file stats for sorting by modification time
@@ -602,41 +541,58 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
 
             return notesWithStats
                 .filter(note => this.isNoteFiltered(note.filePath))
-                .map(note => {
-                    const item = new NoteItem(
-                        note.fileName,
-                        note.filePath,
-                        vscode.TreeItemCollapsibleState.None,
-                        'note'
-                    );
-
-                    // Set command based on whether select mode is active
-                    if (this.bulkOperationsService?.isSelectModeActive()) {
-                        item.command = {
-                            command: 'noted.toggleNoteSelection',
-                            title: 'Toggle Selection',
-                            arguments: [item]
-                        };
-                    } else {
-                        item.command = {
-                            command: 'noted.openNote',
-                            title: 'Open Note',
-                            arguments: [note.filePath]
-                        };
-                    }
-
-                    item.contextValue = 'note';
-                    item.description = '📥'; // Inbox icon
-
-                    // Apply selection state if bulk operations is active
-                    this.applySelectionState(item);
-
-                    return item;
-                });
+                .map(note => this.createNoteItemForSection(note.filePath, { description: '📥' }));
         } catch (error) {
             console.error('[NOTED] Error reading Inbox folder:', error);
             return [];
         }
+    }
+
+    /**
+     * Create a NoteItem with common configuration for special sections
+     * @param notePath Full path to the note file
+     * @param options Optional customization (description, isPinned)
+     */
+    private createNoteItemForSection(
+        notePath: string,
+        options?: { description?: string; isPinned?: boolean }
+    ): NoteItem {
+        const item = new NoteItem(
+            path.basename(notePath),
+            notePath,
+            vscode.TreeItemCollapsibleState.None,
+            'note'
+        );
+
+        // Set command based on whether select mode is active
+        if (this.bulkOperationsService?.isSelectModeActive()) {
+            item.command = {
+                command: 'noted.toggleNoteSelection',
+                title: 'Toggle Selection',
+                arguments: [item]
+            };
+        } else {
+            item.command = {
+                command: 'noted.openNote',
+                title: 'Open Note',
+                arguments: [notePath]
+            };
+        }
+
+        item.contextValue = 'note';
+
+        // Apply optional customizations
+        if (options?.description) {
+            item.description = options.description;
+        }
+        if (options?.isPinned) {
+            item.setPinned(true);
+        }
+
+        // Apply selection state if bulk operations is active
+        this.applySelectionState(item);
+
+        return item;
     }
 
     /**
