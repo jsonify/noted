@@ -4,7 +4,7 @@ import { TreeItem, NoteItem, SectionItem } from './treeItems';
 import { getNotesPath } from '../services/configService';
 import { pathExists, createDirectory, readDirectoryWithTypes, getFileStats, renameFile } from '../services/fileSystemService';
 import { isYearFolder, isMonthFolder, isDailyNote } from '../utils/validators';
-import { DEFAULTS, SUPPORTED_EXTENSIONS } from '../constants';
+import { DEFAULTS, SUPPORTED_EXTENSIONS, SPECIAL_FOLDERS } from '../constants';
 import { TagService } from '../services/tagService';
 import { formatTagForDisplay } from '../utils/tagHelpers';
 import { PinnedNotesService } from '../services/pinnedNotesService';
@@ -297,14 +297,33 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                 }
             }
 
+            // Inbox section - always show if folder exists and has notes
+            try {
+                const inboxPath = path.join(notesPath, SPECIAL_FOLDERS.INBOX);
+                if (await pathExists(inboxPath)) {
+                    const entries = await readDirectoryWithTypes(inboxPath);
+                    const hasNotes = entries.some(e => !e.isDirectory() &&
+                        SUPPORTED_EXTENSIONS.some(ext => e.name.endsWith(ext)));
+                    if (hasNotes) {
+                        items.push(new SectionItem('Inbox', 'inbox'));
+                    }
+                }
+            } catch (error) {
+                console.error('[NOTED] Error checking Inbox folder:', error);
+            }
+
             try {
                 // Get all directories in notes path
                 const allEntries = await readDirectoryWithTypes(notesPath);
                 const customFolders: string[] = [];
 
                 for (const entry of allEntries) {
-                    // Only include custom folders (not year folders, not archive)
-                    if (entry.isDirectory() && entry.name !== '.archive' && !isYearFolder(entry.name)) {
+                    // Only include custom folders (not year folders, not archive, not inbox, not templates)
+                    if (entry.isDirectory() &&
+                        entry.name !== '.archive' &&
+                        entry.name !== SPECIAL_FOLDERS.INBOX &&
+                        entry.name !== SPECIAL_FOLDERS.TEMPLATES &&
+                        !isYearFolder(entry.name)) {
                         customFolders.push(entry.name);
                     }
                 }
@@ -324,6 +343,8 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                 return this.getPinnedNotes();
             } else if (element.sectionType === 'archive') {
                 return this.getArchivedNotes();
+            } else if (element.sectionType === 'inbox') {
+                return this.getInboxNotes();
             }
         } else if (element instanceof NoteItem) {
             if (element.type === 'custom-folder') {
@@ -539,6 +560,83 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
 
                 return item;
             });
+    }
+
+    /**
+     * Get inbox notes
+     */
+    private async getInboxNotes(): Promise<TreeItem[]> {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            return [];
+        }
+
+        const inboxPath = path.join(notesPath, SPECIAL_FOLDERS.INBOX);
+
+        // Check if inbox folder exists
+        if (!(await pathExists(inboxPath))) {
+            return [];
+        }
+
+        try {
+            const entries = await readDirectoryWithTypes(inboxPath);
+
+            // Get all note files (not daily notes)
+            const noteFiles = entries
+                .filter(e => !e.isDirectory() &&
+                       SUPPORTED_EXTENSIONS.some(ext => e.name.endsWith(ext)) &&
+                       !isDailyNote(e.name))
+                .map(e => e.name);
+
+            // Get file stats for sorting by modification time
+            const notesWithStats = await Promise.all(
+                noteFiles.map(async (fileName) => {
+                    const filePath = path.join(inboxPath, fileName);
+                    const stats = await getFileStats(filePath);
+                    return { fileName, filePath, mtime: stats?.mtime || new Date(0) };
+                })
+            );
+
+            // Sort by modification time (most recent first)
+            notesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
+
+            return notesWithStats
+                .filter(note => this.isNoteFiltered(note.filePath))
+                .map(note => {
+                    const item = new NoteItem(
+                        note.fileName,
+                        note.filePath,
+                        vscode.TreeItemCollapsibleState.None,
+                        'note'
+                    );
+
+                    // Set command based on whether select mode is active
+                    if (this.bulkOperationsService?.isSelectModeActive()) {
+                        item.command = {
+                            command: 'noted.toggleNoteSelection',
+                            title: 'Toggle Selection',
+                            arguments: [item]
+                        };
+                    } else {
+                        item.command = {
+                            command: 'noted.openNote',
+                            title: 'Open Note',
+                            arguments: [note.filePath]
+                        };
+                    }
+
+                    item.contextValue = 'note';
+                    item.description = '📥'; // Inbox icon
+
+                    // Apply selection state if bulk operations is active
+                    this.applySelectionState(item);
+
+                    return item;
+                });
+        } catch (error) {
+            console.error('[NOTED] Error reading Inbox folder:', error);
+            return [];
+        }
     }
 
     /**
