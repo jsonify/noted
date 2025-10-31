@@ -43,6 +43,17 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 
 ## Organization Features
 
+### Inbox Folder (v1.34.0)
+- **Automatic Organization**: Notes created from wiki-style links are automatically placed in Inbox
+- **Smart Note Placement**:
+  - Regular links like `[[project-ideas]]` → Create in `Inbox/` folder
+  - Date-formatted links like `[[2025-04-15]]` → Create in date folders (e.g., `2025/04-April/`)
+  - Journal panel notes → Continue using date-based folders
+- **Dedicated Section**: Inbox appears in sidebar tree view with 📥 icon
+- **Sort by Time**: Most recently modified notes shown first
+- **Easy Processing**: Review and organize inbox notes into project folders later
+- **Frictionless Creation**: Create notes during your flow, organize them in batches
+
 ### Custom Folders
 - **Create Folder**: Create custom organizational folders at root level
 - **Rename Folder**: Rename custom folders (date folders are protected)
@@ -265,9 +276,11 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - **Context Menu**: Available when any text is selected in the editor
 - **Automatic Link Synchronization** (v1.13.5): When renaming or moving notes, all `[[links]]` across your workspace are automatically updated
 - **Clickable Links**: Links are automatically detected and clickable in the editor
-- **Create Missing Notes from Links** (v1.17.1): Click broken links to create missing notes
+- **Create Missing Notes from Links** (v1.17.1, Enhanced v1.34.0): Click broken links to create missing notes
   - Clicking a `[[non-existent-note]]` prompts to create it
-  - New note created in current month's folder
+  - **Smart Placement** (v1.34.0):
+    - Regular links → Create in Inbox folder
+    - Date-formatted links (YYYY-MM-DD) → Create in date-based folders
   - Opens automatically for editing
   - Backlinks index updates to include the new note
 - **Link Resolution**: Supports exact matches, partial matches, and fuzzy matching
@@ -454,6 +467,7 @@ All commands are accessible via:
   - **Pinned Notes** (v1.5.0): Quick access to favorited notes
   - **Recent Notes**: Quick access to recently modified notes
   - **Archive** (v1.5.0): Archived notes section
+  - **Inbox** (v1.34.0): Notes created from wiki-style links (📥 icon, sorted by modification time)
   - **Custom Folders**: User-created organizational folders (alphabetically sorted)
   - **Year Folders**: Automatic date-based organization (reverse chronological)
     - **Month Folders**: Within each year, organized by month
@@ -467,9 +481,11 @@ All commands are accessible via:
 - Notes: Note icon (checkmark when selected in bulk mode)
 - **Pinned Notes** (v1.5.0): Pin icon (📌)
 - **Archived Notes** (v1.5.0): Archive icon (📦)
+- **Inbox Notes** (v1.34.0): Inbox icon (📥)
 - Tags: Tag icon with count badge
 - Pinned Notes section: Pin icon
 - Archive section: Archive icon
+- Inbox section: Inbox icon
 - Recent Notes section: History icon
 
 ## Context Menus

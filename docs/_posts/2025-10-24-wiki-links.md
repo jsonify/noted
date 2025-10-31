@@ -43,8 +43,14 @@ Link to specific sections within notes:
 Click on a link to a non-existent note to create it:
 
 ```markdown
-[[future-project]]  ← Click to create this note
+[[future-project]]  ← Click to create this note in Inbox
+[[2025-12-25]]      ← Click to create daily note in date folder
 ```
+
+**Smart Note Placement** (v1.34.0):
+- **Regular links** like `[[project-ideas]]` create notes in the **Inbox** folder
+- **Date-formatted links** like `[[2025-04-15]]` create notes in **date-based folders** (e.g., `2025/04-April/`)
+- Daily notes created from the Journal panel continue to use date-based folders
 
 ## Automatic Backlinks
 
@@ -57,6 +63,19 @@ When you link to a note, Noted automatically tracks the backlink. The linked not
 ```
 
 > Backlinks are automatically maintained when you have `noted.autoBacklinks: true` in settings
+{: .prompt-tip }
+
+## Inbox Folder (v1.34.0)
+
+Notes created from wiki-style links are automatically organized into an **Inbox** folder for easy management:
+
+- **Dedicated Section**: Inbox appears in the sidebar tree view below Archive
+- **Smart Organization**: All non-date notes created via links go here
+- **Visual Indicator**: Inbox notes show a 📥 icon
+- **Sorted by Time**: Most recently modified notes appear first
+- **Easy Processing**: Review and organize your inbox notes into project folders
+
+> The Inbox keeps your note creation frictionless while maintaining organization. Create notes via links during your flow, then batch-organize them later!
 {: .prompt-tip }
 
 ## Connections Panel
