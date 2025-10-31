@@ -78,22 +78,25 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Create tree data provider for main notes view
     const notesProvider = new NotesTreeProvider();
-    const treeView = vscode.window.createTreeView('notedView', {
+    const notesTreeView = vscode.window.createTreeView('notedView', {
         treeDataProvider: notesProvider,
         dragAndDropController: notesProvider
     });
+    context.subscriptions.push(notesTreeView);
 
     // Create tree data provider for journal view (daily notes)
     const journalProvider = new JournalTreeProvider();
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('notedJournalView', journalProvider)
-    );
+    const journalTreeView = vscode.window.createTreeView('notedJournalView', {
+        treeDataProvider: journalProvider
+    });
+    context.subscriptions.push(journalTreeView);
 
     // Create tree data provider for templates view (empty, uses viewsWelcome)
     const templatesProvider = new TemplatesTreeProvider();
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('notedTemplatesView', templatesProvider)
-    );
+    const templatesTreeView = vscode.window.createTreeView('notedTemplatesView', {
+        treeDataProvider: templatesProvider
+    });
+    context.subscriptions.push(templatesTreeView);
 
     // Initialize tag service for tag filtering
     const notesPath = getNotesPath();
@@ -312,23 +315,26 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize connections service and provider
     const connectionsService = new ConnectionsService(linkService);
     const connectionsProvider = new ConnectionsTreeProvider(connectionsService);
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('notedConnectionsView', connectionsProvider)
-    );
+    const connectionsTreeView = vscode.window.createTreeView('notedConnectionsView', {
+        treeDataProvider: connectionsProvider
+    });
+    context.subscriptions.push(connectionsTreeView);
 
     // Initialize orphans service and provider
     const orphansService = new OrphansService(linkService);
     const orphansProvider = new OrphansTreeProvider(orphansService);
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('notedOrphansView', orphansProvider)
-    );
+    const orphansTreeView = vscode.window.createTreeView('notedOrphansView', {
+        treeDataProvider: orphansProvider
+    });
+    context.subscriptions.push(orphansTreeView);
 
     // Initialize placeholders service and provider
     const placeholdersService = new PlaceholdersService(linkService);
     const placeholdersProvider = new PlaceholdersTreeProvider(placeholdersService);
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('notedPlaceholdersView', placeholdersProvider)
-    );
+    const placeholdersTreeView = vscode.window.createTreeView('notedPlaceholdersView', {
+        treeDataProvider: placeholdersProvider
+    });
+    context.subscriptions.push(placeholdersTreeView);
 
     // Initialize diagram service and diagrams tree provider
     // DiagramService now checks for workspace availability on-demand
@@ -661,7 +667,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Command to open note from tree
     let openNote = vscode.commands.registerCommand('noted.openNote', async (filePath: string) => {
         const document = await vscode.workspace.openTextDocument(filePath);
-        await vscode.window.showTextDocument(document);
+        await vscode.window.showTextDocument(document, { preserveFocus: true });
     });
 
     // Command to create a note from a link (used in hover preview for broken links)
@@ -689,14 +695,30 @@ export function activate(context: vscode.ExtensionContext) {
         if (isDateLink) {
             // Date-formatted links go to date-based folders
             // Parse the date from the link text (YYYY-MM-DD)
-            const [year, month, day] = linkText.split('-');
-            const monthNum = parseInt(month, 10);
-            const monthName = MONTH_NAMES[monthNum - 1]; // Month is 1-indexed, array is 0-indexed
-            const folderName = `${month}-${monthName}`;
-            noteFolder = path.join(notesPath, year, folderName);
-            fileName = `${sanitizedName}.${fileFormat}`;
-            // Create a date object for the template
-            dateForTemplate = new Date(parseInt(year, 10), monthNum - 1, parseInt(day, 10));
+            const [yearStr, monthStr, dayStr] = linkText.split('-');
+            const year = parseInt(yearStr, 10);
+            const monthNum = parseInt(monthStr, 10);
+            const day = parseInt(dayStr, 10);
+
+            // Validate the date to prevent issues with non-existent dates like 2025-02-30
+            const parsedDate = new Date(year, monthNum - 1, day);
+            const isValidDate = parsedDate.getFullYear() === year &&
+                               parsedDate.getMonth() === monthNum - 1 &&
+                               parsedDate.getDate() === day;
+
+            if (isValidDate) {
+                // Valid date - create in date-based folder
+                const monthName = MONTH_NAMES[monthNum - 1]; // Month is 1-indexed, array is 0-indexed
+                const folderName = `${monthStr}-${monthName}`;
+                noteFolder = path.join(notesPath, yearStr, folderName);
+                fileName = `${sanitizedName}.${fileFormat}`;
+                dateForTemplate = parsedDate;
+            } else {
+                // Invalid date (e.g., 2025-02-30) - treat as regular link and place in Inbox
+                noteFolder = path.join(notesPath, SPECIAL_FOLDERS.INBOX);
+                fileName = `${sanitizedName}.${fileFormat}`;
+                dateForTemplate = new Date();
+            }
         } else {
             // Regular links go to Inbox folder
             noteFolder = path.join(notesPath, SPECIAL_FOLDERS.INBOX);
@@ -743,7 +765,33 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // Command to delete note
-    let deleteNote = vscode.commands.registerCommand('noted.deleteNote', async (item: NoteItem) => {
+    let deleteNote = vscode.commands.registerCommand('noted.deleteNote', async (item?: NoteItem) => {
+        // If no item provided (keyboard shortcut), get from tree view selection
+        if (!item) {
+            // Try all tree views to find the active selection
+            const treeViews = [
+                notesTreeView,
+                journalTreeView,
+                templatesTreeView,
+                connectionsTreeView,
+                orphansTreeView,
+                placeholdersTreeView
+            ];
+
+            for (const treeView of treeViews) {
+                const selection = treeView.selection;
+                if (selection && selection.length > 0 && selection[0] instanceof NoteItem) {
+                    item = selection[0] as NoteItem;
+                    break;
+                }
+            }
+
+            if (!item) {
+                vscode.window.showInformationMessage('Please select a note to delete');
+                return;
+            }
+        }
+
         const answer = await vscode.window.showWarningMessage(
             `Delete ${item.label}?`,
             'Delete',
@@ -757,6 +805,52 @@ export function activate(context: vscode.ExtensionContext) {
                 await fsp.unlink(item.filePath);
                 refreshAllProviders();
                 vscode.window.showInformationMessage(`Deleted ${item.label} (Undo available)`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to delete note: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        }
+    });
+
+    // Command to delete currently open note in editor
+    let deleteCurrentNote = vscode.commands.registerCommand('noted.deleteCurrentNote', async () => {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor) {
+            vscode.window.showInformationMessage('No note is currently open');
+            return;
+        }
+
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            vscode.window.showErrorMessage('Notes folder not configured');
+            return;
+        }
+
+        const currentFilePath = activeEditor.document.uri.fsPath;
+
+        // Check if the current file is within the notes folder
+        if (!currentFilePath.startsWith(notesPath)) {
+            vscode.window.showInformationMessage('Current file is not a note');
+            return;
+        }
+
+        const fileName = path.basename(currentFilePath);
+        const answer = await vscode.window.showWarningMessage(
+            `Delete ${fileName}?`,
+            'Delete',
+            'Cancel'
+        );
+
+        if (answer === 'Delete') {
+            try {
+                // Close the editor first
+                await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+
+                // Track operation for undo BEFORE deleting
+                await trackDeleteNote(undoService, currentFilePath);
+
+                await fsp.unlink(currentFilePath);
+                refreshAllProviders();
+                vscode.window.showInformationMessage(`Deleted ${fileName} (Undo available)`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to delete note: ${error instanceof Error ? error.message : String(error)}`);
             }

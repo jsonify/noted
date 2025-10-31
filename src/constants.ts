@@ -85,7 +85,8 @@ export const DEFAULTS = {
  */
 export const SPECIAL_FOLDERS = {
     INBOX: 'Inbox',
-    TEMPLATES: '.templates'
+    TEMPLATES: '.noted-templates',
+    ARCHIVE: '.archive'
 };
 
 /**

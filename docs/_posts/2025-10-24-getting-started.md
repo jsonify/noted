@@ -50,12 +50,14 @@ You can configure custom keyboard shortcuts in VS Code:
 2. Search for "Noted"
 3. Assign your preferred shortcuts
 
-**Popular shortcuts to consider:**
+**Built-in shortcuts (v1.34.0):**
 - `Cmd+Shift+N` - Open Today's Note
 - `Cmd+Shift+T` - Insert Timestamp
 - `Cmd+Shift+F` - Search Notes
 - `Cmd+Shift+C` - Show Calendar
 - `Cmd+Shift+G` - Show Graph View
+- `Delete` / `Backspace` - Delete selected note (in tree view)
+- `Cmd+Shift+Delete` - Delete currently open note (in editor)
 
 ## Configuration
 
