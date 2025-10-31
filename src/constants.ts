@@ -81,6 +81,14 @@ export const DEFAULTS = {
 };
 
 /**
+ * Special folder names for note organization
+ */
+export const SPECIAL_FOLDERS = {
+    INBOX: 'Inbox',
+    TEMPLATES: '.templates'
+};
+
+/**
  * Template placeholder patterns
  */
 export const TEMPLATE_PLACEHOLDERS = {

@@ -64,6 +64,7 @@ import {
 } from './commands/undoCommands';
 import { markdownItWikilinkEmbed, warmUpPathCache, clearPathResolutionCache } from './features/preview/wikilink-embed';
 import { showMarkdownPreview } from './preview/markdownPreview';
+import { FOLDER_PATTERNS, SPECIAL_FOLDERS, MONTH_NAMES } from './constants';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
@@ -678,15 +679,31 @@ export function activate(context: vscode.ExtensionContext) {
         const config = vscode.workspace.getConfiguration('noted');
         const fileFormat = config.get<string>('fileFormat', 'txt');
 
-        const now = new Date();
-        const year = now.getFullYear().toString();
-        const month = now.toLocaleString('en-US', { month: '2-digit' });
-        const monthName = now.toLocaleString('en-US', { month: 'long' });
-        const folderName = `${month}-${monthName}`;
+        // Check if the link text is a date format (YYYY-MM-DD)
+        const isDateLink = FOLDER_PATTERNS.DAILY_NOTE.test(linkText);
 
-        // Create the note in today's folder
-        const noteFolder = path.join(notesPath, year, folderName);
-        const fileName = `${sanitizedName}.${fileFormat}`;
+        let noteFolder: string;
+        let fileName: string;
+        let dateForTemplate: Date;
+
+        if (isDateLink) {
+            // Date-formatted links go to date-based folders
+            // Parse the date from the link text (YYYY-MM-DD)
+            const [year, month, day] = linkText.split('-');
+            const monthNum = parseInt(month, 10);
+            const monthName = MONTH_NAMES[monthNum - 1]; // Month is 1-indexed, array is 0-indexed
+            const folderName = `${month}-${monthName}`;
+            noteFolder = path.join(notesPath, year, folderName);
+            fileName = `${sanitizedName}.${fileFormat}`;
+            // Create a date object for the template
+            dateForTemplate = new Date(parseInt(year, 10), monthNum - 1, parseInt(day, 10));
+        } else {
+            // Regular links go to Inbox folder
+            noteFolder = path.join(notesPath, SPECIAL_FOLDERS.INBOX);
+            fileName = `${sanitizedName}.${fileFormat}`;
+            dateForTemplate = new Date();
+        }
+
         const filePath = path.join(noteFolder, fileName);
 
         try {
@@ -709,7 +726,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             // Create the note with a simple template
-            const template = await generateTemplate('quick', now, fileName);
+            const template = await generateTemplate('quick', dateForTemplate, fileName);
             await fsp.writeFile(filePath, template, 'utf8');
 
             // Open the new note
