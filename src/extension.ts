@@ -341,7 +341,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Initialize smart collections service and provider
     const smartCollectionsService = new SmartCollectionsService(context);
-    const collectionsProvider = new CollectionsTreeProvider(smartCollectionsService, tagService);
+    const collectionsProvider = new CollectionsTreeProvider(smartCollectionsService);
     const collectionsTreeView = vscode.window.createTreeView('notedCollectionsView', {
         treeDataProvider: collectionsProvider
     });
