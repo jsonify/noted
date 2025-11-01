@@ -13,7 +13,6 @@ export class CollectionsTreeProvider implements vscode.TreeDataProvider<vscode.T
 
     constructor(
         private collectionsService: SmartCollectionsService,
-        private tagService?: TagService
     ) {
         // Listen to collection changes
         collectionsService.onDidChangeCollections(() => {
@@ -74,7 +73,7 @@ export class CollectionsTreeProvider implements vscode.TreeDataProvider<vscode.T
 
         // Always show all collections section
         items.push(
-            new CollectionSectionItem('All Collections', 'all', unpinnedCollections.length)
+            new CollectionSectionItem('Collections', 'all', unpinnedCollections.length)
         );
 
         return items;

@@ -5,7 +5,7 @@ This document provides a curated, prioritized list of features to work on next, 
 ## 🎯 Top Priority Features (High Value, Medium Complexity)
 
 ### 1. **Saved Searches / Smart Collections** 🔍
-**Status**: Not in current plan
+**Status**: Not in previous plan
 **Complexity**: Medium
 **Value**: Very High
 

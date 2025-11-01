@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { SmartCollectionsService, SmartCollection } from '../services/smartCollectionsService';
 import { TagService } from '../services/tagService';
-import { parseSearchQuery } from '../services/searchService';
+import { CollectionsTreeProvider } from '../providers/collectionsTreeProvider';
 
 /**
  * Create a new smart collection
@@ -448,7 +448,7 @@ export async function handleDuplicateCollection(
  * Refresh collections view
  */
 export function handleRefreshCollections(
-    collectionsTreeProvider: any
+    collectionsTreeProvider: CollectionsTreeProvider
 ): void {
     collectionsTreeProvider.refresh();
     vscode.window.showInformationMessage('Collections refreshed');
