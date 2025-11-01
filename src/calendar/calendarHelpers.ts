@@ -115,4 +115,165 @@ export async function checkNoteExists(notesPath: string, year: number, month: nu
     return false;
 }
 
+/**
+ * Count the number of notes for a specific date (for heatmap visualization)
+ */
+export async function countNotesForDate(notesPath: string, year: number, month: number, day: number): Promise<number> {
+    const notes = await getNotesForDate(notesPath, year, month, day);
+    return notes.length;
+}
+
+/**
+ * Get total count of all notes in the workspace
+ */
+export async function getTotalNotesCount(notesPath: string): Promise<number> {
+    if (!(await pathExists(notesPath))) {
+        return 0;
+    }
+
+    let totalCount = 0;
+
+    try {
+        // Get all year folders
+        const yearEntries = await readDirectoryWithTypes(notesPath);
+
+        for (const yearEntry of yearEntries) {
+            if (yearEntry.isDirectory() && /^\d{4}$/.test(yearEntry.name)) {
+                const yearPath = path.join(notesPath, yearEntry.name);
+                const monthEntries = await readDirectoryWithTypes(yearPath);
+
+                for (const monthEntry of monthEntries) {
+                    if (monthEntry.isDirectory()) {
+                        const monthPath = path.join(yearPath, monthEntry.name);
+                        const noteFiles = await readDirectoryWithTypes(monthPath);
+
+                        for (const file of noteFiles) {
+                            if (!file.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => file.name.endsWith(ext))) {
+                                totalCount++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('[NOTED] Error counting total notes:', error);
+    }
+
+    return totalCount;
+}
+
+/**
+ * Get statistics for the current month, week, and today
+ */
+export async function getMonthlyStats(notesPath: string): Promise<{month: number, week: number, today: number}> {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDay = now.getDate();
+
+    let monthCount = 0;
+    let weekCount = 0;
+    let todayCount = 0;
+
+    // Get start of week (Sunday)
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    try {
+        // Count notes in current month folder
+        const monthStr = (currentMonth + 1).toString().padStart(2, '0');
+        const monthName = new Date(currentYear, currentMonth).toLocaleString('en-US', { month: 'long' });
+        const folderName = `${monthStr}-${monthName}`;
+        const monthPath = path.join(notesPath, currentYear.toString(), folderName);
+
+        if (await pathExists(monthPath)) {
+            const noteFiles = await readDirectoryWithTypes(monthPath);
+
+            for (const file of noteFiles) {
+                if (!file.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => file.name.endsWith(ext))) {
+                    monthCount++;
+
+                    // Check if file matches current date pattern for today
+                    const dayStr = currentDay.toString().padStart(2, '0');
+                    const todayPrefix = `${currentYear}-${monthStr}-${dayStr}`;
+                    if (file.name.startsWith(todayPrefix)) {
+                        todayCount++;
+                    }
+
+                    // Check if file is from this week
+                    const dateMatch = file.name.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                    if (dateMatch) {
+                        const fileDate = new Date(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
+                        if (fileDate >= startOfWeek && fileDate <= now) {
+                            weekCount++;
+                        }
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('[NOTED] Error getting monthly stats:', error);
+    }
+
+    return { month: monthCount, week: weekCount, today: todayCount };
+}
+
+/**
+ * Find the most active day (day with most notes)
+ */
+export async function getMostActiveDay(notesPath: string, year: number, month: number): Promise<{day: number, count: number} | null> {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+
+    let maxDay = 0;
+    let maxCount = 0;
+
+    try {
+        for (let day = 1; day <= daysInMonth; day++) {
+            const count = await countNotesForDate(notesPath, year, month, day);
+            if (count > maxCount) {
+                maxCount = count;
+                maxDay = day;
+            }
+        }
+    } catch (error) {
+        console.error('[NOTED] Error finding most active day:', error);
+    }
+
+    if (maxCount === 0) {
+        return null;
+    }
+
+    return { day: maxDay, count: maxCount };
+}
+
+/**
+ * Get recent activity for the last 7 days
+ */
+export async function getRecentActivity(notesPath: string): Promise<Array<{date: Date, count: number}>> {
+    const activity: Array<{date: Date, count: number}> = [];
+    const now = new Date();
+
+    try {
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(now);
+            date.setDate(now.getDate() - i);
+
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const day = date.getDate();
+
+            const count = await countNotesForDate(notesPath, year, month, day);
+            activity.push({ date: new Date(date), count });
+        }
+    } catch (error) {
+        console.error('[NOTED] Error getting recent activity:', error);
+    }
+
+    return activity;
+}
+
 export { isTodayDate };
