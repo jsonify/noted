@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.34.0](https://github.com/jsonify/noted/compare/v1.33.3...v1.34.0) (2025-11-01)
+
+
+### Features
+
+* Enhance calendar view with note statistics and heatmap visualization ([#49](https://github.com/jsonify/noted/issues/49)) ([2e43188](https://github.com/jsonify/noted/commit/2e431885b0cf0acf5b640ebb5817726febe47c25))
+
 ### [1.33.3](https://github.com/jsonify/noted/compare/v1.33.2...v1.33.3) (2025-10-31)
 
 ### [1.33.2](https://github.com/jsonify/noted/compare/v1.33.1...v1.33.2) (2025-10-31)
