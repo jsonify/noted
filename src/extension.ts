@@ -1561,6 +1561,7 @@ export function activate(context: vscode.ExtensionContext) {
             await config.update('notesFolder', defaultNotesPath, vscode.ConfigurationTarget.Global);
 
             vscode.window.showInformationMessage(`Notes folder created at: ${defaultNotesPath}`);
+            updateFolderConfiguredContext();
             refreshAllProviders();
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to create default notes folder: ${error instanceof Error ? error.message : String(error)}`);
@@ -1647,6 +1648,7 @@ export function activate(context: vscode.ExtensionContext) {
                 await config.update('notesFolder', selectedPath, vscode.ConfigurationTarget.Global);
 
                 vscode.window.showInformationMessage(`Notes folder set to: ${selectedPath}`);
+                updateFolderConfiguredContext();
                 refreshAllProviders();
             }
         } catch (error) {
@@ -1777,6 +1779,17 @@ async function initializeNotesFolder() {
 
     // Check if notes folder exists - if not, tree view will show welcome actions
     // User can click buttons in the tree view to set up
+    updateFolderConfiguredContext();
+}
+
+/**
+ * Update the context variable that controls whether welcome view is shown
+ * The welcome view should only show when the notes folder is not configured
+ */
+function updateFolderConfiguredContext() {
+    const notesPath = getNotesPath();
+    const isFolderConfigured = notesPath !== null;
+    vscode.commands.executeCommand('setContext', 'noted.isFolderConfigured', isFolderConfigured);
 }
 
 // Helper function to check if a folder name matches year pattern (YYYY)
