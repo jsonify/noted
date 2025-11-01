@@ -439,3 +439,82 @@ export class PlaceholderSourceItem extends TreeItem {
         return tooltip;
     }
 }
+
+/**
+ * Collection section item (e.g., "Pinned Collections", "All Collections")
+ */
+export class CollectionSectionItem extends TreeItem {
+    constructor(
+        public readonly label: string,
+        public readonly sectionType: 'pinned' | 'all',
+        public readonly count: number
+    ) {
+        super(`${label} (${count})`, vscode.TreeItemCollapsibleState.Expanded);
+
+        // Set appropriate icon based on section type
+        if (sectionType === 'pinned') {
+            this.iconPath = new vscode.ThemeIcon('pinned');
+        } else {
+            this.iconPath = new vscode.ThemeIcon('library');
+        }
+
+        this.contextValue = 'collection-section';
+        this.tooltip = `${count} ${label.toLowerCase()}`;
+    }
+}
+
+/**
+ * Smart collection item
+ */
+export class CollectionItem extends TreeItem {
+    constructor(
+        public readonly collectionId: string,
+        public readonly collectionName: string,
+        public readonly query: string,
+        public readonly description?: string,
+        public readonly icon?: string,
+        public readonly color?: string,
+        public readonly pinned?: boolean,
+        public readonly resultCount?: number
+    ) {
+        // Show result count if available
+        const label = resultCount !== undefined
+            ? `${collectionName} (${resultCount})`
+            : collectionName;
+
+        super(label, vscode.TreeItemCollapsibleState.None);
+
+        // Use custom icon if provided, otherwise use default
+        this.iconPath = new vscode.ThemeIcon(icon || 'search');
+        this.contextValue = pinned ? 'collection-pinned' : 'collection';
+
+        // Build tooltip
+        this.tooltip = this.buildTooltip();
+
+        // Make clickable to run the collection
+        this.command = {
+            command: 'noted.runCollection',
+            title: 'Run Collection',
+            arguments: [collectionId]
+        };
+    }
+
+    private buildTooltip(): vscode.MarkdownString {
+        const tooltip = new vscode.MarkdownString('', true);
+        tooltip.appendMarkdown(`**Collection:** ${this.collectionName}\n\n`);
+
+        if (this.description) {
+            tooltip.appendMarkdown(`${this.description}\n\n`);
+        }
+
+        tooltip.appendMarkdown(`**Query:** \`${this.query}\`\n\n`);
+
+        if (this.resultCount !== undefined) {
+            tooltip.appendMarkdown(`**Results:** ${this.resultCount} note${this.resultCount !== 1 ? 's' : ''}\n\n`);
+        }
+
+        tooltip.appendMarkdown('Click to run this collection');
+
+        return tooltip;
+    }
+}
