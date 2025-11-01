@@ -15,6 +15,7 @@ import { TagsTreeProvider } from './providers/tagsTreeProvider';
 import { ConnectionsTreeProvider } from './providers/connectionsTreeProvider';
 import { OrphansTreeProvider } from './providers/orphansTreeProvider';
 import { PlaceholdersTreeProvider } from './providers/placeholdersTreeProvider';
+import { CollectionsTreeProvider } from './providers/collectionsTreeProvider';
 import { TreeItem, NoteItem, SectionItem, TagItem, ConnectionItem } from './providers/treeItems';
 import { TagCompletionProvider } from './services/tagCompletionProvider';
 import { LinkService } from './services/linkService';
@@ -22,11 +23,13 @@ import { ConnectionsService } from './services/connectionsService';
 import { BacklinksAppendService } from './services/backlinksAppendService';
 import { OrphansService } from './services/orphansService';
 import { PlaceholdersService } from './services/placeholdersService';
+import { SmartCollectionsService } from './services/smartCollectionsService';
 import { EmbedService } from './services/embedService';
 import { FileWatcherService } from './services/fileWatcherService';
 import { DiagramService } from './services/diagramService';
 import { DiagramsTreeProvider } from './providers/diagramsTreeProvider';
 import { registerDiagramCommands } from './commands/diagramCommands';
+import * as collectionCommands from './commands/collectionCommands';
 import { NoteLinkProvider } from './providers/noteLinkProvider';
 import { BacklinkHoverProvider } from './providers/backlinkHoverProvider';
 import { NotePreviewHoverProvider } from './providers/notePreviewHoverProvider';
@@ -336,6 +339,15 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(placeholdersTreeView);
 
+    // Initialize smart collections service and provider
+    const smartCollectionsService = new SmartCollectionsService(context);
+    const collectionsProvider = new CollectionsTreeProvider(smartCollectionsService, tagService);
+    const collectionsTreeView = vscode.window.createTreeView('notedCollectionsView', {
+        treeDataProvider: collectionsProvider
+    });
+    context.subscriptions.push(collectionsTreeView);
+    context.subscriptions.push(smartCollectionsService);
+
     // Initialize diagram service and diagrams tree provider
     // DiagramService now checks for workspace availability on-demand
     const diagramService = new DiagramService(context);
@@ -346,6 +358,34 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register diagram commands
     registerDiagramCommands(context, diagramService, diagramsProvider);
+
+    // Register smart collections commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('noted.createCollection', () =>
+            collectionCommands.handleCreateCollection(smartCollectionsService)
+        ),
+        vscode.commands.registerCommand('noted.createCollectionFromSearch', (query?: string) =>
+            collectionCommands.handleCreateCollectionFromSearch(smartCollectionsService, query)
+        ),
+        vscode.commands.registerCommand('noted.editCollection', (collectionId?: string) =>
+            collectionCommands.handleEditCollection(smartCollectionsService, collectionId)
+        ),
+        vscode.commands.registerCommand('noted.deleteCollection', (collectionId?: string) =>
+            collectionCommands.handleDeleteCollection(smartCollectionsService, collectionId)
+        ),
+        vscode.commands.registerCommand('noted.runCollection', (collectionId?: string) =>
+            collectionCommands.handleRunCollection(smartCollectionsService, tagService, collectionId)
+        ),
+        vscode.commands.registerCommand('noted.togglePinCollection', (collectionId?: string) =>
+            collectionCommands.handleTogglePinCollection(smartCollectionsService, collectionId)
+        ),
+        vscode.commands.registerCommand('noted.duplicateCollection', (collectionId?: string) =>
+            collectionCommands.handleDuplicateCollection(smartCollectionsService, collectionId)
+        ),
+        vscode.commands.registerCommand('noted.refreshCollections', () =>
+            collectionCommands.handleRefreshCollections(collectionsProvider)
+        )
+    );
 
     // Update connections panel when active editor changes
     const updateConnectionsPanel = async (editor: vscode.TextEditor | undefined) => {

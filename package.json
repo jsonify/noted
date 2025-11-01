@@ -73,6 +73,10 @@
           "name": "Connections"
         },
         {
+          "id": "notedCollectionsView",
+          "name": "Smart Collections"
+        },
+        {
           "id": "notedOrphansView",
           "name": "Orphans"
         },
@@ -456,6 +460,46 @@
         "command": "noted.refreshDiagrams",
         "title": "Noted: Refresh Diagrams",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "noted.createCollection",
+        "title": "Noted: Create Smart Collection",
+        "icon": "$(add)"
+      },
+      {
+        "command": "noted.createCollectionFromSearch",
+        "title": "Noted: Save Current Search as Collection",
+        "icon": "$(save)"
+      },
+      {
+        "command": "noted.editCollection",
+        "title": "Noted: Edit Collection",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "noted.deleteCollection",
+        "title": "Noted: Delete Collection",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "noted.runCollection",
+        "title": "Noted: Run Collection",
+        "icon": "$(play)"
+      },
+      {
+        "command": "noted.togglePinCollection",
+        "title": "Noted: Pin/Unpin Collection",
+        "icon": "$(pin)"
+      },
+      {
+        "command": "noted.duplicateCollection",
+        "title": "Noted: Duplicate Collection",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "noted.refreshCollections",
+        "title": "Noted: Refresh Collections",
+        "icon": "$(refresh)"
       }
     ],
     "keybindings": [
@@ -652,6 +696,16 @@
           "command": "noted.refreshDiagrams",
           "when": "view == notedDiagramsView",
           "group": "navigation@3"
+        },
+        {
+          "command": "noted.createCollection",
+          "when": "view == notedCollectionsView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "noted.refreshCollections",
+          "when": "view == notedCollectionsView",
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
@@ -749,6 +803,31 @@
           "command": "noted.openDiagram",
           "when": "view == notedDiagramsView && viewItem == diagram",
           "group": "navigation@1"
+        },
+        {
+          "command": "noted.runCollection",
+          "when": "view == notedCollectionsView && (viewItem == collection || viewItem == collection-pinned)",
+          "group": "navigation@1"
+        },
+        {
+          "command": "noted.editCollection",
+          "when": "view == notedCollectionsView && (viewItem == collection || viewItem == collection-pinned)",
+          "group": "edit@1"
+        },
+        {
+          "command": "noted.duplicateCollection",
+          "when": "view == notedCollectionsView && (viewItem == collection || viewItem == collection-pinned)",
+          "group": "edit@2"
+        },
+        {
+          "command": "noted.togglePinCollection",
+          "when": "view == notedCollectionsView && (viewItem == collection || viewItem == collection-pinned)",
+          "group": "edit@3"
+        },
+        {
+          "command": "noted.deleteCollection",
+          "when": "view == notedCollectionsView && (viewItem == collection || viewItem == collection-pinned)",
+          "group": "edit@4"
         }
       ]
     },
