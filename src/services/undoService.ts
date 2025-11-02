@@ -21,6 +21,7 @@ import {
     readFile,
     pathExists
 } from './fileSystemService';
+import { LinkService } from './linkService';
 
 /**
  * Types of operations that can be undone
@@ -34,6 +35,7 @@ export enum OperationType {
     BULK_DELETE = 'BULK_DELETE',
     BULK_MOVE = 'BULK_MOVE',
     BULK_ARCHIVE = 'BULK_ARCHIVE',
+    BULK_MERGE = 'BULK_MERGE',
     ARCHIVE_NOTE = 'ARCHIVE_NOTE',
     TAG_DELETE = 'TAG_DELETE',
     TAG_RENAME = 'TAG_RENAME'
@@ -125,6 +127,18 @@ export interface BulkArchiveOperation extends UndoOperation {
 }
 
 /**
+ * Bulk merge operation
+ */
+export interface BulkMergeOperation extends UndoOperation {
+    type: OperationType.BULK_MERGE;
+    targetPath: string;
+    targetWasNew: boolean;
+    targetOriginalContent: string;
+    mergedContent: string;
+    sourceNotes: Array<{ path: string; content: string }>;
+}
+
+/**
  * Archive note operation
  */
 export interface ArchiveNoteOperation extends UndoOperation {
@@ -165,6 +179,7 @@ export type AnyUndoOperation =
     | BulkDeleteOperation
     | BulkMoveOperation
     | BulkArchiveOperation
+    | BulkMergeOperation
     | ArchiveNoteOperation
     | TagDeleteOperation
     | TagRenameOperation;
@@ -177,11 +192,19 @@ export class UndoService {
     private redoStack: AnyUndoOperation[] = [];
     private readonly maxStackSize: number = 50;
     private _onDidChangeUndoState = new vscode.EventEmitter<void>();
+    private linkService?: LinkService;
 
     /**
      * Event fired when undo/redo state changes
      */
     readonly onDidChangeUndoState = this._onDidChangeUndoState.event;
+
+    /**
+     * Set the link service for handling link updates during undo/redo
+     */
+    setLinkService(linkService: LinkService): void {
+        this.linkService = linkService;
+    }
 
     /**
      * Add an operation to the undo stack
@@ -345,6 +368,9 @@ export class UndoService {
             case OperationType.BULK_ARCHIVE:
                 await this.undoBulkArchive(operation);
                 break;
+            case OperationType.BULK_MERGE:
+                await this.undoBulkMerge(operation);
+                break;
             case OperationType.ARCHIVE_NOTE:
                 await this.undoArchiveNote(operation);
                 break;
@@ -385,6 +411,9 @@ export class UndoService {
                 break;
             case OperationType.BULK_ARCHIVE:
                 await this.redoBulkArchive(operation);
+                break;
+            case OperationType.BULK_MERGE:
+                await this.redoBulkMerge(operation);
                 break;
             case OperationType.ARCHIVE_NOTE:
                 await this.redoArchiveNote(operation);
@@ -478,6 +507,31 @@ export class UndoService {
         }
     }
 
+    private async undoBulkMerge(op: BulkMergeOperation): Promise<void> {
+        // Restore target note to original state (or delete if it was new)
+        if (op.targetWasNew) {
+            await deleteFile(op.targetPath);
+        } else {
+            await writeFile(op.targetPath, op.targetOriginalContent);
+        }
+
+        // Restore all source notes
+        for (const sourceNote of op.sourceNotes) {
+            const dir = path.dirname(sourceNote.path);
+            if (!(await pathExists(dir))) {
+                await createDirectory(dir);
+            }
+            await writeFile(sourceNote.path, sourceNote.content);
+        }
+
+        // Revert link updates: update links pointing to target back to source notes
+        if (this.linkService) {
+            for (const sourceNote of op.sourceNotes) {
+                await this.linkService.updateLinksOnRename(op.targetPath, sourceNote.path);
+            }
+        }
+    }
+
     private async undoArchiveNote(op: ArchiveNoteOperation): Promise<void> {
         // Unarchive the note
         const oldDir = path.dirname(op.oldPath);
@@ -548,6 +602,25 @@ export class UndoService {
         // Archive all files again
         for (const file of op.files) {
             await renameFile(file.oldPath, file.newPath);
+        }
+    }
+
+    private async redoBulkMerge(op: BulkMergeOperation): Promise<void> {
+        // Restore the merged content to target
+        await writeFile(op.targetPath, op.mergedContent);
+
+        // Re-apply link updates: update links from source notes to target
+        if (this.linkService) {
+            for (const sourceNote of op.sourceNotes) {
+                await this.linkService.updateLinksOnRename(sourceNote.path, op.targetPath);
+            }
+        }
+
+        // Delete all source notes again
+        for (const sourceNote of op.sourceNotes) {
+            if (await pathExists(sourceNote.path)) {
+                await deleteFile(sourceNote.path);
+            }
         }
     }
 

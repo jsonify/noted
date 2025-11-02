@@ -23,6 +23,14 @@ export class TagsTreeProvider implements vscode.TreeDataProvider<TagItem> {
     }
 
     /**
+     * Refresh the tree view without rebuilding the index (soft refresh)
+     * Use this when the index has already been updated incrementally
+     */
+    softRefresh(): void {
+        this._onDidChangeTreeData.fire();
+    }
+
+    /**
      * Get tree item representation
      */
     getTreeItem(element: TagItem): vscode.TreeItem {

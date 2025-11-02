@@ -181,4 +181,24 @@ export class TagService {
   hasTag(tag: string): boolean {
     return this.tagIndex.has(tag.toLowerCase());
   }
+
+  /**
+   * Update the tag index for a specific file (incremental update)
+   * Removes old tags for this file and re-indexes it
+   */
+  async updateIndexForFile(filePath: string): Promise<void> {
+    // First, remove all tags associated with this file
+    for (const [tag, notes] of this.tagIndex.entries()) {
+      if (notes.has(filePath)) {
+        notes.delete(filePath);
+        // Remove tag from index if it has no more notes
+        if (notes.size === 0) {
+          this.tagIndex.delete(tag);
+        }
+      }
+    }
+
+    // Now re-index the file with its current tags
+    await this.extractTagsFromFile(filePath);
+  }
 }
