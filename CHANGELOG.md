@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.34.3](https://github.com/jsonify/noted/compare/v1.34.1...v1.34.3) (2025-11-02)
+
+
+### Bug Fixes
+
+* welcome screen clears ([#51](https://github.com/jsonify/noted/issues/51)) ([ed168a8](https://github.com/jsonify/noted/commit/ed168a8bce92d29664e6185363461df7c6551d4b))
+
 ### [1.34.1](https://github.com/jsonify/noted/compare/v1.34.0...v1.34.1) (2025-11-01)
 
 ## [1.34.0](https://github.com/jsonify/noted/compare/v1.33.3...v1.34.0) (2025-11-01)
