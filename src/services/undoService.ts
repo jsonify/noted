@@ -21,6 +21,7 @@ import {
     readFile,
     pathExists
 } from './fileSystemService';
+import { LinkService } from './linkService';
 
 /**
  * Types of operations that can be undone
@@ -191,11 +192,19 @@ export class UndoService {
     private redoStack: AnyUndoOperation[] = [];
     private readonly maxStackSize: number = 50;
     private _onDidChangeUndoState = new vscode.EventEmitter<void>();
+    private linkService?: LinkService;
 
     /**
      * Event fired when undo/redo state changes
      */
     readonly onDidChangeUndoState = this._onDidChangeUndoState.event;
+
+    /**
+     * Set the link service for handling link updates during undo/redo
+     */
+    setLinkService(linkService: LinkService): void {
+        this.linkService = linkService;
+    }
 
     /**
      * Add an operation to the undo stack
@@ -514,6 +523,13 @@ export class UndoService {
             }
             await writeFile(sourceNote.path, sourceNote.content);
         }
+
+        // Revert link updates: update links pointing to target back to source notes
+        if (this.linkService) {
+            for (const sourceNote of op.sourceNotes) {
+                await this.linkService.updateLinksOnRename(op.targetPath, sourceNote.path);
+            }
+        }
     }
 
     private async undoArchiveNote(op: ArchiveNoteOperation): Promise<void> {
@@ -592,6 +608,13 @@ export class UndoService {
     private async redoBulkMerge(op: BulkMergeOperation): Promise<void> {
         // Restore the merged content to target
         await writeFile(op.targetPath, op.mergedContent);
+
+        // Re-apply link updates: update links from source notes to target
+        if (this.linkService) {
+            for (const sourceNote of op.sourceNotes) {
+                await this.linkService.updateLinksOnRename(sourceNote.path, op.targetPath);
+            }
+        }
 
         // Delete all source notes again
         for (const sourceNote of op.sourceNotes) {

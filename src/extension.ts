@@ -438,7 +438,7 @@ export function activate(context: vscode.ExtensionContext) {
 
                 // Update tags index and refresh tags panel (tags may have changed)
                 await tagService.updateIndexForFile(filePath);
-                tagsProvider.refreshView();
+                tagsProvider.softRefresh();
             }
         })
     );
@@ -461,6 +461,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Initialize undo service for tracking destructive operations
     const undoService = new UndoService();
+
+    // Set link service on undo service for proper link handling during undo/redo
+    undoService.setLinkService(linkService);
 
     // Initialize markdown toolbar service for visual formatting buttons
     const markdownToolbarService = new MarkdownToolbarService(context);

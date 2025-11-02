@@ -8,7 +8,7 @@ import * as path from 'path';
 import { BulkOperationsService } from '../services/bulkOperationsService';
 import { NotesTreeProvider } from '../providers/notesTreeProvider';
 import { NoteItem } from '../providers/treeItems';
-import { deleteFile, readFile, writeFile } from '../services/fileSystemService';
+import { deleteFile, readFile, writeFile, pathExists } from '../services/fileSystemService';
 import { ArchiveService } from '../services/archiveService';
 import { LinkService } from '../services/linkService';
 import { getAllFolders } from '../utils/folderHelpers';
@@ -439,13 +439,9 @@ export async function handleBulkMerge(
         targetIsNew = true;
 
         // Check if file already exists
-        const fs = require('fs').promises;
-        try {
-            await fs.access(targetNotePath);
+        if (await pathExists(targetNotePath)) {
             vscode.window.showErrorMessage(`Note "${sanitizedName}.${fileFormat}" already exists`);
             return;
-        } catch {
-            // File doesn't exist, proceed
         }
     } else {
         targetNotePath = targetSelection.value;
