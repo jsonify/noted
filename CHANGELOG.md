@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.35.0](https://github.com/jsonify/noted/compare/v1.34.3...v1.35.0) (2025-11-02)
+
+
+### Features
+
+* add auto-updating tags panel and bulk merge notes command ([#52](https://github.com/jsonify/noted/issues/52)) ([960b7be](https://github.com/jsonify/noted/commit/960b7be0b677f8ee1b9f07601f131548b6513132)), closes [#6](https://github.com/jsonify/noted/issues/6)
+
 ### [1.34.3](https://github.com/jsonify/noted/compare/v1.34.1...v1.34.3) (2025-11-02)
 
 
