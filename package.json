@@ -2,7 +2,7 @@
   "name": "noted",
   "displayName": "Noted",
   "description": "Comprehensive workspace notes with wiki-style links, diagram embeds (Draw.io & Excalidraw), graph visualization, templates, advanced search, and daily tracking",
-  "version": "1.34.1",
+  "version": "1.34.2",
   "icon": "icon.png",
   "publisher": "jsonify",
   "repository": {
@@ -98,7 +98,8 @@
     "viewsWelcome": [
       {
         "view": "notedView",
-        "contents": "Welcome to Noted! 📝\n\nYour digital scratch pad for tracking solutions, bugs, and daily progress.\n\nTo get started, choose where to store your notes:\n[Use Default Location](command:noted.setupDefaultFolder)\nNotes will be stored in your workspace under 'Notes/'\n\n[Choose Custom Location](command:noted.setupCustomFolder)\nSelect a different folder for your notes\n\nOnce set up, you can:\n• Press Cmd+Shift+N to open today's note\n• Use templates for structured notes\n• Search across all your notes\n• Track your daily progress"
+        "contents": "Welcome to Noted! 📝\n\nYour digital scratch pad for tracking solutions, bugs, and daily progress.\n\nTo get started, choose where to store your notes:\n[Use Default Location](command:noted.setupDefaultFolder)\nNotes will be stored in your workspace under 'Notes/'\n\n[Choose Custom Location](command:noted.setupCustomFolder)\nSelect a different folder for your notes\n\nOnce set up, you can:\n• Press Cmd+Shift+N to open today's note\n• Use templates for structured notes\n• Search across all your notes\n• Track your daily progress",
+        "when": "!noted.isFolderConfigured"
       },
       {
         "view": "notedDiagramsView",
