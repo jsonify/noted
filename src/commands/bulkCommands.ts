@@ -8,12 +8,12 @@ import * as path from 'path';
 import { BulkOperationsService } from '../services/bulkOperationsService';
 import { NotesTreeProvider } from '../providers/notesTreeProvider';
 import { NoteItem } from '../providers/treeItems';
-import { deleteFile } from '../services/fileSystemService';
+import { deleteFile, readFile, writeFile } from '../services/fileSystemService';
 import { ArchiveService } from '../services/archiveService';
 import { LinkService } from '../services/linkService';
 import { getAllFolders } from '../utils/folderHelpers';
 import { getNotesPath } from '../services/configService';
-import { UndoService } from '../services/undoService';
+import { UndoService, OperationType } from '../services/undoService';
 import {
     trackBulkDelete,
     trackBulkMove,
@@ -350,5 +350,214 @@ export async function handleBulkArchive(
         vscode.window.showInformationMessage(`Archived ${successCount} note${successCount > 1 ? 's' : ''}${undoMsg}`);
     } else {
         vscode.window.showWarningMessage(`Archived ${successCount} note${successCount > 1 ? 's' : ''}, ${errorCount} failed`);
+    }
+}
+
+/**
+ * Merge all selected notes into a single note
+ */
+export async function handleBulkMerge(
+    bulkService: BulkOperationsService,
+    linkService?: LinkService,
+    undoService?: UndoService
+) {
+    const selectedNotes = bulkService.getSelectedNotes();
+
+    if (selectedNotes.length < 2) {
+        vscode.window.showWarningMessage('Select at least 2 notes to merge');
+        return;
+    }
+
+    // Sort notes by file path for consistent ordering
+    selectedNotes.sort();
+
+    // Show confirmation with list of notes
+    const noteNames = selectedNotes.map(p => path.basename(p));
+    const message = `Merge ${selectedNotes.length} notes?`;
+    const detail = `The following notes will be merged:\n\n${noteNames.slice(0, 10).join('\n')}${selectedNotes.length > 10 ? `\n...and ${selectedNotes.length - 10} more` : ''}`;
+
+    const choice = await vscode.window.showWarningMessage(
+        message,
+        { modal: true, detail },
+        'Merge',
+        'Cancel'
+    );
+
+    if (choice !== 'Merge') {
+        return;
+    }
+
+    // Prompt for target note - can choose one of the selected notes or create new one
+    const targetOptions = [
+        { label: '$(file) Create New Note', value: 'new' },
+        ...selectedNotes.map(notePath => ({
+            label: path.basename(notePath),
+            description: path.dirname(notePath),
+            value: notePath
+        }))
+    ];
+
+    const targetSelection = await vscode.window.showQuickPick(targetOptions, {
+        placeHolder: 'Choose target note (all notes will be merged into this)',
+        title: 'Merge Notes'
+    });
+
+    if (!targetSelection) {
+        return;
+    }
+
+    let targetNotePath: string;
+    let targetIsNew = false;
+
+    if (targetSelection.value === 'new') {
+        // Prompt for new note name
+        const newNoteName = await vscode.window.showInputBox({
+            prompt: 'Enter name for merged note',
+            placeHolder: 'merged-notes',
+            validateInput: (value) => {
+                if (!value || value.trim() === '') {
+                    return 'Note name cannot be empty';
+                }
+                // Sanitize filename
+                if (!/^[a-zA-Z0-9-_\s]+$/.test(value)) {
+                    return 'Note name can only contain letters, numbers, hyphens, underscores, and spaces';
+                }
+                return null;
+            }
+        });
+
+        if (!newNoteName) {
+            return;
+        }
+
+        // Create target path in the same folder as the first selected note
+        const firstNoteDir = path.dirname(selectedNotes[0]);
+        const config = vscode.workspace.getConfiguration('noted');
+        const fileFormat = config.get<string>('fileFormat', 'txt');
+        const sanitizedName = newNoteName.trim().toLowerCase().replace(/\s+/g, '-');
+        targetNotePath = path.join(firstNoteDir, `${sanitizedName}.${fileFormat}`);
+        targetIsNew = true;
+
+        // Check if file already exists
+        const fs = require('fs').promises;
+        try {
+            await fs.access(targetNotePath);
+            vscode.window.showErrorMessage(`Note "${sanitizedName}.${fileFormat}" already exists`);
+            return;
+        } catch {
+            // File doesn't exist, proceed
+        }
+    } else {
+        targetNotePath = targetSelection.value;
+    }
+
+    // Get source notes (all selected notes except target)
+    const sourceNotes = selectedNotes.filter(p => p !== targetNotePath);
+
+    // Read all note contents
+    const noteContents: Array<{ path: string; content: string; name: string }> = [];
+
+    try {
+        // Read target note if it exists
+        let targetContent = '';
+        if (!targetIsNew) {
+            targetContent = await readFile(targetNotePath);
+        }
+
+        // Read all source notes
+        for (const notePath of sourceNotes) {
+            const content = await readFile(notePath);
+            const name = path.basename(notePath, path.extname(notePath));
+            noteContents.push({ path: notePath, content, name });
+        }
+
+        // Build merged content
+        let mergedContent = targetContent;
+
+        // Add separator if target had content
+        if (targetContent.trim() !== '') {
+            mergedContent += '\n\n---\n\n';
+        }
+
+        // Add merged from header
+        const mergedFromLinks = noteContents.map(nc => `[[${nc.name}]]`).join(', ');
+        mergedContent += `## Merged Notes\n\nMerged from: ${mergedFromLinks}\n\n---\n\n`;
+
+        // Append all source note contents with separators
+        for (let i = 0; i < noteContents.length; i++) {
+            const nc = noteContents[i];
+            mergedContent += `## From: [[${nc.name}]]\n\n`;
+            mergedContent += nc.content;
+
+            // Add separator between notes (but not after the last one)
+            if (i < noteContents.length - 1) {
+                mergedContent += '\n\n---\n\n';
+            }
+        }
+
+        // Write merged content to target
+        await writeFile(targetNotePath, mergedContent);
+
+        // Update all incoming links to source notes to point to target
+        let totalLinksUpdated = 0;
+        let totalFilesWithUpdatedLinks = 0;
+
+        if (linkService) {
+            for (const sourcePath of sourceNotes) {
+                const linkUpdateResult = await linkService.updateLinksOnRename(sourcePath, targetNotePath);
+                totalLinksUpdated += linkUpdateResult.linksUpdated;
+                if (linkUpdateResult.filesUpdated > 0) {
+                    totalFilesWithUpdatedLinks += linkUpdateResult.filesUpdated;
+                }
+            }
+        }
+
+        // Track operation for undo BEFORE deleting source notes
+        if (undoService) {
+            undoService.pushOperation({
+                type: OperationType.BULK_MERGE,
+                timestamp: Date.now(),
+                description: `Merge ${sourceNotes.length} notes into ${path.basename(targetNotePath)}`,
+                targetPath: targetNotePath,
+                targetWasNew: targetIsNew,
+                targetOriginalContent: targetIsNew ? '' : targetContent,
+                mergedContent: mergedContent,
+                sourceNotes: noteContents.map(nc => ({
+                    path: nc.path,
+                    content: nc.content
+                }))
+            });
+        }
+
+        // Delete source notes
+        let deletedCount = 0;
+        for (const sourcePath of sourceNotes) {
+            try {
+                await deleteFile(sourcePath);
+                deletedCount++;
+            } catch (error) {
+                console.error('[NOTED] Error deleting source note after merge:', sourcePath, error);
+            }
+        }
+
+        // Clear selection and exit select mode
+        bulkService.clearSelection();
+        bulkService.exitSelectMode();
+
+        // Open the merged note
+        const doc = await vscode.workspace.openTextDocument(targetNotePath);
+        await vscode.window.showTextDocument(doc);
+
+        // Show success message
+        const undoMsg = undoService ? ' (Undo available)' : '';
+        let message = `Merged ${deletedCount} note${deletedCount > 1 ? 's' : ''} into ${path.basename(targetNotePath)}${undoMsg}`;
+        if (totalLinksUpdated > 0) {
+            message += ` - Updated ${totalLinksUpdated} link(s) in ${totalFilesWithUpdatedLinks} file(s)`;
+        }
+        vscode.window.showInformationMessage(message);
+
+    } catch (error) {
+        console.error('[NOTED] Error during merge operation:', error);
+        vscode.window.showErrorMessage(`Failed to merge notes: ${error}`);
     }
 }

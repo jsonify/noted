@@ -379,6 +379,11 @@
         "icon": "$(archive)"
       },
       {
+        "command": "noted.bulkMerge",
+        "title": "Noted: Merge Selected Notes",
+        "icon": "$(combine)"
+      },
+      {
         "command": "noted.undo",
         "title": "Noted: Undo Last Operation",
         "icon": "$(discard)"
@@ -614,9 +619,14 @@
           "group": "bulk@3"
         },
         {
-          "command": "noted.clearSelection",
+          "command": "noted.bulkMerge",
           "when": "view == notedView && noted.selectModeActive && noted.hasSelectedNotes",
           "group": "bulk@4"
+        },
+        {
+          "command": "noted.clearSelection",
+          "when": "view == notedView && noted.selectModeActive && noted.hasSelectedNotes",
+          "group": "bulk@5"
         },
         {
           "command": "noted.showStats",

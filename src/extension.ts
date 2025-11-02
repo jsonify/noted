@@ -47,7 +47,8 @@ import {
     handleClearSelection,
     handleBulkDelete,
     handleBulkMove,
-    handleBulkArchive
+    handleBulkArchive,
+    handleBulkMerge
 } from './commands/bulkCommands';
 import { UndoService } from './services/undoService';
 import {
@@ -434,6 +435,10 @@ export function activate(context: vscode.ExtensionContext) {
                 if (vscode.window.activeTextEditor && document === vscode.window.activeTextEditor.document) {
                     await updateConnectionsPanel(vscode.window.activeTextEditor);
                 }
+
+                // Update tags index and refresh tags panel (tags may have changed)
+                await tagService.updateIndexForFile(filePath);
+                tagsProvider.refreshView();
             }
         })
     );
@@ -1695,6 +1700,11 @@ export function activate(context: vscode.ExtensionContext) {
         refreshAllProviders();
     });
 
+    let bulkMerge = vscode.commands.registerCommand('noted.bulkMerge', async () => {
+        await handleBulkMerge(bulkOperationsService, linkService, undoService);
+        refreshAllProviders();
+    });
+
     // ============================================================================
     // Markdown Preview Command
     // ============================================================================
@@ -1752,7 +1762,7 @@ export function activate(context: vscode.ExtensionContext) {
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
-        toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive,
+        toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive, bulkMerge,
         showPreview, showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol,
