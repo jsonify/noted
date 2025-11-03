@@ -677,4 +677,13 @@ export class LinkService {
 
         return results;
     }
+
+    /**
+     * Update the notes path and rebuild the backlinks index
+     * Used when the notes folder location changes
+     */
+    async updateNotesPath(newPath: string): Promise<void> {
+        this.notesPath = newPath;
+        await this.buildBacklinksIndex();
+    }
 }

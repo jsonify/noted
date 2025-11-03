@@ -201,4 +201,13 @@ export class TagService {
     // Now re-index the file with its current tags
     await this.extractTagsFromFile(filePath);
   }
+
+  /**
+   * Update the notes path and rebuild the tag index
+   * Used when the notes folder location changes
+   */
+  async updateNotesPath(newPath: string): Promise<void> {
+    this.notesPath = newPath;
+    await this.buildTagIndex();
+  }
 }
