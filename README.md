@@ -1,335 +1,260 @@
-# Noted Extension
+# Noted - Your Personal Knowledge Base in VS Code
 
 [![CI](https://github.com/jsonify/noted/actions/workflows/ci.yml/badge.svg)](https://github.com/jsonify/noted/actions/workflows/ci.yml)
 
-A comprehensive VS Code extension for organized workspace notes with templates, wiki-style linking, graph visualization, and powerful search - your digital knowledge base!
+**One notes folder. Every workspace. Always accessible.**
 
-## ✨ Key Features
+A comprehensive note-taking and knowledge management system inspired by Foam and Obsidian, built right into VS Code. Connect your thoughts with wiki-style links, visualize your knowledge graph, and organize with powerful search and tagging—no matter which codebase you're working in.
 
-- **📝 Daily Notes**: Instantly open today's note with automatic year/month organization
-- **🔗 Wiki-Style Links**: Connect notes with `[[note-name]]` syntax, see backlinks, and navigate your knowledge graph
-- **🔄 Connections Panel**: Always-visible sidebar showing incoming backlinks and outgoing links with context
-- **📐 Diagrams Panel**: Centralized Draw.io & Excalidraw diagram management with quick creation and auto-embed
-- **📄 Note, Image & Diagram Embeds**: Embed notes, images, and diagrams inline with `![[embed]]` syntax
-- **🕸️ Interactive Graph View**: Visualize your entire note network with customizable, interactive graph
-- **🏷️ Powerful Tag System**: Organize with inline `#tags` or YAML frontmatter, filter, autocomplete, and manage
-- **🔍 Advanced Search**: Regex patterns, date filters, tag filtering, and quick switcher
-- **📅 Calendar View**: Visual monthly calendar for navigating and creating daily notes
-- **📋 Templates**: Built-in and custom templates with 10 dynamic variables
-- **⚡ Bulk Operations**: Multi-select notes for batch move, delete, or archive
-- **↩️ Undo/Redo**: Full undo/redo support for all destructive operations
-- **📌 Pinned Notes**: Pin frequently accessed notes for instant access
-- **📦 Archive**: Keep workspace clean by archiving completed notes
-- **👁️ Markdown Preview**: Live preview for .md files with side-by-side editing
+Unlike workspace-bound solutions, Noted gives you a persistent home for all your notes that follows you across every project. Your knowledge base travels with you.
 
-## 🚀 Quick Start
+Noted is free, open source, and keeps your data in plain markdown files you own.
 
-1. Open Command Palette (`Cmd+Shift+P` or `Ctrl+Shift+P`)
-2. Type "Noted: Open Today's Note"
-3. Start writing!
-
-Notes are automatically organized in: `Notes/2025/10-October/2025-10-24.md`
-
-## 📖 Core Features
-
-### Daily Notes
-
-**Quick Access**: Open today's note instantly via Command Palette
-
-**Auto-Organization**: Notes stored in `Notes/YEAR/MM-MonthName/YYYY-MM-DD.format`
-
-**Timestamps**: Insert formatted timestamps `[HH:MM AM/PM]` at cursor
-
-**Flexible Format**: Choose between `.txt` or `.md` files (configurable)
-
-### Wiki-Style Links
-
-Connect your notes to build a personal knowledge base:
-
-```markdown
-Working on authentication today.
-See also: [[user-auth-spec]] and [[api-design]]
-
-# Use custom display text
-Check out [[long-note-name|this note]] for details
-
-# Disambiguate with paths when names conflict
-Meeting notes: [[work/meeting]] vs [[personal/meeting]]
-```
-
-**Features:**
-- Clickable `[[wiki-links]]` navigate directly to notes
-- Custom display text: `[[note|Display Text]]`
-- Path-based disambiguation: `[[folder/note]]` for duplicate names
-- Autocomplete while typing `[[` shows all available notes
-- Warnings for broken or ambiguous links with quick fixes
-- Automatic link updates when renaming/moving notes
-- Hover previews showing note content
-- Create missing notes directly from broken links
-
-### Connections Panel 🆕
-
-Always-visible sidebar showing all note relationships:
-
-**Outgoing Links**: Notes that the current note links to
-- Shows target note name
-- Line number and context where link appears
-- Click to navigate to linked note
-
-**Backlinks**: Notes that link to the current note
-- See what notes reference your work
-- Context snippets showing how notes are connected
-- Quick navigation to source notes
-- "Open Connection Source" to jump to exact line
-
-**Real-Time Updates**: Panel refreshes as you edit and save notes
-
-### Diagrams Panel 🆕
-
-Centralized diagram management with quick creation and embedding:
-
-**Quick Creation:**
-- Create Draw.io diagrams (`.drawio` files)
-- Create Excalidraw diagrams (`.excalidraw` files)
-- Embed syntax automatically copied to clipboard
-- Open directly in their respective editors
-
-**Organization:**
-- All diagrams stored in centralized `Diagrams` folder
-- Grouped by type (Draw.io / Excalidraw)
-- Visual file metadata and usage tracking
-- Quick insert picker for existing diagrams
-
-**Workflow:**
-1. Click **+** icon in Diagrams panel
-2. Choose diagram type (Draw.io or Excalidraw)
-3. Name your diagram
-4. Embed syntax `![[diagram-name.drawio]]` copied to clipboard
-5. Paste into any note and start editing diagram
-
-**Commands:**
-- **Create Draw.io Diagram**: New diagram with auto-embed copy
-- **Create Excalidraw Diagram**: New diagram with auto-embed copy
-- **Insert Diagram**: Picker showing all available diagrams
-- **Open Diagram**: Launch in appropriate editor
-
-**Requirements**: Install [Draw.io Integration](https://marketplace.visualstudio.com/items?itemName=hediet.vscode-drawio) and/or [Excalidraw](https://marketplace.visualstudio.com/items?itemName=pomdtr.excalidraw-editor) extensions
-
-### Note, Image & Diagram Embeds 🆕
-
-Include content from other notes, display images, and embed diagrams inline:
-
-**Embed Notes:**
-```markdown
-![[meeting-notes]]                    # Embed entire note
-![[project-overview#Goals]]           # Embed specific section
-![[api-docs#Authentication|How to Auth]]  # Custom display text
-```
-
-**Embed Images:**
-```markdown
-![[screenshot.png]]                   # Simple image
-![[./images/diagram.png|Diagram]]     # Relative path with caption
-![[/path/to/photo.jpg]]              # Absolute path
-```
-
-**Embed Diagrams:**
-```markdown
-![[architecture.drawio]]              # Draw.io diagram (clickable link)
-![[wireframe.excalidraw]]             # Excalidraw diagram (clickable link)
-![[diagram.excalidraw.svg|System]]   # Exported diagram (renders inline)
-```
-
-**Supported Formats**:
-- **Images**: PNG, JPG, JPEG, GIF, SVG, WebP, BMP, ICO
-- **Diagrams**: Draw.io (.drawio), Excalidraw (.excalidraw, .excalidraw.svg, .excalidraw.png)
-
-**Diagram Support**: Requires [Draw.io Integration](https://marketplace.visualstudio.com/items?itemName=hediet.vscode-drawio) or [Excalidraw](https://marketplace.visualstudio.com/items?itemName=pomdtr.excalidraw-editor) extensions
-
-**Live Updates**: Embedded content updates automatically when source changes
-
-### Graph View 🆕
-
-Interactive visualization of your note network:
-
-**Interactive Features:**
-- Click nodes to open notes
-- Drag nodes to reorganize
-- Zoom and pan to explore
-- Hover for tooltips
-- Click to highlight connections
-- Right-click for focus mode
-
-**Customization:**
-- 3 layout algorithms: Force-Directed, Hierarchical, Circular
-- Adjust node sizes, colors, shapes (6 options)
-- Configure edge styles, colors, arrows
-- Custom color schemes for connection levels
-- Physics tuning: spring length, repulsion, gravity
-
-**Filtering:**
-- Search by note name
-- Filter by connection type (all/connected/orphans)
-- Date-based filtering (created/modified)
-- Preset ranges: Today, Last 7/30/90/365 Days
-- Custom date ranges
-
-**Statistics:**
-- Total notes and links
-- Orphan detection
-- Most connected notes
-- Average connections per note
-
-### Tag System
-
-Organize notes with flexible tagging:
-
-**Add Tags:**
-```markdown
-# Inline hashtags
-Working on #backend #authentication today
-
-# YAML frontmatter
----
-tags: [backend, security, auth]
 ---
 
-# Combine both approaches!
+## 🌟 Your Notes, Everywhere
+
+**The problem**: You work across multiple projects, but your notes are scattered—some in project folders, some in random locations, lost in different workspaces.
+
+**The Noted solution**: Configure your notes folder once (like `~/Documents/Notes` or `~/Dropbox/Notes`), and access it from **any VS Code workspace** with a single click. Your knowledge base travels with you.
+
+![cross-workspace-access](./assets/cross-workspace.gif)
+
+Whether you're working on a client project, personal code, or company repository, your notes are always one click away in the sidebar. Take meeting notes, document discoveries, and link ideas without switching contexts or losing track of where you put things.
+
+### Why This Matters
+
+- ✅ **Persistent knowledge base** - Your notes aren't tied to any single project
+- ✅ **Cross-project insights** - Link notes from different work contexts together
+- ✅ **One source of truth** - All your professional knowledge in one searchable location
+- ✅ **Zero setup per project** - Open any workspace, your notes are already there
+- ✅ **Cloud-sync ready** - Put your notes folder in Dropbox/iCloud/OneDrive, sync everywhere
+
+---
+
+## Core Features
+
+### Connect your notes with [[wikilinks]]
+
+![wiki-linking](./assets/wiki-linking.gif)
+
+Create connections between notes using `[[wikilinks]]`. Noted provides autocomplete as you type, instant navigation with click-through links, and automatic link updates when you rename or move files. Use `[[note|display text]]` for readable link labels, or `[[folder/note]]` to disambiguate notes with the same name.
+
+### Visualize your knowledge network
+
+![graph-view](./assets/graph-view.gif)
+
+See your entire note network at a glance with the interactive graph visualization. Click nodes to navigate between notes, drag to explore relationships, and use filters to focus on specific time periods or connection patterns. The graph adapts to your note density with smart physics and hover-to-reveal labels that keep the view clean.
+
+### See all connections in real-time
+
+![connections-panel](./assets/connections-panel.gif)
+
+The Connections panel shows all notes linking to and from your current note, with context snippets showing exactly where connections appear. Click any backlink to jump to the source note at the exact line where the link lives. The panel updates in real-time as you work, keeping you aware of your note relationships without breaking your flow.
+
+### Embed notes, images, and diagrams inline
+
+![note-embeds](./assets/note-embeds.gif)
+
+Include content from other notes using `![[note-name]]` or embed specific sections with `![[note-name#Section]]`. Display images inline with `![[image.png]]` and embed diagrams with `![[diagram.drawio]]`. Build comprehensive documents from reusable pieces, with live updates as source content changes.
+
+### Create and manage diagrams seamlessly
+
+![diagrams](./assets/diagrams.gif)
+
+Centralized diagram management with Draw.io and Excalidraw support. Create diagrams from the Diagrams panel, automatically copy embed syntax to your clipboard, and paste `![[diagram.drawio]]` into any note. All diagrams are stored in a single folder for easy organization, with automatic discovery from nested note locations.
+
+### Organize with flexible tags
+
+![tags](./assets/tags.gif)
+
+Tag notes inline with `#hashtags` or in YAML frontmatter (`tags: [work, backend, bug]`). Get autocomplete suggestions as you type `#`, filter notes by single or multiple tags, and see usage counts at a glance in the Tags panel. Sort alphabetically or by frequency to find your most-used organizational categories.
+
+### Find anything with powerful filters
+
+![search](./assets/search.gif)
+
+Combine regex patterns, tag filters, and date ranges to find exactly what you need. Use advanced syntax like `regex: tag:backend from:2025-01-01 auth.*error` to search across thousands of notes instantly. Results show match counts, tags, modification dates, and rich context previews.
+
+### Navigate daily notes visually
+
+![calendar](./assets/calendar.gif)
+
+Visual monthly calendar for daily notes with highlighted indicators showing days with existing content. Click any date to see all notes created that day, create new dated notes, or jump between months with Previous/Today/Next navigation. Perfect for journaling and daily standup workflows.
+
+### Keep your knowledge base healthy
+
+![orphans-placeholders](./assets/orphans.gif)
+
+Identify orphaned notes (no incoming or outgoing links) and placeholder links (references to notes that don't exist yet). The Orphans panel shows three categories: isolated notes, notes with no backlinks, and notes with no outgoing links. The Placeholders panel groups broken links by target, showing all source locations with context snippets and line numbers.
+
+---
+
+## Quick Commands
+
+- **Cmd+Shift+N** (Mac) / **Ctrl+Shift+N** (Windows/Linux) - Open today's note instantly
+- **Cmd+Shift+T** / **Ctrl+Shift+T** - Insert timestamp at cursor
+- Type **[[** - Autocomplete available notes with intelligent suggestions
+- Type **#** - Autocomplete existing tags with usage counts
+- Type **![[** - Embed notes, images, or diagrams inline
+
+---
+
+## Installation
+
+### 1. Install the Extension
+
+Open VS Code Extensions (**Cmd+Shift+X** / **Ctrl+Shift+X**) → Search for "**Noted**" → Click **Install**
+
+### 2. Configure Your Notes Home (First Time Only)
+
+When you first use Noted, you'll be prompted to choose where to store your notes.
+
+**Recommended locations:**
+
+```bash
+# macOS/Linux
+~/Documents/Notes          # Local, backed up by Time Machine/system backups
+~/Dropbox/Notes           # Cloud-synced across devices
+~/Library/Mobile Documents/com~apple~CloudDocs/Notes  # iCloud Drive
+
+# Windows
+C:\Users\YourName\Documents\Notes     # Local
+C:\Users\YourName\Dropbox\Notes       # Cloud-synced
 ```
 
-**Features:**
-- Click tags to filter notes
-- Multi-tag filtering (AND logic)
-- Tag autocomplete when typing `#`
-- Sort alphabetically or by frequency
-- Rename tags across all notes
-- Merge duplicate tags
-- Delete tags with confirmation
-- Export tags to JSON
+**Important:** Choose a location **outside** any specific project folder. This ensures your notes are accessible from every workspace.
 
-### Advanced Search
+### 3. Start Taking Notes
 
-Powerful search with multiple filter types:
+Press **Cmd+Shift+N** (Mac) or **Ctrl+Shift+N** (Windows/Linux) to open today's note.
 
-**Filter Syntax:**
-```
-regex: pattern           # Regular expressions
-case: true              # Case-sensitive search
-tag:name               # Filter by tags
-from:2025-01-01        # Date range start
-to:2025-01-31          # Date range end
-```
+Your notes are now accessible from any VS Code workspace! 🎉
 
-**Combine Filters:**
-```
-regex: tag:backend from:2025-10-01 authentication.*error
-```
+---
 
-**Quick Switcher:**
-- Access 20 most recent notes instantly
-- Searchable by filename, tags, content
-- Fast navigation for active work
+## Getting Started
 
-### Calendar View
+### First-Time Setup (Do Once)
 
-Visual monthly calendar for navigating daily notes:
+1. **Install Noted** from VS Code Marketplace
+2. **Choose your notes home** - Pick a location outside your project folders:
+   - Recommended: `~/Documents/Notes` or `~/Dropbox/Notes`
+   - Avoid: Inside any specific project/workspace folder
+3. **Start taking notes** - Press Cmd+Shift+N to create today's note
 
-**Features:**
-- Click any date to see/create notes
-- Highlighted days with existing notes
-- Current day indicator
-- Month navigation (Previous/Today/Next)
-- Create multiple notes per day
-- Shows all notes for selected date
+That's it! Your notes are now accessible from every VS Code workspace you open.
 
-### Templates
+### Daily Workflow
 
-**Built-in Templates:**
-- Problem/Solution: Troubleshooting and bug tracking
-- Meeting: Agenda, attendees, action items
-- Research: Structured research notes
-- Quick: Simple dated note
+Noted works best when you:
 
-**Custom Templates:**
-Create personalized templates with 10 dynamic variables:
-- `{filename}` - Note file name
-- `{date}` - Full date (Sunday, October 24, 2025)
-- `{time}` - 12-hour time (2:30 PM)
-- `{year}`, `{month}`, `{day}` - Date components
-- `{weekday}` - Short day name (Sun, Mon)
-- `{month_name}` - Full month name (October)
-- `{user}` - System username
-- `{workspace}` - VS Code workspace name
+1. **Keep one unified notes folder** - Don't create separate notes per project
+2. **Link liberally** - Use `[[wikilinks]]` to connect related thoughts
+3. **Tag for organization** - Use `#tags` to categorize and filter notes
+4. **Review connections** - Use the graph view and connections panel to discover relationships
+5. **Open today's note each morning** - Cmd+Shift+N becomes your daily ritual
+6. **Build atomic notes** - One topic per note keeps things focused and linkable
 
-**Template Management:**
-- Create, edit, duplicate, delete templates
-- Template variables reference viewer
-- Open templates folder in system
+### The Power of Persistent Notes
 
-### Bulk Operations 🆕
+Unlike workspace-specific notes, Noted's approach means:
+- Meeting notes from last week's client call? Still there when you switch projects.
+- Research on that authentication pattern? Available in your new side project.
+- Bug investigation from six months ago? Searchable and linkable, no matter where you are.
 
-Multi-select notes for batch operations:
+**Your knowledge compounds over time, not trapped in project folders.**
 
-**Features:**
-- Toggle select mode
-- Visual selection with checkmarks
-- Select all / clear selection
-- Bulk delete with confirmation
-- Bulk move to folder
-- Bulk archive
-- Undo support for all operations
+---
 
-### Undo/Redo 🆕
+## Why Choose Noted Over Other Solutions?
 
-Full undo/redo system for safety:
+| Approach | Access Pattern | Problem |
+|----------|---------------|---------|
+| **Workspace .vscode/notes/** | Only in that project | Notes disappear when switching workspaces |
+| **Project /docs/ folder** | Per-project only | Knowledge scattered across repos |
+| **Random text files** | Wherever you saved them | Can't find anything, no connections |
+| **Separate notes app** | Outside VS Code | Context switching kills flow |
+| **✅ Noted** | **One folder, every workspace** | **Always accessible, fully connected** |
 
-**Supported Operations:**
-- Delete, rename, move notes
-- Archive/unarchive
-- Bulk operations
-- All destructive changes
+With Noted, your notes folder is like your home—you can visit from anywhere, and everything you need is always in the same place.
 
-**Features:**
-- View complete undo history
-- Redo previously undone operations
-- Clear history when needed
-- Smart file restoration with content
+---
 
-### Pinned Notes
+## Real-World Workflows
 
-Pin important notes for quick access:
+### Scenario 1: Freelance Developer
+**The Setup**: Notes folder at `~/Dropbox/Notes`
 
-**Features:**
-- Pin/unpin from context menu
-- Dedicated "Pinned Notes" section at top
-- Visual pin indicator (📌)
-- Persistent across sessions
-- Auto-cleanup if note deleted
+**The Workflow**:
+- Monday morning: Open Client A's project → Cmd+Shift+N → Daily standup notes
+- Monday afternoon: Switch to Client B's project → Same notes appear in sidebar
+- Tuesday: Link yesterday's Client A solution to today's Client B problem
+- Friday: Search "authentication bug" → Find notes from both clients, compare approaches
 
-### Archive
+**The Win**: Knowledge from one client helps another. Your notes bridge all your work.
 
-Keep workspace clean:
+### Scenario 2: Startup Team Member
+**The Setup**: Notes folder at `~/Documents/Work-Notes`
 
-**Features:**
-- Archive to hidden `.archive` folder
-- Dedicated archive section in tree
-- Visual archive indicator (📦)
-- Bulk archive by age
-- Easy unarchive to restore
+**The Workflow**:
+- AM: Work on frontend repo → Take architecture notes with `[[wiki-links]]`
+- PM: Switch to backend repo → Reference morning's frontend notes via graph view
+- Next week: Switch to mobile repo → Search across all previous notes
+- Next month: New project → All context from previous work still accessible
 
-### Markdown Preview 🆕
+**The Win**: Company knowledge stays connected even as you move between codebases.
 
-Live preview for markdown files:
+### Scenario 3: Open Source Contributor + Day Job
+**The Setup**: Notes folder at `~/Notes`
 
-**Features:**
-- Side-by-side editing and preview
-- Auto-update as you type
-- Toggle from editor toolbar
-- Full markdown support
+**The Workflow**:
+- 9-5: Work on proprietary company code → Take meeting notes, tag with `#work`
+- Evening: Contribute to OSS project → Link work learnings to OSS ideas
+- Weekend: Personal learning project → Search across work + OSS notes
+- Graph view reveals patterns across all contexts
 
-## ⚙️ Configuration
+**The Win**: Your entire professional knowledge base is unified and searchable.
 
-Access via VS Code Settings (search for "Noted"):
+---
+
+## Features at a Glance
+
+✅ Wiki-style `[[links]]` with autocomplete  
+✅ Interactive graph visualization with customizable physics  
+✅ Real-time connections panel showing backlinks and outgoing links  
+✅ Note, image, and diagram embeds with `![[embed]]` syntax  
+✅ Powerful regex + tag + date search  
+✅ Visual calendar for daily notes  
+✅ Flexible tagging system (inline `#tags` and YAML frontmatter)  
+✅ Orphan and placeholder detection  
+✅ Undo/redo for all destructive operations  
+✅ Bulk operations (move, delete, archive multiple notes)  
+✅ Custom templates with 10+ dynamic variables  
+✅ Markdown preview with embedded content rendering  
+✅ Pinned notes for quick access  
+✅ Archive system to keep workspace clean  
+✅ Cross-workspace access from single notes folder  
+✅ 100% local, plain markdown files you own  
+
+---
+
+## Use Cases
+
+- **Second Brain** - Capture and connect your knowledge over time, building a personal wiki
+- **Project Documentation** - Keep all project notes linked and searchable across repositories
+- **Research Notes** - Build a personal research database with bidirectional links
+- **Daily Journaling** - Track daily progress with calendar navigation and daily notes
+- **Technical Writing** - Draft articles with embedded diagrams and cross-references
+- **Meeting Minutes** - Capture decisions and link to relevant project context
+- **Learning & Study** - Create connected notes on topics with tags and backlinks
+- **Bug Tracking** - Document bugs with links to related issues and solutions
+
+---
+
+## Configuration
+
+Access settings via VS Code Settings (search for "Noted"):
 
 - **noted.notesFolder**: Where notes are stored (default: "Notes")
 - **noted.diagramsFolder**: Where diagrams are stored (default: "Diagrams")
@@ -337,107 +262,16 @@ Access via VS Code Settings (search for "Noted"):
 - **noted.tagAutoComplete**: Tag suggestions when typing # (default: true)
 - **noted.autoBacklinks**: Auto-append backlinks sections (default: true)
 
-## 📥 Installation
+### Graph View Settings
 
-### From VS Code Marketplace
+- **noted.graph.style.fontSize**: Font size for node labels in pixels (default: 11)
+- **noted.graph.titleMaxLength**: Maximum label length before truncation (default: 24)
+- **noted.graph.physics.chargeStrength**: Node repulsion strength (default: -120)
+- **noted.graph.physics.linkDistance**: Target distance between connected nodes (default: 50)
 
-1. Open VS Code Extensions (`Cmd+Shift+X` or `Ctrl+Shift+X`)
-2. Search for "Noted"
-3. Click Install
-
-### Manual Installation
-
-1. Download latest `.vsix` from [releases](https://github.com/jsonify/noted/releases)
-2. Open VS Code Extensions view
-3. Click "..." menu → "Install from VSIX..."
-4. Select downloaded file
-
-## 🎯 Common Workflows
-
-### Daily Standup
-
-```markdown
----
-tags: [standup, team]
 ---
 
-# Standup - 2025-10-24
-
-## Yesterday
-- Completed [[feature-auth]]
-- Reviewed [[pr-142]]
-
-## Today
-- Starting [[api-refactor]]
-- Meeting about [[database-migration]]
-
-## Blockers
-None
-
-#standup #team
-```
-
-### Project Notes
-
-```markdown
----
-tags: [project-alpha, planning]
----
-
-# Project Alpha - Planning
-
-## Overview
-![[project-alpha-spec#Overview]]
-
-## Current Status
-See [[sprint-5-retrospective]] for latest updates
-
-## Team
-- Alice: [[user-auth]]
-- Bob: [[database-migration]]
-- Charlie: [[ui-redesign]]
-
-## Resources
-- [[architecture-decisions]]
-- [[api-documentation]]
-
-#project-alpha
-```
-
-### Meeting Minutes
-
-```markdown
----
-tags: [meeting, team, weekly]
----
-
-# Weekly Team Sync - 2025-10-24
-
-**Attendees**: Alice, Bob, Charlie
-
-## Agenda
-1. Sprint review
-2. Blockers
-3. Next week planning
-
-## Notes
-[10:00 AM] Sprint 5 completed successfully
-- [[feature-auth]] shipped
-- [[bug-payment]] resolved
-
-[10:15 AM] Blockers discussed
-- Bob blocked on [[database-migration]]
-- Need DevOps support
-
-## Action Items
-- [ ] Bob: Schedule DevOps meeting
-- [ ] Alice: Document [[auth-flow]]
-- [ ] Charlie: Update [[roadmap]]
-
-#meeting #weekly
-```
-
-## 🔧 Development
+## Development
 
 ### Setup
 
@@ -474,62 +308,11 @@ pnpm dlx @vscode/vsce package
 - Cross-platform CI/CD (Ubuntu, macOS, Windows)
 - Multiple Node versions (18.x, 20.x)
 
-### Project Structure
+---
 
-```
-src/
-├── extension.ts              # Entry point
-├── constants.ts              # Shared constants
-├── utils/                    # Utilities
-│   ├── validators.ts
-│   ├── dateHelpers.ts
-│   └── folderHelpers.ts
-├── services/                 # Business logic
-│   ├── noteService.ts
-│   ├── tagService.ts
-│   ├── linkService.ts
-│   ├── graphService.ts
-│   ├── connectionsService.ts
-│   ├── embedService.ts
-│   ├── diagramService.ts
-│   ├── bulkOperationsService.ts
-│   └── undoService.ts
-├── providers/                # Tree view providers
-│   ├── notesTreeProvider.ts
-│   ├── diagramsTreeProvider.ts
-│   └── connectionsTreeProvider.ts
-├── commands/                 # Command handlers
-│   ├── commands.ts
-│   ├── diagramCommands.ts
-│   └── tagCommands.ts
-├── calendar/                 # Calendar view
-└── graph/                    # Graph visualization
-```
+## Documentation
 
-## 📂 Folder Structure
-
-Notes are automatically organized:
-
-```
-Notes/
-├── .templates/              # Custom templates
-├── .archive/               # Archived notes
-├── Diagrams/               # Centralized diagrams (Draw.io & Excalidraw)
-│   ├── architecture.drawio
-│   ├── wireframe.excalidraw
-│   └── system-design.excalidraw.svg
-└── 2025/
-    ├── 10-October/
-    │   ├── 2025-10-01.md
-    │   ├── 2025-10-02.md
-    │   └── 2025-10-24.md
-    └── 11-November/
-        └── ...
-```
-
-## 🌐 Documentation
-
-Full documentation available at: [https://jsonify.github.io/noted](https://jsonify.github.io/noted)
+📖 **[Full Documentation](https://jsonify.github.io/noted)**
 
 **Topics:**
 - Getting Started Guide
@@ -541,16 +324,13 @@ Full documentation available at: [https://jsonify.github.io/noted](https://jsoni
 - Tags System
 - Advanced Search
 - Calendar View
-- Bulk Operations
-- Undo/Redo
+- Bulk Operations & Undo/Redo
 - Templates Guide
 - Pinned Notes & Archive
 
-## 📝 License
+---
 
-MIT
-
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Please:
 1. Fork the repository
@@ -559,11 +339,31 @@ Contributions welcome! Please:
 4. Follow existing code style
 5. Submit a Pull Request
 
-**Note**: This project receives frequent updates, so please check for breaking changes before submitting PRs.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
-## 🙏 Acknowledgments
+---
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/jsonify/noted/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/jsonify/noted/discussions)
+- **Documentation**: [Website](https://jsonify.github.io/noted)
+
+---
+
+## License
+
+MIT License - see [LICENSE](LICENSE)
+
+---
+
+## Acknowledgments
 
 Built with ❤️ for the VS Code community
+
+**Inspired by:**
+- [Foam](https://foambubble.github.io/foam/) - Personal knowledge management for VS Code
+- [Obsidian](https://obsidian.md/) - Powerful knowledge base on local markdown files
 
 **Technologies:**
 - TypeScript
@@ -571,8 +371,6 @@ Built with ❤️ for the VS Code community
 - Vis.js (graph visualization)
 - Mocha & Chai (testing)
 
-## 📧 Support
+---
 
-- **Issues**: [GitHub Issues](https://github.com/jsonify/noted/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/jsonify/noted/discussions)
-- **Documentation**: [Website](https://jsonify.github.io/noted)
+**Your knowledge, unified. Your notes, everywhere.**
