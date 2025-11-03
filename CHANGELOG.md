@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.35.4](https://github.com/jsonify/noted/compare/v1.35.3...v1.35.4) (2025-11-03)
+
+
+### Documentation
+
+* add comprehensive Smart Collections documentation ([#57](https://github.com/jsonify/noted/issues/57)) ([6471fff](https://github.com/jsonify/noted/commit/6471fff7ac48af7f6c766e410ce5126b650e305f))
+
 ### [1.35.3](https://github.com/jsonify/noted/compare/v1.35.2...v1.35.3) (2025-11-03)
 
 
