@@ -101,6 +101,18 @@ Powerful search with regex, date filters, and tag filtering to find exactly what
 
 [Learn more →](/noted/posts/search/)
 
+## 📚 Smart Collections
+
+Save search queries as dynamic collections that auto-update as your notes change. Create multiple filtered views of your notes.
+
+- **Saved Searches**: Save complex queries for reuse
+- **Auto-Updating**: Collections refresh as notes change
+- **Pin Collections**: Keep important collections at the top
+- **Multiple Views**: One note can appear in many collections
+- **Full Search Power**: Use all advanced search filters
+
+[Learn more →](/noted/posts/smart-collections/)
+
 ## 📅 Calendar View
 
 Visual monthly calendar for navigating daily notes and viewing note history.
