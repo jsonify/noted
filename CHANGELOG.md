@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.35.3](https://github.com/jsonify/noted/compare/v1.35.2...v1.35.3) (2025-11-03)
+
+
+### Bug Fixes
+
+* clear tags when Notes directory is changed ([#55](https://github.com/jsonify/noted/issues/55)) ([28c2348](https://github.com/jsonify/noted/commit/28c23485b34d42b5db827016aac40ec0e1b50499))
+
 ### [1.35.2](https://github.com/jsonify/noted/compare/v1.35.1...v1.35.2) (2025-11-03)
 
 ### [1.35.1](https://github.com/jsonify/noted/compare/v1.35.0...v1.35.1) (2025-11-03)
