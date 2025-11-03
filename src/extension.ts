@@ -1817,6 +1817,35 @@ export function activate(context: vscode.ExtensionContext) {
         refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource
     );
 
+    // Listen for configuration changes to handle notes folder relocation
+    const configChangeListener = vscode.workspace.onDidChangeConfiguration(async (e) => {
+        if (e.affectsConfiguration('noted.notesFolder')) {
+            const newNotesPath = getNotesPath();
+            if (newNotesPath) {
+                // Update all services with the new notes path
+                await tagService.updateNotesPath(newNotesPath);
+                await linkService.updateNotesPath(newNotesPath);
+                archiveService.updateNotesPath(newNotesPath);
+
+                // Clear path resolution cache for embeds
+                clearPathResolutionCache();
+
+                // Refresh all tree views
+                notesProvider.refresh();
+                journalProvider.refresh();
+                tagsProvider.refresh();
+                connectionsProvider.refresh();
+                orphansProvider.refresh();
+                placeholdersProvider.refresh();
+                collectionsProvider.refresh();
+                diagramsProvider.refresh();
+
+                vscode.window.showInformationMessage('Notes folder location updated. All indices have been rebuilt.');
+            }
+        }
+    });
+    context.subscriptions.push(configChangeListener);
+
     // Return API for markdown-it plugin registration
     return {
         extendMarkdownIt(md: any) {

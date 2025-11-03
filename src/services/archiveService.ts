@@ -193,4 +193,12 @@ export class ArchiveService {
     isArchived(filePath: string): boolean {
         return filePath.includes(this.archiveFolderName);
     }
+
+    /**
+     * Update the notes path
+     * Used when the notes folder location changes
+     */
+    updateNotesPath(newPath: string): void {
+        this.notesPath = newPath;
+    }
 }
