@@ -56,23 +56,14 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
             // Try to resolve the link
             const targetPath = await this.linkService.resolveLink(linkText);
             if (targetPath) {
-                // If section is specified, create a command link to navigate to that section
-                let uri: vscode.Uri;
-                let tooltip: string;
+                const linkTargetForDisplay = section ? `${linkText}#${section}` : linkText;
+                const tooltip = displayText
+                    ? `Open ${linkTargetForDisplay} (displayed as: "${displayText}")`
+                    : `Open ${linkTargetForDisplay}`;
 
-                if (section) {
-                    // Create command URI to open file and jump to section
-                    uri = vscode.Uri.parse(`command:noted.openLinkWithSection?${encodeURIComponent(JSON.stringify([targetPath, section]))}`);
-                    tooltip = displayText
-                        ? `Open ${linkText}#${section} (displayed as: "${displayText}")`
-                        : `Open ${linkText}#${section}`;
-                } else {
-                    // Regular file link without section
-                    uri = vscode.Uri.file(targetPath);
-                    tooltip = displayText
-                        ? `Open ${linkText} (displayed as: "${displayText}")`
-                        : `Open ${linkText}`;
-                }
+                const uri = section
+                    ? vscode.Uri.parse(`command:noted.openLinkWithSection?${encodeURIComponent(JSON.stringify([targetPath, section]))}`)
+                    : vscode.Uri.file(targetPath);
 
                 const documentLink = new vscode.DocumentLink(range, uri);
                 documentLink.tooltip = tooltip;

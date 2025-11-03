@@ -820,30 +820,19 @@ export function activate(context: vscode.ExtensionContext) {
             const editor = await vscode.window.showTextDocument(document);
 
             // Find the section in the document
-            const text = document.getText();
-            const lines = text.split('\n');
             const normalizedSection = sectionName.toLowerCase().trim();
+            const headingRegex = /^(?:#{1,6}\s+(.+)|(.+):)$/;
 
             let targetLine = -1;
 
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
+            for (let i = 0; i < document.lineCount; i++) {
+                const line = document.lineAt(i).text;
                 const trimmedLine = line.trim();
 
-                // Check for markdown heading: # Heading, ## Heading, etc.
-                const mdHeadingMatch = trimmedLine.match(/^(#{1,6})\s+(.+)$/);
-                if (mdHeadingMatch) {
-                    const headingText = mdHeadingMatch[2].trim().toLowerCase();
-                    if (headingText === normalizedSection) {
-                        targetLine = i;
-                        break;
-                    }
-                }
-
-                // Check for text-style heading: HEADING: or Heading:
-                const textHeadingMatch = trimmedLine.match(/^([A-Za-z0-9\s]+):$/);
-                if (textHeadingMatch) {
-                    const headingText = textHeadingMatch[1].trim().toLowerCase();
+                const match = trimmedLine.match(headingRegex);
+                if (match) {
+                    // match[1] is for markdown headings, match[2] is for text-style headings
+                    const headingText = (match[1] || match[2])?.trim().toLowerCase();
                     if (headingText === normalizedSection) {
                         targetLine = i;
                         break;
@@ -864,7 +853,7 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showWarningMessage(`Section "${sectionName}" not found in note`);
             }
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to open note: ${error}`);
+            vscode.window.showErrorMessage(`Failed to open note: ${error instanceof Error ? error.message : String(error)}`);
         }
     });
 
