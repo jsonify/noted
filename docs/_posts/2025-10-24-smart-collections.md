@@ -308,26 +308,14 @@ Query: from:2024-07-01 to:2024-09-30
 
 ### Status Collections
 
-**Untagged Notes:**
-```
-Name: Needs Tagging
-Query: [use Advanced Search to find untagged]
-Description: Notes without any tags
-```
-
-**Orphaned Notes:**
-```
-Name: Orphans
-Query: [notes with no links in or out]
-Description: Disconnected notes
-```
-
 **Recent Changes:**
 ```
 Name: Recently Modified
 Query: from:2025-10-20
-Description: Last 3 days
+Description: Notes modified since Oct 20. Update the date as needed.
 ```
+
+**Note**: For untagged notes and orphaned notes, use the dedicated Orphans & Placeholders panel rather than Smart Collections, as these require special detection that cannot be expressed as search queries.
 
 ### Project Collections
 
@@ -574,11 +562,13 @@ Collections:
 
 **Icon conventions:**
 - 🔥 Flame → Urgent/High Priority
-- 🐛 Bug → Bug tracking
-- ✨ Sparkles → Features
-- 📅 Calendar → Date-based
-- 🏷️ Tag → Tag-based
 - 🚀 Rocket → Projects
+- 📅 Calendar → Date-based collections
+- 🏷️ Tag → Tag-based collections
+- ⭐ Star → Favorites
+- ⚡ Zap → Quick actions
+- 🔖 Bookmark → Reading lists
+- 🔍 Search → General searches
 
 ### 7. Review & Prune Regularly
 
@@ -685,11 +675,6 @@ Query: tag:in-progress tag:high-priority from:2025-10-01
 **Recent team meetings with action items:**
 ```
 Query: tag:meeting tag:team regex: - \[ \] from:2025-10-01
-```
-
-**Unlinked learning notes:**
-```
-Query: tag:learning [filter for orphans]
 ```
 
 ## Troubleshooting
