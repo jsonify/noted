@@ -42,7 +42,8 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
 
         while ((match = LINK_PATTERN.exec(text)) !== null) {
             const linkText = match[1].trim();
-            const displayText = match[2] ? match[2].trim() : undefined;
+            const section = match[2] ? match[2].trim() : undefined;
+            const displayText = match[3] ? match[3].trim() : undefined;
             const startPos = document.positionAt(match.index);
             const endPos = document.positionAt(match.index + match[0].length);
             const range = new vscode.Range(startPos, endPos);
@@ -55,14 +56,17 @@ export class NoteLinkProvider implements vscode.DocumentLinkProvider {
             // Try to resolve the link
             const targetPath = await this.linkService.resolveLink(linkText);
             if (targetPath) {
-                const documentLink = new vscode.DocumentLink(
-                    range,
-                    vscode.Uri.file(targetPath)
-                );
-                // Show the target if display text is used, otherwise just show the link text
-                documentLink.tooltip = displayText
-                    ? `Open ${linkText} (displayed as: "${displayText}")`
-                    : `Open ${linkText}`;
+                const linkTargetForDisplay = section ? `${linkText}#${section}` : linkText;
+                const tooltip = displayText
+                    ? `Open ${linkTargetForDisplay} (displayed as: "${displayText}")`
+                    : `Open ${linkTargetForDisplay}`;
+
+                const uri = section
+                    ? vscode.Uri.parse(`command:noted.openLinkWithSection?${encodeURIComponent(JSON.stringify([targetPath, section]))}`)
+                    : vscode.Uri.file(targetPath);
+
+                const documentLink = new vscode.DocumentLink(range, uri);
+                documentLink.tooltip = tooltip;
                 links.push(documentLink);
             } else {
                 // Create a link with custom URI that will prompt to create the note
