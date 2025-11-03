@@ -1831,14 +1831,18 @@ export function activate(context: vscode.ExtensionContext) {
                 clearPathResolutionCache();
 
                 // Refresh all tree views
-                notesProvider.refresh();
-                journalProvider.refresh();
-                tagsProvider.refresh();
-                connectionsProvider.refresh();
-                orphansProvider.refresh();
-                placeholdersProvider.refresh();
-                collectionsProvider.refresh();
-                diagramsProvider.refresh();
+                const providersToRefresh = [
+                    notesProvider,
+                    journalProvider,
+                    templatesProvider,
+                    tagsProvider,
+                    connectionsProvider,
+                    orphansProvider,
+                    placeholdersProvider,
+                    collectionsProvider,
+                    diagramsProvider
+                ];
+                providersToRefresh.forEach(p => p.refresh());
 
                 vscode.window.showInformationMessage('Notes folder location updated. All indices have been rebuilt.');
             }
