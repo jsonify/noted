@@ -812,6 +812,62 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // Command to open a link with section reference (e.g., [[note#section]])
+    let openLinkWithSection = vscode.commands.registerCommand('noted.openLinkWithSection', async (filePath: string, sectionName: string) => {
+        try {
+            // Open the document
+            const document = await vscode.workspace.openTextDocument(filePath);
+            const editor = await vscode.window.showTextDocument(document);
+
+            // Find the section in the document
+            const text = document.getText();
+            const lines = text.split('\n');
+            const normalizedSection = sectionName.toLowerCase().trim();
+
+            let targetLine = -1;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmedLine = line.trim();
+
+                // Check for markdown heading: # Heading, ## Heading, etc.
+                const mdHeadingMatch = trimmedLine.match(/^(#{1,6})\s+(.+)$/);
+                if (mdHeadingMatch) {
+                    const headingText = mdHeadingMatch[2].trim().toLowerCase();
+                    if (headingText === normalizedSection) {
+                        targetLine = i;
+                        break;
+                    }
+                }
+
+                // Check for text-style heading: HEADING: or Heading:
+                const textHeadingMatch = trimmedLine.match(/^([A-Za-z0-9\s]+):$/);
+                if (textHeadingMatch) {
+                    const headingText = textHeadingMatch[1].trim().toLowerCase();
+                    if (headingText === normalizedSection) {
+                        targetLine = i;
+                        break;
+                    }
+                }
+            }
+
+            if (targetLine !== -1) {
+                // Jump to the section
+                const position = new vscode.Position(targetLine, 0);
+                editor.selection = new vscode.Selection(position, position);
+                editor.revealRange(
+                    new vscode.Range(position, position),
+                    vscode.TextEditorRevealType.InCenter
+                );
+            } else {
+                // Section not found - still open the file but show a message
+                vscode.window.showWarningMessage(`Section "${sectionName}" not found in note`);
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to open note: ${error}`);
+        }
+    });
+
     // Command to delete note
     let deleteNote = vscode.commands.registerCommand('noted.deleteNote', async (item?: NoteItem) => {
         // If no item provided (keyboard shortcut), get from tree view selection
@@ -1756,7 +1812,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         openTodayNote, openWithTemplate, createQuickNote, createCategoryNote, insertTimestamp, extractSelectionToNote, changeFormat,
-        refreshNotes, refreshConnections, openNote, openConnection, openConnectionSource, createNoteFromLink, deleteNote, renameNote, copyPath, revealInExplorer,
+        refreshNotes, refreshConnections, openNote, openConnection, openConnectionSource, createNoteFromLink, openLinkWithSection, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, quickSwitcher, filterByTag, clearTagFilters, sortTagsByName, sortTagsByFrequency, refreshTags,
         renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,
         showStats, exportNotes, duplicateNote, moveNotesFolder,
