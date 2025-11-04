@@ -155,15 +155,50 @@ describe('TagCompletionProvider', () => {
     // Create tag service with mock data
     tagService = new TagService('/test/notes');
 
-    // Manually populate tag index with test data
+    // Helper function to create a Location<Tag> object
+    const createTagLocation = (tagLabel: string, filePath: string, line: number = 0, char: number = 0) => ({
+      uri: filePath,
+      range: {
+        start: { line, character: char },
+        end: { line, character: char + tagLabel.length + 1 } // +1 for # prefix
+      },
+      data: {
+        label: tagLabel,
+        range: {
+          start: { line, character: char },
+          end: { line, character: char + tagLabel.length + 1 }
+        }
+      }
+    });
+
+    // Manually populate tag index with test data using new Location-based structure
     // Using private property access for testing purposes
     (tagService as any).tagIndex = new Map([
-      ['bug', new Set(['/test/notes/1.txt', '/test/notes/2.txt', '/test/notes/3.txt'])],
-      ['urgent', new Set(['/test/notes/1.txt', '/test/notes/2.txt'])],
-      ['feature', new Set(['/test/notes/4.txt'])],
-      ['meeting', new Set(['/test/notes/5.txt', '/test/notes/6.txt', '/test/notes/7.txt', '/test/notes/8.txt'])],
-      ['project-alpha', new Set(['/test/notes/1.txt'])],
-      ['backend', new Set(['/test/notes/9.txt', '/test/notes/10.txt'])],
+      ['bug', [
+        createTagLocation('bug', '/test/notes/1.txt', 0, 0),
+        createTagLocation('bug', '/test/notes/2.txt', 0, 0),
+        createTagLocation('bug', '/test/notes/3.txt', 0, 0),
+      ]],
+      ['urgent', [
+        createTagLocation('urgent', '/test/notes/1.txt', 1, 0),
+        createTagLocation('urgent', '/test/notes/2.txt', 1, 0),
+      ]],
+      ['feature', [
+        createTagLocation('feature', '/test/notes/4.txt', 0, 0),
+      ]],
+      ['meeting', [
+        createTagLocation('meeting', '/test/notes/5.txt', 0, 0),
+        createTagLocation('meeting', '/test/notes/6.txt', 0, 0),
+        createTagLocation('meeting', '/test/notes/7.txt', 0, 0),
+        createTagLocation('meeting', '/test/notes/8.txt', 0, 0),
+      ]],
+      ['project-alpha', [
+        createTagLocation('project-alpha', '/test/notes/1.txt', 2, 0),
+      ]],
+      ['backend', [
+        createTagLocation('backend', '/test/notes/9.txt', 0, 0),
+        createTagLocation('backend', '/test/notes/10.txt', 0, 0),
+      ]],
     ]);
 
     completionProvider = new TagCompletionProvider(tagService);
