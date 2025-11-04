@@ -30,13 +30,74 @@ export interface SearchResult {
 }
 
 /**
+ * Parse dynamic date keywords into actual dates
+ * Supports:
+ * - TODAY - Current date
+ * - YESTERDAY - One day ago
+ * - LAST N DAYS - N days ago to today
+ * - THIS WEEK - Start of current week (Sunday) to today
+ * - THIS MONTH - Start of current month to today
+ * - THIS YEAR - Start of current year to today
+ */
+function parseDateKeyword(keyword: string): Date | null {
+    const upperKeyword = keyword.trim().toUpperCase();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of day
+
+    // TODAY
+    if (upperKeyword === 'TODAY') {
+        return new Date(today);
+    }
+
+    // YESTERDAY
+    if (upperKeyword === 'YESTERDAY') {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return yesterday;
+    }
+
+    // LAST N DAYS
+    const lastDaysMatch = upperKeyword.match(/^LAST\s+(\d+)\s+DAYS?$/);
+    if (lastDaysMatch) {
+        const days = parseInt(lastDaysMatch[1], 10);
+        const date = new Date(today);
+        date.setDate(date.getDate() - days);
+        return date;
+    }
+
+    // THIS WEEK (Sunday to today)
+    if (upperKeyword === 'THIS WEEK') {
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+        return startOfWeek;
+    }
+
+    // THIS MONTH
+    if (upperKeyword === 'THIS MONTH') {
+        return new Date(today.getFullYear(), today.getMonth(), 1);
+    }
+
+    // THIS YEAR
+    if (upperKeyword === 'THIS YEAR') {
+        return new Date(today.getFullYear(), 0, 1);
+    }
+
+    return null;
+}
+
+/**
  * Parse search query for special filters
  * Supports:
  * - tag:tagname - Filter by tag
- * - from:YYYY-MM-DD - Filter by date from
- * - to:YYYY-MM-DD - Filter by date to
+ * - from:YYYY-MM-DD or from:TODAY or from:LAST 30 DAYS - Filter by date from
+ * - to:YYYY-MM-DD or to:TODAY - Filter by date to
  * - regex: - Use regex mode
  * - case: - Case sensitive mode
+ *
+ * Dynamic date keywords:
+ * - TODAY, YESTERDAY
+ * - LAST N DAYS (e.g., LAST 7 DAYS, LAST 30 DAYS)
+ * - THIS WEEK, THIS MONTH, THIS YEAR
  */
 export function parseSearchQuery(query: string): SearchOptions {
     const options: SearchOptions = {
@@ -51,15 +112,30 @@ export function parseSearchQuery(query: string): SearchOptions {
         options.tags!.push(match[1].toLowerCase().trim());
     }
 
-    // Extract date filters
-    const fromMatch = /from:(\d{4}-\d{2}-\d{2})/i.exec(query);
-    if (fromMatch) {
-        options.dateFrom = new Date(fromMatch[1]);
+    // Extract date filters - support both YYYY-MM-DD and dynamic keywords
+    // Try to match dynamic keywords first (they can have spaces)
+    const fromDynamicMatch = /from:([a-zA-Z][\w\s]*)/i.exec(query);
+    const fromStaticMatch = /from:(\d{4}-\d{2}-\d{2})/i.exec(query);
+
+    if (fromDynamicMatch) {
+        const dynamicDate = parseDateKeyword(fromDynamicMatch[1]);
+        if (dynamicDate) {
+            options.dateFrom = dynamicDate;
+        }
+    } else if (fromStaticMatch) {
+        options.dateFrom = new Date(fromStaticMatch[1]);
     }
 
-    const toMatch = /to:(\d{4}-\d{2}-\d{2})/i.exec(query);
-    if (toMatch) {
-        options.dateTo = new Date(toMatch[1]);
+    const toDynamicMatch = /to:([a-zA-Z][\w\s]*)/i.exec(query);
+    const toStaticMatch = /to:(\d{4}-\d{2}-\d{2})/i.exec(query);
+
+    if (toDynamicMatch) {
+        const dynamicDate = parseDateKeyword(toDynamicMatch[1]);
+        if (dynamicDate) {
+            options.dateTo = dynamicDate;
+        }
+    } else if (toStaticMatch) {
+        options.dateTo = new Date(toStaticMatch[1]);
     }
 
     // Check for regex mode
@@ -75,8 +151,10 @@ export function parseSearchQuery(query: string): SearchOptions {
     // Remove all filter keywords from query
     options.query = query
         .replace(/tag:\S+/gi, '')
-        .replace(/from:\d{4}-\d{2}-\d{2}/gi, '')
-        .replace(/to:\d{4}-\d{2}-\d{2}/gi, '')
+        .replace(/from:[a-zA-Z][\w\s]*/gi, '') // Dynamic keywords
+        .replace(/from:\d{4}-\d{2}-\d{2}/gi, '') // Static dates
+        .replace(/to:[a-zA-Z][\w\s]*/gi, '') // Dynamic keywords
+        .replace(/to:\d{4}-\d{2}-\d{2}/gi, '') // Static dates
         .replace(/regex:/gi, '')
         .replace(/case:/gi, '')
         .trim();
