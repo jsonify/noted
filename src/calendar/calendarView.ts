@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getNotesPath, getFileFormat } from '../services/configService';
-import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity } from './calendarHelpers';
+import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap } from './calendarHelpers';
 
 /**
  * Show the calendar view webview
@@ -94,6 +94,11 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
     const monthlyStats = await getMonthlyStats(notesPath);
     const mostActiveDay = await getMostActiveDay(notesPath, year, month);
     const recentActivity = await getRecentActivity(notesPath);
+
+    // Calculate streak data
+    const currentStreak = await getCurrentStreak(notesPath);
+    const longestStreak = await getLongestStreak(notesPath);
+    const streakHeatmap = await getStreakHeatmap(notesPath, 30);
 
     // Generate 6 weeks to accommodate all possible month layouts
     for (let week = 0; week < 6; week++) {
@@ -577,6 +582,154 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 color: var(--vscode-textLink-foreground);
                 font-weight: 600;
             }
+
+            /* Streak section */
+            .streak-section {
+                margin-bottom: 16px;
+                padding: 16px;
+                background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 140, 107, 0.05));
+                border: 1px solid rgba(255, 107, 107, 0.3);
+                border-radius: 12px;
+                position: relative;
+                overflow: hidden;
+            }
+            .streak-section::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #ff6b6b, #ff8c6b, #ffa06b);
+            }
+            .streak-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 12px;
+            }
+            .streak-title {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--vscode-foreground);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .streak-icon {
+                font-size: 20px;
+                animation: flameFlicker 1.5s ease-in-out infinite;
+            }
+            @keyframes flameFlicker {
+                0%, 100% { transform: scale(1) rotate(-5deg); }
+                50% { transform: scale(1.1) rotate(5deg); }
+            }
+            .streak-values {
+                display: flex;
+                gap: 16px;
+                margin-bottom: 12px;
+            }
+            .streak-current {
+                flex: 1;
+                text-align: center;
+                padding: 12px;
+                background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 140, 107, 0.1));
+                border-radius: 8px;
+                border: 2px solid rgba(255, 107, 107, 0.4);
+            }
+            .streak-current.active {
+                animation: streakPulse 2s ease-in-out infinite;
+            }
+            @keyframes streakPulse {
+                0%, 100% {
+                    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+                }
+                50% {
+                    box-shadow: 0 0 0 8px rgba(255, 107, 107, 0);
+                }
+            }
+            .streak-longest {
+                flex: 1;
+                text-align: center;
+                padding: 12px;
+                background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.05));
+                border-radius: 8px;
+                border: 2px solid rgba(255, 215, 0, 0.3);
+            }
+            .streak-value {
+                font-size: 32px;
+                font-weight: 700;
+                line-height: 1;
+                margin-bottom: 4px;
+            }
+            .streak-current .streak-value {
+                color: #ff6b6b;
+            }
+            .streak-longest .streak-value {
+                color: #ffd700;
+            }
+            .streak-label {
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: var(--vscode-descriptionForeground);
+                font-weight: 600;
+            }
+            .streak-heatmap {
+                display: flex;
+                gap: 3px;
+                justify-content: center;
+                flex-wrap: wrap;
+                padding: 8px 0;
+            }
+            .streak-day {
+                width: 14px;
+                height: 14px;
+                border-radius: 3px;
+                background: rgba(100, 100, 120, 0.15);
+                border: 1px solid rgba(128, 128, 128, 0.2);
+                transition: all 0.2s ease;
+                position: relative;
+            }
+            .streak-day.has-note {
+                background: linear-gradient(135deg, rgba(255, 107, 107, 0.8), rgba(255, 140, 107, 0.6));
+                border-color: rgba(255, 107, 107, 0.6);
+            }
+            .streak-day.today {
+                border: 2px solid var(--vscode-focusBorder);
+                box-shadow: 0 0 6px rgba(100, 180, 255, 0.5);
+            }
+            .streak-day:hover {
+                transform: scale(1.3);
+                z-index: 10;
+            }
+            .streak-day:hover::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 4px 8px;
+                background: var(--vscode-editorHoverWidget-background);
+                border: 1px solid var(--vscode-editorHoverWidget-border);
+                border-radius: 4px;
+                font-size: 10px;
+                white-space: nowrap;
+                pointer-events: none;
+                z-index: 20;
+                margin-bottom: 4px;
+            }
+            .streak-message {
+                text-align: center;
+                font-size: 11px;
+                color: var(--vscode-descriptionForeground);
+                margin-top: 8px;
+                font-style: italic;
+            }
+            .streak-message.encouraging {
+                color: #ff6b6b;
+                font-weight: 600;
+            }
             /* Notes panel styling */
             #notesSection {
                 flex: 1;
@@ -766,7 +919,10 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 week: ${monthlyStats.week},
                 today: ${monthlyStats.today},
                 mostActiveDay: ${mostActiveDay ? `{day: ${mostActiveDay.day}, count: ${mostActiveDay.count}}` : 'null'},
-                recentActivity: ${JSON.stringify(recentActivity.map(a => ({date: a.date.toISOString(), count: a.count})))}
+                recentActivity: ${JSON.stringify(recentActivity.map(a => ({date: a.date.toISOString(), count: a.count})))},
+                currentStreak: ${currentStreak},
+                longestStreak: ${longestStreak},
+                streakHeatmap: ${JSON.stringify(streakHeatmap.map(h => ({date: h.date.toISOString(), count: h.count, hasNote: h.hasNote})))}
             };
 
             let selectedDay = null;
@@ -779,7 +935,58 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
 
                 const maxActivity = Math.max(...statistics.recentActivity.map(a => a.count), 1);
 
+                // Generate streak heatmap HTML
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const streakHeatmapHtml = statistics.streakHeatmap.map(day => {
+                    const date = new Date(day.date);
+                    const isToday = date.toDateString() === today.toDateString();
+                    const classes = ['streak-day'];
+                    if (day.hasNote) {classes.push('has-note');}
+                    if (isToday) {classes.push('today');}
+                    const tooltip = \`\${date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}: \${day.count} note\${day.count !== 1 ? 's' : ''}\`;
+                    return \`<div class="\${classes.join(' ')}" data-tooltip="\${tooltip}"></div>\`;
+                }).join('');
+
+                // Generate encouraging message
+                let streakMessage = '';
+                if (statistics.currentStreak === 0) {
+                    streakMessage = 'Start your streak today!';
+                } else if (statistics.currentStreak === 1) {
+                    streakMessage = 'Great start! Keep it going tomorrow! 💪';
+                } else if (statistics.currentStreak < 7) {
+                    streakMessage = \`\${statistics.currentStreak} days strong! Keep the momentum! 🚀\`;
+                } else if (statistics.currentStreak < 30) {
+                    streakMessage = \`Amazing! \${statistics.currentStreak} days! You're on fire! 🔥\`;
+                } else {
+                    streakMessage = \`Incredible! \${statistics.currentStreak} days! You're a note-taking legend! 🏆\`;
+                }
+
                 statsContent.innerHTML = \`
+                    <div class="streak-section">
+                        <div class="streak-header">
+                            <div class="streak-title">
+                                <span class="streak-icon">\${statistics.currentStreak > 0 ? '🔥' : '📝'}</span>
+                                <span>Daily Streak</span>
+                            </div>
+                        </div>
+                        <div class="streak-values">
+                            <div class="streak-current \${statistics.currentStreak > 0 ? 'active' : ''}">
+                                <div class="streak-value">\${statistics.currentStreak}</div>
+                                <div class="streak-label">Current Streak</div>
+                            </div>
+                            <div class="streak-longest">
+                                <div class="streak-value">\${statistics.longestStreak}</div>
+                                <div class="streak-label">Best Streak</div>
+                            </div>
+                        </div>
+                        <div class="streak-heatmap">
+                            \${streakHeatmapHtml}
+                        </div>
+                        <div class="streak-message \${statistics.currentStreak > 0 ? 'encouraging' : ''}">
+                            \${streakMessage}
+                        </div>
+                    </div>
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-card-icon">📝</div>

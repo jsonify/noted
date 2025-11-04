@@ -276,4 +276,148 @@ export async function getRecentActivity(notesPath: string): Promise<Array<{date:
     return activity;
 }
 
+/**
+ * Calculate the current streak (consecutive days with notes from today backwards)
+ */
+export async function getCurrentStreak(notesPath: string): Promise<number> {
+    const now = new Date();
+    let streak = 0;
+    let checkDate = new Date(now);
+
+    try {
+        // Check each day backwards from today
+        while (true) {
+            const year = checkDate.getFullYear();
+            const month = checkDate.getMonth();
+            const day = checkDate.getDate();
+
+            const count = await countNotesForDate(notesPath, year, month, day);
+
+            if (count > 0) {
+                streak++;
+                // Move to previous day
+                checkDate.setDate(checkDate.getDate() - 1);
+            } else {
+                // Streak broken
+                break;
+            }
+        }
+    } catch (error) {
+        console.error('[NOTED] Error calculating current streak:', error);
+    }
+
+    return streak;
+}
+
+/**
+ * Calculate the longest streak in history
+ */
+export async function getLongestStreak(notesPath: string): Promise<number> {
+    if (!(await pathExists(notesPath))) {
+        return 0;
+    }
+
+    let longestStreak = 0;
+    let currentStreak = 0;
+    const allDates: Date[] = [];
+
+    try {
+        // Get all year folders
+        const yearEntries = await readDirectoryWithTypes(notesPath);
+
+        for (const yearEntry of yearEntries) {
+            if (yearEntry.isDirectory() && /^\d{4}$/.test(yearEntry.name)) {
+                const yearPath = path.join(notesPath, yearEntry.name);
+                const monthEntries = await readDirectoryWithTypes(yearPath);
+
+                for (const monthEntry of monthEntries) {
+                    if (monthEntry.isDirectory()) {
+                        const monthPath = path.join(yearPath, monthEntry.name);
+                        const noteFiles = await readDirectoryWithTypes(monthPath);
+
+                        for (const file of noteFiles) {
+                            if (!file.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => file.name.endsWith(ext))) {
+                                // Extract date from filename (YYYY-MM-DD)
+                                const dateMatch = file.name.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                                if (dateMatch) {
+                                    const date = new Date(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
+                                    allDates.push(date);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Sort dates
+        allDates.sort((a, b) => a.getTime() - b.getTime());
+
+        // Remove duplicates (same day, different notes)
+        const uniqueDates = allDates.filter((date, index) => {
+            if (index === 0) {return true;}
+            const prev = allDates[index - 1];
+            return date.toDateString() !== prev.toDateString();
+        });
+
+        // Calculate streaks
+        if (uniqueDates.length > 0) {
+            currentStreak = 1;
+            longestStreak = 1;
+
+            for (let i = 1; i < uniqueDates.length; i++) {
+                const prevDate = uniqueDates[i - 1];
+                const currDate = uniqueDates[i];
+
+                // Calculate difference in days
+                const diffTime = currDate.getTime() - prevDate.getTime();
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 1) {
+                    // Consecutive day
+                    currentStreak++;
+                    longestStreak = Math.max(longestStreak, currentStreak);
+                } else {
+                    // Streak broken
+                    currentStreak = 1;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('[NOTED] Error calculating longest streak:', error);
+    }
+
+    return longestStreak;
+}
+
+/**
+ * Get heatmap data for the last N days
+ */
+export async function getStreakHeatmap(notesPath: string, days: number = 30): Promise<Array<{date: Date, count: number, hasNote: boolean}>> {
+    const heatmap: Array<{date: Date, count: number, hasNote: boolean}> = [];
+    const now = new Date();
+
+    try {
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date(now);
+            date.setDate(now.getDate() - i);
+
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const day = date.getDate();
+
+            const count = await countNotesForDate(notesPath, year, month, day);
+            heatmap.push({
+                date: new Date(date),
+                count,
+                hasNote: count > 0
+            });
+        }
+    } catch (error) {
+        console.error('[NOTED] Error getting streak heatmap:', error);
+    }
+
+    return heatmap;
+}
+
 export { isTodayDate };
