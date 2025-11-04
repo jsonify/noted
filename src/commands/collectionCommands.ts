@@ -13,14 +13,11 @@ import { CollectionItem } from '../providers/treeItems';
  * Helper function to extract collection ID from either a CollectionItem or a string
  */
 function getCollectionId(item: CollectionItem | string | undefined): string | undefined {
-    if (!item) {
-        return undefined;
-    }
-    if (typeof item === 'string') {
-        return item;
-    }
     if (item instanceof CollectionItem) {
         return item.collectionId;
+    }
+    if (typeof item === 'string' && item) {
+        return item;
     }
     return undefined;
 }
