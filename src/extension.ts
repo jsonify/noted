@@ -16,7 +16,7 @@ import { ConnectionsTreeProvider } from './providers/connectionsTreeProvider';
 import { OrphansTreeProvider } from './providers/orphansTreeProvider';
 import { PlaceholdersTreeProvider } from './providers/placeholdersTreeProvider';
 import { CollectionsTreeProvider } from './providers/collectionsTreeProvider';
-import { TreeItem, NoteItem, SectionItem, TagItem, ConnectionItem } from './providers/treeItems';
+import { TreeItem, NoteItem, SectionItem, TagItem, TagFileItem, TagReferenceItem, ConnectionItem } from './providers/treeItems';
 import { TagCompletionProvider } from './services/tagCompletionProvider';
 import { LinkService } from './services/linkService';
 import { ConnectionsService } from './services/connectionsService';
@@ -712,6 +712,29 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // Command to open tag reference (navigate to specific tag location with selection)
+    let openTagReference = vscode.commands.registerCommand('noted.openTagReference', async (
+        filePath: string,
+        lineNumber: number,
+        character: number,
+        tagLength: number
+    ) => {
+        try {
+            const document = await vscode.workspace.openTextDocument(filePath);
+            const editor = await vscode.window.showTextDocument(document);
+
+            // Create selection to highlight the tag
+            const startPosition = new vscode.Position(lineNumber, character);
+            const endPosition = new vscode.Position(lineNumber, character + tagLength);
+            const range = new vscode.Range(startPosition, endPosition);
+
+            editor.selection = new vscode.Selection(startPosition, endPosition);
+            editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to open tag reference: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
     // Command to open note from tree
     let openNote = vscode.commands.registerCommand('noted.openNote', async (filePath: string) => {
         const document = await vscode.workspace.openTextDocument(filePath);
@@ -1266,16 +1289,14 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage('Tag filters cleared');
     });
 
-    // Command to sort tags by name
+    // Command to sort tags by name (deprecated - tags are now always sorted alphabetically)
     let sortTagsByName = vscode.commands.registerCommand('noted.sortTagsByName', () => {
-        tagsProvider.setSortOrder('alphabetical');
-        vscode.window.showInformationMessage('Tags sorted alphabetically');
+        vscode.window.showInformationMessage('Tags are now always sorted alphabetically in the hierarchical view');
     });
 
-    // Command to sort tags by frequency
+    // Command to sort tags by frequency (deprecated - feature removed in tag system redesign)
     let sortTagsByFrequency = vscode.commands.registerCommand('noted.sortTagsByFrequency', () => {
-        tagsProvider.setSortOrder('frequency');
-        vscode.window.showInformationMessage('Tags sorted by frequency');
+        vscode.window.showInformationMessage('Tags are now always sorted alphabetically in the hierarchical view');
     });
 
     // Command to refresh tags
@@ -1814,7 +1835,7 @@ export function activate(context: vscode.ExtensionContext) {
         showPreview, showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol,
-        refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource
+        refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource, openTagReference
     );
 
     // Listen for configuration changes to handle notes folder relocation

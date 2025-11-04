@@ -99,27 +99,136 @@ export class NoteItem extends TreeItem {
 }
 
 /**
- * Tag item representing a tag with usage count
+ * Tag item representing a tag node in hierarchical tag view
+ * Shows tag label with reference count and can have child tags or files
  */
 export class TagItem extends TreeItem {
     constructor(
         public readonly tagName: string,
-        public readonly count: number,
-        public readonly notePaths: string[]
+        public readonly referenceCount: number,
+        public readonly hasChildren: boolean = false
     ) {
-        super(`#${tagName} (${count})`, vscode.TreeItemCollapsibleState.None);
+        // Collapsible if has children (child tags or files), otherwise collapsed by default
+        const collapsibleState = hasChildren
+            ? vscode.TreeItemCollapsibleState.Collapsed
+            : vscode.TreeItemCollapsibleState.Collapsed;
 
-        this.iconPath = new vscode.ThemeIcon('tag');
+        super(`#${tagName}`, collapsibleState);
+
+        this.iconPath = new vscode.ThemeIcon('symbol-number');
         this.contextValue = 'tag';
-        this.tooltip = `Tag: #${tagName}\nUsed in ${count} note${count !== 1 ? 's' : ''}`;
-        this.description = `${count}`;
+        this.description = `${referenceCount} reference${referenceCount !== 1 ? 's' : ''}`;
+        this.tooltip = this.buildTooltip();
+    }
 
-        // Make tag clickable to filter notes
+    private buildTooltip(): vscode.MarkdownString {
+        const tooltip = new vscode.MarkdownString('', true);
+        tooltip.appendMarkdown(`**Tag:** \`#${this.tagName}\`\n\n`);
+        tooltip.appendMarkdown(`**References:** ${this.referenceCount}\n\n`);
+        tooltip.appendMarkdown('Expand to see files and line references');
+        return tooltip;
+    }
+}
+
+/**
+ * Tag file item representing a file that contains a specific tag
+ * Shows file name with count of tag occurrences in that file
+ */
+export class TagFileItem extends TreeItem {
+    constructor(
+        public readonly filePath: string,
+        public readonly tagName: string,
+        public readonly tagCountInFile: number
+    ) {
+        const filename = path.basename(filePath, path.extname(filePath));
+        super(filename, vscode.TreeItemCollapsibleState.Collapsed);
+
+        this.iconPath = new vscode.ThemeIcon('file');
+        this.contextValue = 'tag-file';
+        this.resourceUri = vscode.Uri.file(filePath);
+        this.description = `${tagCountInFile} occurrence${tagCountInFile !== 1 ? 's' : ''}`;
+        this.tooltip = this.buildTooltip();
+
+        // Make clickable to open the file
         this.command = {
-            command: 'noted.filterByTag',
-            title: 'Filter by Tag',
-            arguments: [tagName]
+            command: 'vscode.open',
+            title: 'Open File',
+            arguments: [vscode.Uri.file(filePath)]
         };
+    }
+
+    private buildTooltip(): vscode.MarkdownString {
+        const filename = path.basename(this.filePath);
+        const relativePath = vscode.workspace.asRelativePath(this.filePath);
+
+        const tooltip = new vscode.MarkdownString('', true);
+        tooltip.appendMarkdown(`**File:** \`${filename}\`\n\n`);
+        tooltip.appendMarkdown(`**Path:** \`${relativePath}\`\n\n`);
+        tooltip.appendMarkdown(`**Tag:** \`#${this.tagName}\`\n\n`);
+        tooltip.appendMarkdown(`**Occurrences:** ${this.tagCountInFile}\n\n`);
+        tooltip.appendMarkdown('Click to open file, or expand to see line references');
+
+        return tooltip;
+    }
+}
+
+/**
+ * Tag reference item representing a specific line where a tag appears
+ * Shows line number and context snippet
+ */
+export class TagReferenceItem extends TreeItem {
+    constructor(
+        public readonly filePath: string,
+        public readonly lineNumber: number,
+        public readonly character: number,
+        public readonly context: string,
+        public readonly tagName: string
+    ) {
+        // Extract context snippet (60 chars around tag)
+        const contextSnippet = TagReferenceItem.extractContextSnippet(context, 60);
+
+        // Label format: "line: context snippet"
+        super(`${lineNumber + 1}: ${contextSnippet}`, vscode.TreeItemCollapsibleState.None);
+
+        this.iconPath = new vscode.ThemeIcon('symbol-number');
+        this.contextValue = 'tag-reference';
+        this.resourceUri = vscode.Uri.file(filePath);
+        this.tooltip = this.buildTooltip();
+
+        // Make clickable to open file at specific line with selection
+        this.command = {
+            command: 'noted.openTagReference',
+            title: 'Go to Reference',
+            arguments: [filePath, lineNumber, character, tagName.length + 1] // +1 for the # symbol
+        };
+    }
+
+    private buildTooltip(): vscode.MarkdownString {
+        const filename = path.basename(this.filePath);
+        const relativePath = vscode.workspace.asRelativePath(this.filePath);
+
+        const tooltip = new vscode.MarkdownString('', true);
+        tooltip.appendMarkdown(`**File:** \`${filename}\`\n\n`);
+        tooltip.appendMarkdown(`**Path:** \`${relativePath}\`\n\n`);
+        tooltip.appendMarkdown(`**Line:** ${this.lineNumber + 1}\n\n`);
+        tooltip.appendMarkdown(`**Tag:** \`#${this.tagName}\`\n\n`);
+        tooltip.appendMarkdown(`**Context:**\n`);
+        tooltip.appendCodeblock(this.context.trim(), 'markdown');
+
+        return tooltip;
+    }
+
+    /**
+     * Extract a snippet of context around the tag (max length)
+     */
+    private static extractContextSnippet(context: string, maxLength: number): string {
+        const trimmed = context.trim();
+        if (trimmed.length <= maxLength) {
+            return trimmed;
+        }
+
+        // Truncate and add ellipsis
+        return trimmed.substring(0, maxLength - 3) + '...';
     }
 }
 
