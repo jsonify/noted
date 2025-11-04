@@ -1,7 +1,8 @@
 import * as path from 'path';
 import { readFile, readDirectoryWithTypes, pathExists } from './fileSystemService';
-import { extractTagsFromContent } from '../utils/tagHelpers';
+import { extractTagsFromContent, extractAllTagsWithPositions } from '../utils/tagHelpers';
 import { SUPPORTED_EXTENSIONS } from '../constants';
+import { Tag, Location, RangeUtils } from '../types/tags';
 
 /**
  * Represents a tag with metadata
@@ -19,9 +20,11 @@ export type TagSortOrder = 'frequency' | 'alphabetical';
 
 /**
  * Service for managing tag indexing and retrieval
+ * Now supports location-based tag storage with precise positioning
  */
 export class TagService {
-  private tagIndex: Map<string, Set<string>> = new Map();
+  // NEW: Location-based storage instead of just file paths
+  private tagIndex: Map<string, Location<Tag>[]> = new Map();
   private notesPath: string;
 
   constructor(notesPath: string) {
@@ -68,17 +71,24 @@ export class TagService {
 
   /**
    * Extract tags from a single file and add to index
+   * NEW: Now extracts tags with their exact positions
    */
   private async extractTagsFromFile(filePath: string): Promise<void> {
     try {
       const content = await readFile(filePath);
-      const tags = extractTagsFromContent(content);
+      const tags = extractAllTagsWithPositions(content);
 
       for (const tag of tags) {
-        if (!this.tagIndex.has(tag)) {
-          this.tagIndex.set(tag, new Set());
+        const location: Location<Tag> = {
+          uri: filePath,
+          range: tag.range,
+          data: tag
+        };
+
+        if (!this.tagIndex.has(tag.label)) {
+          this.tagIndex.set(tag.label, []);
         }
-        this.tagIndex.get(tag)!.add(filePath);
+        this.tagIndex.get(tag.label)!.push(location);
       }
     } catch (error) {
       // Silently ignore file read errors
@@ -92,8 +102,9 @@ export class TagService {
   getTagsForNote(notePath: string): string[] {
     const tags: string[] = [];
 
-    for (const [tag, notes] of this.tagIndex.entries()) {
-      if (notes.has(notePath)) {
+    for (const [tag, locations] of this.tagIndex.entries()) {
+      // Check if any location is for this note
+      if (locations.some(loc => loc.uri === notePath)) {
         tags.push(tag);
       }
     }
@@ -106,8 +117,19 @@ export class TagService {
    */
   getNotesWithTag(tag: string): string[] {
     const normalizedTag = tag.toLowerCase();
-    const notes = this.tagIndex.get(normalizedTag);
-    return notes ? Array.from(notes) : [];
+    const locations = this.tagIndex.get(normalizedTag);
+
+    if (!locations) {
+      return [];
+    }
+
+    // Extract unique file paths from locations
+    const uniqueNotes = new Set<string>();
+    for (const location of locations) {
+      uniqueNotes.add(location.uri);
+    }
+
+    return Array.from(uniqueNotes);
   }
 
   /**
@@ -137,11 +159,17 @@ export class TagService {
   getAllTags(sortOrder: TagSortOrder = 'frequency'): TagInfo[] {
     const tags: TagInfo[] = [];
 
-    for (const [tag, notes] of this.tagIndex.entries()) {
+    for (const [tag, locations] of this.tagIndex.entries()) {
+      // Extract unique file paths
+      const uniqueNotes = new Set<string>();
+      for (const location of locations) {
+        uniqueNotes.add(location.uri);
+      }
+
       tags.push({
         name: tag,
-        count: notes.size,
-        notes: Array.from(notes)
+        count: uniqueNotes.size,
+        notes: Array.from(uniqueNotes)
       });
     }
 
@@ -187,14 +215,16 @@ export class TagService {
    * Removes old tags for this file and re-indexes it
    */
   async updateIndexForFile(filePath: string): Promise<void> {
-    // First, remove all tags associated with this file
-    for (const [tag, notes] of this.tagIndex.entries()) {
-      if (notes.has(filePath)) {
-        notes.delete(filePath);
-        // Remove tag from index if it has no more notes
-        if (notes.size === 0) {
-          this.tagIndex.delete(tag);
-        }
+    // First, remove all locations associated with this file
+    for (const [tag, locations] of this.tagIndex.entries()) {
+      const filteredLocations = locations.filter(loc => loc.uri !== filePath);
+
+      if (filteredLocations.length === 0) {
+        // Remove tag from index if it has no more locations
+        this.tagIndex.delete(tag);
+      } else {
+        // Update the locations array
+        this.tagIndex.set(tag, filteredLocations);
       }
     }
 
@@ -209,5 +239,66 @@ export class TagService {
   async updateNotesPath(newPath: string): Promise<void> {
     this.notesPath = newPath;
     await this.buildTagIndex();
+  }
+
+  // ============================================================================
+  // NEW: Location-based query methods for hierarchical tag panel
+  // ============================================================================
+
+  /**
+   * Get all locations for a specific tag
+   * NEW: Returns Location<Tag>[] with exact positions
+   */
+  getLocationsForTag(tag: string): Location<Tag>[] {
+    const normalizedTag = tag.toLowerCase();
+    return this.tagIndex.get(normalizedTag) || [];
+  }
+
+  /**
+   * Get all locations for a specific tag in a specific file
+   * NEW: For showing line references in the tree
+   */
+  getLocationsForTagInFile(tag: string, filePath: string): Location<Tag>[] {
+    const locations = this.getLocationsForTag(tag);
+    return locations.filter(loc => loc.uri === filePath);
+  }
+
+  /**
+   * Get tag at a specific position in a file
+   * NEW: For F2 rename support - detect if cursor is on a tag
+   */
+  getTagAtPosition(filePath: string, line: number, character: number): { tag: string; location: Location<Tag> } | null {
+    for (const [tagLabel, locations] of this.tagIndex.entries()) {
+      for (const location of locations) {
+        if (location.uri === filePath && RangeUtils.containsPosition(location.range, { line, character })) {
+          return { tag: tagLabel, location };
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get total number of references for a tag (counting all occurrences, not just unique files)
+   * NEW: For showing reference counts in tree
+   */
+  getTagReferenceCount(tag: string): number {
+    const normalizedTag = tag.toLowerCase();
+    const locations = this.tagIndex.get(normalizedTag);
+    return locations ? locations.length : 0;
+  }
+
+  /**
+   * Get all unique tags (for root level of tree)
+   */
+  getAllTagLabels(): string[] {
+    return Array.from(this.tagIndex.keys());
+  }
+
+  /**
+   * Get the raw tag index (for debugging or advanced use)
+   */
+  getTagIndex(): Map<string, Location<Tag>[]> {
+    return this.tagIndex;
   }
 }
