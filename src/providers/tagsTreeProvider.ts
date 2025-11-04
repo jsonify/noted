@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import { TagItem, TagFileItem, TagReferenceItem } from './treeItems';
 import { TagService } from '../services/tagService';
+import { readFile } from '../services/fileSystemService';
 
 // Union type for all possible tree items in tags view
 type TagTreeItem = TagItem | TagFileItem | TagReferenceItem;
@@ -55,7 +55,7 @@ export class TagsTreeProvider implements vscode.TreeDataProvider<TagTreeItem> {
             return this.getFileNodesForTag(element.tagName);
         } else if (element instanceof TagFileItem) {
             // File level: Return line references in this file
-            return this.getReferenceNodesForFile(element.tagName, element.filePath);
+            return await this.getReferenceNodesForFile(element.tagName, element.filePath);
         } else {
             // TagReferenceItem has no children
             return undefined;
@@ -113,13 +113,13 @@ export class TagsTreeProvider implements vscode.TreeDataProvider<TagTreeItem> {
      * Get reference nodes for a specific tag in a specific file
      * Returns TagReferenceItem for each line reference
      */
-    private getReferenceNodesForFile(tagName: string, filePath: string): TagReferenceItem[] {
+    private async getReferenceNodesForFile(tagName: string, filePath: string): Promise<TagReferenceItem[]> {
         const locations = this.tagService.getLocationsForTagInFile(tagName, filePath);
 
-        // Read file content to extract context
+        // Read file content to extract context (async to avoid blocking UI)
         let fileContent = '';
         try {
-            fileContent = fs.readFileSync(filePath, 'utf-8');
+            fileContent = await readFile(filePath);
         } catch (error) {
             console.error(`[NOTED] Failed to read file for tag references: ${filePath}`, error);
             return [];

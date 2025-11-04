@@ -208,6 +208,12 @@ export function extractInlineHashtagsWithPositions(content: string): Tag[] {
 
 /**
  * Extract tags from YAML frontmatter with their exact positions
+ * Supports both inline array format and block list format:
+ * - Inline: tags: [tag1, tag2, tag3]
+ * - Block list:
+ *   tags:
+ *     - tag1
+ *     - tag2
  * @param content The note content to parse
  * @returns Array of Tag objects with labels and ranges
  */
@@ -222,62 +228,113 @@ export function extractFrontmatterTagsWithPositions(content: string): Tag[] {
 
   const frontmatter = frontmatterMatch[1];
   const frontmatterStartLine = 1; // Line after first "---"
-
-  // Extract tags from array format: tags: [tag1, tag2, tag3]
-  const arrayMatch = FRONTMATTER_TAGS_PATTERN.exec(frontmatter);
-  if (!arrayMatch) {
-    return tags;
-  }
-
-  // Find which line contains "tags:" within the frontmatter
   const frontmatterLines = frontmatter.split('\n');
-  let tagsLineIndex = -1;
-  let tagsLineContent = '';
 
-  for (let i = 0; i < frontmatterLines.length; i++) {
-    if (frontmatterLines[i].includes('tags:')) {
-      tagsLineIndex = i;
-      tagsLineContent = frontmatterLines[i];
-      break;
+  // Try to extract tags from inline array format: tags: [tag1, tag2, tag3]
+  const arrayMatch = FRONTMATTER_TAGS_PATTERN.exec(frontmatter);
+
+  if (arrayMatch) {
+    // Inline array format found
+    let tagsLineIndex = -1;
+    let tagsLineContent = '';
+
+    for (let i = 0; i < frontmatterLines.length; i++) {
+      if (frontmatterLines[i].includes('tags:')) {
+        tagsLineIndex = i;
+        tagsLineContent = frontmatterLines[i];
+        break;
+      }
     }
-  }
 
-  if (tagsLineIndex === -1) {
-    return tags;
-  }
+    if (tagsLineIndex !== -1) {
+      const absoluteLineNumber = frontmatterStartLine + tagsLineIndex;
+      const tagsList = arrayMatch[1];
+      const tagItems = tagsList.split(',').map(t => t.trim());
 
-  const absoluteLineNumber = frontmatterStartLine + tagsLineIndex;
+      // Find each tag's position within the line
+      let searchStart = tagsLineContent.indexOf('[') + 1;
 
-  // Parse individual tags from the array
-  const tagsList = arrayMatch[1];
-  const tagItems = tagsList.split(',').map(t => t.trim());
+      for (const tag of tagItems) {
+        // Remove quotes if present
+        const cleanTag = tag.replace(/^['"]|['"]$/g, '').trim();
+        const normalized = normalizeTag(cleanTag);
 
-  // Find each tag's position within the line
-  let searchStart = tagsLineContent.indexOf('[') + 1;
+        if (normalized && isValidTag(normalized)) {
+          // Find the tag's position in the line
+          const tagStart = tagsLineContent.indexOf(cleanTag, searchStart);
 
-  for (const tag of tagItems) {
-    // Remove quotes if present
-    const cleanTag = tag.replace(/^['"]|['"]$/g, '').trim();
-    const normalized = normalizeTag(cleanTag);
+          if (tagStart !== -1) {
+            const range = RangeUtils.createRangeFromCoords(
+              absoluteLineNumber,
+              tagStart,
+              absoluteLineNumber,
+              tagStart + cleanTag.length
+            );
 
-    if (normalized && isValidTag(normalized)) {
-      // Find the tag's position in the line
-      const tagStart = tagsLineContent.indexOf(cleanTag, searchStart);
+            tags.push({
+              label: normalized,
+              range: range
+            });
 
-      if (tagStart !== -1) {
-        const range = RangeUtils.createRangeFromCoords(
-          absoluteLineNumber,
-          tagStart,
-          absoluteLineNumber,
-          tagStart + cleanTag.length
-        );
+            searchStart = tagStart + cleanTag.length;
+          }
+        }
+      }
+    }
+  } else {
+    // Try block list format:
+    // tags:
+    //   - tag1
+    //   - tag2
+    let inTagsBlock = false;
+    let tagsLineFound = false;
 
-        tags.push({
-          label: normalized,
-          range: range
-        });
+    for (let i = 0; i < frontmatterLines.length; i++) {
+      const line = frontmatterLines[i];
+      const trimmedLine = line.trim();
 
-        searchStart = tagStart + cleanTag.length;
+      // Check if this is the "tags:" line
+      if (/^tags:\s*$/.test(trimmedLine)) {
+        inTagsBlock = true;
+        tagsLineFound = true;
+        continue;
+      }
+
+      // If we're in the tags block, look for list items
+      if (inTagsBlock) {
+        // Check if this is a list item: "  - tag" or "- tag"
+        const listItemMatch = /^\s*-\s+(.+)$/.exec(line);
+
+        if (listItemMatch) {
+          const tagText = listItemMatch[1].trim();
+          // Remove quotes if present
+          const cleanTag = tagText.replace(/^['"]|['"]$/g, '');
+          const normalized = normalizeTag(cleanTag);
+
+          if (normalized && isValidTag(normalized)) {
+            // Find the tag's position in the line
+            const dashIndex = line.indexOf('-');
+            const tagStart = line.indexOf(cleanTag, dashIndex + 1);
+
+            if (tagStart !== -1) {
+              const absoluteLineNumber = frontmatterStartLine + i;
+              const range = RangeUtils.createRangeFromCoords(
+                absoluteLineNumber,
+                tagStart,
+                absoluteLineNumber,
+                tagStart + cleanTag.length
+              );
+
+              tags.push({
+                label: normalized,
+                range: range
+              });
+            }
+          }
+        } else if (trimmedLine && !trimmedLine.startsWith('-')) {
+          // Non-list-item, non-empty line - we've left the tags block
+          break;
+        }
       }
     }
   }

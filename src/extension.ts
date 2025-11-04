@@ -136,7 +136,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     // Register tag rename provider for F2 rename support
-    const tagRenameProvider = new TagRenameProvider(tagService);
+    const tagRenameProvider = new TagRenameProvider(tagService, tagEditService);
     const tagRenameDisposable = vscode.languages.registerRenameProvider(
         [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
         tagRenameProvider

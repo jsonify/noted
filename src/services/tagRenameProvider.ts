@@ -1,13 +1,16 @@
 import * as vscode from 'vscode';
 import { TagService } from './tagService';
-import { isValidTag } from '../utils/tagHelpers';
+import { TagEditService } from './tagEditService';
 
 /**
  * Rename provider for tags
  * Enables F2 (rename) support when cursor is on a tag
  */
 export class TagRenameProvider implements vscode.RenameProvider {
-    constructor(private tagService: TagService) {}
+    constructor(
+        private tagService: TagService,
+        private tagEditService: TagEditService
+    ) {}
 
     /**
      * Prepare rename: Check if cursor is on a tag and return range + placeholder
@@ -79,17 +82,14 @@ export class TagRenameProvider implements vscode.RenameProvider {
             normalizedNewName = normalizedNewName.substring(1);
         }
 
-        // Validate new tag name
-        if (!isValidTag(normalizedNewName)) {
-            vscode.window.showErrorMessage(
-                `Invalid tag name: "${normalizedNewName}". ` +
-                'Tags must start with a letter, contain only lowercase letters, numbers, ' +
-                'hyphens, and forward slashes for hierarchy.'
-            );
+        // Validate new tag name using TagEditService
+        const validationError = this.tagEditService.validateTagRename(oldTag, normalizedNewName);
+        if (validationError) {
+            vscode.window.showErrorMessage(validationError);
             return null;
         }
 
-        // Check if tag already exists (case-insensitive)
+        // Check if tag already exists (merge detection)
         const existingTags = this.tagService.getAllTagLabels();
         const normalizedExistingTags = existingTags.map(t => t.toLowerCase());
 
@@ -114,42 +114,7 @@ export class TagRenameProvider implements vscode.RenameProvider {
             return null;
         }
 
-        // Create workspace edit
-        const workspaceEdit = new vscode.WorkspaceEdit();
-
-        // Group locations by file for efficient processing
-        const locationsByFile = new Map<string, typeof locations>();
-        for (const location of locations) {
-            if (!locationsByFile.has(location.uri)) {
-                locationsByFile.set(location.uri, []);
-            }
-            locationsByFile.get(location.uri)!.push(location);
-        }
-
-        // Process each file
-        for (const [fileUri, fileLocations] of locationsByFile.entries()) {
-            const uri = vscode.Uri.file(fileUri);
-
-            // Sort locations by position (reverse order to avoid offset issues)
-            const sortedLocations = fileLocations.sort((a, b) => {
-                if (a.range.start.line !== b.range.start.line) {
-                    return b.range.start.line - a.range.start.line;
-                }
-                return b.range.start.character - a.range.start.character;
-            });
-
-            // Create text edits for each location
-            for (const location of sortedLocations) {
-                const range = new vscode.Range(
-                    new vscode.Position(location.range.start.line, location.range.start.character),
-                    new vscode.Position(location.range.end.line, location.range.end.character)
-                );
-
-                // Replace with new tag name (keep # prefix for inline hashtags)
-                workspaceEdit.replace(uri, range, `#${normalizedNewName}`);
-            }
-        }
-
-        return workspaceEdit;
+        // Use TagEditService to create rename edits (DRY principle)
+        return this.tagEditService.createRenameEdits(oldTag, normalizedNewName);
     }
 }
