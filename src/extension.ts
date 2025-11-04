@@ -6,6 +6,8 @@ import { showCalendarView } from './calendar/calendarView';
 import { showGraphView } from './graph/graphView';
 import { MarkdownToolbarService } from './services/markdownToolbarService';
 import { TagService } from './services/tagService';
+import { TagRenameProvider } from './services/tagRenameProvider';
+import { TagEditService } from './services/tagEditService';
 import { renameTag, mergeTags, deleteTag, exportTags } from './commands/tagCommands';
 import { NotesTreeProvider } from './providers/notesTreeProvider';
 import { JournalTreeProvider } from './providers/journalTreeProvider';
@@ -105,6 +107,9 @@ export function activate(context: vscode.ExtensionContext) {
     const notesPath = getNotesPath();
     const tagService = new TagService(notesPath || '');
 
+    // Initialize tag edit service for advanced tag operations
+    const tagEditService = new TagEditService(tagService);
+
     // Build tag index on activation (async, non-blocking)
     if (notesPath) {
         tagService.buildTagIndex().catch(() => {
@@ -129,6 +134,14 @@ export function activate(context: vscode.ExtensionContext) {
         );
         context.subscriptions.push(completionDisposable);
     }
+
+    // Register tag rename provider for F2 rename support
+    const tagRenameProvider = new TagRenameProvider(tagService);
+    const tagRenameDisposable = vscode.languages.registerRenameProvider(
+        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        tagRenameProvider
+    );
+    context.subscriptions.push(tagRenameDisposable);
 
     // Initialize link service for wiki-style links
     const linkService = new LinkService(notesPath || '');
@@ -1261,6 +1274,31 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage('Tags refreshed');
     });
 
+    // Command to search for a tag in workspace
+    let searchTagCmd = vscode.commands.registerCommand('noted.searchTag', async (tagName?: string) => {
+        // If no tag name provided, ask user to select from available tags
+        if (!tagName) {
+            const allTags = tagService.getAllTagLabels();
+            if (allTags.length === 0) {
+                vscode.window.showInformationMessage('No tags found in notes');
+                return;
+            }
+
+            const selected = await vscode.window.showQuickPick(
+                allTags.map(tag => ({ label: `#${tag}`, tag })),
+                { placeHolder: 'Select a tag to search for' }
+            );
+
+            if (!selected) {
+                return;
+            }
+
+            tagName = selected.tag;
+        }
+
+        await tagEditService.openWorkspaceSearch(tagName);
+    });
+
     // Command to rename a tag
     let renameTagCmd = vscode.commands.registerCommand('noted.renameTag', async () => {
         const notesPath = getNotesPath();
@@ -1780,7 +1818,7 @@ export function activate(context: vscode.ExtensionContext) {
         openTodayNote, openWithTemplate, createQuickNote, createCategoryNote, insertTimestamp, extractSelectionToNote, changeFormat,
         refreshNotes, refreshConnections, openNote, openConnection, openConnectionSource, createNoteFromLink, openLinkWithSection, deleteNote, renameNote, copyPath, revealInExplorer,
         searchNotes, quickSwitcher, filterByTag, clearTagFilters, sortTagsByName, sortTagsByFrequency, refreshTags,
-        renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,
+        searchTagCmd, renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,
         showStats, exportNotes, duplicateNote, moveNotesFolder,
         setupDefaultFolder, setupCustomFolder, showNotesConfig,
         createCustomTemplate, editCustomTemplateCmd, deleteCustomTemplateCmd,
