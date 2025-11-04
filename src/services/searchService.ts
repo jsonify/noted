@@ -146,12 +146,23 @@ export async function advancedSearch(
                     try {
                         const stat = await getFileStats(fullPath);
 
-                        // Apply date filters
-                        if (options.dateFrom && stat.mtime < options.dateFrom) {
+                        // Extract date from filename if it matches YYYY-MM-DD pattern
+                        // This ensures date filtering works based on the note's date, not file modification time
+                        const basename = path.basename(entry.name, path.extname(entry.name));
+                        const dateMatch = basename.match(/^(\d{4}-\d{2}-\d{2})/);
+                        const noteDate = dateMatch ? new Date(dateMatch[1]) : stat.mtime;
+
+                        // Apply date filters using note date
+                        if (options.dateFrom && noteDate < options.dateFrom) {
                             continue;
                         }
-                        if (options.dateTo && stat.mtime > options.dateTo) {
-                            continue;
+                        if (options.dateTo) {
+                            // Set dateTo to end of day to include notes on the "to" date
+                            const dateToEndOfDay = new Date(options.dateTo);
+                            dateToEndOfDay.setHours(23, 59, 59, 999);
+                            if (noteDate > dateToEndOfDay) {
+                                continue;
+                            }
                         }
 
                         const content = await readFile(fullPath);
