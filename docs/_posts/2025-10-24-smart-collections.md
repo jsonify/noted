@@ -40,9 +40,9 @@ This is what you'll see in your Collections sidebar.
 
 **Prompt 2 - Search Query:**
 ```
-tag:work from:2025-10-01
+tag:work from:THIS MONTH
 ```
-This filters for notes tagged with `#work` created since October 1st.
+This filters for notes tagged with `#work` created this month (auto-updates!).
 
 **Prompt 3 - Description (optional):**
 ```
@@ -121,8 +121,8 @@ Filter notes by date:
 1. Run command: `Noted: Create Smart Collection`
 2. Enter when prompted:
    - **Name:** `This Week`
-   - **Query:** `from:2025-10-20`
-   - **Description:** `Notes from the last 7 days`
+   - **Query:** `from:THIS WEEK`
+   - **Description:** `Notes from Sunday to today - auto-updates!`
 
 ### Advanced Collection
 
@@ -131,8 +131,8 @@ Combine multiple filters (tags + dates):
 1. Run command: `Noted: Create Smart Collection`
 2. Enter when prompted:
    - **Name:** `Critical Backend Bugs`
-   - **Query:** `tag:backend tag:bug tag:critical from:2025-10-01`
-   - **Description:** `High-priority backend bugs this month`
+   - **Query:** `tag:backend tag:bug tag:critical from:THIS MONTH`
+   - **Description:** `High-priority backend bugs this month - auto-updates!`
    - **Icon:** `🔥`
    - **Pin:** `yes`
 
@@ -156,6 +156,10 @@ All notes must have BOTH tags.
 
 ### Date Filters
 
+Smart Collections support both **static dates** and **dynamic date keywords** for flexible date filtering.
+
+#### Static Dates
+
 **From date (inclusive):**
 ```
 from:2025-10-01
@@ -172,6 +176,56 @@ from:2025-10-01 to:2025-10-31
 ```
 
 **Date format**: `YYYY-MM-DD` (ISO 8601)
+
+#### Dynamic Date Keywords
+
+Create collections that auto-update based on the current date:
+
+**TODAY:**
+```
+from:TODAY
+```
+Shows notes from today onward.
+
+**YESTERDAY:**
+```
+from:YESTERDAY to:YESTERDAY
+```
+Shows only yesterday's notes.
+
+**LAST N DAYS:**
+```
+from:LAST 7 DAYS
+from:LAST 30 DAYS
+from:LAST 90 DAYS
+```
+Shows notes from the last N days. Works with any number!
+
+**THIS WEEK:**
+```
+from:THIS WEEK
+```
+Shows notes from Sunday (start of week) to today.
+
+**THIS MONTH:**
+```
+from:THIS MONTH
+```
+Shows notes from the 1st of the current month to today.
+
+**THIS YEAR:**
+```
+from:THIS YEAR
+```
+Shows notes from January 1st of the current year to today.
+
+**Combine with TO:**
+```
+from:LAST 30 DAYS to:TODAY
+from:THIS MONTH to:TODAY
+```
+
+These keywords are **case-insensitive**, so `TODAY`, `today`, and `Today` all work!
 
 ### Text Search
 
@@ -216,12 +270,12 @@ Default is case-insensitive.
 Mix and match any filters:
 
 ```
-tag:backend from:2025-10-01 regex: bug-\d+
+tag:backend from:THIS MONTH regex: bug-\d+
 ```
 
 This finds:
 - Notes with `#backend` tag
-- Modified since Oct 1, 2025
+- Created this month (auto-updates!)
 - Containing patterns like "bug-123"
 
 ## Managing Collections
@@ -332,7 +386,7 @@ Found a search query you use often? Save it as a collection!
 1. **Run a search:**
    - Open Command Palette (`Cmd+Shift+P`)
    - Run: `Noted: Search Notes`
-   - Enter query: `tag:meeting from:2025-10-01`
+   - Enter query: `tag:meeting from:THIS MONTH`
 
 2. **Review the results** to make sure the query finds what you want
 
@@ -351,22 +405,46 @@ The collection is created instantly with your search query already filled in!
 
 ### Time-Based Collections
 
+**Today's Notes:**
+```
+Name: Today
+Query: from:TODAY to:TODAY
+Description: Notes created today - updates automatically!
+```
+
 **This Week:**
 ```
 Name: This Week
-Query: from:2025-10-20
+Query: from:THIS WEEK
+Description: Sunday to today - no manual updates needed!
 ```
 
 **This Month:**
 ```
 Name: This Month
-Query: from:2025-10-01
+Query: from:THIS MONTH
+Description: Always shows current month's notes
 ```
 
-**Last Quarter:**
+**Last 7 Days:**
+```
+Name: Last 7 Days
+Query: from:LAST 7 DAYS
+Description: Rolling 7-day window - always current!
+```
+
+**Last 30 Days:**
+```
+Name: Last 30 Days
+Query: from:LAST 30 DAYS
+Description: Rolling 30-day window - always current!
+```
+
+**Last Quarter (static):**
 ```
 Name: Q3 2024
 Query: from:2024-07-01 to:2024-09-30
+Description: Historical data - use static dates
 ```
 
 ### Status Collections
@@ -374,8 +452,8 @@ Query: from:2024-07-01 to:2024-09-30
 **Recent Changes:**
 ```
 Name: Recently Modified
-Query: from:2025-10-20
-Description: Notes modified since Oct 20. Update the date as needed.
+Query: from:LAST 7 DAYS
+Description: Notes from the last week - always current!
 ```
 
 **Note**: For untagged notes and orphaned notes, use the dedicated Orphans & Placeholders panel rather than Smart Collections, as these require special detection that cannot be expressed as search queries.
@@ -423,8 +501,9 @@ Pin: Yes
 
 **Recent Bugs:**
 ```
-Name: New Bugs
-Query: tag:bug from:2025-10-01
+Name: New Bugs This Month
+Query: tag:bug from:THIS MONTH
+Description: Auto-updates each month!
 ```
 
 ### Learning & Reference
@@ -438,7 +517,8 @@ Query: tag:learning
 **Study This Week:**
 ```
 Name: Recent Learning
-Query: tag:learning from:2025-10-20
+Query: tag:learning from:THIS WEEK
+Description: This week's learning notes - auto-updates!
 ```
 
 **JavaScript Learning:**
@@ -469,8 +549,16 @@ Query: tag:meeting tag:team
 
 **This Month's Meetings:**
 ```
-Name: October Meetings
-Query: tag:meeting from:2025-10-01 to:2025-10-31
+Name: This Month's Meetings
+Query: tag:meeting from:THIS MONTH
+Description: Current month's meetings - auto-updates!
+```
+
+**Historical Meetings:**
+```
+Name: October 2024 Meetings
+Query: tag:meeting from:2024-10-01 to:2024-10-31
+Description: Use static dates for historical records
 ```
 
 **Meetings with Action Items:**
@@ -536,7 +624,7 @@ Collections:
 Collections:
 - 📋 Backlog (tag:backlog)
 - 🚧 In Progress (tag:in-progress)
-- ✅ Done This Week (tag:done from:2025-10-20)
+- ✅ Done This Week (tag:done from:THIS WEEK)
 ```
 
 ### Research & Writing
@@ -564,7 +652,8 @@ Collections:
 
 Begin with 3-5 essential collections:
 - Recent Notes (no filter)
-- This Week (from:recent-date)
+- This Week (from:THIS WEEK)
+- Last 30 Days (from:LAST 30 DAYS)
 - Your main project (tag:project-name)
 - Urgent items (tag:urgent)
 
@@ -591,17 +680,19 @@ Keep unpinned collections for occasional use.
 - "Notes"
 - "Stuff"
 
-### 4. Update Date Filters Regularly
+### 4. Use Dynamic Date Keywords
 
-**Monthly collections:**
+**No more manual date updates!**
 ```
-"This Month" → Update from: date each month
+✅ "This Month"    → from:THIS MONTH        (Auto-updates!)
+✅ "Last 30 Days"  → from:LAST 30 DAYS      (Auto-updates!)
+✅ "This Week"     → from:THIS WEEK         (Auto-updates!)
 ```
 
-**Or create specific collections:**
+**Use static dates for historical records:**
 ```
-"October 2024" → from:2024-10-01 to:2024-10-31
-"November 2024" → from:2024-11-01 to:2024-11-30
+📅 "October 2024"   → from:2024-10-01 to:2024-10-31
+📅 "Q3 2024"        → from:2024-07-01 to:2024-09-30
 ```
 
 ### 5. Combine with Tags
@@ -618,7 +709,7 @@ Tag strategy:
 Collections:
 - "Alpha Urgent" → tag:project-alpha tag:urgent
 - "Alpha Bugs" → tag:project-alpha tag:bug
-- "Done This Week" → tag:done from:2025-10-20
+- "Done This Week" → tag:done from:THIS WEEK
 ```
 
 ### 6. Use Icons Consistently
@@ -645,19 +736,31 @@ Collections:
 
 ### Dynamic Date Collections
 
-Create collections that stay relevant:
+Create collections that **automatically stay current** using dynamic date keywords:
 
-**Last 7 Days:**
+**Rolling Windows (Auto-Update!):**
 ```
-Query: from:2025-10-20
-Update: Change date weekly
+Last 7 Days   → from:LAST 7 DAYS
+Last 30 Days  → from:LAST 30 DAYS
+Last 90 Days  → from:LAST 90 DAYS
 ```
 
-**Or use specific periods:**
+**Current Periods (Auto-Update!):**
 ```
-"Week 42" → from:2024-10-14 to:2024-10-20
-"Week 43" → from:2024-10-21 to:2024-10-27
+Today         → from:TODAY to:TODAY
+This Week     → from:THIS WEEK
+This Month    → from:THIS MONTH
+This Year     → from:THIS YEAR
 ```
+
+**Historical Periods (Static Dates):**
+```
+"Week 42"     → from:2024-10-14 to:2024-10-20
+"October 24"  → from:2024-10-01 to:2024-10-31
+"Q3 2024"     → from:2024-07-01 to:2024-09-30
+```
+
+**Pro Tip:** Use dynamic keywords for ongoing tracking, static dates for historical records!
 
 ### Multi-Layer Organization
 
@@ -732,12 +835,12 @@ Query: regex: v\d+\.\d+  (version numbers)
 
 **Active high-priority work:**
 ```
-Query: tag:in-progress tag:high-priority from:2025-10-01
+Query: tag:in-progress tag:high-priority from:THIS MONTH
 ```
 
 **Recent team meetings with action items:**
 ```
-Query: tag:meeting tag:team regex: - \[ \] from:2025-10-01
+Query: tag:meeting tag:team regex: - \[ \] from:LAST 30 DAYS
 ```
 
 ## Troubleshooting
@@ -894,15 +997,24 @@ Organize notes effortlessly with Smart Collections! 📚✨
 ╠══════════════════════════════════════════════╣
 ║ FILTERS:                                     ║
 ║  tag:name           - Filter by tag          ║
-║  from:YYYY-MM-DD    - From date              ║
-║  to:YYYY-MM-DD      - To date                ║
+║  from:YYYY-MM-DD    - From date (static)     ║
+║  to:YYYY-MM-DD      - To date (static)       ║
 ║  regex:pattern      - Regex search           ║
 ║  case:true          - Case sensitive         ║
 ║                                              ║
+║ DYNAMIC DATE KEYWORDS:                       ║
+║  TODAY              - Today's date           ║
+║  YESTERDAY          - Yesterday's date       ║
+║  LAST N DAYS        - Last 7, 30, 90 days    ║
+║  THIS WEEK          - Sunday to today        ║
+║  THIS MONTH         - 1st to today           ║
+║  THIS YEAR          - Jan 1 to today         ║
+║                                              ║
 ║ COMMON COLLECTIONS:                          ║
-║  Recent             - from:recent-date       ║
-║  This Week          - from:week-start        ║
-║  Untagged           - [no tags filter]       ║
+║  Recent             - from:LAST 7 DAYS       ║
+║  This Week          - from:THIS WEEK         ║
+║  This Month         - from:THIS MONTH        ║
+║  Last 30 Days       - from:LAST 30 DAYS      ║
 ║  Project            - tag:project-name       ║
 ║  Urgent             - tag:urgent             ║
 ║                                              ║
