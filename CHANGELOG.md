@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.35.5](https://github.com/jsonify/noted/compare/v1.35.4...v1.35.5) (2025-11-04)
+
+
+### Bug Fixes
+
+* resolve collection not found error when editing from context menu ([#58](https://github.com/jsonify/noted/issues/58)) ([89aa6e8](https://github.com/jsonify/noted/commit/89aa6e881f06cdbc8bc1287db3772e054650f9cc))
+
 ### [1.35.4](https://github.com/jsonify/noted/compare/v1.35.3...v1.35.4) (2025-11-03)
 
 
