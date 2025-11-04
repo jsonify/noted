@@ -110,15 +110,33 @@ export class TagEditService {
 
     /**
      * Open workspace search for a tag
-     * Searches for all occurrences of the tag in the workspace
+     * Searches for all occurrences of the tag in the notes folder
      * @param tag Tag name to search for
+     * @param notesPath Optional path to notes folder for scoped search
      */
-    async openWorkspaceSearch(tag: string): Promise<void> {
+    async openWorkspaceSearch(tag: string, notesPath?: string): Promise<void> {
         // Build regex pattern to match tag in various formats:
-        // 1. Inline hashtag: #tag
-        // 2. YAML array: tags: [tag, ...]
-        // 3. YAML list: - tag
-        const tagPattern = `(#${tag}\\b|tags:.*?\\b${tag}\\b|^\\s*-\\s+${tag}\\b)`;
+        // 1. Inline hashtag: #tag (anywhere in file)
+        // 2. YAML frontmatter with hashtag: tags: #tag
+        // 3. YAML frontmatter without hashtag: tags: [tag, ...] or - tag
+        const tagPattern = `(#${tag}\\b|tags:.*?#${tag}\\b|tags:.*?\\b${tag}\\b|^\\s*-\\s+${tag}\\b)`;
+
+        // Build file pattern to search in notes folder if path provided
+        let filePattern = '**/*.{txt,md}';
+        if (notesPath && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+            // Get the relative path from workspace root to notes folder
+            const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+            const path = require('path');
+            let relativePath = path.relative(workspaceRoot, notesPath);
+
+            // Normalize path separators for cross-platform compatibility
+            relativePath = relativePath.replace(/\\/g, '/');
+
+            // Only use relative path if notes folder is within workspace
+            if (relativePath && !relativePath.startsWith('..')) {
+                filePattern = `${relativePath}/**/*.{txt,md}`;
+            }
+        }
 
         try {
             await vscode.commands.executeCommand('workbench.action.findInFiles', {
@@ -127,7 +145,7 @@ export class TagEditService {
                 isCaseSensitive: false,
                 matchWholeWord: false,
                 triggerSearch: true,
-                filesToInclude: '**/*.{txt,md}', // Search in note files
+                filesToInclude: filePattern,
                 filesToExclude: '**/node_modules/**,**/.git/**'
             });
         } catch (error) {
