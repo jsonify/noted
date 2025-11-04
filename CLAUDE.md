@@ -149,6 +149,41 @@ The extension now uses a fully modular architecture with clear separation of con
   - Integrates with `LinkService` backlinks cache
   - Controlled by `noted.autoBacklinks` configuration setting (default: true)
 
+- **TagService** (v1.36.0): Location-based tag indexing with hierarchical support
+  - Core data structure: `Map<string, Location<Tag>[]>` (tag → locations with exact positions)
+  - Supports inline #hashtags and YAML frontmatter tags
+  - Supports hierarchical tags with '/' separator (e.g., `#project/frontend`)
+  - `buildTagIndex()` builds tag index from all notes
+  - `getLocationsForTag()` returns all locations for a tag
+  - `getLocationsForTagInFile()` returns locations in specific file
+  - `getTagAtPosition()` finds tag at cursor position (for F2 rename)
+  - `getTagReferenceCount()` counts total occurrences (not just unique files)
+  - `getAllTagLabels()` returns all tag names
+  - Hierarchical utilities: `splitTagPath()`, `getTagHierarchy()`, `isChildTag()`, `getParentTag()`, `getChildTags()`
+
+- **TagsTreeProvider** (v1.36.0): Hierarchical tag navigation (tags → files → line references)
+  - Three-level hierarchy: TagItem → TagFileItem → TagReferenceItem
+  - Root level: All tags sorted alphabetically with reference counts
+  - Tag level: Files containing the tag with occurrence counts
+  - File level: Line references with context snippets
+  - Click line references to jump to exact position with tag highlighted
+  - Removed old filtering system (deprecated in favor of hierarchical view)
+
+- **TagRenameProvider** (v1.36.0): F2 rename support for tags
+  - Implements `vscode.RenameProvider` for inline #hashtags and YAML tags
+  - `prepareRename()` detects if cursor is on a tag
+  - `provideRenameEdits()` generates atomic workspace edits for all occurrences
+  - Validates new tag name with format checking
+  - Prompts for confirmation if target tag already exists (merge detection)
+  - Atomic operations with rollback support via WorkspaceEdit
+
+- **TagEditService** (v1.36.0): Advanced tag editing operations
+  - `validateTagRename()` validates tag rename with error messages
+  - `createRenameEdits()` creates workspace edit for single tag rename
+  - `createHierarchicalRenameEdits()` renames parent and all child tags together
+  - `openWorkspaceSearch()` opens VS Code search with tag regex pattern
+  - `hasChildren()`, `getChildCount()` helper methods for hierarchy checks
+
 ### File Organization Pattern
 
 Notes are stored in hierarchical structure:
@@ -223,7 +258,18 @@ All commands are registered in `activate()` and defined in package.json contribu
 **Search Commands** (enhanced v1.6.0):
 - `noted.searchNotes` - Advanced search with regex and filters (regex:, case:, tag:, from:, to:) (Cmd+Shift+F)
 - `noted.quickSwitcher` - Quick access to 20 most recent notes (Cmd+Shift+P)
-- `noted.filterByTag` - Filter notes by tag (Cmd+K Cmd+T)
+
+**Tag Commands** (redesigned v1.36.0):
+- `noted.searchTag` - Search for tag in workspace (opens VS Code search with regex)
+- `noted.refreshTags` - Rebuild tag index and refresh Tags view
+- `noted.renameTag` - Rename a tag across all notes (also available via F2 on any tag)
+- `noted.mergeTags` - Merge two tags into one
+- `noted.deleteTag` - Delete a tag from all notes
+- `noted.exportTags` - Export tags to JSON file
+- `noted.filterByTag` - (Deprecated v1.36.0) Shows message to use hierarchical Tags view
+- `noted.clearTagFilters` - (Deprecated v1.36.0) No longer needed
+- `noted.sortTagsByName` - (Deprecated v1.36.0) Tags always sorted alphabetically
+- `noted.sortTagsByFrequency` - (Deprecated v1.36.0) No longer available
 
 **Management Commands**:
 - `noted.showStats` - Shows total/weekly/monthly note counts (Cmd+Shift+S)
@@ -292,9 +338,12 @@ All commands are registered in `activate()` and defined in package.json contribu
 - **Context values**:
   - Notes have `contextValue: 'note'` for context menu visibility
   - Selected notes have `contextValue: 'note-selected'` (v1.10.0)
+  - Tags have `contextValue: 'tag'` for context menu visibility (v1.36.0)
+  - Tag files have `contextValue: 'tag-file'` (v1.36.0)
+  - Tag references have `contextValue: 'tag-reference'` (v1.36.0)
   - Connection items have `contextValue: 'connection'` (v1.22.0)
   - Connection sections have `contextValue: 'connection-section'` (v1.22.0)
-  - Context variables: `noted.selectModeActive`, `noted.hasSelectedNotes`, `noted.hasActiveTagFilters`
+  - Context variables: `noted.selectModeActive`, `noted.hasSelectedNotes`
 
 ## TypeScript Configuration
 
