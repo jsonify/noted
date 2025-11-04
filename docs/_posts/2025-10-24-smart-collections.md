@@ -9,17 +9,73 @@ tags: [search, collections, filters, saved-searches]
 
 Smart Collections are saved search queries that automatically update as your notes change. Think of them as dynamic folders that organize notes based on criteria you define - tags, dates, content patterns, and more.
 
+### Think of it like this:
+
+Instead of manually dragging notes into folders, you define rules like:
+- "Show me all notes tagged `#bug` from this month"
+- "Show me all meeting notes with action items"
+- "Show me my learning notes from the last week"
+
+Then the collection **automatically shows** all matching notes - and updates when you create or edit notes!
+
 ## Quick Start
 
+Let's create your first Smart Collection in 3 easy steps:
+
+### Step 1: Open the Command
+Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux) to open the Command Palette, then type:
 ```
-Command: Noted: Create Smart Collection
-Name: Work Notes This Month
-Query: tag:work from:2025-10-01
+Noted: Create Smart Collection
+```
+Press Enter.
+
+### Step 2: Fill in the Details
+You'll see a series of prompts:
+
+**Prompt 1 - Collection Name:**
+```
+Work Notes This Month
+```
+This is what you'll see in your Collections sidebar.
+
+**Prompt 2 - Search Query:**
+```
+tag:work from:2025-10-01
+```
+This filters for notes tagged with `#work` created since October 1st.
+
+**Prompt 3 - Description (optional):**
+```
+All work-related notes from this month
+```
+Press Enter to skip, or add a description for reference.
+
+**Prompt 4 - Icon (optional):**
+```
+🚀
+```
+Choose from 10 icons or press Enter to use the default 🔍.
+
+**Prompt 5 - Pin Collection? (yes/no):**
+```
+yes
+```
+Type `yes` to pin it to the top of your Collections sidebar for quick access.
+
+### Step 3: Find Your Collection
+Look in the **Collections** sidebar panel (in the Noted activity bar on the left). You'll see:
+
+```
+Collections View
+  ├── 📌 Pinned Collections
+  │   └── 🚀 Work Notes This Month (15)
 ```
 
-The collection now appears in your Collections sidebar and updates automatically as you create or modify notes!
+**Click on the collection** to see all matching notes! The number `(15)` shows how many notes match your query.
 
-**Tip**: Pin frequently-used collections to keep them at the top.
+The collection **updates automatically** as you create or modify notes - no manual refresh needed!
+
+**Tip**: Pin frequently-used collections to keep them at the top of the sidebar.
 
 ## Why Use Smart Collections?
 
@@ -38,49 +94,47 @@ The collection now appears in your Collections sidebar and updates automatically
 
 ### Basic Collection
 
-Create a simple collection:
+Create a simple collection that shows all notes:
 
-```
-Command: Noted: Create Smart Collection
-
-Name: Recent Notes
-Query: [leave empty to show all]
-Description: All notes sorted by date
-Icon: 📜 (history)
-Pin: Yes
-```
+1. Run command: `Noted: Create Smart Collection`
+2. Enter when prompted:
+   - **Name:** `Recent Notes`
+   - **Query:** *(press Enter to leave empty - shows all notes)*
+   - **Description:** `All notes sorted by date`
+   - **Icon:** `📜`
+   - **Pin:** `yes`
 
 ### Collection with Tag Filter
 
-Filter by tags:
+Filter notes by a specific tag:
 
-```
-Name: Backend Work
-Query: tag:backend
-Description: All backend development notes
-```
+1. Run command: `Noted: Create Smart Collection`
+2. Enter when prompted:
+   - **Name:** `Backend Work`
+   - **Query:** `tag:backend`
+   - **Description:** `All backend development notes`
 
 ### Collection with Date Range
 
-Filter by date:
+Filter notes by date:
 
-```
-Name: This Week
-Query: from:2025-10-20
-Description: Notes from the last 7 days
-```
+1. Run command: `Noted: Create Smart Collection`
+2. Enter when prompted:
+   - **Name:** `This Week`
+   - **Query:** `from:2025-10-20`
+   - **Description:** `Notes from the last 7 days`
 
 ### Advanced Collection
 
-Combine multiple filters:
+Combine multiple filters (tags + dates):
 
-```
-Name: Critical Backend Bugs
-Query: tag:backend tag:bug tag:critical from:2025-10-01
-Description: High-priority backend bugs this month
-Icon: 🔥 (flame)
-Pin: Yes
-```
+1. Run command: `Noted: Create Smart Collection`
+2. Enter when prompted:
+   - **Name:** `Critical Backend Bugs`
+   - **Query:** `tag:backend tag:bug tag:critical from:2025-10-01`
+   - **Description:** `High-priority backend bugs this month`
+   - **Icon:** `🔥`
+   - **Pin:** `yes`
 
 ## Collection Query Syntax
 
@@ -271,18 +325,27 @@ Choose from 10 built-in icons:
 
 ## Save Current Search as Collection
 
-Working with a search query you use often?
+Found a search query you use often? Save it as a collection!
 
-```
-1. Run a search: Noted: Search Notes
-2. Enter query: tag:meeting from:2025-10-01
-3. Review results
-4. Command: Noted: Save Current Search as Collection
-5. Name: October Meetings
-6. Description: Meetings from October
-```
+### How to Save a Search
 
-Instantly creates a collection from your active search!
+1. **Run a search:**
+   - Open Command Palette (`Cmd+Shift+P`)
+   - Run: `Noted: Search Notes`
+   - Enter query: `tag:meeting from:2025-10-01`
+
+2. **Review the results** to make sure the query finds what you want
+
+3. **Save as collection:**
+   - Open Command Palette again (`Cmd+Shift+P`)
+   - Run: `Noted: Save Current Search as Collection`
+   - When prompted:
+     - **Name:** `October Meetings`
+     - **Description:** `Meetings from October`
+     - **Icon:** Choose one or press Enter
+     - **Pin:** `yes` or `no`
+
+The collection is created instantly with your search query already filled in!
 
 ## Pre-Built Collection Ideas
 
