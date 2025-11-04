@@ -270,16 +270,6 @@
         "icon": "$(open-preview)"
       },
       {
-        "command": "noted.filterByTag",
-        "title": "Noted: Filter Notes by Tag",
-        "icon": "$(tag)"
-      },
-      {
-        "command": "noted.clearTagFilters",
-        "title": "Noted: Clear Tag Filters",
-        "icon": "$(clear-all)"
-      },
-      {
         "command": "noted.sortTagsByName",
         "title": "Noted: Sort Tags by Name",
         "icon": "$(sort-precedence)"
@@ -293,6 +283,11 @@
         "command": "noted.refreshTags",
         "title": "Noted: Refresh Tags",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "noted.searchTag",
+        "title": "Noted: Search for Tag",
+        "icon": "$(search)"
       },
       {
         "command": "noted.renameTag",
@@ -594,11 +589,6 @@
           "group": "navigation@3"
         },
         {
-          "command": "noted.clearTagFilters",
-          "when": "view == notedView && noted.hasActiveTagFilters",
-          "group": "navigation@7"
-        },
-        {
           "command": "noted.toggleSelectMode",
           "when": "view == notedView",
           "group": "navigation@8"
@@ -639,7 +629,7 @@
           "group": "actions@2"
         },
         {
-          "command": "noted.filterByTag",
+          "command": "noted.searchTag",
           "when": "view == notedTagsView",
           "group": "navigation@1"
         },
@@ -776,7 +766,7 @@
           "group": "organize@2"
         },
         {
-          "command": "noted.filterByTag",
+          "command": "noted.searchTag",
           "when": "view == notedTagsView && viewItem == tag",
           "group": "navigation@1"
         },

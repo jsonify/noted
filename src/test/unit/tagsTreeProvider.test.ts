@@ -25,7 +25,7 @@ describe('TagsTreeProvider', () => {
 
   describe('getTreeItem', () => {
     it('should return the tag item as-is', () => {
-      const tagItem = new TagItem('bug', 5, ['/note1.txt', '/note2.txt']);
+      const tagItem = new TagItem('bug', 5, true);
       const result = provider.getTreeItem(tagItem);
 
       expect(result).to.equal(tagItem);
@@ -45,10 +45,12 @@ describe('TagsTreeProvider', () => {
 
       expect(children).to.have.lengthOf(2);
       expect(children![0]).to.be.instanceOf(TagItem);
-      expect(children![0].tagName).to.equal('bug');
-      expect(children![0].count).to.equal(2);
-      expect(children![1].tagName).to.equal('feature');
-      expect(children![1].count).to.equal(2);
+      const tag1 = children![0] as TagItem;
+      const tag2 = children![1] as TagItem;
+      expect(tag1.tagName).to.equal('bug');
+      expect(tag1.referenceCount).to.equal(2);
+      expect(tag2.tagName).to.equal('feature');
+      expect(tag2.referenceCount).to.equal(2);
     });
 
     it('should return empty array when no tags exist', async () => {
@@ -58,7 +60,7 @@ describe('TagsTreeProvider', () => {
       expect(children).to.deep.equal([]);
     });
 
-    it('should use frequency sort order by default', async () => {
+    it('should use alphabetical sort order', async () => {
       await fs.mkdir(path.join(tempDir, '2025', '10-October'), { recursive: true });
       await fs.writeFile(path.join(tempDir, '2025', '10-October', '2025-10-15.txt'), 'tags: #bug\n\nContent');
       await fs.writeFile(path.join(tempDir, '2025', '10-October', '2025-10-16.txt'), 'tags: #bug #feature\n\nContent');
@@ -67,17 +69,18 @@ describe('TagsTreeProvider', () => {
       await tagService.buildTagIndex();
       const children = await provider.getChildren();
 
-      // Bug appears 3 times, feature 1 time, so bug should be first
-      expect(children![0].tagName).to.equal('bug');
-      expect(children![0].count).to.equal(3);
-      expect(children![1].tagName).to.equal('feature');
+      // Tags are always sorted alphabetically now
+      const tag1 = children![0] as TagItem;
+      const tag2 = children![1] as TagItem;
+      expect(tag1.tagName).to.equal('bug');
+      expect(tag1.referenceCount).to.equal(3);
+      expect(tag2.tagName).to.equal('feature');
     });
 
-    it('should use alphabetical sort order when configured', async () => {
+    it('should sort tags alphabetically', async () => {
       await fs.mkdir(path.join(tempDir, '2025', '10-October'), { recursive: true });
       await fs.writeFile(path.join(tempDir, '2025', '10-October', '2025-10-15.txt'), 'tags: #zebra #alpha\n\nContent');
 
-      provider.setSortOrder('alphabetical');
       await tagService.buildTagIndex();
       const children = await provider.getChildren();
 
@@ -85,11 +88,12 @@ describe('TagsTreeProvider', () => {
       expect(children![1].tagName).to.equal('zebra');
     });
 
-    it('should return undefined for getChildren with element parameter', async () => {
-      const tagItem = new TagItem('bug', 5, []);
+    it('should return tag items with hasChildren flag', async () => {
+      const tagItem = new TagItem('bug', 5, true);
       const result = await provider.getChildren(tagItem);
 
-      expect(result).to.be.undefined;
+      // TagItem nodes should have children (files)
+      expect(result).to.not.be.undefined;
     });
   });
 
@@ -113,25 +117,8 @@ describe('TagsTreeProvider', () => {
     });
   });
 
-  describe('setSortOrder', () => {
-    it('should update sort order to frequency', async () => {
-      provider.setSortOrder('frequency');
-      expect(provider.getSortOrder()).to.equal('frequency');
-    });
-
-    it('should update sort order to alphabetical', async () => {
-      provider.setSortOrder('alphabetical');
-      expect(provider.getSortOrder()).to.equal('alphabetical');
-    });
-
-    it('should trigger tree refresh when sort order changes', (done) => {
-      provider.onDidChangeTreeData(() => {
-        done();
-      });
-
-      provider.setSortOrder('alphabetical');
-    });
-  });
+  // Note: setSortOrder and getSortOrder methods have been removed
+  // Tags are now always sorted alphabetically in the hierarchical view
 
   describe('getTagCount', () => {
     it('should return total number of tags', async () => {

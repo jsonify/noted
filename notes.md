@@ -95,7 +95,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 
 ## Search & Discovery
 
-### Tags
+### Tags (Redesigned v1.36.0)
 - **Tag Your Notes**: Add tags using two methods:
   - **Inline hashtags**: `#tagname` syntax works anywhere in your note content
   - **YAML frontmatter** (v1.25.0): `tags: [tag1, tag2, tag3]` array format at the beginning of notes
@@ -104,14 +104,30 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - Frontmatter array: `tags: [backend, auth, bugfix]`
   - Quoted values: `tags: ["bug", "feature"]` or `tags: ['bug', 'feature']`
   - Combined: Use both frontmatter and inline tags in the same note (automatically merged)
-- **Tags View**: Dedicated sidebar showing all tags with usage counts
-- **Filter by Tag**: Click any tag to instantly filter the My Notes view, or use the Filter command for multi-tag selection
+  - **Hierarchical tags** (v1.36.0): Use `/` for hierarchy (e.g., `#project/frontend`, `#work/meetings/2025`)
+- **Hierarchical Tag View** (v1.36.0): Three-level navigation
+  - **Tags level**: Expand tags to see which files contain them (with reference counts)
+  - **Files level**: Expand files to see line references (with occurrence counts)
+  - **References level**: Click line references to jump to exact position with tag highlighted
+  - All items clickable with context menus for tag operations
+- **F2 Rename** (v1.36.0): Press F2 on any tag to rename all occurrences
+  - Works on inline `#hashtags` and YAML frontmatter tags
+  - Atomic workspace edits (all succeed or all fail)
+  - Merge detection with confirmation
+  - Standard VS Code rename workflow
+- **Workspace Search** (v1.36.0): Right-click tag → "Search for Tag"
+  - Opens VS Code search with regex pattern
+  - Finds tags in all formats (inline, frontmatter array, frontmatter list)
+  - Preview results before navigation
 - **Tag Autocomplete**: Type `#` anywhere in notes to see autocomplete suggestions from existing tags
-- **Sort Tags**: Sort tags alphabetically or by frequency (usage count)
-- **Tag Statistics**: See how many notes use each tag at a glance
-- **Multi-Tag Filtering**: Filter notes by multiple tags simultaneously (AND logic - shows notes with all selected tags)
-- **Tag Format**: Tags support alphanumeric characters, hyphens, and underscores (e.g., `#bug-fix`, `#work_notes`)
+- **Tag Management**:
+  - **Rename Tag**: Rename across all notes (also available via F2)
+  - **Merge Tags**: Combine two tags into one
+  - **Delete Tag**: Remove tag from all notes
+  - **Export Tags**: Export tag data to JSON
+- **Tag Format**: Tags support lowercase letters, numbers, hyphens, and forward slashes for hierarchy (e.g., `#bug-fix`, `#project/backend`)
 - **Inline Support**: Tags can appear anywhere in your notes - in paragraphs, lists, headings, or anywhere else
+- **Precise Positioning** (v1.36.0): All tag locations stored with character-level accuracy for exact navigation
 
 ### Calendar View
 - **Show Calendar View**: Visual monthly calendar for navigating daily notes
