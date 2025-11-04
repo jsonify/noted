@@ -4,10 +4,11 @@ This document provides a curated, prioritized list of features to work on next, 
 
 ## 🎯 Top Priority Features (High Value, Medium Complexity)
 
-### 1. **Saved Searches / Smart Collections** 🔍
-**Status**: Not in previous plan
+### 1. **Saved Searches / Smart Collections** 🔍 ✅ COMPLETED
+**Status**: ✅ Implemented (v1.35.0)
 **Complexity**: Medium
 **Value**: Very High
+**Documentation**: Comprehensive guide with improved Quick Start (2025-11-04)
 
 Dynamic, auto-updating note collections based on saved queries.
 
@@ -17,29 +18,35 @@ Dynamic, auto-updating note collections based on saved queries.
 - Power users who work with many notes need this
 - Makes notes more actionable and organized
 
-**Features**:
-- Save complex search queries with names
-- Dedicated "Smart Collections" tree view panel
-- Auto-update as notes change
-- Pin important collections for quick access
-- Pre-built collections: "Urgent Items", "Recent Meetings", "Untagged Notes"
-- Export/import collections for sharing
+**Implemented Features**:
+- ✅ Save complex search queries with names and descriptions
+- ✅ Dedicated "Collections" tree view panel in sidebar
+- ✅ Auto-update as notes change (real-time filtering)
+- ✅ Pin important collections for quick access
+- ✅ 10 built-in icons for visual organization
+- ✅ All Advanced Search filters supported (tags, dates, regex, case-sensitivity)
+- ✅ "Save Current Search as Collection" workflow
+- ✅ Full CRUD operations: Create, Edit, Duplicate, Delete, Pin/Unpin
+- ✅ "Run Collection" to execute saved queries
+- ✅ Comprehensive documentation with step-by-step Quick Start
 
 **Implementation**:
 ```
 src/
 ├── services/
-│   └── smartCollectionsService.ts   # Collection storage and querying
+│   └── collectionsService.ts        # Collection storage, filtering, and querying
 ├── providers/
-│   └── collectionsTreeProvider.ts   # Tree view for collections
+│   └── collectionsTreeProvider.ts   # Tree view with pinned/unpinned sections
 └── commands/
-    └── collectionCommands.ts        # Create, edit, delete collections
+    └── collectionCommands.ts        # Full CRUD operations
 ```
 
-**User Stories**:
-- "Show me all work notes tagged urgent from the last 30 days"
-- "Show me all unprocessed inbox notes"
-- "Show me all meeting notes with action items"
+**User Stories** (Now Possible):
+- ✅ "Show me all work notes tagged urgent from the last 30 days" → `tag:urgent tag:work from:2025-10-01`
+- ✅ "Show me all unprocessed inbox notes" → `tag:inbox`
+- ✅ "Show me all meeting notes with action items" → `tag:meeting regex: - \[ \]`
+- ✅ "Show me all backend bugs from this quarter" → `tag:backend tag:bug from:2025-10-01`
+- ✅ "Show me recent learning notes" → `tag:learning from:2025-10-20`
 
 ---
 
@@ -354,9 +361,9 @@ Based on value, complexity, and dependencies:
 3. ✅ **Forward/Back Navigation** (2-3 days) - Simple, useful
 
 ### Phase 2: Core Extensions (2-4 weeks)
-4. ✅ **Saved Searches / Smart Collections** (1 week) - High value, builds on search
-5. ✅ **Unlinked Mentions** (3-4 days) - Extends connections panel
-6. ✅ **Section Links** (3-4 days) - Natural extension of existing embeds
+4. ✅ **Saved Searches / Smart Collections** (1 week) - ✅ COMPLETED (v1.35.0, docs improved 2025-11-04)
+5. **Unlinked Mentions** (3-4 days) - Extends connections panel
+6. **Section Links** (3-4 days) - Natural extension of existing embeds
 
 ### Phase 3: Advanced Organization (3-4 weeks)
 7. ✅ **Hierarchical Tags** (1 week) - Major enhancement to tag system
@@ -386,17 +393,17 @@ These three features can be implemented quickly and provide immediate user value
 ## Comparison with Existing plan.md
 
 **From plan.md that should be prioritized**:
-- ✅ Random note (was listed, now prioritized)
-- ✅ Unlinked mentions (was listed, now prioritized)
-- ✅ Section links (was listed, now prioritized)
-- ✅ Hierarchical tags (was listed, now prioritized)
-- ✅ Merge notes (was listed, now prioritized)
+- Random note (was listed, now prioritized)
+- Unlinked mentions (was listed, now prioritized)
+- Section links (was listed, now prioritized)
+- Hierarchical tags (was listed, now prioritized)
+- Merge notes (was listed, now prioritized)
 
 **New suggestions not in plan.md**:
-- ✅ Saved searches / Smart collections
-- ✅ Review system / Weekly review
-- ✅ Note versioning / Change history
-- ✅ Enhanced template variables (was mentioned briefly)
+- ✅ **Saved searches / Smart collections** - COMPLETED (v1.35.0, docs improved 2025-11-04)
+- Review system / Weekly review
+- Note versioning / Change history
+- Enhanced template variables (was mentioned briefly)
 
 **From plan.md to defer**:
 - ⏸️ Diagram Management Phase 2/3 (already in progress, continue separately)

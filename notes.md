@@ -238,6 +238,32 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Smart Sorting**: Results sorted by modification date (newest first)
 - **Quick Pick**: Select from search results to open notes
 
+### Smart Collections (v1.35.0)
+- **Saved Search Queries**: Save complex search queries as reusable collections that auto-update
+- **Dynamic Collections**: Collections automatically update as notes are created, modified, or deleted
+- **Collections Sidebar**: Dedicated "Collections" panel in sidebar showing all saved collections
+- **Pinned Collections**: Pin frequently-used collections to keep them at the top for quick access
+- **Full CRUD Operations**: Create, Edit, Duplicate, Delete, and Pin/Unpin collections
+- **Run Collection**: Execute saved queries to see all matching notes
+- **Query Syntax**: Supports all Advanced Search features:
+  - Tag filters: `tag:work tag:urgent` (multiple tags with AND logic)
+  - Date filters: `from:2025-10-01 to:2025-10-31` (ISO 8601 format)
+  - Text search: Simple text or multiple keywords
+  - Regex patterns: `regex: bug-\d+` for pattern matching
+  - Case sensitivity: `case:true` for case-sensitive matching
+  - Combined filters: Mix and match all filter types
+- **Visual Organization**: Choose from 10 built-in icons (🔍 Search, 📁 Folder, 🏷️ Tag, 📅 Calendar, ⭐ Star, 🔖 Bookmark, ❤️ Heart, 🔥 Flame, ⚡ Zap, 🚀 Rocket)
+- **Save Current Search**: Convert active search results to a collection with one command
+- **Collection Metadata**: Name, description, icon, and pin status for each collection
+- **Real-time Filtering**: Collections filter notes in real-time based on saved criteria
+- **Use Cases**:
+  - Time-based: "This Week", "This Month", "Last Quarter"
+  - Project tracking: "Project Alpha Bugs", "Active Features"
+  - Status tracking: "Urgent Items", "In Progress Notes"
+  - Meeting notes: "Team Meetings", "Meetings with Action Items"
+  - Learning: "Recent Learning Notes", "JavaScript Topics"
+- **Documentation**: Comprehensive guide with step-by-step Quick Start (improved 2025-11-04)
+
 ### Recent Notes
 - Dedicated "Recent Notes" section showing 10 most recently modified notes
 - Quick access from tree view
@@ -638,6 +664,27 @@ pnpm run test
 ```
 
 ## Recent Updates
+
+### Smart Collections Documentation Improvements (2025-11-04)
+- **Enhanced Quick Start**: Completely rewrote Quick Start guide with step-by-step instructions
+  - Clear 3-step process: Open Command → Fill in Details → Find Your Collection
+  - Detailed explanation of each prompt in the creation workflow
+  - Visual indicator showing where collections appear in sidebar
+  - Added concrete examples before diving into instructions
+- **Improved Creation Examples**: Transformed abstract examples into actionable numbered steps
+- **Better "Save Current Search" Section**: Step-by-step workflow for converting searches to collections
+- **Clearer Explanations**: Added context throughout to explain what Smart Collections are and how to use them
+- **User-Focused Language**: Changed from technical documentation to conversational, helpful instructions
+
+### Smart Collections (v1.35.0)
+- **Saved Search Queries**: Create reusable collections from complex search queries
+- **Dynamic Auto-Updates**: Collections automatically update as notes change
+- **Dedicated Collections Panel**: Sidebar view with pinned and unpinned sections
+- **Full CRUD Operations**: Create, Edit, Duplicate, Delete, Pin/Unpin
+- **Advanced Query Syntax**: Supports all search features (tags, dates, regex, case-sensitivity)
+- **10 Built-in Icons**: Visual organization with emoji icons
+- **Save Current Search**: One-command conversion from search results to collection
+- **Comprehensive Documentation**: Full guide with examples and use cases
 
 ### Diagram Embed Enhancements (v1.31.7)
 - **Automatic Sibling Folder Search**: Diagrams in `Diagrams/` folder automatically discovered
