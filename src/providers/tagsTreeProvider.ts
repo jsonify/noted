@@ -7,12 +7,24 @@ import { readFile } from '../services/fileSystemService';
 type TagTreeItem = TagItem | TagFileItem | TagReferenceItem;
 
 /**
+ * Sort mode for tags
+ */
+export enum TagSortMode {
+    NameAscending = 'name-asc',
+    NameDescending = 'name-desc',
+    FrequencyDescending = 'frequency-desc',
+    FrequencyAscending = 'frequency-asc'
+}
+
+/**
  * Tree data provider for tags view
  * Displays hierarchical view: tags → files → line references
  */
 export class TagsTreeProvider implements vscode.TreeDataProvider<TagTreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<TagTreeItem | undefined | null | void> = new vscode.EventEmitter<TagTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<TagTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
+
+    private sortMode: TagSortMode = TagSortMode.NameAscending;
 
     constructor(private tagService: TagService) {}
 
@@ -30,6 +42,45 @@ export class TagsTreeProvider implements vscode.TreeDataProvider<TagTreeItem> {
      */
     softRefresh(): void {
         this._onDidChangeTreeData.fire();
+    }
+
+    /**
+     * Set the sort mode for tags
+     */
+    setSortMode(mode: TagSortMode): void {
+        this.sortMode = mode;
+        this.softRefresh();
+    }
+
+    /**
+     * Get the current sort mode
+     */
+    getSortMode(): TagSortMode {
+        return this.sortMode;
+    }
+
+    /**
+     * Toggle between A-Z and Z-A sorting
+     */
+    toggleNameSort(): void {
+        if (this.sortMode === TagSortMode.NameAscending) {
+            this.sortMode = TagSortMode.NameDescending;
+        } else {
+            this.sortMode = TagSortMode.NameAscending;
+        }
+        this.softRefresh();
+    }
+
+    /**
+     * Toggle between most frequent and least frequent sorting
+     */
+    toggleFrequencySort(): void {
+        if (this.sortMode === TagSortMode.FrequencyDescending) {
+            this.sortMode = TagSortMode.FrequencyAscending;
+        } else {
+            this.sortMode = TagSortMode.FrequencyDescending;
+        }
+        this.softRefresh();
     }
 
     /**
@@ -68,15 +119,42 @@ export class TagsTreeProvider implements vscode.TreeDataProvider<TagTreeItem> {
     private getTagNodes(): TagItem[] {
         const allTagLabels = this.tagService.getAllTagLabels();
 
-        // Sort tags alphabetically
-        const sortedTags = allTagLabels.sort((a, b) => a.localeCompare(b));
-
-        // Create TagItem for each tag
-        return sortedTags.map(tag => {
+        // Create TagItem for each tag with reference counts
+        const tagItems = allTagLabels.map(tag => {
             const referenceCount = this.tagService.getTagReferenceCount(tag);
             const hasChildren = referenceCount > 0;
             return new TagItem(tag, referenceCount, hasChildren);
         });
+
+        // Sort based on current sort mode
+        switch (this.sortMode) {
+            case TagSortMode.NameAscending:
+                tagItems.sort((a, b) => a.tagName.localeCompare(b.tagName));
+                break;
+            case TagSortMode.NameDescending:
+                tagItems.sort((a, b) => b.tagName.localeCompare(a.tagName));
+                break;
+            case TagSortMode.FrequencyDescending:
+                tagItems.sort((a, b) => {
+                    // Sort by frequency (high to low), then by name (A-Z) for ties
+                    if (b.referenceCount !== a.referenceCount) {
+                        return b.referenceCount - a.referenceCount;
+                    }
+                    return a.tagName.localeCompare(b.tagName);
+                });
+                break;
+            case TagSortMode.FrequencyAscending:
+                tagItems.sort((a, b) => {
+                    // Sort by frequency (low to high), then by name (A-Z) for ties
+                    if (a.referenceCount !== b.referenceCount) {
+                        return a.referenceCount - b.referenceCount;
+                    }
+                    return a.tagName.localeCompare(b.tagName);
+                });
+                break;
+        }
+
+        return tagItems;
     }
 
     /**

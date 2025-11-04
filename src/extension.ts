@@ -1258,14 +1258,22 @@ export function activate(context: vscode.ExtensionContext) {
         );
     });
 
-    // Command to sort tags by name (deprecated - tags are now always sorted alphabetically)
+    // Command to toggle sorting tags by name (A-Z / Z-A)
     let sortTagsByName = vscode.commands.registerCommand('noted.sortTagsByName', () => {
-        vscode.window.showInformationMessage('Tags are now always sorted alphabetically in the hierarchical view');
+        tagsProvider.toggleNameSort();
+        const sortMode = tagsProvider.getSortMode();
+        const message = sortMode === 'name-asc' ? 'Tags sorted A-Z' : 'Tags sorted Z-A';
+        vscode.window.showInformationMessage(message);
     });
 
-    // Command to sort tags by frequency (deprecated - feature removed in tag system redesign)
+    // Command to toggle sorting tags by frequency (most/least frequent)
     let sortTagsByFrequency = vscode.commands.registerCommand('noted.sortTagsByFrequency', () => {
-        vscode.window.showInformationMessage('Tags are now always sorted alphabetically in the hierarchical view');
+        tagsProvider.toggleFrequencySort();
+        const sortMode = tagsProvider.getSortMode();
+        const message = sortMode === 'frequency-desc'
+            ? 'Tags sorted by frequency (most to least)'
+            : 'Tags sorted by frequency (least to most)';
+        vscode.window.showInformationMessage(message);
     });
 
     // Command to refresh tags
@@ -1296,7 +1304,8 @@ export function activate(context: vscode.ExtensionContext) {
             tagName = selected.tag;
         }
 
-        await tagEditService.openWorkspaceSearch(tagName);
+        const notesPath = getNotesPath() || undefined;
+        await tagEditService.openWorkspaceSearch(tagName, notesPath);
     });
 
     // Command to rename a tag
