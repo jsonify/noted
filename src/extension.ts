@@ -6,7 +6,6 @@ import { showCalendarView } from './calendar/calendarView';
 import { showGraphView } from './graph/graphView';
 import { MarkdownToolbarService } from './services/markdownToolbarService';
 import { TagService } from './services/tagService';
-import { formatTagForDisplay } from './utils/tagHelpers';
 import { renameTag, mergeTags, deleteTag, exportTags } from './commands/tagCommands';
 import { NotesTreeProvider } from './providers/notesTreeProvider';
 import { JournalTreeProvider } from './providers/journalTreeProvider';
@@ -1231,62 +1230,19 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Command to filter notes by tag
+    // Command to filter notes by tag (deprecated - use hierarchical tag view instead)
     let filterByTag = vscode.commands.registerCommand('noted.filterByTag', async (tagName?: string) => {
-        // Rebuild tag index to ensure it's up to date
-        if (notesPath) {
-            await tagService.buildTagIndex();
-        }
-
-        let selectedTags: string[] = [];
-
-        if (tagName) {
-            // Tag name provided (e.g., clicked from tag tree)
-            selectedTags = [tagName];
-        } else {
-            // Show quick pick with all available tags
-            const allTags = tagService.getAllTags('frequency');
-
-            if (allTags.length === 0) {
-                vscode.window.showInformationMessage('No tags found in notes');
-                return;
-            }
-
-            const items = allTags.map(tag => ({
-                label: formatTagForDisplay(tag.name),
-                description: `${tag.count} note${tag.count !== 1 ? 's' : ''}`,
-                picked: notesProvider.getActiveFilters().includes(tag.name)
-            }));
-
-            const selected = await vscode.window.showQuickPick(items, {
-                placeHolder: 'Select tags to filter by (supports multiple selection)',
-                canPickMany: true
-            });
-
-            if (!selected || selected.length === 0) {
-                return;
-            }
-
-            selectedTags = selected.map(item => item.label.substring(1)); // Remove # prefix
-        }
-
-        // Apply filters
-        notesProvider.filterByTag(selectedTags, tagService);
-
-        // Show filter description
-        const filterDesc = notesProvider.getFilterDescription();
-        if (filterDesc) {
-            const noteCount = notesProvider.getFilteredNotePaths().length;
-            vscode.window.showInformationMessage(
-                `${filterDesc} - ${noteCount} note${noteCount !== 1 ? 's' : ''} found`
-            );
-        }
+        vscode.window.showInformationMessage(
+            'Tag filtering has been replaced with the hierarchical tag view. ' +
+            'Use the Tags panel to browse tags → files → line references.'
+        );
     });
 
-    // Command to clear tag filters
+    // Command to clear tag filters (deprecated - no longer needed)
     let clearTagFilters = vscode.commands.registerCommand('noted.clearTagFilters', () => {
-        notesProvider.clearTagFilters();
-        vscode.window.showInformationMessage('Tag filters cleared');
+        vscode.window.showInformationMessage(
+            'Tag filtering has been removed. Use the hierarchical Tags panel for navigation.'
+        );
     });
 
     // Command to sort tags by name (deprecated - tags are now always sorted alphabetically)

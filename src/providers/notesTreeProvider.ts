@@ -5,8 +5,6 @@ import { getNotesPath } from '../services/configService';
 import { pathExists, createDirectory, readDirectoryWithTypes, getFileStats, renameFile } from '../services/fileSystemService';
 import { isYearFolder, isMonthFolder, isDailyNote } from '../utils/validators';
 import { DEFAULTS, SUPPORTED_EXTENSIONS, SPECIAL_FOLDERS } from '../constants';
-import { TagService } from '../services/tagService';
-import { formatTagForDisplay } from '../utils/tagHelpers';
 import { PinnedNotesService } from '../services/pinnedNotesService';
 import { ArchiveService } from '../services/archiveService';
 import { BulkOperationsService } from '../services/bulkOperationsService';
@@ -22,10 +20,6 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
     // Drag and drop support
     dropMimeTypes = ['application/vnd.code.tree.notedView'];
     dragMimeTypes = ['text/uri-list'];
-
-    // Tag filtering state
-    private activeFilters: Set<string> = new Set();
-    private filteredNotePaths: Set<string> = new Set();
 
     // Optional services for pinned notes and archive
     private pinnedNotesService?: PinnedNotesService;
@@ -59,103 +53,6 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
-    }
-
-    /**
-     * Get the currently active tag filters
-     */
-    getActiveFilters(): string[] {
-        return Array.from(this.activeFilters);
-    }
-
-    /**
-     * Set tag filters for the tree view
-     * @param tags Array of tag names to filter by (AND logic)
-     */
-    setTagFilters(tags: string[]): void {
-        this.activeFilters.clear();
-
-        // Normalize and deduplicate tags
-        const normalizedTags = tags.map(tag => tag.toLowerCase().trim());
-        const uniqueTags = [...new Set(normalizedTags)];
-
-        uniqueTags.forEach(tag => {
-            if (tag) {
-                this.activeFilters.add(tag);
-            }
-        });
-
-        // Update context variable for conditional UI elements
-        vscode.commands.executeCommand('setContext', 'noted.hasActiveTagFilters', this.activeFilters.size > 0);
-
-        this.refresh();
-    }
-
-    /**
-     * Clear all active tag filters
-     */
-    clearTagFilters(): void {
-        this.activeFilters.clear();
-        this.filteredNotePaths.clear();
-
-        // Update context variable for conditional UI elements
-        vscode.commands.executeCommand('setContext', 'noted.hasActiveTagFilters', this.activeFilters.size > 0);
-
-        this.refresh();
-    }
-
-    /**
-     * Filter notes by tag(s) using TagService
-     * @param tags Single tag or array of tags to filter by
-     * @param tagService TagService instance for querying notes
-     */
-    filterByTag(tags: string | string[], tagService: TagService): void {
-        const tagArray = Array.isArray(tags) ? tags : [tags];
-        this.setTagFilters(tagArray);
-
-        // Get notes that match all active filters
-        if (this.activeFilters.size > 0) {
-            const notePaths = tagService.getNotesWithTags(Array.from(this.activeFilters));
-            this.filteredNotePaths = new Set(notePaths);
-        } else {
-            this.filteredNotePaths.clear();
-        }
-
-        this.refresh();
-    }
-
-    /**
-     * Get the set of filtered note paths
-     */
-    getFilteredNotePaths(): string[] {
-        return Array.from(this.filteredNotePaths);
-    }
-
-    /**
-     * Check if a note should be displayed based on active filters
-     * @param notePath Path to the note file
-     * @returns true if note should be shown, false otherwise
-     */
-    isNoteFiltered(notePath: string): boolean {
-        // If no filters active, show all notes
-        if (this.activeFilters.size === 0) {
-            return true;
-        }
-
-        // Check if note is in filtered set
-        return this.filteredNotePaths.has(notePath);
-    }
-
-    /**
-     * Get description text for active filters
-     */
-    getFilterDescription(): string {
-        if (this.activeFilters.size === 0) {
-            return '';
-        }
-
-        const tagStrings = Array.from(this.activeFilters).map(tag => formatTagForDisplay(tag));
-        return `Filtered by: ${tagStrings.join(', ')}`;
     }
 
     async handleDrag(source: readonly TreeItem[], dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Promise<void> {
@@ -396,8 +293,7 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                             this.applySelectionState(item);
 
                             return item;
-                        })
-                        .filter(item => this.isNoteFiltered(item.filePath)));
+                        }));
 
                     return items;
                 } catch (error) {
@@ -439,7 +335,6 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
 
         return allNotes
             .slice(0, DEFAULTS.RECENT_NOTES_LIMIT)
-            .filter(note => this.isNoteFiltered(note.path))
             .map(note => {
                 const item = new NoteItem(note.name, note.path, vscode.TreeItemCollapsibleState.None, 'note');
 
@@ -483,7 +378,6 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
         const pinnedPaths = await this.pinnedNotesService.getPinnedNotes();
 
         return pinnedPaths
-            .filter(note => this.isNoteFiltered(note))
             .map(notePath => this.createNoteItemForSection(notePath, { isPinned: true }));
     }
 
@@ -498,7 +392,6 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
         const archivedPaths = await this.archiveService.getArchivedNotes();
 
         return archivedPaths
-            .filter(note => this.isNoteFiltered(note))
             .map(notePath => this.createNoteItemForSection(notePath, { description: '📦' }));
     }
 
@@ -540,7 +433,6 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
             notesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
 
             return notesWithStats
-                .filter(note => this.isNoteFiltered(note.filePath))
                 .map(note => this.createNoteItemForSection(note.filePath, { description: '📥' }));
         } catch (error) {
             console.error('[NOTED] Error reading Inbox folder:', error);
