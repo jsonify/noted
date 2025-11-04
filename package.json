@@ -285,6 +285,11 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "noted.searchTag",
+        "title": "Noted: Search for Tag",
+        "icon": "$(search)"
+      },
+      {
         "command": "noted.renameTag",
         "title": "Noted: Rename Tag",
         "icon": "$(edit)"
@@ -624,6 +629,11 @@
           "group": "actions@2"
         },
         {
+          "command": "noted.searchTag",
+          "when": "view == notedTagsView",
+          "group": "navigation@1"
+        },
+        {
           "command": "noted.sortTagsByName",
           "when": "view == notedTagsView",
           "group": "navigation@2"
@@ -754,6 +764,11 @@
           "command": "noted.archiveNote",
           "when": "view == notedView && viewItem == note",
           "group": "organize@2"
+        },
+        {
+          "command": "noted.searchTag",
+          "when": "view == notedTagsView && viewItem == tag",
+          "group": "navigation@1"
         },
         {
           "command": "noted.renameTag",
