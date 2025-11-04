@@ -7,6 +7,20 @@ import * as path from 'path';
 import { SmartCollectionsService, SmartCollection } from '../services/smartCollectionsService';
 import { TagService } from '../services/tagService';
 import { CollectionsTreeProvider } from '../providers/collectionsTreeProvider';
+import { CollectionItem } from '../providers/treeItems';
+
+/**
+ * Helper function to extract collection ID from either a CollectionItem or a string
+ */
+function getCollectionId(item: CollectionItem | string | undefined): string | undefined {
+    if (item instanceof CollectionItem) {
+        return item.collectionId;
+    }
+    if (typeof item === 'string' && item) {
+        return item;
+    }
+    return undefined;
+}
 
 /**
  * Create a new smart collection
@@ -137,8 +151,11 @@ export async function handleCreateCollectionFromSearch(
  */
 export async function handleEditCollection(
     collectionsService: SmartCollectionsService,
-    collectionId?: string
+    collectionIdOrItem?: CollectionItem | string
 ): Promise<void> {
+    // Extract collection ID from either a CollectionItem or a string
+    let collectionId = getCollectionId(collectionIdOrItem);
+
     // If no ID provided, show picker
     if (!collectionId) {
         const collections = collectionsService.getAllCollections();
@@ -221,8 +238,11 @@ export async function handleEditCollection(
  */
 export async function handleDeleteCollection(
     collectionsService: SmartCollectionsService,
-    collectionId?: string
+    collectionIdOrItem?: CollectionItem | string
 ): Promise<void> {
+    // Extract collection ID from either a CollectionItem or a string
+    let collectionId = getCollectionId(collectionIdOrItem);
+
     // If no ID provided, show picker
     if (!collectionId) {
         const collections = collectionsService.getAllCollections();
@@ -280,8 +300,11 @@ export async function handleDeleteCollection(
 export async function handleRunCollection(
     collectionsService: SmartCollectionsService,
     tagService: TagService | undefined,
-    collectionId?: string
+    collectionIdOrItem?: CollectionItem | string
 ): Promise<void> {
+    // Extract collection ID from either a CollectionItem or a string
+    let collectionId = getCollectionId(collectionIdOrItem);
+
     // If no ID provided, show picker
     if (!collectionId) {
         const collections = collectionsService.getAllCollections();
@@ -358,8 +381,11 @@ export async function handleRunCollection(
  */
 export async function handleTogglePinCollection(
     collectionsService: SmartCollectionsService,
-    collectionId?: string
+    collectionIdOrItem?: CollectionItem | string
 ): Promise<void> {
+    // Extract collection ID from either a CollectionItem or a string
+    let collectionId = getCollectionId(collectionIdOrItem);
+
     // If no ID provided, show picker
     if (!collectionId) {
         const collections = collectionsService.getAllCollections();
@@ -406,8 +432,11 @@ export async function handleTogglePinCollection(
  */
 export async function handleDuplicateCollection(
     collectionsService: SmartCollectionsService,
-    collectionId?: string
+    collectionIdOrItem?: CollectionItem | string
 ): Promise<void> {
+    // Extract collection ID from either a CollectionItem or a string
+    let collectionId = getCollectionId(collectionIdOrItem);
+
     // If no ID provided, show picker
     if (!collectionId) {
         const collections = collectionsService.getAllCollections();
