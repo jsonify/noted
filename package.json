@@ -265,6 +265,11 @@
         "icon": "$(graph)"
       },
       {
+        "command": "noted.showActivity",
+        "title": "Noted: Show Activity Chart",
+        "icon": "$(pulse)"
+      },
+      {
         "command": "noted.showPreview",
         "title": "Noted: Open Preview (with Diagram Support)",
         "icon": "$(open-preview)"
@@ -574,6 +579,11 @@
           "group": "navigation@6"
         },
         {
+          "command": "noted.showActivity",
+          "when": "view == notedView",
+          "group": "navigation@7"
+        },
+        {
           "command": "noted.openToday",
           "when": "view == notedJournalView",
           "group": "navigation@1"
@@ -591,7 +601,7 @@
         {
           "command": "noted.toggleSelectMode",
           "when": "view == notedView",
-          "group": "navigation@8"
+          "group": "navigation@9"
         },
         {
           "command": "noted.bulkDelete",

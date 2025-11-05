@@ -352,7 +352,7 @@ src/
 - Mobile companion app
 - Daily note reminders/notifications
 - Note templates with form fields
-- Statistics dashboard with charts
+- ~~Statistics dashboard with charts~~ ✅ Activity Chart (v1.36.0) - Shows notes created, tags added, and links created over 12 weeks
 - Integration with other VS Code extensions
 
 ## Technical Debt

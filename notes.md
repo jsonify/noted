@@ -129,7 +129,7 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 - **Inline Support**: Tags can appear anywhere in your notes - in paragraphs, lists, headings, or anywhere else
 - **Precise Positioning** (v1.36.0): All tag locations stored with character-level accuracy for exact navigation
 
-### Calendar View
+### Calendar View (Enhanced v1.36.0)
 - **Show Calendar View**: Visual monthly calendar for navigating daily notes
 - **Interactive Date Selection**: Click any date to see all notes created on that day
 - **Notes List Display**: Shows all notes for selected date below calendar
@@ -137,10 +137,24 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - Create new notes directly from the calendar
   - "Create Another Note" button when notes already exist
 - **Visual Indicators**:
-  - Days with notes are highlighted
-  - Current day marked with special border
+  - Days with notes are highlighted with intensity based on note count
+  - Current day marked with special border and glow effect
+  - Hover effects with smooth scaling animations
 - **Month Navigation**: Previous/Next month buttons and "Today" quick jump
 - **Multi-note Support**: Handles multiple notes per day (daily notes + templated notes)
+- **Statistics Panel** (Enhanced v1.36.0): Comprehensive analytics with Chart.js visualizations
+  - **Activity Chart**: 12-week stacked area chart showing notes created, tags added, and links created
+  - **Day of Week Patterns**: Bar chart showing which days you write most (highlights today)
+  - **Growth Over Time**: Line chart with area fill showing cumulative note growth
+  - **Daily Streak**: Track consecutive days of note creation with visual heatmap
+  - **Insights**: Average notes per day, most active week, and favorite day
+  - All charts use consistent theme colors and smooth curves
+  - Compact heights eliminate scrolling while maintaining readability
+- **Unified Design** (v1.36.0):
+  - Matching purple gradient backgrounds with subtle borders
+  - Applied to calendar, notes panel, and all statistics sections
+  - Consistent spacing and padding throughout
+  - Overflow control prevents layout shifts on hover
 
 ### Graph View (v1.14.0, Enhanced v1.17.1, v1.19.1, v1.20.1, v1.32.0)
 - **Show Graph View**: Interactive visualization of note connections via wiki-style links
@@ -238,6 +252,29 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - **Refresh button**: Rebuild graph after creating new links
   - **Fit View button**: Auto-zoom to show entire graph
   - **Customize button**: Open customization panel
+
+### Activity Chart (v1.36.0)
+- **Show Activity Chart**: Visualize your workspace activity over the last 12 weeks
+- **Standalone View**: Open via command palette or toolbar icon
+- **Calendar View Integration**: Activity chart automatically included in Calendar View statistics panel
+- **Three Key Metrics Tracked**:
+  - **Notes Created**: New note files created each week (based on file creation time)
+  - **Links Created**: Wiki-style links added to notes (based on file modification time)
+  - **Tags Added**: Tags introduced in notes (both inline hashtags and frontmatter tags)
+- **Stacked Area Chart**: Beautiful visualization inspired by platform activity dashboards
+  - Interactive Chart.js visualization with smooth curves
+  - Hover to see detailed counts for each week
+  - Click legend items to toggle individual metrics
+- **Weekly Timeline**: Activity grouped into 12-week view (W1 through W12)
+- **Statistics Summary**: View total counts and averages per week for each metric
+- **Historical Data**: Infers activity from file timestamps for retroactive analysis
+- **Production Environment Badge**: Shows "Live" status and time period at a glance (standalone view)
+- **Centralized Theme Colors**: Consistent color palette across all charts
+  - Color-coded layers: Notes (blue), Links (teal), Tags (light blue)
+  - Same theme colors used in Calendar View charts
+  - Responsive design that adapts to webview size
+  - VS Code theme integration for consistent appearance
+  - Tooltip shows week date range and detailed counts
 
 ### Search (ENHANCED v1.6.0)
 - **Full-Text Search**: Search across all notes with preview of matching lines
@@ -584,8 +621,9 @@ All commands are accessible via:
 - Search Notes
 - Quick Switcher
 - Refresh
-- Show Calendar View
+- Show Calendar View (with integrated Activity Chart)
 - Show Graph View
+- Show Activity Chart (standalone)
 - Clear Tag Filters (when active)
 - Toggle Select Mode
 - Bulk Delete (when notes selected)

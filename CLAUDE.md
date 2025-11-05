@@ -50,6 +50,7 @@ The extension now uses a fully modular architecture with clear separation of con
   - `undoService.ts`: Undo/redo functionality (v1.13.0)
   - `undoHelpers.ts`: Undo operation helpers (v1.13.0)
   - `graphService.ts`: Graph data preparation and analysis (v1.14.0)
+  - `activityService.ts`: Activity metrics collection and analysis (v1.36.0)
 - **`src/providers/`**: VS Code tree view providers
   - `treeItems.ts`: Tree item classes (includes ConnectionSectionItem and ConnectionItem)
   - `templatesTreeProvider.ts`: Templates view
@@ -64,6 +65,8 @@ The extension now uses a fully modular architecture with clear separation of con
   - `calendarView.ts`: Webview and HTML generation
 - **`src/graph/`**: Graph view visualization
   - `graphView.ts`: Interactive graph webview with vis.js
+- **`src/activity/`**: Activity chart visualization (v1.36.0)
+  - `activityView.ts`: Stacked area chart webview with Chart.js
 
 **File Operations**:
 - All file I/O uses `fs.promises` API with async/await pattern
@@ -100,6 +103,15 @@ The extension now uses a fully modular architecture with clear separation of con
   - Supports node coloring based on connection count
   - Calculates node sizes using logarithmic scaling for better visual distribution
   - Identifies bidirectional links (notes that link to each other)
+
+- **ActivityService** (v1.36.0): Collects and analyzes activity metrics over time
+  - Tracks three key metrics: notes created, tags added, links created
+  - `getWeeklyActivity(weeks)` returns activity data for the last N weeks
+  - Infers historical data from file creation (`birthtime`) and modification (`mtime`) timestamps
+  - Groups activity into weekly buckets for visualization
+  - `getActivityStats()` provides summary statistics and averages
+  - Integrates with `LinkService` and `TagService` for accurate metrics
+  - Recursively processes all note files while excluding templates folder
 
 - **EmbedService** (v1.5.0, diagram support v1.31.0): Manages note, image, and diagram embeds
   - Extracts embeds using `![[note-name]]`, `![[image.png]]`, and `![[diagram.drawio]]` syntax
@@ -275,6 +287,7 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.showStats` - Shows total/weekly/monthly note counts (Cmd+Shift+S)
 - `noted.showCalendar` - Show calendar view for navigating daily notes (Cmd+Shift+C)
 - `noted.showGraph` - Show interactive graph view of note connections (Cmd+Shift+G)
+- `noted.showActivity` - Show activity chart with notes created, tags added, and links created over 12 weeks (v1.36.0)
 - `noted.exportNotes` - Exports notes by date range to single file (Cmd+Shift+E)
 - `noted.deleteNote`, `renameNote`, `duplicateNote`, `copyPath` - File operations on notes
 - `noted.moveNotesFolder` - Renames the notes folder location
