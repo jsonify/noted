@@ -7,6 +7,54 @@ import { isTodayDate } from '../utils/dateHelpers';
 import { SUPPORTED_EXTENSIONS } from '../constants';
 
 /**
+ * Async generator that yields note file information from the entire notes directory structure.
+ * This eliminates code duplication across multiple statistics functions.
+ *
+ * @param notesPath - Root path of the notes directory
+ * @yields Object containing file name and the extracted date from the filename
+ */
+async function* iterateNoteFiles(notesPath: string): AsyncGenerator<{ fileName: string; date: Date; filePath: string }> {
+    if (!(await pathExists(notesPath))) {
+        return;
+    }
+
+    const yearEntries = await readDirectoryWithTypes(notesPath);
+
+    for (const yearEntry of yearEntries) {
+        if (yearEntry.isDirectory() && /^\d{4}$/.test(yearEntry.name)) {
+            const yearPath = path.join(notesPath, yearEntry.name);
+            const monthEntries = await readDirectoryWithTypes(yearPath);
+
+            for (const monthEntry of monthEntries) {
+                if (monthEntry.isDirectory()) {
+                    const monthPath = path.join(yearPath, monthEntry.name);
+                    const noteFiles = await readDirectoryWithTypes(monthPath);
+
+                    for (const file of noteFiles) {
+                        if (!file.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => file.name.endsWith(ext))) {
+                            // Extract date from filename (YYYY-MM-DD)
+                            const dateMatch = file.name.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                            if (dateMatch) {
+                                const date = new Date(
+                                    parseInt(dateMatch[1]),
+                                    parseInt(dateMatch[2]) - 1,
+                                    parseInt(dateMatch[3])
+                                );
+                                yield {
+                                    fileName: file.name,
+                                    date,
+                                    filePath: path.join(monthPath, file.name)
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
  * Get all notes for a specific date
  */
 export async function getNotesForDate(notesPath: string, year: number, month: number, day: number): Promise<Array<{name: string, path: string}>> {
@@ -134,33 +182,50 @@ export async function getTotalNotesCount(notesPath: string): Promise<number> {
     let totalCount = 0;
 
     try {
-        // Get all year folders
-        const yearEntries = await readDirectoryWithTypes(notesPath);
-
-        for (const yearEntry of yearEntries) {
-            if (yearEntry.isDirectory() && /^\d{4}$/.test(yearEntry.name)) {
-                const yearPath = path.join(notesPath, yearEntry.name);
-                const monthEntries = await readDirectoryWithTypes(yearPath);
-
-                for (const monthEntry of monthEntries) {
-                    if (monthEntry.isDirectory()) {
-                        const monthPath = path.join(yearPath, monthEntry.name);
-                        const noteFiles = await readDirectoryWithTypes(monthPath);
-
-                        for (const file of noteFiles) {
-                            if (!file.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => file.name.endsWith(ext))) {
-                                totalCount++;
-                            }
-                        }
-                    }
-                }
-            }
+        for await (const _ of iterateNoteFiles(notesPath)) {
+            totalCount++;
         }
     } catch (error) {
         console.error('[NOTED] Error counting total notes:', error);
     }
 
     return totalCount;
+}
+
+/**
+ * Get the date range of all notes (earliest and latest dates)
+ * Returns null if no notes exist
+ */
+export async function getNoteDateRange(notesPath: string): Promise<{firstDate: Date, lastDate: Date, daySpan: number} | null> {
+    if (!(await pathExists(notesPath))) {
+        return null;
+    }
+
+    let firstDate: Date | null = null;
+    let lastDate: Date | null = null;
+
+    try {
+        for await (const { date } of iterateNoteFiles(notesPath)) {
+            if (!firstDate || date < firstDate) {
+                firstDate = date;
+            }
+            if (!lastDate || date > lastDate) {
+                lastDate = date;
+            }
+        }
+
+        if (firstDate && lastDate) {
+            // Calculate the number of days between first and last note
+            const diffTime = lastDate.getTime() - firstDate.getTime();
+            const daySpan = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1, 1); // Add 1 to include both first and last day
+            return { firstDate, lastDate, daySpan };
+        }
+
+        return null;
+    } catch (error) {
+        console.error('[NOTED] Error getting note date range:', error);
+        throw error;
+    }
 }
 
 /**
@@ -304,6 +369,7 @@ export async function getCurrentStreak(notesPath: string): Promise<number> {
         }
     } catch (error) {
         console.error('[NOTED] Error calculating current streak:', error);
+        throw error;
     }
 
     return streak;
@@ -322,32 +388,9 @@ export async function getLongestStreak(notesPath: string): Promise<number> {
     const allDates: Date[] = [];
 
     try {
-        // Get all year folders
-        const yearEntries = await readDirectoryWithTypes(notesPath);
-
-        for (const yearEntry of yearEntries) {
-            if (yearEntry.isDirectory() && /^\d{4}$/.test(yearEntry.name)) {
-                const yearPath = path.join(notesPath, yearEntry.name);
-                const monthEntries = await readDirectoryWithTypes(yearPath);
-
-                for (const monthEntry of monthEntries) {
-                    if (monthEntry.isDirectory()) {
-                        const monthPath = path.join(yearPath, monthEntry.name);
-                        const noteFiles = await readDirectoryWithTypes(monthPath);
-
-                        for (const file of noteFiles) {
-                            if (!file.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => file.name.endsWith(ext))) {
-                                // Extract date from filename (YYYY-MM-DD)
-                                const dateMatch = file.name.match(/^(\d{4})-(\d{2})-(\d{2})/);
-                                if (dateMatch) {
-                                    const date = new Date(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
-                                    allDates.push(date);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        // Collect all note dates
+        for await (const { date } of iterateNoteFiles(notesPath)) {
+            allDates.push(date);
         }
 
         // Sort dates
@@ -385,6 +428,7 @@ export async function getLongestStreak(notesPath: string): Promise<number> {
         }
     } catch (error) {
         console.error('[NOTED] Error calculating longest streak:', error);
+        throw error;
     }
 
     return longestStreak;
@@ -415,6 +459,7 @@ export async function getStreakHeatmap(notesPath: string, days: number = 30): Pr
         }
     } catch (error) {
         console.error('[NOTED] Error getting streak heatmap:', error);
+        throw error;
     }
 
     return heatmap;
@@ -453,6 +498,7 @@ export async function getMonthlyTrend(notesPath: string, months: number = 6): Pr
         }
     } catch (error) {
         console.error('[NOTED] Error getting monthly trend:', error);
+        throw error;
     }
 
     return trend;
@@ -466,34 +512,13 @@ export async function getDayOfWeekAnalysis(notesPath: string): Promise<Array<{da
     const dayCounts = [0, 0, 0, 0, 0, 0, 0];
 
     try {
-        const yearEntries = await readDirectoryWithTypes(notesPath);
-
-        for (const yearEntry of yearEntries) {
-            if (yearEntry.isDirectory() && /^\d{4}$/.test(yearEntry.name)) {
-                const yearPath = path.join(notesPath, yearEntry.name);
-                const monthEntries = await readDirectoryWithTypes(yearPath);
-
-                for (const monthEntry of monthEntries) {
-                    if (monthEntry.isDirectory()) {
-                        const monthPath = path.join(yearPath, monthEntry.name);
-                        const noteFiles = await readDirectoryWithTypes(monthPath);
-
-                        for (const file of noteFiles) {
-                            if (!file.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => file.name.endsWith(ext))) {
-                                const dateMatch = file.name.match(/^(\d{4})-(\d{2})-(\d{2})/);
-                                if (dateMatch) {
-                                    const date = new Date(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
-                                    const dayOfWeek = date.getDay();
-                                    dayCounts[dayOfWeek]++;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        for await (const { date } of iterateNoteFiles(notesPath)) {
+            const dayOfWeek = date.getDay();
+            dayCounts[dayOfWeek]++;
         }
     } catch (error) {
         console.error('[NOTED] Error analyzing day of week:', error);
+        throw error;
     }
 
     return dayNames.map((day, index) => ({
@@ -505,73 +530,50 @@ export async function getDayOfWeekAnalysis(notesPath: string): Promise<Array<{da
 
 /**
  * Get growth data - cumulative notes over time
+ * Optimized to use single-pass directory traversal
  */
 export async function getGrowthData(notesPath: string, months: number = 6): Promise<Array<{month: string, year: number, cumulative: number}>> {
-    const growth: Array<{month: string, year: number, cumulative: number}> = [];
-    let cumulative = 0;
     const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+
+    // Map to store note counts by month key (YYYY-MM)
+    const monthCounts = new Map<string, number>();
+    let notesBeforeStart = 0;
 
     try {
-        // First, get total notes before the period
-        const yearEntries = await readDirectoryWithTypes(notesPath);
-        const startDate = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
-
-        for (const yearEntry of yearEntries) {
-            if (yearEntry.isDirectory() && /^\d{4}$/.test(yearEntry.name)) {
-                const yearPath = path.join(notesPath, yearEntry.name);
-                const monthEntries = await readDirectoryWithTypes(yearPath);
-
-                for (const monthEntry of monthEntries) {
-                    if (monthEntry.isDirectory()) {
-                        const monthPath = path.join(yearPath, monthEntry.name);
-                        const noteFiles = await readDirectoryWithTypes(monthPath);
-
-                        for (const file of noteFiles) {
-                            if (!file.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => file.name.endsWith(ext))) {
-                                const dateMatch = file.name.match(/^(\d{4})-(\d{2})-(\d{2})/);
-                                if (dateMatch) {
-                                    const date = new Date(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
-                                    if (date < startDate) {
-                                        cumulative++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        // Single pass through all notes
+        for await (const { date } of iterateNoteFiles(notesPath)) {
+            if (date < startDate) {
+                // Count notes before the period
+                notesBeforeStart++;
+            } else {
+                // Categorize notes by month
+                const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                monthCounts.set(monthKey, (monthCounts.get(monthKey) || 0) + 1);
             }
         }
 
-        // Now build growth data for each month
+        // Build growth data for each month
+        const growth: Array<{month: string, year: number, cumulative: number}> = [];
+        let cumulative = notesBeforeStart;
+
         for (let i = months - 1; i >= 0; i--) {
             const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const year = date.getFullYear();
             const monthNum = date.getMonth();
             const monthName = date.toLocaleString('en-US', { month: 'short' });
+            const monthKey = `${year}-${(monthNum + 1).toString().padStart(2, '0')}`;
 
-            const monthStr = (monthNum + 1).toString().padStart(2, '0');
-            const fullMonthName = date.toLocaleString('en-US', { month: 'long' });
-            const folderName = `${monthStr}-${fullMonthName}`;
-            const monthPath = path.join(notesPath, year.toString(), folderName);
-
-            let monthCount = 0;
-            if (await pathExists(monthPath)) {
-                const noteFiles = await readDirectoryWithTypes(monthPath);
-                for (const file of noteFiles) {
-                    if (!file.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => file.name.endsWith(ext))) {
-                        monthCount++;
-                    }
-                }
-            }
-
+            const monthCount = monthCounts.get(monthKey) || 0;
             cumulative += monthCount;
             growth.push({ month: monthName, year, cumulative });
         }
+
+        return growth;
     } catch (error) {
         console.error('[NOTED] Error getting growth data:', error);
+        throw error;
     }
-
-    return growth;
 }
 
 export { isTodayDate };

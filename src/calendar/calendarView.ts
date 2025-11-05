@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getNotesPath, getFileFormat } from '../services/configService';
-import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap, getMonthlyTrend, getDayOfWeekAnalysis, getGrowthData } from './calendarHelpers';
+import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap, getMonthlyTrend, getDayOfWeekAnalysis, getGrowthData, getNoteDateRange } from './calendarHelpers';
 
 /**
  * Show the calendar view webview
@@ -95,15 +95,24 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
     const mostActiveDay = await getMostActiveDay(notesPath, year, month);
     const recentActivity = await getRecentActivity(notesPath);
 
-    // Calculate streak data
-    const currentStreak = await getCurrentStreak(notesPath);
-    const longestStreak = await getLongestStreak(notesPath);
-    const streakHeatmap = await getStreakHeatmap(notesPath, 30);
-
-    // Calculate new visualization data
-    const monthlyTrend = await getMonthlyTrend(notesPath, 6);
-    const dayOfWeekAnalysis = await getDayOfWeekAnalysis(notesPath);
-    const growthData = await getGrowthData(notesPath, 6);
+    // Calculate streak and visualization data in parallel for better performance
+    const [
+        currentStreak,
+        longestStreak,
+        streakHeatmap,
+        monthlyTrend,
+        dayOfWeekAnalysis,
+        growthData,
+        dateRange
+    ] = await Promise.all([
+        getCurrentStreak(notesPath),
+        getLongestStreak(notesPath),
+        getStreakHeatmap(notesPath, 30),
+        getMonthlyTrend(notesPath, 6),
+        getDayOfWeekAnalysis(notesPath),
+        getGrowthData(notesPath, 6),
+        getNoteDateRange(notesPath)
+    ]);
 
     // Generate 6 weeks to accommodate all possible month layouts
     for (let week = 0; week < 6; week++) {
@@ -1129,21 +1138,17 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 streakHeatmap: ${JSON.stringify(streakHeatmap.map(h => ({date: h.date.toISOString(), count: h.count, hasNote: h.hasNote})))},
                 monthlyTrend: ${JSON.stringify(monthlyTrend)},
                 dayOfWeekAnalysis: ${JSON.stringify(dayOfWeekAnalysis)},
-                growthData: ${JSON.stringify(growthData)}
+                growthData: ${JSON.stringify(growthData)},
+                dateRange: ${dateRange ? `{firstDate: '${dateRange.firstDate.toISOString()}', lastDate: '${dateRange.lastDate.toISOString()}', daySpan: ${dateRange.daySpan}}` : 'null'}
             };
 
             let selectedDay = null;
 
-            // Display overview statistics on load
-            function showOverviewStatistics() {
-                const statsContent = document.getElementById('statsContent');
-                const statsTitle = document.getElementById('statsTitle');
-                statsTitle.textContent = 'Statistics';
-
-                // Generate streak heatmap HTML
+            // Helper: Render streak heatmap HTML
+            function renderStreakHeatmap() {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                const streakHeatmapHtml = statistics.streakHeatmap.map(day => {
+                return statistics.streakHeatmap.map(day => {
                     const date = new Date(day.date);
                     const isToday = date.toDateString() === today.toDateString();
                     const classes = ['streak-day'];
@@ -1152,24 +1157,27 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                     const tooltip = \`\${date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}: \${day.count} note\${day.count !== 1 ? 's' : ''}\`;
                     return \`<div class="\${classes.join(' ')}" data-tooltip="\${tooltip}"></div>\`;
                 }).join('');
+            }
 
-                // Generate encouraging message
-                let streakMessage = '';
+            // Helper: Get encouraging streak message
+            function getStreakMessage() {
                 if (statistics.currentStreak === 0) {
-                    streakMessage = 'Start your streak today!';
+                    return 'Start your streak today!';
                 } else if (statistics.currentStreak === 1) {
-                    streakMessage = 'Great start! Keep it going tomorrow! 💪';
+                    return 'Great start! Keep it going tomorrow! 💪';
                 } else if (statistics.currentStreak < 7) {
-                    streakMessage = \`\${statistics.currentStreak} days strong! Keep the momentum! 🚀\`;
+                    return \`\${statistics.currentStreak} days strong! Keep the momentum! 🚀\`;
                 } else if (statistics.currentStreak < 30) {
-                    streakMessage = \`Amazing! \${statistics.currentStreak} days! You're on fire! 🔥\`;
+                    return \`Amazing! \${statistics.currentStreak} days! You're on fire! 🔥\`;
                 } else {
-                    streakMessage = \`Incredible! \${statistics.currentStreak} days! You're a note-taking legend! 🏆\`;
+                    return \`Incredible! \${statistics.currentStreak} days! You're a note-taking legend! 🏆\`;
                 }
+            }
 
-                // Monthly Trend Chart
+            // Helper: Render monthly trend chart
+            function renderMonthlyTrendChart() {
                 const maxMonthly = Math.max(...statistics.monthlyTrend.map(m => m.count), 1);
-                const monthlyTrendHtml = statistics.monthlyTrend.map((m, index) => {
+                return statistics.monthlyTrend.map((m, index) => {
                     const height = m.count === 0 ? 4 : Math.max(((m.count / maxMonthly) * 100), 8);
                     const isCurrentMonth = m.year === currentYear && m.monthNum === currentMonth;
                     return \`
@@ -1181,12 +1189,14 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                         </div>
                     \`;
                 }).join('');
+            }
 
-                // Day of Week Chart
+            // Helper: Render day of week chart
+            function renderDayOfWeekChart() {
                 const maxDayOfWeek = Math.max(...statistics.dayOfWeekAnalysis.map(d => d.count), 1);
-                const dayOfWeekHtml = statistics.dayOfWeekAnalysis.map(d => {
+                const todayDayOfWeek = new Date().getDay();
+                return statistics.dayOfWeekAnalysis.map(d => {
                     const height = d.count === 0 ? 4 : Math.max(((d.count / maxDayOfWeek) * 100), 8);
-                    const todayDayOfWeek = new Date().getDay();
                     const isToday = d.dayNum === todayDayOfWeek;
                     return \`
                         <div class="dow-bar-container">
@@ -1197,8 +1207,10 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                         </div>
                     \`;
                 }).join('');
+            }
 
-                // Growth Chart (Area)
+            // Helper: Render growth chart SVG
+            function renderGrowthChart() {
                 const maxGrowth = Math.max(...statistics.growthData.map(g => g.cumulative), 1);
                 const growthPoints = statistics.growthData.map((g, index) => {
                     const x = (index / (statistics.growthData.length - 1)) * 100;
@@ -1212,10 +1224,52 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                     return \`L \${x} \${y}\`;
                 }).join(' ') + \` L 100 100 L 0 100 Z\`;
 
-                // Calculate insights
-                const avgPerDay = statistics.total > 0 ? (statistics.total / 365).toFixed(1) : 0;
+                return \`
+                    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="growthGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:rgba(150, 130, 255, 0.8);stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:rgba(150, 130, 255, 0.1);stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <path d="\${growthArea}" fill="url(#growthGradient)"/>
+                        <polyline points="\${growthPoints}" fill="none" stroke="rgba(160, 140, 255, 1)" stroke-width="0.5"/>
+                    </svg>
+                    <div class="growth-labels">
+                        \${statistics.growthData.map(g => \`<div class="growth-label">\${g.month}</div>\`).join('')}
+                    </div>
+                    <div class="growth-total">\${statistics.total} total notes</div>
+                \`;
+            }
+
+            // Helper: Calculate insights using actual date range
+            function calculateInsights() {
+                // Calculate average per day using actual date range
+                let avgPerDay = 0;
+                if (statistics.total > 0 && statistics.dateRange) {
+                    avgPerDay = (statistics.total / statistics.dateRange.daySpan).toFixed(1);
+                } else if (statistics.total > 0) {
+                    // Fallback to 365 if date range is not available
+                    avgPerDay = (statistics.total / 365).toFixed(1);
+                }
+
                 const bestMonth = statistics.monthlyTrend.reduce((max, m) => m.count > max.count ? m : max, {count: 0, month: 'None'});
                 const favoriteDay = statistics.dayOfWeekAnalysis.reduce((max, d) => d.count > max.count ? d : max, {count: 0, day: 'None'});
+                return { avgPerDay, bestMonth, favoriteDay };
+            }
+
+            // Display overview statistics on load
+            function showOverviewStatistics() {
+                const statsContent = document.getElementById('statsContent');
+                const statsTitle = document.getElementById('statsTitle');
+                statsTitle.textContent = 'Statistics';
+
+                const streakHeatmapHtml = renderStreakHeatmap();
+                const streakMessage = getStreakMessage();
+                const monthlyTrendHtml = renderMonthlyTrendChart();
+                const dayOfWeekHtml = renderDayOfWeekChart();
+                const growthChartHtml = renderGrowthChart();
+                const { avgPerDay, bestMonth, favoriteDay } = calculateInsights();
 
                 statsContent.innerHTML = \`
                     <div class="streak-section">
@@ -1269,20 +1323,7 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                             <div class="chart-subtitle">Cumulative notes</div>
                         </div>
                         <div class="growth-chart">
-                            <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-                                <defs>
-                                    <linearGradient id="growthGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" style="stop-color:rgba(150, 130, 255, 0.8);stop-opacity:1" />
-                                        <stop offset="100%" style="stop-color:rgba(150, 130, 255, 0.1);stop-opacity:1" />
-                                    </linearGradient>
-                                </defs>
-                                <path d="\${growthArea}" fill="url(#growthGradient)"/>
-                                <polyline points="\${growthPoints}" fill="none" stroke="rgba(160, 140, 255, 1)" stroke-width="0.5"/>
-                            </svg>
-                            <div class="growth-labels">
-                                \${statistics.growthData.map(g => \`<div class="growth-label">\${g.month}</div>\`).join('')}
-                            </div>
-                            <div class="growth-total">\${statistics.total} total notes</div>
+                            \${growthChartHtml}
                         </div>
                     </div>
 
