@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getNotesPath, getFileFormat } from '../services/configService';
-import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap } from './calendarHelpers';
+import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap, getMonthlyTrend, getDayOfWeekAnalysis, getGrowthData } from './calendarHelpers';
 
 /**
  * Show the calendar view webview
@@ -100,6 +100,11 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
     const longestStreak = await getLongestStreak(notesPath);
     const streakHeatmap = await getStreakHeatmap(notesPath, 30);
 
+    // Calculate new visualization data
+    const monthlyTrend = await getMonthlyTrend(notesPath, 6);
+    const dayOfWeekAnalysis = await getDayOfWeekAnalysis(notesPath);
+    const growthData = await getGrowthData(notesPath, 6);
+
     // Generate 6 weeks to accommodate all possible month layouts
     for (let week = 0; week < 6; week++) {
         for (let day = 0; day < 7; day++) {
@@ -153,15 +158,33 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 gap: 0;
             }
 
-            /* Left panel - Calendar */
-            .calendar-panel {
+            /* Left panel - Calendar + Notes */
+            .left-panel {
                 flex: 0 0 40%;
                 min-width: 300px;
                 max-width: 70%;
                 display: flex;
                 flex-direction: column;
-                overflow-y: auto;
+                overflow: hidden;
                 padding-right: 12px;
+            }
+
+            /* Calendar section - top of left side */
+            .calendar-section {
+                flex: 1 1 60%;
+                min-height: 200px;
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+            }
+
+            /* Notes panel - bottom of left side */
+            .notes-panel {
+                flex: 0 1 40%;
+                min-height: 150px;
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
             }
 
             /* Horizontal resize handle */
@@ -184,25 +207,6 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 border-radius: 2px;
             }
 
-            /* Right panel container */
-            .right-panel {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                padding-left: 12px;
-            }
-
-            /* Notes panel - top of right side */
-            .notes-panel {
-                flex: 1 1 60%;
-                min-height: 200px;
-                display: flex;
-                flex-direction: column;
-                overflow-y: auto;
-                background-color: var(--vscode-editor-background);
-            }
-
             /* Vertical resize handle */
             .resize-handle-vertical {
                 flex: 0 0 8px;
@@ -223,14 +227,13 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 border-radius: 2px;
             }
 
-            /* Statistics panel - bottom of right side */
-            .statistics-panel {
-                flex: 0 1 40%;
-                min-height: 150px;
+            /* Right panel - All statistics */
+            .right-panel {
+                flex: 1;
                 display: flex;
                 flex-direction: column;
                 overflow-y: auto;
-                padding-top: 8px;
+                padding-left: 12px;
             }
 
             .header {
@@ -514,7 +517,7 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 background: linear-gradient(135deg, rgba(120, 100, 200, 0.1), rgba(140, 120, 240, 0.05));
                 border: 1px solid var(--vscode-panel-border);
                 border-radius: 8px;
-                padding: 12px;
+                padding: 12px 12px 22px 12px;
                 transition: all 0.2s ease;
             }
             .stat-card:hover {
@@ -730,6 +733,207 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 color: #ff6b6b;
                 font-weight: 600;
             }
+
+            /* Chart Sections */
+            .chart-section {
+                margin-bottom: 20px;
+                padding: 16px;
+                background: linear-gradient(135deg, rgba(120, 100, 200, 0.08), rgba(140, 120, 240, 0.03));
+                border: 1px solid var(--vscode-panel-border);
+                border-radius: 12px;
+            }
+            .chart-header {
+                margin-bottom: 12px;
+            }
+            .chart-title {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--vscode-foreground);
+                margin-bottom: 2px;
+            }
+            .chart-subtitle {
+                font-size: 10px;
+                color: var(--vscode-descriptionForeground);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            /* Monthly Trend Chart */
+            .trend-chart {
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                height: 120px;
+                gap: 8px;
+                padding-top: 24px;
+                position: relative;
+            }
+            .trend-bar-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                height: 100%;
+            }
+            .trend-bar {
+                width: 100%;
+                background: linear-gradient(to top, rgba(140, 120, 240, 0.8), rgba(150, 130, 255, 0.6));
+                border-radius: 4px 4px 0 0;
+                min-height: 4px;
+                transition: all 0.3s ease;
+                position: relative;
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+            }
+            .trend-bar.current {
+                background: linear-gradient(to top, rgba(100, 180, 255, 0.9), rgba(120, 190, 255, 0.7));
+                box-shadow: 0 0 12px rgba(100, 180, 255, 0.4);
+            }
+            .trend-bar:hover {
+                background: linear-gradient(to top, rgba(150, 130, 255, 1), rgba(160, 140, 255, 0.8));
+                transform: scaleY(1.05);
+            }
+            .trend-value {
+                position: absolute;
+                top: -18px;
+                font-size: 10px;
+                font-weight: 600;
+                color: var(--vscode-foreground);
+            }
+            .trend-label {
+                margin-top: 4px;
+                font-size: 9px;
+                color: var(--vscode-descriptionForeground);
+                font-weight: 500;
+            }
+
+            /* Day of Week Chart */
+            .dow-chart {
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                height: 120px;
+                gap: 6px;
+                padding-top: 24px;
+            }
+            .dow-bar-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                height: 100%;
+            }
+            .dow-bar {
+                width: 100%;
+                background: linear-gradient(to top, rgba(120, 100, 200, 0.7), rgba(140, 120, 240, 0.5));
+                border-radius: 4px 4px 0 0;
+                min-height: 4px;
+                transition: all 0.3s ease;
+                position: relative;
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+            }
+            .dow-bar.today {
+                background: linear-gradient(to top, rgba(255, 215, 0, 0.8), rgba(255, 225, 100, 0.6));
+                box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+            }
+            .dow-bar:hover {
+                background: linear-gradient(to top, rgba(140, 120, 240, 1), rgba(150, 130, 255, 0.8));
+                transform: scaleY(1.05);
+            }
+            .dow-value {
+                position: absolute;
+                top: -18px;
+                font-size: 10px;
+                font-weight: 600;
+                color: var(--vscode-foreground);
+            }
+            .dow-label {
+                margin-top: 4px;
+                font-size: 10px;
+                color: var(--vscode-descriptionForeground);
+                font-weight: 600;
+            }
+
+            /* Growth Chart */
+            .growth-chart {
+                position: relative;
+                height: 100px;
+                margin-bottom: 24px;
+            }
+            .growth-chart svg {
+                width: 100%;
+                height: 100%;
+            }
+            .growth-labels {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 4px;
+            }
+            .growth-label {
+                font-size: 9px;
+                color: var(--vscode-descriptionForeground);
+                font-weight: 500;
+            }
+            .growth-total {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                font-size: 11px;
+                font-weight: 600;
+                color: rgba(160, 140, 255, 1);
+                background: rgba(0, 0, 0, 0.3);
+                padding: 4px 8px;
+                border-radius: 4px;
+            }
+
+            /* Insights Section */
+            .insights-section {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+                margin-top: 8px;
+            }
+            .insight-card {
+                background: linear-gradient(135deg, rgba(140, 120, 240, 0.1), rgba(150, 130, 255, 0.05));
+                border: 1px solid var(--vscode-panel-border);
+                border-radius: 8px;
+                padding: 12px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                transition: all 0.2s ease;
+            }
+            .insight-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                border-color: var(--vscode-focusBorder);
+            }
+            .insight-icon {
+                font-size: 24px;
+                flex-shrink: 0;
+            }
+            .insight-content {
+                flex: 1;
+                min-width: 0;
+            }
+            .insight-title {
+                font-size: 9px;
+                color: var(--vscode-descriptionForeground);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 2px;
+            }
+            .insight-value {
+                font-size: 14px;
+                font-weight: 700;
+                color: var(--vscode-foreground);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
             /* Notes panel styling */
             #notesSection {
                 flex: 1;
@@ -827,63 +1031,63 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
     </head>
     <body>
         <div class="container">
-            <!-- Left: Calendar -->
-            <div class="calendar-panel">
-                <div class="header">
-                    <h2>${monthNames[month]} ${year}</h2>
-                    <div class="nav-buttons">
-                        <button id="prevMonth">← Prev</button>
-                        <button id="today">Today</button>
-                        <button id="nextMonth">Next →</button>
+            <!-- Left: Calendar + Notes -->
+            <div class="left-panel">
+                <!-- Top: Calendar -->
+                <div class="calendar-section">
+                    <div class="header">
+                        <h2>${monthNames[month]} ${year}</h2>
+                        <div class="nav-buttons">
+                            <button id="prevMonth">← Prev</button>
+                            <button id="today">Today</button>
+                            <button id="nextMonth">Next →</button>
+                        </div>
+                    </div>
+                    <div class="weekday-headers">
+                        <div class="weekday-header">Sun</div>
+                        <div class="weekday-header">Mon</div>
+                        <div class="weekday-header">Tue</div>
+                        <div class="weekday-header">Wed</div>
+                        <div class="weekday-header">Thu</div>
+                        <div class="weekday-header">Fri</div>
+                        <div class="weekday-header">Sat</div>
+                    </div>
+                    <div class="calendar">
+                        ${calendarHtml}
+                    </div>
+                    <div class="legend">
+                        <span class="legend-label">Activity:</span>
+                        <div class="legend-item">
+                            <div class="legend-circle intensity-0"></div>
+                            <span>None</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-circle intensity-1"></div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-circle intensity-2"></div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-circle intensity-3"></div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-circle intensity-4"></div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-circle intensity-5"></div>
+                            <span>Most</span>
+                        </div>
+                        <div class="legend-item" style="margin-left: 6px;">
+                            <div class="legend-today"></div>
+                            <span>Today</span>
+                        </div>
                     </div>
                 </div>
-                <div class="weekday-headers">
-                    <div class="weekday-header">Sun</div>
-                    <div class="weekday-header">Mon</div>
-                    <div class="weekday-header">Tue</div>
-                    <div class="weekday-header">Wed</div>
-                    <div class="weekday-header">Thu</div>
-                    <div class="weekday-header">Fri</div>
-                    <div class="weekday-header">Sat</div>
-                </div>
-                <div class="calendar">
-                    ${calendarHtml}
-                </div>
-                <div class="legend">
-                    <span class="legend-label">Activity:</span>
-                    <div class="legend-item">
-                        <div class="legend-circle intensity-0"></div>
-                        <span>None</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-circle intensity-1"></div>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-circle intensity-2"></div>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-circle intensity-3"></div>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-circle intensity-4"></div>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-circle intensity-5"></div>
-                        <span>Most</span>
-                    </div>
-                    <div class="legend-item" style="margin-left: 6px;">
-                        <div class="legend-today"></div>
-                        <span>Today</span>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Horizontal resize handle -->
-            <div class="resize-handle-horizontal" id="resizeHandleH"></div>
+                <!-- Vertical resize handle for left panel -->
+                <div class="resize-handle-vertical" id="resizeHandleVLeft"></div>
 
-            <!-- Right: Notes + Statistics -->
-            <div class="right-panel">
-                <!-- Top: Notes -->
+                <!-- Bottom: Notes -->
                 <div class="notes-panel">
                     <div id="notesSection" class="empty">
                         <div class="empty-state">
@@ -892,18 +1096,18 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Vertical resize handle -->
-                <div class="resize-handle-vertical" id="resizeHandleV"></div>
+            <!-- Horizontal resize handle -->
+            <div class="resize-handle-horizontal" id="resizeHandleH"></div>
 
-                <!-- Bottom: Statistics -->
-                <div class="statistics-panel">
-                    <div class="stats-header">
-                        <h3 id="statsTitle">Statistics</h3>
-                    </div>
-                    <div id="statsContent">
-                        <!-- Statistics will be populated by JavaScript -->
-                    </div>
+            <!-- Right: All Statistics -->
+            <div class="right-panel">
+                <div class="stats-header">
+                    <h3 id="statsTitle">Statistics</h3>
+                </div>
+                <div id="statsContent">
+                    <!-- Statistics will be populated by JavaScript -->
                 </div>
             </div>
         </div>
@@ -922,7 +1126,10 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 recentActivity: ${JSON.stringify(recentActivity.map(a => ({date: a.date.toISOString(), count: a.count})))},
                 currentStreak: ${currentStreak},
                 longestStreak: ${longestStreak},
-                streakHeatmap: ${JSON.stringify(streakHeatmap.map(h => ({date: h.date.toISOString(), count: h.count, hasNote: h.hasNote})))}
+                streakHeatmap: ${JSON.stringify(streakHeatmap.map(h => ({date: h.date.toISOString(), count: h.count, hasNote: h.hasNote})))},
+                monthlyTrend: ${JSON.stringify(monthlyTrend)},
+                dayOfWeekAnalysis: ${JSON.stringify(dayOfWeekAnalysis)},
+                growthData: ${JSON.stringify(growthData)}
             };
 
             let selectedDay = null;
@@ -931,9 +1138,7 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
             function showOverviewStatistics() {
                 const statsContent = document.getElementById('statsContent');
                 const statsTitle = document.getElementById('statsTitle');
-                statsTitle.textContent = 'Overview';
-
-                const maxActivity = Math.max(...statistics.recentActivity.map(a => a.count), 1);
+                statsTitle.textContent = 'Statistics';
 
                 // Generate streak heatmap HTML
                 const today = new Date();
@@ -962,6 +1167,56 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                     streakMessage = \`Incredible! \${statistics.currentStreak} days! You're a note-taking legend! 🏆\`;
                 }
 
+                // Monthly Trend Chart
+                const maxMonthly = Math.max(...statistics.monthlyTrend.map(m => m.count), 1);
+                const monthlyTrendHtml = statistics.monthlyTrend.map((m, index) => {
+                    const height = m.count === 0 ? 4 : Math.max(((m.count / maxMonthly) * 100), 8);
+                    const isCurrentMonth = m.year === currentYear && m.monthNum === currentMonth;
+                    return \`
+                        <div class="trend-bar-container">
+                            <div class="trend-bar \${isCurrentMonth ? 'current' : ''}" style="height: \${height}%;" title="\${m.month} \${m.year}: \${m.count} notes">
+                                <div class="trend-value">\${m.count > 0 ? m.count : ''}</div>
+                            </div>
+                            <div class="trend-label">\${m.month}</div>
+                        </div>
+                    \`;
+                }).join('');
+
+                // Day of Week Chart
+                const maxDayOfWeek = Math.max(...statistics.dayOfWeekAnalysis.map(d => d.count), 1);
+                const dayOfWeekHtml = statistics.dayOfWeekAnalysis.map(d => {
+                    const height = d.count === 0 ? 4 : Math.max(((d.count / maxDayOfWeek) * 100), 8);
+                    const todayDayOfWeek = new Date().getDay();
+                    const isToday = d.dayNum === todayDayOfWeek;
+                    return \`
+                        <div class="dow-bar-container">
+                            <div class="dow-bar \${isToday ? 'today' : ''}" style="height: \${height}%;" title="\${d.day}: \${d.count} notes">
+                                <div class="dow-value">\${d.count > 0 ? d.count : ''}</div>
+                            </div>
+                            <div class="dow-label">\${d.day}</div>
+                        </div>
+                    \`;
+                }).join('');
+
+                // Growth Chart (Area)
+                const maxGrowth = Math.max(...statistics.growthData.map(g => g.cumulative), 1);
+                const growthPoints = statistics.growthData.map((g, index) => {
+                    const x = (index / (statistics.growthData.length - 1)) * 100;
+                    const y = 100 - ((g.cumulative / maxGrowth) * 100);
+                    return \`\${x},\${y}\`;
+                }).join(' ');
+                const growthArea = statistics.growthData.map((g, index) => {
+                    const x = (index / (statistics.growthData.length - 1)) * 100;
+                    const y = 100 - ((g.cumulative / maxGrowth) * 100);
+                    if (index === 0) {return \`M \${x} \${y}\`;}
+                    return \`L \${x} \${y}\`;
+                }).join(' ') + \` L 100 100 L 0 100 Z\`;
+
+                // Calculate insights
+                const avgPerDay = statistics.total > 0 ? (statistics.total / 365).toFixed(1) : 0;
+                const bestMonth = statistics.monthlyTrend.reduce((max, m) => m.count > max.count ? m : max, {count: 0, month: 'None'});
+                const favoriteDay = statistics.dayOfWeekAnalysis.reduce((max, d) => d.count > max.count ? d : max, {count: 0, day: 'None'});
+
                 statsContent.innerHTML = \`
                     <div class="streak-section">
                         <div class="streak-header">
@@ -987,100 +1242,76 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                             \${streakMessage}
                         </div>
                     </div>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-icon">📝</div>
-                            <div class="stat-card-value">\${statistics.total}</div>
-                            <div class="stat-card-label">Total Notes</div>
+
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">📈 Monthly Trend</div>
+                            <div class="chart-subtitle">Notes created per month</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-icon">📅</div>
-                            <div class="stat-card-value">\${statistics.month}</div>
-                            <div class="stat-card-label">This Month</div>
+                        <div class="trend-chart">
+                            \${monthlyTrendHtml}
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-icon">📊</div>
-                            <div class="stat-card-value">\${statistics.week}</div>
-                            <div class="stat-card-label">This Week</div>
+                    </div>
+
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">📅 Day of Week Patterns</div>
+                            <div class="chart-subtitle">When you write most</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-icon">✨</div>
-                            <div class="stat-card-value">\${statistics.today}</div>
-                            <div class="stat-card-label">Today</div>
+                        <div class="dow-chart">
+                            \${dayOfWeekHtml}
                         </div>
-                        <div class="stat-card full-width">
-                            <div class="stat-card-icon">🏆</div>
-                            <div class="stat-card-label">Most Active Day</div>
-                            <div class="stat-detail">
-                                \${statistics.mostActiveDay
-                                    ? \`<span class="stat-detail-highlight">\${new Date(currentYear, currentMonth, statistics.mostActiveDay.day).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</span> with <span class="stat-detail-highlight">\${statistics.mostActiveDay.count}</span> notes\`
-                                    : 'No notes this month'}
+                    </div>
+
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">📊 Growth Over Time</div>
+                            <div class="chart-subtitle">Cumulative notes</div>
+                        </div>
+                        <div class="growth-chart">
+                            <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="growthGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:rgba(150, 130, 255, 0.8);stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:rgba(150, 130, 255, 0.1);stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="\${growthArea}" fill="url(#growthGradient)"/>
+                                <polyline points="\${growthPoints}" fill="none" stroke="rgba(160, 140, 255, 1)" stroke-width="0.5"/>
+                            </svg>
+                            <div class="growth-labels">
+                                \${statistics.growthData.map(g => \`<div class="growth-label">\${g.month}</div>\`).join('')}
+                            </div>
+                            <div class="growth-total">\${statistics.total} total notes</div>
+                        </div>
+                    </div>
+
+                    <div class="insights-section">
+                        <div class="insight-card">
+                            <div class="insight-icon">💡</div>
+                            <div class="insight-content">
+                                <div class="insight-title">Average per Day</div>
+                                <div class="insight-value">\${avgPerDay}</div>
                             </div>
                         </div>
-                        <div class="stat-card full-width">
-                            <div class="stat-card-label">Last 7 Days Activity</div>
-                            <div class="activity-chart">
-                                \${statistics.recentActivity.map(activity => {
-                                    const date = new Date(activity.date);
-                                    const height = activity.count === 0 ? 4 : Math.max(((activity.count / maxActivity) * 100), 10);
-                                    const dayLabel = date.toLocaleDateString('en-US', {weekday: 'short'}).substring(0, 1);
-                                    return \`
-                                        <div class="activity-bar" style="height: \${height}%;" title="\${date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}: \${activity.count} notes">
-                                            <div class="activity-bar-label">\${dayLabel}</div>
-                                        </div>
-                                    \`;
-                                }).join('')}
+                        <div class="insight-card">
+                            <div class="insight-icon">🌟</div>
+                            <div class="insight-content">
+                                <div class="insight-title">Best Month</div>
+                                <div class="insight-value">\${bestMonth.month} (\${bestMonth.count})</div>
+                            </div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-icon">📆</div>
+                            <div class="insight-content">
+                                <div class="insight-title">Favorite Day</div>
+                                <div class="insight-value">\${favoriteDay.day} (\${favoriteDay.count})</div>
                             </div>
                         </div>
                     </div>
                 \`;
             }
 
-            // Display day-specific statistics
-            function showDayStatistics(day, count) {
-                const statsContent = document.getElementById('statsContent');
-                const statsTitle = document.getElementById('statsTitle');
-                const date = new Date(currentYear, currentMonth, day);
-                statsTitle.textContent = date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
-
-                const dayOfWeek = date.toLocaleDateString('en-US', {weekday: 'long'});
-                const avgMonthly = statistics.month > 0 ? (statistics.month / new Date(currentYear, currentMonth + 1, 0).getDate()).toFixed(1) : 0;
-                const comparison = count > avgMonthly ? 'above' : count < avgMonthly ? 'below' : 'at';
-
-                statsContent.innerHTML = \`
-                    <div class="stats-grid">
-                        <div class="stat-card full-width">
-                            <div class="stat-card-icon">📄</div>
-                            <div class="stat-card-value">\${count}</div>
-                            <div class="stat-card-label">Notes on this day</div>
-                            <div class="stat-detail">
-                                \${count > 0 ? \`\${comparison} monthly average of \${avgMonthly}\` : 'No notes created'}
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-icon">📆</div>
-                            <div class="stat-card-value">\${dayOfWeek}</div>
-                            <div class="stat-card-label">Day of Week</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-icon">📊</div>
-                            <div class="stat-card-value">\${statistics.month}</div>
-                            <div class="stat-card-label">Month Total</div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 16px; text-align: center;">
-                        <button class="create-note-btn" onclick="backToOverview()" style="max-width: 200px; margin: 0 auto;">
-                            <span>←</span>
-                            <span>Back to Overview</span>
-                        </button>
-                    </div>
-                \`;
-            }
-
-            function backToOverview() {
-                selectedDay = null;
-                showOverviewStatistics();
-            }
 
             // Initialize statistics display
             showOverviewStatistics();
@@ -1089,20 +1320,19 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
 
             // Restore saved sizes or use defaults
             const state = vscode.getState() || {};
-            const savedCalendarWidth = state.calendarWidth || 40;
-            const savedNotesHeight = state.notesHeight || 60;
+            const savedLeftWidth = state.leftWidth || 40;
+            const savedCalendarHeight = state.calendarHeight || 60;
 
-            const calendarPanel = document.querySelector('.calendar-panel');
+            const leftPanel = document.querySelector('.left-panel');
+            const calendarSection = document.querySelector('.calendar-section');
             const notesPanel = document.querySelector('.notes-panel');
-            const rightPanel = document.querySelector('.right-panel');
-            const statsPanel = document.querySelector('.statistics-panel');
 
             // Apply saved sizes
-            calendarPanel.style.flex = \`0 0 \${savedCalendarWidth}%\`;
-            notesPanel.style.flex = \`1 1 \${savedNotesHeight}%\`;
-            statsPanel.style.flex = \`0 1 \${100 - savedNotesHeight}%\`;
+            leftPanel.style.flex = \`0 0 \${savedLeftWidth}%\`;
+            calendarSection.style.flex = \`1 1 \${savedCalendarHeight}%\`;
+            notesPanel.style.flex = \`0 1 \${100 - savedCalendarHeight}%\`;
 
-            // Horizontal resize (calendar vs right panel)
+            // Horizontal resize (left panel vs right panel)
             const resizeHandleH = document.getElementById('resizeHandleH');
             let isResizingH = false;
             let startXH = 0;
@@ -1112,25 +1342,25 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 isResizingH = true;
                 startXH = e.clientX;
                 const containerWidth = document.querySelector('.container').offsetWidth;
-                startWidthH = (calendarPanel.offsetWidth / containerWidth) * 100;
+                startWidthH = (leftPanel.offsetWidth / containerWidth) * 100;
                 resizeHandleH.classList.add('resizing');
                 document.body.style.cursor = 'col-resize';
                 document.body.style.userSelect = 'none';
                 e.preventDefault();
             });
 
-            // Vertical resize (notes vs statistics)
-            const resizeHandleV = document.getElementById('resizeHandleV');
-            let isResizingV = false;
-            let startYV = 0;
-            let startHeightV = 0;
+            // Vertical resize (calendar vs notes within left panel)
+            const resizeHandleVLeft = document.getElementById('resizeHandleVLeft');
+            let isResizingVLeft = false;
+            let startYVLeft = 0;
+            let startHeightVLeft = 0;
 
-            resizeHandleV.addEventListener('mousedown', (e) => {
-                isResizingV = true;
-                startYV = e.clientY;
-                const rightPanelHeight = rightPanel.offsetHeight;
-                startHeightV = (notesPanel.offsetHeight / rightPanelHeight) * 100;
-                resizeHandleV.classList.add('resizing');
+            resizeHandleVLeft.addEventListener('mousedown', (e) => {
+                isResizingVLeft = true;
+                startYVLeft = e.clientY;
+                const leftPanelHeight = leftPanel.offsetHeight;
+                startHeightVLeft = (calendarSection.offsetHeight / leftPanelHeight) * 100;
+                resizeHandleVLeft.classList.add('resizing');
                 document.body.style.cursor = 'row-resize';
                 document.body.style.userSelect = 'none';
                 e.preventDefault();
@@ -1146,26 +1376,26 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                     // Constrain to min/max
                     newWidth = Math.max(25, Math.min(70, newWidth));
 
-                    calendarPanel.style.flex = \`0 0 \${newWidth}%\`;
+                    leftPanel.style.flex = \`0 0 \${newWidth}%\`;
 
                     // Save state
-                    vscode.setState({ ...vscode.getState(), calendarWidth: newWidth });
+                    vscode.setState({ ...vscode.getState(), leftWidth: newWidth });
                 }
 
-                if (isResizingV) {
-                    const rightPanelHeight = rightPanel.offsetHeight;
-                    const deltaY = e.clientY - startYV;
-                    const deltaPercent = (deltaY / rightPanelHeight) * 100;
-                    let newHeight = startHeightV + deltaPercent;
+                if (isResizingVLeft) {
+                    const leftPanelHeight = leftPanel.offsetHeight;
+                    const deltaY = e.clientY - startYVLeft;
+                    const deltaPercent = (deltaY / leftPanelHeight) * 100;
+                    let newHeight = startHeightVLeft + deltaPercent;
 
                     // Constrain to min/max
                     newHeight = Math.max(20, Math.min(80, newHeight));
 
-                    notesPanel.style.flex = \`1 1 \${newHeight}%\`;
-                    statsPanel.style.flex = \`0 1 \${100 - newHeight}%\`;
+                    calendarSection.style.flex = \`1 1 \${newHeight}%\`;
+                    notesPanel.style.flex = \`0 1 \${100 - newHeight}%\`;
 
                     // Save state
-                    vscode.setState({ ...vscode.getState(), notesHeight: newHeight });
+                    vscode.setState({ ...vscode.getState(), calendarHeight: newHeight });
                 }
             });
 
@@ -1176,9 +1406,9 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                     document.body.style.cursor = '';
                     document.body.style.userSelect = '';
                 }
-                if (isResizingV) {
-                    isResizingV = false;
-                    resizeHandleV.classList.remove('resizing');
+                if (isResizingVLeft) {
+                    isResizingVLeft = false;
+                    resizeHandleVLeft.classList.remove('resizing');
                     document.body.style.cursor = '';
                     document.body.style.userSelect = '';
                 }
@@ -1188,11 +1418,7 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
             document.querySelectorAll('.day-cell[data-day]').forEach(cell => {
                 cell.addEventListener('click', () => {
                     const day = parseInt(cell.dataset.day);
-                    const count = parseInt(cell.dataset.count);
                     selectedDay = day;
-
-                    // Update statistics panel
-                    showDayStatistics(day, count);
 
                     // Fetch notes for the day
                     vscode.postMessage({
