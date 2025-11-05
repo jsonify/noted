@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.36.0](https://github.com/jsonify/noted/compare/v1.35.10...v1.36.0) (2025-11-05)
+
+
+### Features
+
+* add activity view and metrics tracking ([#64](https://github.com/jsonify/noted/issues/64)) ([39d9a04](https://github.com/jsonify/noted/commit/39d9a04e8bf375ed3118b3768381f5b4fcee9979))
+
 ### [1.35.10](https://github.com/jsonify/noted/compare/v1.35.9...v1.35.10) (2025-11-05)
 
 ### [1.35.9](https://github.com/jsonify/noted/compare/v1.35.8...v1.35.9) (2025-11-04)
