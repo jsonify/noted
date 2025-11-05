@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { promises as fsp } from 'fs';
 import { showCalendarView } from './calendar/calendarView';
 import { showGraphView } from './graph/graphView';
+import { showActivityView } from './activity/activityView';
 import { MarkdownToolbarService } from './services/markdownToolbarService';
 import { TagService } from './services/tagService';
 import { TagRenameProvider } from './services/tagRenameProvider';
@@ -1573,12 +1574,17 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command to show calendar view
     let showCalendar = vscode.commands.registerCommand('noted.showCalendar', async () => {
-        await showCalendarView(context);
+        await showCalendarView(context, linkService, tagService);
     });
 
     // Command to show graph view
     let showGraph = vscode.commands.registerCommand('noted.showGraph', async () => {
         await showGraphView(context, linkService);
+    });
+
+    // Command to show activity chart
+    let showActivity = vscode.commands.registerCommand('noted.showActivity', async () => {
+        await showActivityView(context, linkService, tagService);
     });
 
     // Command to show current notes folder configuration (for debugging)
@@ -1832,7 +1838,7 @@ export function activate(context: vscode.ExtensionContext) {
         setupDefaultFolder, setupCustomFolder, showNotesConfig,
         createCustomTemplate, editCustomTemplateCmd, deleteCustomTemplateCmd,
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
-        createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph,
+        createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph, showActivity,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive, bulkMerge,
         showPreview, showMarkdownToolbar,
