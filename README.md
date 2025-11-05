@@ -18,7 +18,7 @@ Noted is free, open source, and keeps your data in plain markdown files you own.
 
 **The Noted solution**: Configure your notes folder once (like `~/Documents/Notes` or `~/Dropbox/Notes`), and access it from **any VS Code workspace** with a single click. Your knowledge base travels with you.
 
-![cross-workspace-access](./assets/cross-workspace.gif)
+![Screenshot showing VS Code with two different workspace folders (project-alpha and project-beta) with the same Noted sidebar displaying identical notes in both workspaces](./assets/cross-workspace.gif)
 
 Whether you're working on a client project, personal code, or company repository, your notes are always one click away in the sidebar. Take meeting notes, document discoveries, and link ideas without switching contexts or losing track of where you put things.
 
@@ -36,55 +36,55 @@ Whether you're working on a client project, personal code, or company repository
 
 ### Connect your notes with [[wikilinks]]
 
-![wiki-linking](./assets/wiki-linking.gif)
+![Screenshot of VS Code editor showing wiki-link autocomplete popup with available notes listed, and a completed [[project-alpha]] link with blue underline styling](./assets/wiki-linking.gif)
 
 Create connections between notes using `[[wikilinks]]`. Noted provides autocomplete as you type, instant navigation with click-through links, and automatic link updates when you rename or move files. Use `[[note|display text]]` for readable link labels, or `[[folder/note]]` to disambiguate notes with the same name.
 
 ### Visualize your knowledge network
 
-![graph-view](./assets/graph-view.gif)
+![Screenshot of interactive graph visualization showing 10-12 connected notes as nodes with edges between them, with one node highlighted and its connections emphasized in pink](./assets/graph-view.png)
 
 See your entire note network at a glance with the interactive graph visualization. Click nodes to navigate between notes, drag to explore relationships, and use filters to focus on specific time periods or connection patterns. The graph adapts to your note density with smart physics and hover-to-reveal labels that keep the view clean.
 
 ### See all connections in real-time
 
-![connections-panel](./assets/connections-panel.gif)
+![Screenshot showing VS Code with Connections panel in sidebar displaying Outgoing Links and Backlinks sections with context snippets, and an open note in the editor](./assets/connections-panel.png)
 
 The Connections panel shows all notes linking to and from your current note, with context snippets showing exactly where connections appear. Click any backlink to jump to the source note at the exact line where the link lives. The panel updates in real-time as you work, keeping you aware of your note relationships without breaking your flow.
 
 ### Embed notes, images, and diagrams inline
 
-![note-embeds](./assets/note-embeds.gif)
+![Screenshot showing split view with markdown editor on left containing ![[meeting-notes#Action Items]] embed syntax, and preview on right displaying the embedded section content with styled border](./assets/note-embeds.png)
 
 Include content from other notes using `![[note-name]]` or embed specific sections with `![[note-name#Section]]`. Display images inline with `![[image.png]]` and embed diagrams with `![[diagram.drawio]]`. Build comprehensive documents from reusable pieces, with live updates as source content changes.
 
 ### Create and manage diagrams seamlessly
 
-![diagrams](./assets/diagrams.gif)
+![Screenshot showing Diagrams panel in sidebar with + button, a Draw.io diagram editor open, and a note containing ![[architecture.drawio]] embed syntax](./assets/diagrams.png)
 
 Centralized diagram management with Draw.io and Excalidraw support. Create diagrams from the Diagrams panel, automatically copy embed syntax to your clipboard, and paste `![[diagram.drawio]]` into any note. All diagrams are stored in a single folder for easy organization, with automatic discovery from nested note locations.
 
 ### Organize with flexible tags
 
-![tags](./assets/tags.gif)
+![Screenshot showing editor with #backend tag autocomplete dropdown, Tags panel in sidebar displaying tags with usage counts, and filtered notes view](./assets/tags.png)
 
 Tag notes inline with `#hashtags` or in YAML frontmatter (`tags: [work, backend, bug]`). Get autocomplete suggestions as you type `#`, filter notes by single or multiple tags, and see usage counts at a glance in the Tags panel. Sort alphabetically or by frequency to find your most-used organizational categories.
 
 ### Find anything with powerful filters
 
-![search](./assets/search.gif)
+![Screenshot of search input box with query "regex: tag:backend from:2025-01-01 auth.*" and results dropdown showing matching notes with tags, dates, and preview snippets](./assets/search.png)
 
 Combine regex patterns, tag filters, and date ranges to find exactly what you need. Use advanced syntax like `regex: tag:backend from:2025-01-01 auth.*error` to search across thousands of notes instantly. Results show match counts, tags, modification dates, and rich context previews.
 
 ### Navigate daily notes visually
 
-![calendar](./assets/calendar.gif)
+![Screenshot of calendar view showing monthly calendar with highlighted dates that have notes, a selected date showing notes list below, and a note open in split view](./assets/calendar.png)
 
 Visual monthly calendar for daily notes with highlighted indicators showing days with existing content. Click any date to see all notes created that day, create new dated notes, or jump between months with Previous/Today/Next navigation. Perfect for journaling and daily standup workflows.
 
 ### Keep your knowledge base healthy
 
-![orphans-placeholders](./assets/orphans.gif)
+![Screenshot showing Orphans panel with three sections (No Connections, No Backlinks, No Outgoing Links) and Placeholders panel showing grouped broken links with source locations](./assets/orphans.png)
 
 Identify orphaned notes (no incoming or outgoing links) and placeholder links (references to notes that don't exist yet). The Orphans panel shows three categories: isolated notes, notes with no backlinks, and notes with no outgoing links. The Placeholders panel groups broken links by target, showing all source locations with context snippets and line numbers.
 
