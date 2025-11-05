@@ -8,13 +8,16 @@ Utility scripts for development and testing.
 
 **Usage**:
 ```bash
+# With default path (~/Documents/Notes)
 pnpm run generate:graph-data
+
+# Or specify your notes folder path
+npx ts-node scripts/generateGraphTestData.ts ~/Notes md
+npx ts-node scripts/generateGraphTestData.ts ~/Dropbox/Notes md
+npx ts-node scripts/generateGraphTestData.ts /path/to/your/notes txt
 ```
 
-Or directly with ts-node:
-```bash
-npx ts-node scripts/generateGraphTestData.ts
-```
+**Important**: Make sure to use the same path that your Noted extension is configured to use! Check your VS Code settings: `noted.notesFolder`
 
 **What it creates**:
 - 23 interconnected notes spread across October 2025

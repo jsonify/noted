@@ -1,7 +1,17 @@
 /**
  * Generate test notes with diverse connection patterns for graph view demonstration
  *
- * Usage: npx ts-node scripts/generateGraphTestData.ts
+ * Usage:
+ *   npx ts-node scripts/generateGraphTestData.ts [notes-path] [format]
+ *
+ * Arguments:
+ *   notes-path - Path to your notes folder (e.g., ~/Notes, ~/Dropbox/Notes)
+ *   format     - File format: 'md' or 'txt' (default: 'md')
+ *
+ * Examples:
+ *   npx ts-node scripts/generateGraphTestData.ts ~/Notes md
+ *   npx ts-node scripts/generateGraphTestData.ts ~/Dropbox/Notes txt
+ *   pnpm run generate:graph-data  # Uses default: ~/Documents/Notes
  *
  * This creates:
  * - Hub notes (highly connected)
@@ -15,11 +25,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-// Configuration
-const NOTES_BASE_PATH = path.join(os.homedir(), 'Documents', 'Notes');
-const FILE_FORMAT = 'md'; // or 'txt'
+// Configuration - can be overridden via command-line arguments
+let NOTES_BASE_PATH = process.argv[2] || path.join(os.homedir(), 'Documents', 'Notes');
+let FILE_FORMAT = (process.argv[3] || 'md') as 'md' | 'txt'; // or 'txt'
 const START_DATE = new Date('2025-10-01');
 const NUM_DAYS = 20; // Spread notes across 20 days
+
+// Expand ~ to home directory if present
+if (NOTES_BASE_PATH.startsWith('~')) {
+    NOTES_BASE_PATH = path.join(os.homedir(), NOTES_BASE_PATH.slice(1));
+}
 
 interface NoteData {
     filename: string;
@@ -526,9 +541,14 @@ created: ${note.date.toISOString()}
  */
 function main(): void {
     console.log('🚀 Generating graph test data...\n');
-    console.log(`Target directory: ${NOTES_BASE_PATH}`);
-    console.log(`File format: .${FILE_FORMAT}`);
-    console.log(`Total notes: ${notesData.length}\n`);
+    console.log(`📁 Target directory: ${NOTES_BASE_PATH}`);
+    console.log(`📄 File format: .${FILE_FORMAT}`);
+    console.log(`📝 Total notes: ${notesData.length}\n`);
+
+    // Check if directory exists, create if it doesn't
+    if (!fs.existsSync(NOTES_BASE_PATH)) {
+        console.log(`⚠️  Notes folder doesn't exist. Creating: ${NOTES_BASE_PATH}\n`);
+    }
 
     // Ensure base notes directory exists
     ensureDir(NOTES_BASE_PATH);
@@ -552,8 +572,13 @@ function main(): void {
 
     console.log('\n💡 Next steps:');
     console.log('   1. Open VS Code');
-    console.log('   2. Run "Noted: Show Graph" (Cmd+Shift+G)');
-    console.log('   3. Explore the graph visualization!');
+    console.log('   2. Make sure your Noted extension is configured to use:');
+    console.log(`      ${NOTES_BASE_PATH}`);
+    console.log('   3. Refresh the Notes view (click refresh icon)');
+    console.log('   4. Check "My Notes" panel → 2025 → 10-October');
+    console.log('   5. Run "Noted: Show Graph" (Cmd+Shift+G) to see connections');
+    console.log('\n📍 If notes don\'t appear, your VS Code notes folder setting may be different.');
+    console.log('   Check: VS Code Settings → Search "noted.notesFolder"');
 }
 
 // Run the script
