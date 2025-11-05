@@ -946,7 +946,8 @@
     "release:minor": "standard-version --release-as minor && pnpm run package",
     "release:major": "standard-version --release-as major && pnpm run package",
     "release": "standard-version && pnpm run package",
-    "publish:release": "git push --follow-tags origin main"
+    "publish:release": "git push --follow-tags origin main",
+    "generate:graph-data": "npx ts-node scripts/generateGraphTestData.ts"
   },
   "packageManager": "pnpm@8.15.9",
   "devDependencies": {
