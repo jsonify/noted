@@ -1,14 +1,17 @@
 # Noted - Your Personal Knowledge Base in VS Code
 
+---
+[Repository](https://github.com/jsonify/noted)  |  [Issues](https://github.com/jsonify/noted/issues)  |  [Documentation](https://jsonify.github.io/noted/)
+
 [![CI](https://github.com/jsonify/noted/actions/workflows/ci.yml/badge.svg)](https://github.com/jsonify/noted/actions/workflows/ci.yml)
 
 **One notes folder. Every workspace. Always accessible.**
 
-A comprehensive note-taking and knowledge management system inspired by Foam and Obsidian, built right into VS Code. Connect your thoughts with wiki-style links, visualize your knowledge graph, and organize with powerful search and tagging—no matter which codebase you're working in.
+A comprehensive note-taking and knowledge management system inspired by Foam and Obsidian, built right into A [Visual Studio Code](https://code.visualstudio.com) [extension](https://marketplace.visualstudio.com/items?itemName=jsonify.noted). Connect your thoughts with wiki-style links, visualize your knowledge graph, and organize with powerful search and tagging—no matter which codebase you're working in.
 
 Unlike workspace-bound solutions, Noted gives you a persistent home for all your notes that follows you across every project. Your knowledge base travels with you.
 
-Noted is free, open source, and keeps your data in plain markdown files you own.
+Noted is free, open source, and keeps your data in plain markdown files you own. 
 
 ---
 
@@ -42,7 +45,7 @@ Create connections between notes using `[[wikilinks]]`. Noted provides autocompl
 
 ### Visualize your knowledge network
 
-![Screenshot of interactive graph visualization showing 10-12 connected notes as nodes with edges between them, with one node highlighted and its connections emphasized in pink](./assets/graph-view.png)
+![Screenshot of interactive graph visualization showing 10-12 connected notes as nodes with edges between them, with one node highlighted and its connections emphasized in pink](./assets/graph-view.gif)
 
 See your entire note network at a glance with the interactive graph visualization. Click nodes to navigate between notes, drag to explore relationships, and use filters to focus on specific time periods or connection patterns. The graph adapts to your note density with smart physics and hover-to-reveal labels that keep the view clean.
 
