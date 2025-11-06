@@ -3,6 +3,7 @@ import * as path from 'path';
 import { getNotesPath } from './configService';
 import { LinkService } from './linkService';
 import { TagService } from './tagService';
+import { parseFrontmatter } from '../utils/frontmatterParser';
 
 /**
  * Weekly activity data
@@ -47,24 +48,27 @@ export class ActivityService {
                 const stats = await fs.promises.stat(filePath);
                 const content = await fs.promises.readFile(filePath, 'utf-8');
 
+                // Extract the creation date using frontmatter, filename, or file stats
+                const createdDate = await this.extractNoteDate(filePath, content, stats);
+
                 // Determine which week this file was created
-                const createdWeek = this.getWeekIndex(stats.birthtime, weeklyData);
+                const createdWeek = this.getWeekIndex(createdDate, weeklyData);
                 if (createdWeek !== -1) {
                     weeklyData[createdWeek].notesCreated++;
                 }
 
                 // Count links in this file
                 const links = await this.linkService.extractLinksFromFile(filePath);
-                // Use file modification time as proxy for when links were added
-                const linksWeek = this.getWeekIndex(stats.mtime, weeklyData);
+                // Use creation date for when links were added (same as note creation)
+                const linksWeek = this.getWeekIndex(createdDate, weeklyData);
                 if (linksWeek !== -1) {
                     weeklyData[linksWeek].linksCreated += links.length;
                 }
 
                 // Count tags in this file
                 const tags = this.extractTagsFromContent(content);
-                // Use file modification time as proxy for when tags were added
-                const tagsWeek = this.getWeekIndex(stats.mtime, weeklyData);
+                // Use creation date for when tags were added (same as note creation)
+                const tagsWeek = this.getWeekIndex(createdDate, weeklyData);
                 if (tagsWeek !== -1) {
                     weeklyData[tagsWeek].tagsAdded += tags.length;
                 }
@@ -122,6 +126,37 @@ export class ActivityService {
             }
         }
         return -1;
+    }
+
+    /**
+     * Extract the creation date from a note using multiple strategies:
+     * 1. Frontmatter 'created' field
+     * 2. Filename (YYYY-MM-DD prefix)
+     * 3. File creation timestamp (birthtime)
+     */
+    private async extractNoteDate(filePath: string, content: string, stats: fs.Stats): Promise<Date> {
+        // Strategy 1: Parse frontmatter 'created' field
+        const frontmatter = parseFrontmatter(content);
+        if (frontmatter.created) {
+            const createdDate = new Date(frontmatter.created);
+            if (!isNaN(createdDate.getTime())) {
+                return createdDate;
+            }
+        }
+
+        // Strategy 2: Extract from filename (YYYY-MM-DD prefix)
+        const fileName = path.basename(filePath);
+        const dateMatch = fileName.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (dateMatch) {
+            return new Date(
+                parseInt(dateMatch[1]),
+                parseInt(dateMatch[2]) - 1,
+                parseInt(dateMatch[3])
+            );
+        }
+
+        // Strategy 3: Use file creation timestamp
+        return stats.birthtime;
     }
 
     /**

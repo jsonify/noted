@@ -1,10 +1,52 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { getNotesPath, getFileFormat } from '../services/configService';
-import { pathExists, createDirectory, writeFile, readDirectoryWithTypes } from '../services/fileSystemService';
+import { pathExists, createDirectory, writeFile, readDirectoryWithTypes, readFile, getFileStats } from '../services/fileSystemService';
 import { generateTemplate } from '../services/templateService';
 import { isTodayDate } from '../utils/dateHelpers';
 import { SUPPORTED_EXTENSIONS } from '../constants';
+import { parseFrontmatter } from '../utils/frontmatterParser';
+
+/**
+ * Extract the creation date from a note using multiple strategies:
+ * 1. Filename (YYYY-MM-DD prefix)
+ * 2. Frontmatter 'created' field
+ * 3. File creation timestamp (birthtime)
+ */
+async function extractNoteDate(filePath: string): Promise<Date | null> {
+    // Strategy 1: Extract from filename (YYYY-MM-DD prefix)
+    const fileName = path.basename(filePath);
+    const dateMatch = fileName.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (dateMatch) {
+        return new Date(
+            parseInt(dateMatch[1]),
+            parseInt(dateMatch[2]) - 1,
+            parseInt(dateMatch[3])
+        );
+    }
+
+    // Strategy 2: Parse frontmatter 'created' field
+    try {
+        const content = await readFile(filePath);
+        const frontmatter = parseFrontmatter(content);
+        if (frontmatter.created) {
+            const createdDate = new Date(frontmatter.created);
+            if (!isNaN(createdDate.getTime())) {
+                return createdDate;
+            }
+        }
+    } catch (error) {
+        // Fall through to file stats
+    }
+
+    // Strategy 3: Use file creation timestamp
+    try {
+        const stats = await getFileStats(filePath);
+        return stats.birthtime;
+    } catch (error) {
+        return null;
+    }
+}
 
 /**
  * Async generator that yields note file information from the entire notes directory structure.
@@ -18,72 +60,61 @@ async function* iterateNoteFiles(notesPath: string): AsyncGenerator<{ fileName: 
         return;
     }
 
-    const yearEntries = await readDirectoryWithTypes(notesPath);
+    // Recursive helper to scan directories
+    async function* scanDirectory(dirPath: string): AsyncGenerator<string> {
+        const entries = await readDirectoryWithTypes(dirPath);
+        for (const entry of entries) {
+            const fullPath = path.join(dirPath, entry.name);
 
-    for (const yearEntry of yearEntries) {
-        if (yearEntry.isDirectory() && /^\d{4}$/.test(yearEntry.name)) {
-            const yearPath = path.join(notesPath, yearEntry.name);
-            const monthEntries = await readDirectoryWithTypes(yearPath);
-
-            for (const monthEntry of monthEntries) {
-                if (monthEntry.isDirectory()) {
-                    const monthPath = path.join(yearPath, monthEntry.name);
-                    const noteFiles = await readDirectoryWithTypes(monthPath);
-
-                    for (const file of noteFiles) {
-                        if (!file.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => file.name.endsWith(ext))) {
-                            // Extract date from filename (YYYY-MM-DD)
-                            const dateMatch = file.name.match(/^(\d{4})-(\d{2})-(\d{2})/);
-                            if (dateMatch) {
-                                const date = new Date(
-                                    parseInt(dateMatch[1]),
-                                    parseInt(dateMatch[2]) - 1,
-                                    parseInt(dateMatch[3])
-                                );
-                                yield {
-                                    fileName: file.name,
-                                    date,
-                                    filePath: path.join(monthPath, file.name)
-                                };
-                            }
-                        }
-                    }
+            // Skip special folders
+            if (entry.isDirectory()) {
+                const skipFolders = ['.templates', 'Archive', '.trash'];
+                if (!skipFolders.includes(entry.name)) {
+                    yield* scanDirectory(fullPath);
                 }
+            } else if (SUPPORTED_EXTENSIONS.some(ext => entry.name.endsWith(ext))) {
+                yield fullPath;
             }
         }
     }
+
+    // Scan all notes and extract dates
+    for await (const filePath of scanDirectory(notesPath)) {
+        const date = await extractNoteDate(filePath);
+        if (date) {
+            yield {
+                fileName: path.basename(filePath),
+                date,
+                filePath
+            };
+        }
+    }
+}
+
+/**
+ * Helper function to check if two dates are the same day
+ */
+function isSameDay(date1: Date, date2: Date): boolean {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
 }
 
 /**
  * Get all notes for a specific date
  */
 export async function getNotesForDate(notesPath: string, year: number, month: number, day: number): Promise<Array<{name: string, path: string}>> {
-    const monthStr = (month + 1).toString().padStart(2, '0');
-    const monthName = new Date(year, month).toLocaleString('en-US', { month: 'long' });
-    const dayStr = day.toString().padStart(2, '0');
-    const folderName = `${monthStr}-${monthName}`;
-    const datePrefix = `${year}-${monthStr}-${dayStr}`;
-
-    const noteFolder = path.join(notesPath, year.toString(), folderName);
-
-    if (!(await pathExists(noteFolder))) {
-        return [];
-    }
-
+    const targetDate = new Date(year, month, day);
     const notes: Array<{name: string, path: string}> = [];
 
     try {
-        const entries = await readDirectoryWithTypes(noteFolder);
-
-        for (const entry of entries) {
-            if (!entry.isDirectory() && SUPPORTED_EXTENSIONS.some(ext => entry.name.endsWith(ext))) {
-                // Check if the file starts with the date prefix (YYYY-MM-DD)
-                if (entry.name.startsWith(datePrefix)) {
-                    notes.push({
-                        name: entry.name,
-                        path: path.join(noteFolder, entry.name)
-                    });
-                }
+        // Scan all notes and filter by date
+        for await (const noteInfo of iterateNoteFiles(notesPath)) {
+            if (isSameDay(noteInfo.date, targetDate)) {
+                notes.push({
+                    name: noteInfo.fileName,
+                    path: noteInfo.filePath
+                });
             }
         }
     } catch (error) {
