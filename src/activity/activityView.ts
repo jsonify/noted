@@ -76,39 +76,55 @@ function getActivityHtml(weeklyData: any[], stats: any, dayOfWeekAnalysis: any[]
         <title>Platform Activity</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
         <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            html, body {
+                height: 100%;
+                overflow: hidden;
+            }
+
             body {
                 font-family: var(--vscode-font-family);
-                padding: 20px;
+                padding: 12px;
                 color: var(--vscode-foreground);
                 background-color: var(--vscode-editor-background);
-                margin: 0;
+            }
+
+            .container {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
             }
 
             .header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 20px;
+                flex-shrink: 0;
             }
 
             .header h1 {
-                margin: 0;
-                font-size: 24px;
+                font-size: 18px;
                 font-weight: 600;
             }
 
             .header-meta {
                 display: flex;
                 align-items: center;
-                gap: 16px;
+                gap: 10px;
             }
 
             .live-badge {
                 background: ${THEME_COLORS.accent.primaryFaint};
                 border: 1px solid ${THEME_COLORS.accent.primaryBorder};
-                padding: 4px 12px;
+                padding: 3px 10px;
                 border-radius: 12px;
-                font-size: 11px;
+                font-size: 10px;
                 font-weight: 600;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
@@ -116,41 +132,67 @@ function getActivityHtml(weeklyData: any[], stats: any, dayOfWeekAnalysis: any[]
             }
 
             .time-period {
-                font-size: 13px;
+                font-size: 12px;
                 color: var(--vscode-descriptionForeground);
             }
 
             .chart-container {
                 position: relative;
-                height: 400px;
-                margin-bottom: 30px;
                 background: ${THEME_COLORS.purple.gradientFaint};
                 border: 1px solid var(--vscode-panel-border);
                 border-radius: 8px;
-                padding: 20px;
+                padding: 12px;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .chart-container.main {
+                flex: 1.2;
+                min-height: 0;
+            }
+
+            .chart-container.secondary {
+                flex: 1;
+                min-height: 0;
+            }
+
+            .chart-wrapper {
+                position: relative;
+                flex: 1;
+                min-height: 0;
+                width: 100%;
+            }
+
+            .chart-wrapper canvas {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100% !important;
+                height: 100% !important;
             }
 
             .legend-container {
                 display: flex;
                 justify-content: center;
-                gap: 24px;
-                margin-bottom: 30px;
-                padding: 16px;
+                gap: 20px;
+                padding: 10px;
                 background: ${THEME_COLORS.purple.gradientLight};
                 border: 1px solid var(--vscode-panel-border);
                 border-radius: 8px;
+                flex-shrink: 0;
             }
 
             .legend-item {
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                font-size: 12px;
+                gap: 6px;
+                font-size: 11px;
             }
 
             .legend-color {
-                width: 32px;
-                height: 12px;
+                width: 28px;
+                height: 10px;
                 border-radius: 2px;
             }
 
@@ -174,15 +216,15 @@ function getActivityHtml(weeklyData: any[], stats: any, dayOfWeekAnalysis: any[]
             .stats-grid {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
-                gap: 16px;
-                margin-bottom: 30px;
+                gap: 10px;
+                flex-shrink: 0;
             }
 
             .stat-card {
                 background: ${THEME_COLORS.purple.gradientMedium};
                 border: 1px solid var(--vscode-panel-border);
                 border-radius: 8px;
-                padding: 20px;
+                padding: 12px;
                 transition: all 0.2s ease;
             }
 
@@ -193,23 +235,23 @@ function getActivityHtml(weeklyData: any[], stats: any, dayOfWeekAnalysis: any[]
             }
 
             .stat-label {
-                font-size: 11px;
+                font-size: 9px;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
                 color: var(--vscode-descriptionForeground);
-                margin-bottom: 8px;
+                margin-bottom: 4px;
                 font-weight: 600;
             }
 
             .stat-value {
-                font-size: 32px;
+                font-size: 24px;
                 font-weight: 700;
                 color: var(--vscode-foreground);
-                margin-bottom: 4px;
+                margin-bottom: 2px;
             }
 
             .stat-average {
-                font-size: 12px;
+                font-size: 10px;
                 color: var(--vscode-descriptionForeground);
             }
 
@@ -218,89 +260,121 @@ function getActivityHtml(weeklyData: any[], stats: any, dayOfWeekAnalysis: any[]
                 color: var(--vscode-textLink-foreground);
             }
 
-            .footer-note {
-                text-align: center;
+            .secondary-charts-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                flex: 1;
+                min-height: 0;
+            }
+
+            .chart-title {
+                margin: 0 0 4px 0;
+                font-size: 14px;
+                font-weight: 600;
+                flex-shrink: 0;
+            }
+
+            .chart-subtitle {
+                margin: 0 0 8px 0;
                 font-size: 11px;
                 color: var(--vscode-descriptionForeground);
-                margin-top: 20px;
+                flex-shrink: 0;
+            }
+
+            .footer-note {
+                text-align: center;
+                font-size: 9px;
+                color: var(--vscode-descriptionForeground);
                 font-style: italic;
+                flex-shrink: 0;
             }
 
             .helper-text {
-                font-size: 11px;
+                font-size: 9px;
                 color: var(--vscode-descriptionForeground);
-                margin-bottom: 12px;
-                padding: 8px 12px;
+                padding: 6px 10px;
                 background: ${THEME_COLORS.chart.helperBackground};
                 border-left: 3px solid ${THEME_COLORS.chart.helperBorder};
                 border-radius: 4px;
+                flex-shrink: 0;
             }
         </style>
     </head>
     <body>
-        <div class="header">
-            <h1>Platform Activity</h1>
-            <div class="header-meta">
-                <div class="live-badge">Live</div>
-                <div class="time-period">Last 12 weeks · Production environment</div>
+        <div class="container">
+            <div class="header">
+                <h1>Platform Activity</h1>
+                <div class="header-meta">
+                    <div class="live-badge">Live</div>
+                    <div class="time-period">Last 12 weeks · Production environment</div>
+                </div>
             </div>
-        </div>
 
-        <div class="helper-text">
-            ℹ️ Hover over the chart to see detailed counts. Click legend items to toggle layers.
-        </div>
-
-        <div class="chart-container">
-            <canvas id="activityChart"></canvas>
-        </div>
-
-        <div class="legend-container">
-            <div class="legend-item">
-                <div class="legend-color notes"></div>
-                <div class="legend-label">Notes Created</div>
+            <div class="helper-text">
+                ℹ️ Hover over the chart to see detailed counts. Click legend items to toggle layers.
             </div>
-            <div class="legend-item">
-                <div class="legend-color links"></div>
-                <div class="legend-label">Links Created</div>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color tags"></div>
-                <div class="legend-label">Tags Added</div>
-            </div>
-        </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Notes</div>
-                <div class="stat-value">${stats.totalNotes}</div>
-                <div class="stat-average">Avg: <span class="stat-average-value">${stats.avgNotesPerWeek}/week</span></div>
+            <div class="chart-container main">
+                <div class="chart-wrapper">
+                    <canvas id="activityChart"></canvas>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Links</div>
-                <div class="stat-value">${stats.totalLinks}</div>
-                <div class="stat-average">Avg: <span class="stat-average-value">${stats.avgLinksPerWeek}/week</span></div>
+
+            <div class="legend-container">
+                <div class="legend-item">
+                    <div class="legend-color notes"></div>
+                    <div class="legend-label">Notes Created</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color links"></div>
+                    <div class="legend-label">Links Created</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color tags"></div>
+                    <div class="legend-label">Tags Added</div>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Tags</div>
-                <div class="stat-value">${stats.totalTags}</div>
-                <div class="stat-average">Avg: <span class="stat-average-value">${stats.avgTagsPerWeek}/week</span></div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Notes</div>
+                    <div class="stat-value">${stats.totalNotes}</div>
+                    <div class="stat-average">Avg: <span class="stat-average-value">${stats.avgNotesPerWeek}/week</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Links</div>
+                    <div class="stat-value">${stats.totalLinks}</div>
+                    <div class="stat-average">Avg: <span class="stat-average-value">${stats.avgLinksPerWeek}/week</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Tags</div>
+                    <div class="stat-value">${stats.totalTags}</div>
+                    <div class="stat-average">Avg: <span class="stat-average-value">${stats.avgTagsPerWeek}/week</span></div>
+                </div>
             </div>
-        </div>
 
-        <div class="chart-container">
-            <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">📅 Day of Week Patterns</h2>
-            <p style="margin: 0 0 16px 0; font-size: 13px; color: var(--vscode-descriptionForeground);">When you write most</p>
-            <canvas id="dayOfWeekChart"></canvas>
-        </div>
+            <div class="secondary-charts-grid">
+                <div class="chart-container secondary">
+                    <h2 class="chart-title">📅 Day of Week Patterns</h2>
+                    <p class="chart-subtitle">When you write most</p>
+                    <div class="chart-wrapper">
+                        <canvas id="dayOfWeekChart"></canvas>
+                    </div>
+                </div>
 
-        <div class="chart-container">
-            <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">📈 Growth Over Time</h2>
-            <p style="margin: 0 0 16px 0; font-size: 13px; color: var(--vscode-descriptionForeground);">Cumulative notes</p>
-            <canvas id="growthChart"></canvas>
-        </div>
+                <div class="chart-container secondary">
+                    <h2 class="chart-title">📈 Growth Over Time</h2>
+                    <p class="chart-subtitle">Cumulative notes</p>
+                    <div class="chart-wrapper">
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                </div>
+            </div>
 
-        <div class="footer-note">
-            Data is inferred from file creation and modification times. Click "Refresh" to update.
+            <div class="footer-note">
+                Data is inferred from file creation and modification times. Click "Refresh" to update.
+            </div>
         </div>
 
         <script>
