@@ -1,18 +1,13 @@
 import * as vscode from 'vscode';
 import { getNotesPath, getFileFormat } from '../services/configService';
-import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap, getMonthlyTrend, getDayOfWeekAnalysis, getGrowthData, getNoteDateRange } from './calendarHelpers';
-import { ActivityService } from '../services/activityService';
-import { LinkService } from '../services/linkService';
-import { TagService } from '../services/tagService';
+import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap, getMonthlyTrend } from './calendarHelpers';
 import { THEME_COLORS } from '../constants/themeColors';
 
 /**
  * Show the calendar view webview
  */
 export async function showCalendarView(
-    context: vscode.ExtensionContext,
-    linkService: LinkService,
-    tagService: TagService
+    context: vscode.ExtensionContext
 ): Promise<void> {
     const notesPath = getNotesPath();
     if (!notesPath) {
@@ -35,12 +30,8 @@ export async function showCalendarView(
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
 
-    // Create activity service and get weekly data
-    const activityService = new ActivityService(linkService, tagService);
-    const weeklyActivity = await activityService.getWeeklyActivity(12);
-
     // Set the initial HTML
-    panel.webview.html = await getCalendarHtml(currentYear, currentMonth, notesPath, weeklyActivity);
+    panel.webview.html = await getCalendarHtml(currentYear, currentMonth, notesPath);
 
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
@@ -61,7 +52,7 @@ export async function showCalendarView(
                     panel.webview.postMessage({ command: 'showNotes', notes: updatedNotes, year: message.year, month: message.month, day: message.day });
                     break;
                 case 'changeMonth':
-                    panel.webview.html = await getCalendarHtml(message.year, message.month, notesPath, weeklyActivity);
+                    panel.webview.html = await getCalendarHtml(message.year, message.month, notesPath);
                     break;
             }
         },
@@ -73,7 +64,7 @@ export async function showCalendarView(
 /**
  * Generate the HTML content for the calendar webview
  */
-async function getCalendarHtml(year: number, month: number, notesPath: string, weeklyActivity: any[]): Promise<string> {
+async function getCalendarHtml(year: number, month: number, notesPath: string): Promise<string> {
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
@@ -107,21 +98,15 @@ async function getCalendarHtml(year: number, month: number, notesPath: string, w
     const mostActiveDay = await getMostActiveDay(notesPath, year, month);
     const recentActivity = await getRecentActivity(notesPath);
 
-    // Calculate streak and visualization data in parallel for better performance
+    // Calculate streak data in parallel for better performance
     const [
         currentStreak,
         longestStreak,
-        streakHeatmap,
-        dayOfWeekAnalysis,
-        growthData,
-        dateRange
+        streakHeatmap
     ] = await Promise.all([
         getCurrentStreak(notesPath),
         getLongestStreak(notesPath),
-        getStreakHeatmap(notesPath, 30),
-        getDayOfWeekAnalysis(notesPath),
-        getGrowthData(notesPath, 6),
-        getNoteDateRange(notesPath)
+        getStreakHeatmap(notesPath, 30)
     ]);
 
     // Generate 6 weeks to accommodate all possible month layouts
@@ -1158,11 +1143,7 @@ async function getCalendarHtml(year: number, month: number, notesPath: string, w
                 recentActivity: ${JSON.stringify(recentActivity.map(a => ({date: a.date.toISOString(), count: a.count})))},
                 currentStreak: ${currentStreak},
                 longestStreak: ${longestStreak},
-                streakHeatmap: ${JSON.stringify(streakHeatmap.map(h => ({date: h.date.toISOString(), count: h.count, hasNote: h.hasNote})))},
-                weeklyActivity: ${JSON.stringify(weeklyActivity)},
-                dayOfWeekAnalysis: ${JSON.stringify(dayOfWeekAnalysis)},
-                growthData: ${JSON.stringify(growthData)},
-                dateRange: ${dateRange ? `{firstDate: '${dateRange.firstDate.toISOString()}', lastDate: '${dateRange.lastDate.toISOString()}', daySpan: ${dateRange.daySpan}}` : 'null'}
+                streakHeatmap: ${JSON.stringify(streakHeatmap.map(h => ({date: h.date.toISOString(), count: h.count, hasNote: h.hasNote})))}
             };
 
             let selectedDay = null;
@@ -1197,44 +1178,21 @@ async function getCalendarHtml(year: number, month: number, notesPath: string, w
                 }
             }
 
-            // Helper: Calculate insights using actual date range
-            function calculateInsights() {
-                // Calculate average per day using actual date range
-                let avgPerDay = 0;
-                if (statistics.total > 0 && statistics.dateRange) {
-                    avgPerDay = (statistics.total / statistics.dateRange.daySpan).toFixed(1);
-                } else if (statistics.total > 0) {
-                    // Fallback to 365 if date range is not available
-                    avgPerDay = (statistics.total / 365).toFixed(1);
-                }
-
-                const favoriteDay = statistics.dayOfWeekAnalysis.reduce((max, d) => d.count > max.count ? d : max, {count: 0, day: 'None'});
-
-                // Calculate best week from activity data
-                const bestWeek = statistics.weeklyActivity.reduce((max, w) =>
-                    (w.notesCreated + w.tagsAdded + w.linksCreated) > (max.notesCreated + max.tagsAdded + max.linksCreated) ? w : max,
-                    {weekLabel: 'None', notesCreated: 0, tagsAdded: 0, linksCreated: 0}
-                );
-
-                return { avgPerDay, bestWeek, favoriteDay };
-            }
-
             // Display overview statistics on load
             function showOverviewStatistics() {
                 const statsContent = document.getElementById('statsContent');
                 const statsTitle = document.getElementById('statsTitle');
-                statsTitle.textContent = 'Statistics';
+                statsTitle.textContent = 'Daily Streak';
 
                 const streakHeatmapHtml = renderStreakHeatmap();
                 const streakMessage = getStreakMessage();
-                const { avgPerDay, bestWeek, favoriteDay } = calculateInsights();
 
                 statsContent.innerHTML = \`
                     <div class="streak-section">
                         <div class="streak-header">
                             <div class="streak-title">
                                 <span class="streak-icon">\${statistics.currentStreak > 0 ? '🔥' : '📝'}</span>
-                                <span>Daily Streak</span>
+                                <span>Keep the momentum going!</span>
                             </div>
                         </div>
                         <div class="streak-values">
@@ -1254,276 +1212,12 @@ async function getCalendarHtml(year: number, month: number, notesPath: string, w
                             \${streakMessage}
                         </div>
                     </div>
-
-                    <div class="chart-section">
-                        <div class="chart-header">
-                            <div class="chart-title">📊 Activity Chart</div>
-                            <div class="chart-subtitle">Last 12 weeks: Notes, Tags & Links</div>
-                        </div>
-                        <div style="position: relative; height: 160px; margin-top: 8px;">
-                            <canvas id="activityChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-section">
-                        <div class="chart-header">
-                            <div class="chart-title">📅 Day of Week Patterns</div>
-                            <div class="chart-subtitle">When you write most</div>
-                        </div>
-                        <div style="position: relative; height: 140px; margin-top: 8px;">
-                            <canvas id="dayOfWeekChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-section">
-                        <div class="chart-header">
-                            <div class="chart-title">📊 Growth Over Time</div>
-                            <div class="chart-subtitle">Cumulative notes</div>
-                        </div>
-                        <div style="position: relative; height: 140px; margin-top: 8px;">
-                            <canvas id="growthChart"></canvas>
-                        </div>
-                    </div>
                 \`;
             }
 
 
             // Initialize statistics display
             showOverviewStatistics();
-
-            // Initialize Activity Chart
-            const activityCtx = document.getElementById('activityChart').getContext('2d');
-            const activityLabels = statistics.weeklyActivity.map(w => w.weekLabel);
-            const notesData = statistics.weeklyActivity.map(w => w.notesCreated);
-            const linksData = statistics.weeklyActivity.map(w => w.linksCreated);
-            const tagsData = statistics.weeklyActivity.map(w => w.tagsAdded);
-
-            // Get computed VS Code theme colors
-            const computedStyle = getComputedStyle(document.body);
-            const foregroundColor = computedStyle.getPropertyValue('--vscode-foreground').trim() || '#cccccc';
-
-            new Chart(activityCtx, {
-                type: 'line',
-                data: {
-                    labels: activityLabels,
-                    datasets: [
-                        {
-                            label: 'Notes Created',
-                            data: notesData,
-                            backgroundColor: '${THEME_COLORS.activity.notes.fill}',
-                            borderColor: '${THEME_COLORS.activity.notes.border}',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 0,
-                            pointHoverRadius: 4
-                        },
-                        {
-                            label: 'Links Created',
-                            data: linksData,
-                            backgroundColor: '${THEME_COLORS.activity.links.fill}',
-                            borderColor: '${THEME_COLORS.activity.links.border}',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 0,
-                            pointHoverRadius: 4
-                        },
-                        {
-                            label: 'Tags Added',
-                            data: tagsData,
-                            backgroundColor: '${THEME_COLORS.activity.tags.fill}',
-                            borderColor: '${THEME_COLORS.activity.tags.border}',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 0,
-                            pointHoverRadius: 4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 10,
-                            displayColors: true
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: '${THEME_COLORS.chart.gridColor}',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            }
-                        },
-                        y: {
-                            stacked: true,
-                            grid: {
-                                color: '${THEME_COLORS.chart.gridColor}',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            },
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-
-            // Initialize Day of Week Chart
-            const dayOfWeekCtx = document.getElementById('dayOfWeekChart').getContext('2d');
-            const dayOfWeekLabels = statistics.dayOfWeekAnalysis.map(d => d.day);
-            const dayOfWeekData = statistics.dayOfWeekAnalysis.map(d => d.count);
-            const todayDayOfWeek = new Date().getDay();
-
-            new Chart(dayOfWeekCtx, {
-                type: 'bar',
-                data: {
-                    labels: dayOfWeekLabels,
-                    datasets: [{
-                        label: 'Notes',
-                        data: dayOfWeekData,
-                        backgroundColor: dayOfWeekData.map((_, index) =>
-                            index === todayDayOfWeek ? '${THEME_COLORS.activity.notes.border}' : '${THEME_COLORS.activity.notes.fill}'
-                        ),
-                        borderColor: '${THEME_COLORS.activity.notes.border}',
-                        borderWidth: 2,
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '${THEME_COLORS.chart.tooltipBackground}',
-                            padding: 10,
-                            displayColors: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: '${THEME_COLORS.chart.gridColor}',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            },
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-
-            // Initialize Growth Over Time Chart
-            const growthCtx = document.getElementById('growthChart').getContext('2d');
-            const growthLabels = statistics.growthData.map(g => g.month);
-            const growthData = statistics.growthData.map(g => g.cumulative);
-
-            new Chart(growthCtx, {
-                type: 'line',
-                data: {
-                    labels: growthLabels,
-                    datasets: [{
-                        label: 'Cumulative Notes',
-                        data: growthData,
-                        backgroundColor: '${THEME_COLORS.activity.links.fill}',
-                        borderColor: '${THEME_COLORS.activity.links.border}',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        pointHoverBackgroundColor: '${THEME_COLORS.activity.links.border}',
-                        pointHoverBorderColor: '#fff',
-                        pointHoverBorderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '${THEME_COLORS.chart.tooltipBackground}',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: '${THEME_COLORS.accent.primaryGlow}',
-                            borderWidth: 1,
-                            padding: 12,
-                            displayColors: true,
-                            callbacks: {
-                                title: function(context) {
-                                    return context[0].label;
-                                },
-                                label: function(context) {
-                                    const total = context.parsed.y;
-                                    return 'Total: ' + (total === 1 ? '1 note' : total + ' notes');
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: '${THEME_COLORS.chart.gridColor}',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: '${THEME_COLORS.chart.gridColor}',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            },
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
 
             // ===== RESIZE FUNCTIONALITY =====
 

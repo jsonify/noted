@@ -3,6 +3,7 @@ import { getNotesPath } from '../services/configService';
 import { ActivityService } from '../services/activityService';
 import { LinkService } from '../services/linkService';
 import { TagService } from '../services/tagService';
+import { getDayOfWeekAnalysis, getGrowthData } from '../calendar/calendarHelpers';
 import { THEME_COLORS } from '../constants/themeColors';
 
 /**
@@ -25,6 +26,10 @@ export async function showActivityView(
     const weeklyData = await activityService.getWeeklyActivity(12);
     const stats = await activityService.getActivityStats();
 
+    // Collect additional analysis data
+    const dayOfWeekAnalysis = await getDayOfWeekAnalysis(notesPath);
+    const growthData = await getGrowthData(notesPath, 6);
+
     const panel = vscode.window.createWebviewPanel(
         'notedActivity',
         'Platform Activity',
@@ -36,7 +41,7 @@ export async function showActivityView(
     );
 
     // Set the initial HTML
-    panel.webview.html = getActivityHtml(weeklyData, stats);
+    panel.webview.html = getActivityHtml(weeklyData, stats, dayOfWeekAnalysis, growthData);
 
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
@@ -62,7 +67,7 @@ export async function showActivityView(
 /**
  * Generate the HTML content for the activity webview
  */
-function getActivityHtml(weeklyData: any[], stats: any): string {
+function getActivityHtml(weeklyData: any[], stats: any, dayOfWeekAnalysis: any[], growthData: any[]): string {
     return `<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -282,6 +287,18 @@ function getActivityHtml(weeklyData: any[], stats: any): string {
             </div>
         </div>
 
+        <div class="chart-container">
+            <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">📅 Day of Week Patterns</h2>
+            <p style="margin: 0 0 16px 0; font-size: 13px; color: var(--vscode-descriptionForeground);">When you write most</p>
+            <canvas id="dayOfWeekChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">📈 Growth Over Time</h2>
+            <p style="margin: 0 0 16px 0; font-size: 13px; color: var(--vscode-descriptionForeground);">Cumulative notes</p>
+            <canvas id="growthChart"></canvas>
+        </div>
+
         <div class="footer-note">
             Data is inferred from file creation and modification times. Click "Refresh" to update.
         </div>
@@ -291,6 +308,8 @@ function getActivityHtml(weeklyData: any[], stats: any): string {
 
             // Activity data
             const weeklyData = ${JSON.stringify(weeklyData)};
+            const dayOfWeekAnalysis = ${JSON.stringify(dayOfWeekAnalysis)};
+            const growthData = ${JSON.stringify(growthData)};
 
             // Prepare chart data
             const labels = weeklyData.map(w => w.weekLabel);
@@ -410,6 +429,145 @@ function getActivityHtml(weeklyData: any[], stats: any): string {
                                 callback: function(value) {
                                     return Math.floor(value);
                                 }
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Initialize Day of Week Chart
+            const dayOfWeekCtx = document.getElementById('dayOfWeekChart').getContext('2d');
+            const dayOfWeekLabels = dayOfWeekAnalysis.map(d => d.day);
+            const dayOfWeekData = dayOfWeekAnalysis.map(d => d.count);
+            const todayDayOfWeek = new Date().getDay();
+
+            new Chart(dayOfWeekCtx, {
+                type: 'bar',
+                data: {
+                    labels: dayOfWeekLabels,
+                    datasets: [{
+                        label: 'Notes',
+                        data: dayOfWeekData,
+                        backgroundColor: dayOfWeekData.map((_, index) =>
+                            index === todayDayOfWeek ? '${THEME_COLORS.activity.notes.border}' : '${THEME_COLORS.activity.notes.fill}'
+                        ),
+                        borderColor: '${THEME_COLORS.activity.notes.border}',
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '${THEME_COLORS.chart.tooltipBackground}',
+                            padding: 10,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: foregroundColor,
+                                font: { size: 11 }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: '${THEME_COLORS.chart.gridColor}',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: foregroundColor,
+                                font: { size: 11 }
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Initialize Growth Over Time Chart
+            const growthCtx = document.getElementById('growthChart').getContext('2d');
+            const growthLabels = growthData.map(g => g.month);
+            const growthDataPoints = growthData.map(g => g.cumulative);
+
+            new Chart(growthCtx, {
+                type: 'line',
+                data: {
+                    labels: growthLabels,
+                    datasets: [{
+                        label: 'Cumulative Notes',
+                        data: growthDataPoints,
+                        backgroundColor: '${THEME_COLORS.activity.links.fill}',
+                        borderColor: '${THEME_COLORS.activity.links.border}',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '${THEME_COLORS.activity.links.hover}',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '${THEME_COLORS.chart.tooltipBackground}',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '${THEME_COLORS.accent.primaryGlow}',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                title: function(context) {
+                                    return context[0].label;
+                                },
+                                label: function(context) {
+                                    const total = context.parsed.y;
+                                    return 'Total: ' + (total === 1 ? '1 note' : total + ' notes');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: '${THEME_COLORS.chart.gridColor}',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: foregroundColor,
+                                font: { size: 11 }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: '${THEME_COLORS.chart.gridColor}',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: foregroundColor,
+                                font: { size: 11 }
                             },
                             beginAtZero: true
                         }
