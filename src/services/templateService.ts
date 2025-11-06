@@ -39,13 +39,10 @@ function replacePlaceholders(content: string, date: Date, filename?: string): st
  * Generate YAML frontmatter for a note
  */
 function generateFrontmatter(date: Date, filename?: string): string {
-    const dateStr = formatDateForNote(date);
-    const timeStr = formatTimeForNote(date);
-
     const lines = [
         '---',
         'tags: []',
-        `created: ${dateStr} at ${timeStr}`,
+        `created: ${date.toISOString()}`,
     ];
 
     if (filename) {
