@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.36.4](https://github.com/jsonify/noted/compare/v1.36.3...v1.36.4) (2025-11-06)
+
+
+### Bug Fixes
+
+* **deps:** resolve @conventional-changelog/git-client security vulnerability ([#68](https://github.com/jsonify/noted/issues/68)) ([16cef9c](https://github.com/jsonify/noted/commit/16cef9c11933f4a6059f36547a8cb8a2bfb1faca)), closes [#1](https://github.com/jsonify/noted/issues/1)
+
 ### [1.36.3](https://github.com/jsonify/noted/compare/v1.36.2...v1.36.3) (2025-11-06)
 
 ### [1.36.2](https://github.com/jsonify/noted/compare/v1.36.1...v1.36.2) (2025-11-06)
