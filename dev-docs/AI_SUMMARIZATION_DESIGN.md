@@ -99,7 +99,7 @@ class SummarizationService {
 }
 
 interface SummaryOptions {
-  maxLength?: number;      // Target summary length (short/medium/long)
+  maxLength?: 'short' | 'medium' | 'long'; // Target summary length
   format?: 'paragraph' | 'bullets' | 'structured';
   includeActionItems?: boolean;
   includeKeywords?: boolean;
