@@ -35,6 +35,7 @@
 - [x] Custom prompt templates
 - [x] Summary history/versions
 - [x] Auto-tagging based on content
+- [x] Critical bug fixes (memory leaks, type errors, diff implementation)
 - [ ] Semantic search using embeddings (deferred)
 - [ ] Note version comparison via git (deferred)
 
@@ -45,3 +46,7 @@
 - Semantic search requires embedding generation (external API or local model)
 - Note version comparison requires git integration (complex, low priority)
 - Core Phase 4 features (templates, history, auto-tagging) all implemented
+- Code review completed and 3 critical bugs fixed:
+  1. Memory leak from missing command disposables
+  2. Type cast error in promptTemplateService
+  3. Broken diff command implementation
