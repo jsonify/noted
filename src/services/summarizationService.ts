@@ -212,7 +212,7 @@ Summary requirements:
             maxLength: config.get<'short' | 'medium' | 'long'>('summaryLength', 'medium'),
             format: config.get<'paragraph' | 'bullets' | 'structured'>('summaryFormat', 'structured'),
             includeActionItems: config.get<boolean>('includeActionItems', true),
-            includeKeywords: false // Not yet in config
+            includeKeywords: config.get<boolean>('includeKeywords', false)
         };
     }
 

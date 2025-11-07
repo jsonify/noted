@@ -73,6 +73,9 @@ import {
     handleSummarizeNote,
     handleSummarizeCurrentNote,
     handleSummarizeRecent,
+    handleSummarizeWeek,
+    handleSummarizeMonth,
+    handleSummarizeCustomRange,
     handleClearSummaryCache
 } from './commands/summarizationCommands';
 import { markdownItWikilinkEmbed, warmUpPathCache, clearPathResolutionCache } from './features/preview/wikilink-embed';
@@ -1855,6 +1858,18 @@ export function activate(context: vscode.ExtensionContext) {
         await handleSummarizeRecent(summarizationService);
     });
 
+    let summarizeWeek = vscode.commands.registerCommand('noted.summarizeWeek', async () => {
+        await handleSummarizeWeek(summarizationService);
+    });
+
+    let summarizeMonth = vscode.commands.registerCommand('noted.summarizeMonth', async () => {
+        await handleSummarizeMonth(summarizationService);
+    });
+
+    let summarizeCustomRange = vscode.commands.registerCommand('noted.summarizeCustomRange', async () => {
+        await handleSummarizeCustomRange(summarizationService);
+    });
+
     let clearSummaryCache = vscode.commands.registerCommand('noted.clearSummaryCache', async () => {
         await handleClearSummaryCache(summarizationService);
     });
@@ -1874,7 +1889,7 @@ export function activate(context: vscode.ExtensionContext) {
         showPreview, showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol,
-        summarizeNote, summarizeCurrentNote, summarizeRecent, clearSummaryCache,
+        summarizeNote, summarizeCurrentNote, summarizeRecent, summarizeWeek, summarizeMonth, summarizeCustomRange, clearSummaryCache,
         refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource, openTagReference
     );
 

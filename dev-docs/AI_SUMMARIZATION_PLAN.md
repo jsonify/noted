@@ -12,13 +12,14 @@
 **Estimated effort:** 2-3 days
 
 ### Phase 2: Enhanced Features
-- [ ] Batch summarization (week/month)
-- [ ] Cache implementation
-- [ ] Progress indicators
-- [ ] Summary formatting options
-- [ ] Configuration settings
+- [x] Batch summarization (week/month/custom range)
+- [x] Cache implementation
+- [x] Progress indicators (cancellable with detailed progress)
+- [x] Summary formatting options
+- [x] Configuration settings
 
 **Estimated effort:** 2-3 days
+**Status:** ✅ Complete (2025-11-07)
 
 ### Phase 3: Polish & Integration
 - [ ] Search results summarization

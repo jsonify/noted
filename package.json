@@ -523,6 +523,21 @@
         "icon": "$(sparkle)"
       },
       {
+        "command": "noted.summarizeWeek",
+        "title": "Noted: Summarize This Week",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "noted.summarizeMonth",
+        "title": "Noted: Summarize This Month",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "noted.summarizeCustomRange",
+        "title": "Noted: Summarize Custom Date Range",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "noted.clearSummaryCache",
         "title": "Noted: Clear Summary Cache",
         "icon": "$(clear-all)"
@@ -989,6 +1004,11 @@
           "type": "boolean",
           "default": true,
           "description": "Extract action items in summaries"
+        },
+        "noted.ai.includeKeywords": {
+          "type": "boolean",
+          "default": false,
+          "description": "Extract keywords/tags in summaries"
         },
         "noted.ai.cacheEnabled": {
           "type": "boolean",
