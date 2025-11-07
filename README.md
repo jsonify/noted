@@ -222,7 +222,7 @@ With Noted, your notes folder is like your home—you can visit from anywhere, a
 ✅ Real-time connections panel showing backlinks and outgoing links
 ✅ Note, image, and diagram embeds with `![[embed]]` syntax
 ✅ AI-powered summarization with GitHub Copilot (single notes & batch processing)
-✅ Custom prompt templates and summary history tracking
+✅ Custom prompt templates and summary version history
 ✅ Auto-tagging from AI-extracted keywords
 ✅ Powerful regex + tag + date search
 ✅ Visual calendar for daily notes
