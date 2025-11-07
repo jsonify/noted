@@ -136,6 +136,38 @@ Interactive visualization of note connections showing your knowledge network.
 
 [Learn more →](/noted/posts/graph/)
 
+## 📈 Activity Chart
+
+Visualize your note-taking activity over time with stacked area charts showing notes created, tags added, and links created.
+
+- **Weekly Metrics**: Track your productivity over 12 weeks
+- **Stacked Visualization**: See all metrics in one clear chart
+- **Interactive Legend**: Click to show/hide specific metrics
+- **Historical Analysis**: Infers past activity from file metadata
+- **Trend Identification**: Spot patterns in your note-taking habits
+
+[Learn more →](/noted/posts/activity-chart/)
+
+## ✨ AI Summarization
+
+Generate intelligent summaries of your notes using GitHub Copilot. Summarize single notes or batch process multiple notes by time period.
+
+- **Single Note Summaries**: Right-click any note to generate instant summary
+- **Batch Processing**: Summarize week, month, or custom date ranges
+- **Smart Caching**: Instant retrieval for previously generated summaries
+- **Custom Formats**: Choose paragraph, bullets, or structured summaries
+- **Action Items**: Automatically extract tasks and next steps
+- **Keyword Generation**: AI-extracted tags and topics
+- **Custom Prompts**: Create templates for different contexts (meetings, technical reviews)
+- **Version History**: Track and compare summary versions over time
+- **Auto-Tagging**: Automatically apply AI-extracted tags to notes
+- **Search Integration**: Summarize search results with one click
+- **Export Support**: Include summaries in exported notes
+
+**Requirements:** GitHub Copilot extension with active subscription
+
+[Learn more →](/noted/posts/ai-summarization/)
+
 ## ⚡ Bulk Operations
 
 Multi-select notes for batch operations: move, delete, or archive multiple notes at once.
