@@ -22,13 +22,14 @@
 **Status:** ✅ Complete (2025-11-07)
 
 ### Phase 3: Polish & Integration
-- [ ] Search results summarization
-- [ ] Export with summaries
-- [ ] Hover tooltips with previews
-- [ ] Action item extraction
-- [ ] Keyword generation
+- [x] Search results summarization
+- [x] Export with summaries
+- [x] Hover tooltips with previews
+- [x] Action item extraction (enhanced)
+- [x] Keyword generation (enhanced)
 
 **Estimated effort:** 2-3 days
+**Status:** ✅ Complete (2025-11-07)
 
 ### Phase 4: Advanced Features (Future)
 - [ ] Custom prompt templates

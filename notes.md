@@ -760,6 +760,34 @@ pnpm run test
 
 ## Recent Updates
 
+### AI Summarization Phase 3 (v1.38.0 - 2025-11-07)
+- **Search Results Summarization**: Summarize search results directly from search interface
+  - After performing search, prompt appears: "Summarize Results?"
+  - Analyzes all matching notes with progress tracking
+  - Summary includes search query context
+- **Export with AI Summaries**: Enhanced export functionality with optional summaries
+  - Prompt when exporting: "Include AI summaries? Yes/No"
+  - Each note gets dedicated "## AI Summary" section before content
+  - Export metadata shows summary inclusion status
+  - Cancellable progress during generation
+- **Hover Summary Previews**: AI summaries shown when hovering over wiki-style links
+  - Displays first 100 words of cached summary in tooltip
+  - Shows "✨ AI Summary" header with note name
+  - Clickable links: "View full summary" or "Generate summary"
+  - Only shows cached summaries (no generation on hover)
+- **Enhanced Action Item Extraction**: Improved formatting and detail
+  - Checkbox format: `- [ ] Task description`
+  - Includes assignees when mentioned: `- [ ] Review PR (John)`
+  - Includes deadlines: `- [ ] Deploy by Friday`
+  - Priority markers: `- [ ] [URGENT] Fix bug`
+  - Grouped by category/project for multi-note summaries
+- **Enhanced Keyword Generation**: More intelligent tag suggestions
+  - Hashtag format: `#keyword` or `#project/component`
+  - Focuses on searchable, specific terms
+  - Includes technical terms, project names, domain concepts
+  - Hierarchical tags when applicable
+  - Overarching themes for multi-note summaries
+
 ### AI Summarization Phase 2 (v1.37.0 - 2025-11-07)
 - **Enhanced Batch Summarization**: New commands for week, month, and custom date ranges
   - `Summarize This Week`: Analyze all notes from current week

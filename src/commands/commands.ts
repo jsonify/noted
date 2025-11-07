@@ -15,11 +15,18 @@ import { isValidCustomFolderName, isYearFolder, isMonthFolder } from '../utils/v
 import { formatTimestamp } from '../utils/dateHelpers';
 import { getAllFolders } from '../utils/folderHelpers';
 import { BUILT_IN_TEMPLATE_INFO, DEFAULTS } from '../constants';
+import { SearchResult } from '../services/searchService';
 
 /**
  * Register a function to refresh the tree view
  */
 let refreshTreeView: (() => void) | null = null;
+
+/**
+ * Store last search results for summarization
+ */
+let lastSearchResults: SearchResult[] = [];
+let lastSearchQuery: string = '';
 
 export function setRefreshCallback(callback: () => void) {
     refreshTreeView = callback;
@@ -696,7 +703,13 @@ export async function handleSearchNotes() {
 
             if (results.length === 0) {
                 vscode.window.showInformationMessage('No results found');
+                lastSearchResults = [];
+                lastSearchQuery = '';
             } else {
+                // Store results for potential summarization
+                lastSearchResults = results;
+                lastSearchQuery = query;
+
                 const items = results.map(r => {
                     const fileName = path.basename(r.file);
                     const matchInfo = r.matches > 0 ? ` (${r.matches} match${r.matches > 1 ? 'es' : ''})` : '';
@@ -717,6 +730,19 @@ export async function handleSearchNotes() {
                 if (selected && selected.filePath) {
                     const document = await vscode.workspace.openTextDocument(selected.filePath);
                     await vscode.window.showTextDocument(document);
+                }
+
+                // After search results are displayed, offer to summarize
+                if (results.length > 0) {
+                    const action = await vscode.window.showInformationMessage(
+                        `Found ${results.length} note(s). Would you like to summarize these results?`,
+                        'Summarize Results',
+                        'Dismiss'
+                    );
+
+                    if (action === 'Summarize Results') {
+                        await vscode.commands.executeCommand('noted.summarizeSearchResults');
+                    }
                 }
             }
         } catch (error) {
@@ -768,15 +794,40 @@ export async function handleShowStats() {
     vscode.window.showInformationMessage(message);
 }
 
-export async function handleExportNotes() {
+export async function handleExportNotes(summarizationService?: any) {
     const options = await vscode.window.showQuickPick(
         ['This Week', 'This Month', 'All Notes'],
         { placeHolder: 'Select export range' }
     );
 
-    if (options) {
-        await exportNotesToFile(options);
+    if (!options) {
+        return;
     }
+
+    // Ask if user wants to include AI summaries
+    let includeSummaries = false;
+
+    if (summarizationService) {
+        const summaryChoice = await vscode.window.showQuickPick(
+            [
+                { label: 'No', description: 'Export notes without summaries', value: false },
+                { label: 'Yes', description: 'Include AI-generated summaries for each note', value: true }
+            ],
+            {
+                placeHolder: 'Include AI summaries in export?',
+                title: 'Export Options'
+            }
+        );
+
+        if (summaryChoice === undefined) {
+            // User cancelled
+            return;
+        }
+
+        includeSummaries = summaryChoice.value;
+    }
+
+    await exportNotesToFile(options, summarizationService, includeSummaries);
 }
 
 export async function handleShowConfig() {
@@ -797,6 +848,106 @@ export async function handleShowConfig() {
         `Exists: ${exists}`;
 
     vscode.window.showInformationMessage(message, { modal: true });
+}
+
+// ============================================================================
+// Search Results Summarization Commands
+// ============================================================================
+
+export async function handleSummarizeSearchResults(summarizationService: any) {
+    if (!lastSearchResults || lastSearchResults.length === 0) {
+        vscode.window.showWarningMessage('No search results available. Please perform a search first.');
+        return;
+    }
+
+    try {
+        const notePaths = lastSearchResults.map(r => r.file);
+        const title = `Search Results: ${lastSearchQuery}`;
+        const progressTitle = `Analyzing ${notePaths.length} note(s) from search results...`;
+
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: progressTitle,
+                cancellable: true
+            },
+            async (progress, token) => {
+                // Check if cancelled before starting
+                if (token.isCancellationRequested) {
+                    return;
+                }
+
+                // Report initial progress
+                progress.report({ increment: 0, message: 'Starting...' });
+
+                // If more than 10 notes, summarize individually with progress
+                if (notePaths.length > 10) {
+                    const summaries: string[] = [];
+                    const increment = 100 / notePaths.length;
+
+                    for (let i = 0; i < notePaths.length; i++) {
+                        if (token.isCancellationRequested) {
+                            vscode.window.showInformationMessage('Summarization cancelled');
+                            return;
+                        }
+
+                        const notePath = notePaths[i];
+                        const noteBasename = path.basename(notePath);
+
+                        progress.report({
+                            increment,
+                            message: `Processing ${i + 1} of ${notePaths.length}: ${noteBasename}`
+                        });
+
+                        try {
+                            const summary = await summarizationService.summarizeNote(notePath);
+                            summaries.push(`### ${noteBasename}\n${summary}\n`);
+                        } catch (error) {
+                            summaries.push(`### ${noteBasename}\n*Error: ${error instanceof Error ? error.message : String(error)}*\n`);
+                        }
+                    }
+
+                    // Combine summaries
+                    const combinedSummary = summaries.join('\n');
+                    await displaySearchSummary(combinedSummary, title, notePaths, lastSearchQuery);
+                } else {
+                    // For 10 or fewer notes, use batch summarization
+                    const summary = await summarizationService.summarizeNotes(notePaths);
+                    await displaySearchSummary(summary, title, notePaths, lastSearchQuery);
+                }
+            }
+        );
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+/**
+ * Display search results summary in a new editor tab
+ */
+async function displaySearchSummary(summary: string, title: string, sourcePaths: string[], searchQuery: string): Promise<void> {
+    const timestamp = new Date().toLocaleString();
+    const sourceList = sourcePaths.map(p => `  - ${path.basename(p)}`).join('\n');
+
+    const fullContent = `# Summary: ${title}
+
+Generated: ${timestamp}
+Search Query: "${searchQuery}"
+Results: ${sourcePaths.length} note${sourcePaths.length > 1 ? 's' : ''}
+
+${sourcePaths.length > 1 ? `## Source Notes\n${sourceList}\n\n` : ''}## Summary
+
+${summary}
+
+---
+Generated by GitHub Copilot • Noted Extension`;
+
+    const doc = await vscode.workspace.openTextDocument({
+        content: fullContent,
+        language: 'markdown'
+    });
+
+    await vscode.window.showTextDocument(doc, { preview: false });
 }
 
 // ============================================================================

@@ -541,6 +541,11 @@
         "command": "noted.clearSummaryCache",
         "title": "Noted: Clear Summary Cache",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "noted.summarizeSearchResults",
+        "title": "Noted: Summarize Search Results",
+        "icon": "$(sparkle)"
       }
     ],
     "keybindings": [

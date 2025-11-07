@@ -82,11 +82,21 @@ Summary requirements:
 - Focus on: main topics, key decisions, action items, and outcomes`;
 
         if (options.includeActionItems) {
-            prompt += '\n- Extract action items as a bulleted list';
+            prompt += '\n- Extract action items in a dedicated section with:';
+            prompt += '\n  - Each item as a checkbox: - [ ] Task description';
+            prompt += '\n  - Include assignees if mentioned (e.g., "- [ ] Review PR (John)")';
+            prompt += '\n  - Include deadlines if mentioned (e.g., "- [ ] Deploy by Friday")';
+            prompt += '\n  - Mark priority if critical/urgent (e.g., "- [ ] [URGENT] Fix bug")';
+            prompt += '\n  - Group related items together';
         }
 
         if (options.includeKeywords) {
-            prompt += '\n- Include 3-5 relevant keywords/tags';
+            prompt += '\n- Generate 3-5 highly relevant keywords/tags in a dedicated section:';
+            prompt += '\n  - Choose specific, searchable terms (not generic words)';
+            prompt += '\n  - Include technical terms, project names, or domain concepts';
+            prompt += '\n  - Use hashtag format: #keyword';
+            prompt += '\n  - Prefer hierarchical tags when applicable: #project/frontend';
+            prompt += '\n  - Focus on topics that would help find this note later';
         }
 
         prompt += '\n\nProvide only the summary without preamble.';
@@ -120,7 +130,20 @@ Summary requirements:
 - Format: ${format}`;
 
         if (options.includeActionItems) {
-            prompt += '\n- Extract all action items across notes';
+            prompt += '\n- Extract all action items across notes in a dedicated section:';
+            prompt += '\n  - Consolidate duplicate/similar items';
+            prompt += '\n  - Use checkbox format: - [ ] Task description';
+            prompt += '\n  - Include assignees and deadlines if mentioned';
+            prompt += '\n  - Mark priority/urgency when applicable';
+            prompt += '\n  - Group by project/category when relevant';
+        }
+
+        if (options.includeKeywords) {
+            prompt += '\n- Generate 3-5 overarching keywords/tags that span all notes:';
+            prompt += '\n  - Choose terms that represent common themes';
+            prompt += '\n  - Use hashtag format: #keyword';
+            prompt += '\n  - Include project names, technologies, or key topics';
+            prompt += '\n  - Prefer hierarchical tags: #project/component';
         }
 
         prompt += '\n\nProvide only the summary without preamble.';
