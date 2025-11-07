@@ -10,7 +10,7 @@
     "url": "https://github.com/jsonify/noted"
   },
   "engines": {
-    "vscode": "^1.80.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Other"
@@ -506,6 +506,26 @@
         "command": "noted.refreshCollections",
         "title": "Noted: Refresh Collections",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "noted.summarizeNote",
+        "title": "Noted: Summarize Note",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "noted.summarizeCurrentNote",
+        "title": "Noted: Summarize Current Note",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "noted.summarizeRecent",
+        "title": "Noted: Summarize Recent Notes (Last 7 Days)",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "noted.clearSummaryCache",
+        "title": "Noted: Clear Summary Cache",
+        "icon": "$(clear-all)"
       }
     ],
     "keybindings": [
@@ -540,6 +560,11 @@
           "command": "noted.extractSelectionToNote",
           "when": "editorHasSelection",
           "group": "noted@1"
+        },
+        {
+          "command": "noted.summarizeCurrentNote",
+          "when": "resourcePath =~ /Notes.*\\.(txt|md)$/",
+          "group": "ai@1"
         }
       ],
       "view/title": [
@@ -776,6 +801,11 @@
           "group": "organize@2"
         },
         {
+          "command": "noted.summarizeNote",
+          "when": "view == notedView && viewItem == note",
+          "group": "ai@1"
+        },
+        {
           "command": "noted.searchTag",
           "when": "view == notedTagsView && viewItem == tag",
           "group": "navigation@1"
@@ -929,6 +959,33 @@
           "type": "number",
           "default": 1.5,
           "description": "Collision padding multiplier for node spacing. Adaptive: 2.5 for dense graphs (50+ nodes)"
+        },
+        "noted.ai.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable AI-powered summarization features"
+        },
+        "noted.ai.summaryLength": {
+          "type": "string",
+          "enum": ["short", "medium", "long"],
+          "default": "medium",
+          "description": "Default summary length"
+        },
+        "noted.ai.summaryFormat": {
+          "type": "string",
+          "enum": ["paragraph", "bullets", "structured"],
+          "default": "structured",
+          "description": "Default summary format"
+        },
+        "noted.ai.includeActionItems": {
+          "type": "boolean",
+          "default": true,
+          "description": "Extract action items in summaries"
+        },
+        "noted.ai.cacheEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Cache generated summaries for better performance"
         }
       }
     }

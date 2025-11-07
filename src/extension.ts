@@ -53,6 +53,7 @@ import {
     handleBulkMerge
 } from './commands/bulkCommands';
 import { UndoService } from './services/undoService';
+import { SummarizationService } from './services/summarizationService';
 import {
     trackDeleteNote,
     trackDeleteFolder,
@@ -68,6 +69,12 @@ import {
     handleShowUndoHistory,
     handleClearUndoHistory
 } from './commands/undoCommands';
+import {
+    handleSummarizeNote,
+    handleSummarizeCurrentNote,
+    handleSummarizeRecent,
+    handleClearSummaryCache
+} from './commands/summarizationCommands';
 import { markdownItWikilinkEmbed, warmUpPathCache, clearPathResolutionCache } from './features/preview/wikilink-embed';
 import { showMarkdownPreview } from './preview/markdownPreview';
 import { FOLDER_PATTERNS, SPECIAL_FOLDERS, MONTH_NAMES } from './constants';
@@ -477,6 +484,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Set link service on undo service for proper link handling during undo/redo
     undoService.setLinkService(linkService);
+
+    // Initialize AI summarization service
+    const summarizationService = new SummarizationService(context);
 
     // Initialize markdown toolbar service for visual formatting buttons
     const markdownToolbarService = new MarkdownToolbarService(context);
@@ -1829,6 +1839,26 @@ export function activate(context: vscode.ExtensionContext) {
         await handleRenameSymbol(linkService);
     });
 
+    // ============================================================================
+    // AI Summarization Commands
+    // ============================================================================
+
+    let summarizeNote = vscode.commands.registerCommand('noted.summarizeNote', async (item: NoteItem) => {
+        await handleSummarizeNote(summarizationService, item);
+    });
+
+    let summarizeCurrentNote = vscode.commands.registerCommand('noted.summarizeCurrentNote', async () => {
+        await handleSummarizeCurrentNote(summarizationService);
+    });
+
+    let summarizeRecent = vscode.commands.registerCommand('noted.summarizeRecent', async () => {
+        await handleSummarizeRecent(summarizationService);
+    });
+
+    let clearSummaryCache = vscode.commands.registerCommand('noted.clearSummaryCache', async () => {
+        await handleClearSummaryCache(summarizationService);
+    });
+
     context.subscriptions.push(
         openTodayNote, openWithTemplate, createQuickNote, createCategoryNote, insertTimestamp, extractSelectionToNote, changeFormat,
         refreshNotes, refreshConnections, openNote, openConnection, openConnectionSource, createNoteFromLink, openLinkWithSection, deleteNote, renameNote, copyPath, revealInExplorer,
@@ -1844,6 +1874,7 @@ export function activate(context: vscode.ExtensionContext) {
         showPreview, showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol,
+        summarizeNote, summarizeCurrentNote, summarizeRecent, clearSummaryCache,
         refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource, openTagReference
     );
 
