@@ -276,6 +276,47 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - VS Code theme integration for consistent appearance
   - Tooltip shows week date range and detailed counts
 
+### AI Summarization (v1.37.0 - Phase 2)
+- **Single Note Summarization**: Generate AI-powered summaries of individual notes
+  - Right-click any note in tree view and select "Summarize Note"
+  - Summarize currently open note via command palette
+  - Cancellable progress indicator shows status
+- **Batch Summarization**: Analyze multiple notes at once with intelligent grouping
+  - **Summarize Recent**: Last 7 days of notes
+  - **Summarize This Week**: All notes from current week (Sunday-Saturday)
+  - **Summarize This Month**: All notes from current month
+  - **Custom Date Range**: Select specific start and end dates for analysis
+  - Large batches (>10 notes) show detailed "X of Y" progress with cancellation support
+  - Small batches (≤10 notes) use optimized single-prompt analysis
+- **Smart Caching System**: Automatic cache with LRU eviction for performance
+  - Summaries cached with file modification tracking
+  - Cache invalidates automatically when notes change
+  - Configurable cache enable/disable
+  - Manual cache clearing via command palette
+  - Up to 100 cached summaries stored
+- **Customizable Output**:
+  - **Summary Length**: Short (~50 words), Medium (~150 words), Long (~300 words)
+  - **Format Styles**: Paragraph, Bullets, Structured
+  - **Action Items**: Optionally extract and highlight action items
+  - **Keywords**: Optionally generate 3-5 relevant keywords/tags
+- **Rich Summary Display**: Opens in new markdown editor with metadata
+  - Generated timestamp
+  - Source note(s) list
+  - Formatted summary content
+  - Professional footer with attribution
+- **Progress Indicators**: Enhanced cancellable progress for all operations
+  - Real-time progress for batch operations
+  - Current note being processed shown in progress bar
+  - Cancel button to stop long-running operations
+- **Configuration Settings** (noted.ai.*):
+  - `enabled`: Enable/disable AI features (default: true)
+  - `summaryLength`: Default length (short/medium/long)
+  - `summaryFormat`: Default format (paragraph/bullets/structured)
+  - `includeActionItems`: Extract action items (default: true)
+  - `includeKeywords`: Extract keywords (default: false)
+  - `cacheEnabled`: Cache summaries (default: true)
+- **Requirements**: GitHub Copilot extension must be installed and active
+
 ### Search (ENHANCED v1.6.0)
 - **Full-Text Search**: Search across all notes with preview of matching lines
 - **Regex Search**: Use `regex:` flag in search to enable regular expression pattern matching
@@ -718,6 +759,71 @@ pnpm run test
 ```
 
 ## Recent Updates
+
+### AI Summarization Phase 4 (v1.39.0 - 2025-11-07)
+- **Custom Prompt Templates**: Create and use custom prompts for AI summarization
+  - Built-in templates: Default, Technical Deep Dive, Meeting Summary, Code Review, Brainstorm
+  - Template picker before each summarization
+  - Template variables: `{content}`, `{length}`, `{format}`, `{filename}`, `{date}`, etc.
+  - CRUD operations: Create, Edit, Delete, Duplicate, List templates
+  - Stored in `.noted-templates/prompts/` as JSON files
+  - Last used template remembered per workspace
+- **Summary History/Versions**: Track and compare summary versions over time
+  - Auto-saves each summary with metadata (timestamp, options, model, template)
+  - Max 10 versions per note with LRU eviction
+  - Stored in `.noted-cache/summaries/` as JSON files
+  - Commands: Show History, Compare Versions, Restore Version, Clear History, Show Stats
+  - Side-by-side diff view for version comparison
+  - Comprehensive version metadata display
+- **Auto-Tagging from Summaries**: Automatically generate and apply tags based on AI analysis
+  - Extracts hashtags from summary keywords section
+  - Smart filtering of generic words
+  - Hierarchical tag support: `#project/component`
+  - Tag application modes: Append, Replace, Suggest
+  - Batch auto-tagging: This Week, This Month, Last 7 Days, All Untagged
+  - User confirmation with preview before applying
+  - Frontmatter creation/update with tags array
+  - Context menu integration: Right-click → "Auto-Tag Note from Summary"
+
+### AI Summarization Phase 3 (v1.38.0 - 2025-11-07)
+- **Search Results Summarization**: Summarize search results directly from search interface
+  - After performing search, prompt appears: "Summarize Results?"
+  - Analyzes all matching notes with progress tracking
+  - Summary includes search query context
+- **Export with AI Summaries**: Enhanced export functionality with optional summaries
+  - Prompt when exporting: "Include AI summaries? Yes/No"
+  - Each note gets dedicated "## AI Summary" section before content
+  - Export metadata shows summary inclusion status
+  - Cancellable progress during generation
+- **Hover Summary Previews**: AI summaries shown when hovering over wiki-style links
+  - Displays first 100 words of cached summary in tooltip
+  - Shows "✨ AI Summary" header with note name
+  - Clickable links: "View full summary" or "Generate summary"
+  - Only shows cached summaries (no generation on hover)
+- **Enhanced Action Item Extraction**: Improved formatting and detail
+  - Checkbox format: `- [ ] Task description`
+  - Includes assignees when mentioned: `- [ ] Review PR (John)`
+  - Includes deadlines: `- [ ] Deploy by Friday`
+  - Priority markers: `- [ ] [URGENT] Fix bug`
+  - Grouped by category/project for multi-note summaries
+- **Enhanced Keyword Generation**: More intelligent tag suggestions
+  - Hashtag format: `#keyword` or `#project/component`
+  - Focuses on searchable, specific terms
+  - Includes technical terms, project names, domain concepts
+  - Hierarchical tags when applicable
+  - Overarching themes for multi-note summaries
+
+### AI Summarization Phase 2 (v1.37.0 - 2025-11-07)
+- **Enhanced Batch Summarization**: New commands for week, month, and custom date ranges
+  - `Summarize This Week`: Analyze all notes from current week
+  - `Summarize This Month`: Analyze all notes from current month
+  - `Summarize Custom Range`: Pick specific start/end dates for analysis
+- **Improved Progress Indicators**: All summarization operations now cancellable with detailed progress
+  - Real-time "Processing X of Y" counter for batch operations
+  - Cancel button to abort long-running operations
+  - Smart batching: >10 notes use individual processing with progress, ≤10 use optimized batch mode
+- **Additional Configuration**: New `includeKeywords` setting to extract 3-5 relevant keywords/tags
+- **Complete Phase 2 Implementation**: Cache, progress, batch operations, and configuration all production-ready
 
 ### Smart Collections Documentation Improvements (2025-11-04)
 - **Enhanced Quick Start**: Completely rewrote Quick Start guide with step-by-step instructions

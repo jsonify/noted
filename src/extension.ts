@@ -36,6 +36,7 @@ import { NoteLinkProvider } from './providers/noteLinkProvider';
 import { BacklinkHoverProvider } from './providers/backlinkHoverProvider';
 import { NotePreviewHoverProvider } from './providers/notePreviewHoverProvider';
 import { EmbedHoverProvider } from './providers/embedHoverProvider';
+import { SummaryHoverProvider } from './providers/summaryHoverProvider';
 import { EmbedDecoratorProvider } from './providers/embedDecoratorProvider';
 import { LinkCompletionProvider } from './providers/linkCompletionProvider';
 import { LinkDiagnosticsProvider, LinkCodeActionProvider } from './providers/linkDiagnosticsProvider';
@@ -54,6 +55,7 @@ import {
 } from './commands/bulkCommands';
 import { UndoService } from './services/undoService';
 import { SummarizationService } from './services/summarizationService';
+import { AutoTagService } from './services/autoTagService';
 import {
     trackDeleteNote,
     trackDeleteFolder,
@@ -73,8 +75,32 @@ import {
     handleSummarizeNote,
     handleSummarizeCurrentNote,
     handleSummarizeRecent,
+    handleSummarizeWeek,
+    handleSummarizeMonth,
+    handleSummarizeCustomRange,
     handleClearSummaryCache
 } from './commands/summarizationCommands';
+import {
+    handleAutoTagNote,
+    handleAutoTagCurrentNote,
+    handleAutoTagBatch,
+    handleSuggestTags
+} from './commands/autoTagCommands';
+import {
+    handleCreatePromptTemplate,
+    handleEditPromptTemplate,
+    handleDeletePromptTemplate,
+    handleDuplicatePromptTemplate,
+    handleListPromptTemplates,
+    handleViewTemplateVariables
+} from './commands/promptTemplateCommands';
+import {
+    handleShowSummaryHistory,
+    handleCompareSummaries,
+    handleRestoreSummaryVersion,
+    handleClearSummaryHistory,
+    handleShowSummaryHistoryStats
+} from './commands/summaryHistoryCommands';
 import { markdownItWikilinkEmbed, warmUpPathCache, clearPathResolutionCache } from './features/preview/wikilink-embed';
 import { showMarkdownPreview } from './preview/markdownPreview';
 import { FOLDER_PATTERNS, SPECIAL_FOLDERS, MONTH_NAMES } from './constants';
@@ -486,7 +512,18 @@ export function activate(context: vscode.ExtensionContext) {
     undoService.setLinkService(linkService);
 
     // Initialize AI summarization service
-    const summarizationService = new SummarizationService(context);
+    const summarizationService = new SummarizationService(context, notesPath || undefined);
+
+    // Initialize auto-tagging service (Phase 4)
+    const autoTagService = new AutoTagService();
+
+    // Register hover provider for AI summary previews
+    const summaryHoverProvider = new SummaryHoverProvider(linkService, summarizationService);
+    const summaryHoverDisposable = vscode.languages.registerHoverProvider(
+        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        summaryHoverProvider
+    );
+    context.subscriptions.push(summaryHoverDisposable);
 
     // Initialize markdown toolbar service for visual formatting buttons
     const markdownToolbarService = new MarkdownToolbarService(context);
@@ -1369,14 +1406,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command to export notes
     let exportNotes = vscode.commands.registerCommand('noted.exportNotes', async () => {
-        const options = await vscode.window.showQuickPick(
-            ['This Week', 'This Month', 'All Notes'],
-            { placeHolder: 'Select export range' }
-        );
-
-        if (options) {
-            await exportNotesToFile(options);
-        }
+        const { handleExportNotes } = await import('./commands/commands');
+        await handleExportNotes(summarizationService);
     });
 
     // Command to move notes folder
@@ -1844,19 +1875,114 @@ export function activate(context: vscode.ExtensionContext) {
     // ============================================================================
 
     let summarizeNote = vscode.commands.registerCommand('noted.summarizeNote', async (item: NoteItem) => {
-        await handleSummarizeNote(summarizationService, item);
+        await handleSummarizeNote(summarizationService, item, context);
     });
 
     let summarizeCurrentNote = vscode.commands.registerCommand('noted.summarizeCurrentNote', async () => {
-        await handleSummarizeCurrentNote(summarizationService);
+        await handleSummarizeCurrentNote(summarizationService, context);
     });
 
     let summarizeRecent = vscode.commands.registerCommand('noted.summarizeRecent', async () => {
-        await handleSummarizeRecent(summarizationService);
+        await handleSummarizeRecent(summarizationService, context);
+    });
+
+    let summarizeWeek = vscode.commands.registerCommand('noted.summarizeWeek', async () => {
+        await handleSummarizeWeek(summarizationService, context);
+    });
+
+    let summarizeMonth = vscode.commands.registerCommand('noted.summarizeMonth', async () => {
+        await handleSummarizeMonth(summarizationService, context);
+    });
+
+    let summarizeCustomRange = vscode.commands.registerCommand('noted.summarizeCustomRange', async () => {
+        await handleSummarizeCustomRange(summarizationService, context);
     });
 
     let clearSummaryCache = vscode.commands.registerCommand('noted.clearSummaryCache', async () => {
         await handleClearSummaryCache(summarizationService);
+    });
+
+    // ============================================================================
+    // Auto-Tagging Commands (Phase 4)
+    // ============================================================================
+
+    let autoTagNote = vscode.commands.registerCommand('noted.autoTagNote', async (item: NoteItem) => {
+        await handleAutoTagNote(summarizationService, autoTagService, item);
+    });
+
+    let autoTagCurrentNote = vscode.commands.registerCommand('noted.autoTagCurrentNote', async () => {
+        await handleAutoTagCurrentNote(summarizationService, autoTagService);
+    });
+
+    let autoTagBatch = vscode.commands.registerCommand('noted.autoTagBatch', async () => {
+        await handleAutoTagBatch(summarizationService, autoTagService);
+    });
+
+    let suggestTags = vscode.commands.registerCommand('noted.suggestTags', async () => {
+        await handleSuggestTags(summarizationService, autoTagService);
+    });
+
+    // ============================================================================
+    // Prompt Template Commands
+    // ============================================================================
+
+    let createPromptTemplate = vscode.commands.registerCommand('noted.createPromptTemplate', async () => {
+        const { PromptTemplateService } = await import('./services/promptTemplateService');
+        const promptTemplateService = new PromptTemplateService(context);
+        await handleCreatePromptTemplate(promptTemplateService);
+    });
+
+    let editPromptTemplate = vscode.commands.registerCommand('noted.editPromptTemplate', async () => {
+        const { PromptTemplateService } = await import('./services/promptTemplateService');
+        const promptTemplateService = new PromptTemplateService(context);
+        await handleEditPromptTemplate(promptTemplateService);
+    });
+
+    let deletePromptTemplate = vscode.commands.registerCommand('noted.deletePromptTemplate', async () => {
+        const { PromptTemplateService } = await import('./services/promptTemplateService');
+        const promptTemplateService = new PromptTemplateService(context);
+        await handleDeletePromptTemplate(promptTemplateService);
+    });
+
+    let duplicatePromptTemplate = vscode.commands.registerCommand('noted.duplicatePromptTemplate', async () => {
+        const { PromptTemplateService } = await import('./services/promptTemplateService');
+        const promptTemplateService = new PromptTemplateService(context);
+        await handleDuplicatePromptTemplate(promptTemplateService);
+    });
+
+    let listPromptTemplates = vscode.commands.registerCommand('noted.listPromptTemplates', async () => {
+        const { PromptTemplateService } = await import('./services/promptTemplateService');
+        const promptTemplateService = new PromptTemplateService(context);
+        await handleListPromptTemplates(promptTemplateService);
+    });
+
+    let viewTemplateVariables = vscode.commands.registerCommand('noted.viewTemplateVariables', async () => {
+        await handleViewTemplateVariables();
+    });
+
+    let showSummaryHistory = vscode.commands.registerCommand('noted.showSummaryHistory', async () => {
+        await handleShowSummaryHistory(summarizationService);
+    });
+
+    let compareSummaries = vscode.commands.registerCommand('noted.compareSummaries', async () => {
+        await handleCompareSummaries(summarizationService);
+    });
+
+    let restoreSummaryVersion = vscode.commands.registerCommand('noted.restoreSummaryVersion', async () => {
+        await handleRestoreSummaryVersion(summarizationService);
+    });
+
+    let clearSummaryHistory = vscode.commands.registerCommand('noted.clearSummaryHistory', async () => {
+        await handleClearSummaryHistory(summarizationService);
+    });
+
+    let showSummaryHistoryStats = vscode.commands.registerCommand('noted.showSummaryHistoryStats', async () => {
+        await handleShowSummaryHistoryStats(summarizationService);
+    });
+
+    let summarizeSearchResults = vscode.commands.registerCommand('noted.summarizeSearchResults', async () => {
+        const { handleSummarizeSearchResults } = await import('./commands/commands');
+        await handleSummarizeSearchResults(summarizationService);
     });
 
     context.subscriptions.push(
@@ -1874,7 +2000,10 @@ export function activate(context: vscode.ExtensionContext) {
         showPreview, showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol,
-        summarizeNote, summarizeCurrentNote, summarizeRecent, clearSummaryCache,
+        summarizeNote, summarizeCurrentNote, summarizeRecent, summarizeWeek, summarizeMonth, summarizeCustomRange, clearSummaryCache, summarizeSearchResults,
+        showSummaryHistory, compareSummaries, restoreSummaryVersion, clearSummaryHistory, showSummaryHistoryStats,
+        createPromptTemplate, editPromptTemplate, deletePromptTemplate, duplicatePromptTemplate, listPromptTemplates, viewTemplateVariables,
+        autoTagNote, autoTagCurrentNote, autoTagBatch, suggestTags,
         refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource, openTagReference
     );
 
@@ -1887,6 +2016,7 @@ export function activate(context: vscode.ExtensionContext) {
                 await tagService.updateNotesPath(newNotesPath);
                 await linkService.updateNotesPath(newNotesPath);
                 archiveService.updateNotesPath(newNotesPath);
+                summarizationService.setHistoryService(newNotesPath);
 
                 // Clear path resolution cache for embeds
                 clearPathResolutionCache();
@@ -2490,7 +2620,7 @@ async function getNoteStats(): Promise<{total: number, thisWeek: number, thisMon
     return { total, thisWeek, thisMonth };
 }
 
-async function exportNotesToFile(range: string) {
+async function exportNotesToFile(range: string, summarizationService?: SummarizationService, includeSummaries: boolean = false) {
     const notesPath = getNotesPath();
     if (!notesPath) {
         vscode.window.showErrorMessage('Please open a workspace folder first');
@@ -2521,7 +2651,8 @@ async function exportNotesToFile(range: string) {
         filterDate = new Date(0);
     }
 
-    let combinedContent = `Exported Notes - ${range}\n${'='.repeat(50)}\n\n`;
+    // Collect all notes first
+    const notesToExport: Array<{ name: string; path: string; content: string }> = [];
 
     async function collectNotes(dir: string) {
         try {
@@ -2535,7 +2666,11 @@ async function exportNotesToFile(range: string) {
                         const stat = await fsp.stat(fullPath);
                         if (stat.mtime >= filterDate) {
                             const content = await fsp.readFile(fullPath, 'utf8');
-                            combinedContent += `\n\n--- ${entry.name} ---\n\n${content}`;
+                            notesToExport.push({
+                                name: entry.name,
+                                path: fullPath,
+                                content
+                            });
                         }
                     } catch (error) {
                         // Error processing file
@@ -2548,14 +2683,94 @@ async function exportNotesToFile(range: string) {
     }
 
     try {
+        // First, collect all notes
         await collectNotes(notesPath);
+
+        if (notesToExport.length === 0) {
+            vscode.window.showInformationMessage('No notes found in the selected range');
+            return;
+        }
+
+        // Build export content with optional summaries
+        let combinedContent = `Exported Notes - ${range}\n${'='.repeat(50)}\n`;
+        combinedContent += `Export Date: ${now.toLocaleString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        })}\n`;
+        combinedContent += `Total Notes: ${notesToExport.length}\n`;
+
+        if (includeSummaries && summarizationService) {
+            combinedContent += `AI Summaries: Included\n`;
+        }
+
+        combinedContent += `${'='.repeat(50)}\n\n`;
+
+        // Process notes with or without summaries
+        if (includeSummaries && summarizationService) {
+            // Use withProgress with cancellation support
+            await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: 'Exporting notes with AI summaries',
+                    cancellable: true
+                },
+                async (progress, token) => {
+                    for (let i = 0; i < notesToExport.length; i++) {
+                        // Check for cancellation
+                        if (token.isCancellationRequested) {
+                            throw new Error('Export cancelled by user');
+                        }
+
+                        const note = notesToExport[i];
+
+                        // Update progress
+                        progress.report({
+                            message: `Exporting ${i + 1} of ${notesToExport.length} notes (generating summaries)...`,
+                            increment: (100 / notesToExport.length)
+                        });
+
+                        combinedContent += `\n\n${'='.repeat(50)}\n`;
+                        combinedContent += `${note.name}\n`;
+                        combinedContent += `${'='.repeat(50)}\n\n`;
+
+                        // Generate summary
+                        try {
+                            const summary = await summarizationService.summarizeNote(note.path, {
+                                maxLength: 'medium',
+                                format: 'structured',
+                                includeActionItems: true
+                            });
+
+                            combinedContent += `## AI Summary\n\n${summary}\n\n`;
+                            combinedContent += `## Note Content\n\n${note.content}\n`;
+                        } catch (error) {
+                            // If summary fails, include note without summary
+                            combinedContent += `## AI Summary\n\n[Summary generation failed: ${error instanceof Error ? error.message : String(error)}]\n\n`;
+                            combinedContent += `## Note Content\n\n${note.content}\n`;
+                        }
+                    }
+                }
+            );
+        } else {
+            // Export without summaries (original behavior)
+            for (const note of notesToExport) {
+                combinedContent += `\n\n--- ${note.name} ---\n\n${note.content}`;
+            }
+        }
 
         const exportPath = path.join(rootPath, `notes-export-${Date.now()}.txt`);
         await fsp.writeFile(exportPath, combinedContent);
 
         const document = await vscode.workspace.openTextDocument(exportPath);
         await vscode.window.showTextDocument(document);
-        vscode.window.showInformationMessage(`Exported to ${path.basename(exportPath)}`);
+
+        const summaryInfo = includeSummaries ? ' with AI summaries' : '';
+        vscode.window.showInformationMessage(`Exported ${notesToExport.length} note(s)${summaryInfo} to ${path.basename(exportPath)}`);
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to export notes: ${error instanceof Error ? error.message : String(error)}`);
     }

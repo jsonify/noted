@@ -5,17 +5,40 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { SummarizationService } from '../services/summarizationService';
+import { SummarizationService, SummaryOptions } from '../services/summarizationService';
+import { AutoTagService } from '../services/autoTagService';
 import { NoteItem } from '../providers/treeItems';
 import { getNotesPath } from '../services/configService';
 import { readDirectoryWithTypes } from '../services/fileSystemService';
+import { formatTagForDisplay } from '../utils/tagHelpers';
+import { PromptTemplateService } from '../services/promptTemplateService';
+
+/**
+ * Prompt user to select a template for summarization
+ */
+async function promptForTemplate(
+    context: vscode.ExtensionContext
+): Promise<SummaryOptions | null> {
+    const promptTemplateService = new PromptTemplateService(context);
+
+    const template = await promptTemplateService.pickTemplate();
+
+    if (!template) {
+        return null; // User cancelled
+    }
+
+    return {
+        promptTemplate: template
+    };
+}
 
 /**
  * Handle summarizing a single note from tree view
  */
 export async function handleSummarizeNote(
     summarizationService: SummarizationService,
-    noteItem: NoteItem
+    noteItem: NoteItem,
+    context: vscode.ExtensionContext
 ): Promise<void> {
     if (noteItem.type !== 'note') {
         vscode.window.showErrorMessage('Please select a note to summarize');
@@ -23,15 +46,29 @@ export async function handleSummarizeNote(
     }
 
     try {
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
         await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
                 title: 'Generating summary...',
-                cancellable: false
+                cancellable: true
             },
-            async () => {
-                const summary = await summarizationService.summarizeNote(noteItem.filePath);
-                await displaySummary(summary, path.basename(noteItem.filePath), [noteItem.filePath]);
+            async (progress, token) => {
+                if (token.isCancellationRequested) {
+                    return;
+                }
+
+                progress.report({ message: path.basename(noteItem.filePath) });
+                const summary = await summarizationService.summarizeNote(noteItem.filePath, options);
+
+                if (!token.isCancellationRequested) {
+                    await displaySummary(summary, path.basename(noteItem.filePath), [noteItem.filePath]);
+                }
             }
         );
     } catch (error) {
@@ -43,7 +80,8 @@ export async function handleSummarizeNote(
  * Handle summarizing the currently open note
  */
 export async function handleSummarizeCurrentNote(
-    summarizationService: SummarizationService
+    summarizationService: SummarizationService,
+    context: vscode.ExtensionContext
 ): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -67,15 +105,29 @@ export async function handleSummarizeCurrentNote(
     }
 
     try {
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
         await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
                 title: 'Generating summary...',
-                cancellable: false
+                cancellable: true
             },
-            async () => {
-                const summary = await summarizationService.summarizeNote(filePath);
-                await displaySummary(summary, path.basename(filePath), [filePath]);
+            async (progress, token) => {
+                if (token.isCancellationRequested) {
+                    return;
+                }
+
+                progress.report({ message: path.basename(filePath) });
+                const summary = await summarizationService.summarizeNote(filePath, options);
+
+                if (!token.isCancellationRequested) {
+                    await displaySummary(summary, path.basename(filePath), [filePath]);
+                }
             }
         );
     } catch (error) {
@@ -87,7 +139,8 @@ export async function handleSummarizeCurrentNote(
  * Handle summarizing recent notes (last 7 days)
  */
 export async function handleSummarizeRecent(
-    summarizationService: SummarizationService
+    summarizationService: SummarizationService,
+    context: vscode.ExtensionContext
 ): Promise<void> {
     const notesPath = getNotesPath();
     if (!notesPath) {
@@ -107,16 +160,186 @@ export async function handleSummarizeRecent(
             return;
         }
 
-        await vscode.window.withProgress(
-            {
-                location: vscode.ProgressLocation.Notification,
-                title: `Analyzing ${recentNotes.length} notes from the last 7 days...`,
-                cancellable: false
-            },
-            async () => {
-                const summary = await summarizationService.summarizeNotes(recentNotes);
-                await displaySummary(summary, `Recent Notes (Last 7 Days)`, recentNotes);
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
+        await summarizeWithProgress(
+            summarizationService,
+            recentNotes,
+            `Recent Notes (Last 7 Days)`,
+            `Analyzing ${recentNotes.length} notes from the last 7 days...`,
+            options
+        );
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+/**
+ * Handle summarizing notes from this week
+ */
+export async function handleSummarizeWeek(
+    summarizationService: SummarizationService,
+    context: vscode.ExtensionContext
+): Promise<void> {
+    const notesPath = getNotesPath();
+    if (!notesPath) {
+        vscode.window.showErrorMessage('Notes folder not configured');
+        return;
+    }
+
+    try {
+        // Get start of this week (Sunday)
+        const now = new Date();
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const weekNotes = await getRecentNotes(notesPath, startOfWeek);
+
+        if (weekNotes.length === 0) {
+            vscode.window.showInformationMessage('No notes found this week');
+            return;
+        }
+
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
+        await summarizeWithProgress(
+            summarizationService,
+            weekNotes,
+            `This Week (${startOfWeek.toLocaleDateString()})`,
+            `Analyzing ${weekNotes.length} notes from this week...`,
+            options
+        );
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+/**
+ * Handle summarizing notes from this month
+ */
+export async function handleSummarizeMonth(
+    summarizationService: SummarizationService,
+    context: vscode.ExtensionContext
+): Promise<void> {
+    const notesPath = getNotesPath();
+    if (!notesPath) {
+        vscode.window.showErrorMessage('Notes folder not configured');
+        return;
+    }
+
+    try {
+        // Get start of this month
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const monthNotes = await getRecentNotes(notesPath, startOfMonth);
+
+        if (monthNotes.length === 0) {
+            vscode.window.showInformationMessage('No notes found this month');
+            return;
+        }
+
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
+        await summarizeWithProgress(
+            summarizationService,
+            monthNotes,
+            `This Month (${startOfMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })})`,
+            `Analyzing ${monthNotes.length} notes from this month...`,
+            options
+        );
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+/**
+ * Handle summarizing notes from a custom date range
+ */
+export async function handleSummarizeCustomRange(
+    summarizationService: SummarizationService,
+    context: vscode.ExtensionContext
+): Promise<void> {
+    const notesPath = getNotesPath();
+    if (!notesPath) {
+        vscode.window.showErrorMessage('Notes folder not configured');
+        return;
+    }
+
+    try {
+        // Prompt for start date
+        const startDateStr = await vscode.window.showInputBox({
+            prompt: 'Enter start date (YYYY-MM-DD)',
+            placeHolder: '2025-01-01',
+            validateInput: (value) => {
+                if (!value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    return 'Please enter a valid date in YYYY-MM-DD format';
+                }
+                return undefined;
             }
+        });
+
+        if (!startDateStr) {
+            return; // User cancelled
+        }
+
+        // Prompt for end date
+        const endDateStr = await vscode.window.showInputBox({
+            prompt: 'Enter end date (YYYY-MM-DD)',
+            placeHolder: '2025-01-31',
+            validateInput: (value) => {
+                if (!value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    return 'Please enter a valid date in YYYY-MM-DD format';
+                }
+                return undefined;
+            }
+        });
+
+        if (!endDateStr) {
+            return; // User cancelled
+        }
+
+        const startDate = new Date(startDateStr);
+        const endDate = new Date(endDateStr);
+        endDate.setHours(23, 59, 59, 999); // End of day
+
+        if (startDate > endDate) {
+            vscode.window.showErrorMessage('Start date must be before end date');
+            return;
+        }
+
+        const rangeNotes = await getNotesInRange(notesPath, startDate, endDate);
+
+        if (rangeNotes.length === 0) {
+            vscode.window.showInformationMessage(`No notes found between ${startDateStr} and ${endDateStr}`);
+            return;
+        }
+
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
+        await summarizeWithProgress(
+            summarizationService,
+            rangeNotes,
+            `Custom Range (${startDateStr} to ${endDateStr})`,
+            `Analyzing ${rangeNotes.length} notes from custom range...`,
+            options
         );
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
@@ -150,9 +373,15 @@ export async function handleClearSummaryCache(
 }
 
 /**
- * Display summary in a new editor tab
+ * Display summary in a new editor tab with optional auto-tagging prompt
  */
-async function displaySummary(summary: string, title: string, sourcePaths: string[]): Promise<void> {
+async function displaySummary(
+    summary: string,
+    title: string,
+    sourcePaths: string[],
+    autoTagService?: AutoTagService,
+    offerAutoTag: boolean = false
+): Promise<void> {
     // Create a new untitled document with the summary
     const timestamp = new Date().toLocaleString();
     const sourceList = sourcePaths.map(p => `  - ${path.basename(p)}`).join('\n');
@@ -175,6 +404,76 @@ Generated by GitHub Copilot • Noted Extension`;
     });
 
     await vscode.window.showTextDocument(doc, { preview: false });
+
+    // Offer auto-tagging if enabled and service provided
+    if (offerAutoTag && autoTagService && sourcePaths.length === 1) {
+        // TODO: Implement promptForAutoTagging function
+        // await promptForAutoTagging(autoTagService, sourcePaths[0], summary);
+    }
+}
+
+/**
+ * Summarize notes with enhanced progress tracking
+ */
+async function summarizeWithProgress(
+    summarizationService: SummarizationService,
+    notePaths: string[],
+    title: string,
+    progressTitle: string,
+    options?: SummaryOptions
+): Promise<void> {
+    await vscode.window.withProgress(
+        {
+            location: vscode.ProgressLocation.Notification,
+            title: progressTitle,
+            cancellable: true
+        },
+        async (progress, token) => {
+            // Check if cancelled before starting
+            if (token.isCancellationRequested) {
+                return;
+            }
+
+            // Report initial progress
+            progress.report({ increment: 0, message: 'Starting...' });
+
+            // If more than 10 notes, summarize individually with progress
+            if (notePaths.length > 10) {
+                const summaries: string[] = [];
+                const increment = 100 / notePaths.length;
+
+                for (let i = 0; i < notePaths.length; i++) {
+                    if (token.isCancellationRequested) {
+                        vscode.window.showInformationMessage('Summarization cancelled');
+                        return;
+                    }
+
+                    const notePath = notePaths[i];
+                    const noteBasename = path.basename(notePath);
+
+                    progress.report({
+                        increment,
+                        message: `Processing ${i + 1} of ${notePaths.length}: ${noteBasename}`
+                    });
+
+                    try {
+                        const summary = await summarizationService.summarizeNote(notePath, options);
+                        summaries.push(`### ${noteBasename}\n${summary}\n`);
+                    } catch (error) {
+                        summaries.push(`### ${noteBasename}\n*Error: ${error instanceof Error ? error.message : String(error)}*\n`);
+                    }
+                }
+
+                // Combine summaries
+                const combinedSummary = summaries.join('\n');
+                await displaySummary(combinedSummary, title, notePaths);
+            } else {
+                // For 10 or fewer notes, use batch summarization
+                const summary = await summarizationService.summarizeNotes(notePaths, options);
+                await displaySummary(summary, title, notePaths);
+            }
+        }
+    );
 }
 
 /**
@@ -200,6 +499,49 @@ async function getRecentNotes(notesPath: string, since: Date): Promise<string[]>
                     try {
                         const stat = await vscode.workspace.fs.stat(vscode.Uri.file(fullPath));
                         if (stat.mtime >= since.getTime()) {
+                            notes.push({ path: fullPath, mtime: stat.mtime });
+                        }
+                    } catch (error) {
+                        // Error stating file, skip it
+                    }
+                }
+            }
+        } catch (error) {
+            // Error reading directory, skip it
+        }
+    }
+
+    await scanDirectory(notesPath);
+
+    // Sort by modification time (most recent first)
+    notes.sort((a, b) => b.mtime - a.mtime);
+
+    return notes.map(note => note.path);
+}
+
+/**
+ * Get all notes within a date range (inclusive)
+ */
+async function getNotesInRange(notesPath: string, startDate: Date, endDate: Date): Promise<string[]> {
+    const notes: { path: string; mtime: number }[] = [];
+
+    async function scanDirectory(dir: string): Promise<void> {
+        try {
+            const entries = await readDirectoryWithTypes(dir);
+
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+
+                if (entry.isDirectory()) {
+                    // Skip special folders
+                    if (entry.name === '.noted-templates' || entry.name === '.archive') {
+                        continue;
+                    }
+                    await scanDirectory(fullPath);
+                } else if (entry.name.endsWith('.txt') || entry.name.endsWith('.md')) {
+                    try {
+                        const stat = await vscode.workspace.fs.stat(vscode.Uri.file(fullPath));
+                        if (stat.mtime >= startDate.getTime() && stat.mtime <= endDate.getTime()) {
                             notes.push({ path: fullPath, mtime: stat.mtime });
                         }
                     } catch (error) {
