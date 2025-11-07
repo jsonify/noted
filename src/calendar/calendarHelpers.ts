@@ -769,7 +769,7 @@ export async function getPerfectWeekData(notesPath: string): Promise<{
                 const weekStart = new Date(date);
                 weekStart.setDate(date.getDate() - date.getDay());
                 weekStart.setHours(0, 0, 0, 0);
-                const weekKey = weekStart.toISOString().split('T')[0];
+                const weekKey = `${weekStart.getFullYear()}-${(weekStart.getMonth() + 1).toString().padStart(2, '0')}-${weekStart.getDate().toString().padStart(2, '0')}`;
 
                 if (!weekDays.has(weekKey)) {
                     weekDays.set(weekKey, new Set());

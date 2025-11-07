@@ -81,7 +81,7 @@ export class ActivityService {
                     weeklyData[tagsWeek].tagsAdded += tags.length;
                 }
             } catch (error) {
-                // Skip files that can't be read
+                console.error(`[NOTED] Error processing file for activity: ${filePath}`, error);
                 continue;
             }
         }
@@ -289,6 +289,7 @@ export class ActivityService {
 
                 hourlyData[hour].count++;
             } catch (error) {
+                console.error(`[NOTED] Error processing file for hourly activity: ${filePath}`, error);
                 continue;
             }
         }

@@ -1,10 +1,25 @@
 import * as vscode from 'vscode';
 import { getNotesPath } from '../services/configService';
-import { ActivityService } from '../services/activityService';
+import { ActivityService, WeeklyActivity, HourlyActivity } from '../services/activityService';
 import { LinkService } from '../services/linkService';
 import { TagService } from '../services/tagService';
-import { getDayOfWeekAnalysis, getGrowthData } from '../calendar/calendarHelpers';
+import { getGrowthData } from '../calendar/calendarHelpers';
 import { THEME_COLORS } from '../constants/themeColors';
+
+interface ActivityStats {
+    totalNotes: number;
+    totalTags: number;
+    totalLinks: number;
+    avgNotesPerWeek: number;
+    avgTagsPerWeek: number;
+    avgLinksPerWeek: number;
+}
+
+interface GrowthData {
+    month: string;
+    year: number;
+    cumulative: number;
+}
 
 /**
  * Show the activity view webview
@@ -28,7 +43,6 @@ export async function showActivityView(
     const hourlyData = await activityService.getHourlyActivity();
 
     // Collect additional analysis data
-    const dayOfWeekAnalysis = await getDayOfWeekAnalysis(notesPath);
     const growthData = await getGrowthData(notesPath, 6);
 
     const panel = vscode.window.createWebviewPanel(
@@ -42,7 +56,7 @@ export async function showActivityView(
     );
 
     // Set the initial HTML
-    panel.webview.html = getActivityHtml(weeklyData, stats, hourlyData, dayOfWeekAnalysis, growthData);
+    panel.webview.html = getActivityHtml(weeklyData, stats, hourlyData, growthData);
 
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
@@ -68,7 +82,7 @@ export async function showActivityView(
 /**
  * Generate the HTML content for the activity webview
  */
-function getActivityHtml(weeklyData: any[], stats: any, hourlyData: any[], dayOfWeekAnalysis: any[], growthData: any[]): string {
+function getActivityHtml(weeklyData: WeeklyActivity[], stats: ActivityStats, hourlyData: HourlyActivity[], growthData: GrowthData[]): string {
     return `<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -384,7 +398,6 @@ function getActivityHtml(weeklyData: any[], stats: any, hourlyData: any[], dayOf
             // Activity data
             const weeklyData = ${JSON.stringify(weeklyData)};
             const hourlyData = ${JSON.stringify(hourlyData)};
-            const dayOfWeekAnalysis = ${JSON.stringify(dayOfWeekAnalysis)};
             const growthData = ${JSON.stringify(growthData)};
 
             // Prepare chart data
@@ -540,13 +553,13 @@ function getActivityHtml(weeklyData: any[], stats: any, hourlyData: any[], dayOf
                     const radius = Math.min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) / 2;
 
                     ctx.save();
-                    ctx.font = '14px sans-serif';
+                    ctx.font = \`14px \${computedStyle.getPropertyValue('--vscode-font-family')}\`;
                     ctx.fillStyle = foregroundColor;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
-                    // Draw hour markers at 6, 12, 18, 24
-                    const hours = [6, 12, 18, 24];
+                    // Draw hour markers at 6, 12, 18, 0 (midnight)
+                    const hours = [6, 12, 18, 0];
                     hours.forEach(hour => {
                         const angle = (hour / 24) * 2 * Math.PI - Math.PI / 2;
                         const x = centerX + Math.cos(angle) * (radius * 1.15);
@@ -597,6 +610,7 @@ function getActivityHtml(weeklyData: any[], stats: any, hourlyData: any[], dayOf
                 },
                 plugins: [hourLabelsPlugin]
             });
+
 
             // Initialize Growth Over Time Chart
             const growthCtx = document.getElementById('growthChart').getContext('2d');
