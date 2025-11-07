@@ -25,6 +25,7 @@ export async function showActivityView(
     // Collect activity data
     const weeklyData = await activityService.getWeeklyActivity(12);
     const stats = await activityService.getActivityStats();
+    const hourlyData = await activityService.getHourlyActivity();
 
     // Collect additional analysis data
     const dayOfWeekAnalysis = await getDayOfWeekAnalysis(notesPath);
@@ -41,7 +42,7 @@ export async function showActivityView(
     );
 
     // Set the initial HTML
-    panel.webview.html = getActivityHtml(weeklyData, stats, dayOfWeekAnalysis, growthData);
+    panel.webview.html = getActivityHtml(weeklyData, stats, hourlyData, dayOfWeekAnalysis, growthData);
 
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
@@ -67,7 +68,7 @@ export async function showActivityView(
 /**
  * Generate the HTML content for the activity webview
  */
-function getActivityHtml(weeklyData: any[], stats: any, dayOfWeekAnalysis: any[], growthData: any[]): string {
+function getActivityHtml(weeklyData: any[], stats: any, hourlyData: any[], dayOfWeekAnalysis: any[], growthData: any[]): string {
     return `<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -356,10 +357,10 @@ function getActivityHtml(weeklyData: any[], stats: any, dayOfWeekAnalysis: any[]
 
             <div class="secondary-charts-grid">
                 <div class="chart-container secondary">
-                    <h2 class="chart-title">📅 Day of Week Patterns</h2>
-                    <p class="chart-subtitle">When you write most</p>
+                    <h2 class="chart-title">🕐 Writing Hours</h2>
+                    <p class="chart-subtitle">24-hour activity pattern</p>
                     <div class="chart-wrapper">
-                        <canvas id="dayOfWeekChart"></canvas>
+                        <canvas id="hourlyChart"></canvas>
                     </div>
                 </div>
 
@@ -382,6 +383,7 @@ function getActivityHtml(weeklyData: any[], stats: any, dayOfWeekAnalysis: any[]
 
             // Activity data
             const weeklyData = ${JSON.stringify(weeklyData)};
+            const hourlyData = ${JSON.stringify(hourlyData)};
             const dayOfWeekAnalysis = ${JSON.stringify(dayOfWeekAnalysis)};
             const growthData = ${JSON.stringify(growthData)};
 
@@ -510,63 +512,90 @@ function getActivityHtml(weeklyData: any[], stats: any, dayOfWeekAnalysis: any[]
                 }
             });
 
-            // Initialize Day of Week Chart
-            const dayOfWeekCtx = document.getElementById('dayOfWeekChart').getContext('2d');
-            const dayOfWeekLabels = dayOfWeekAnalysis.map(d => d.day);
-            const dayOfWeekData = dayOfWeekAnalysis.map(d => d.count);
-            const todayDayOfWeek = new Date().getDay();
+            // Initialize Hourly Chart (Ringmap)
+            const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+            const hourlyCounts = hourlyData.map(h => h.count);
+            const maxCount = Math.max(...hourlyCounts);
 
-            new Chart(dayOfWeekCtx, {
-                type: 'bar',
+            // Generate gradient colors based on intensity
+            const hourlyColors = hourlyCounts.map(count => {
+                const intensity = maxCount > 0 ? count / maxCount : 0;
+                if (intensity === 0) return 'rgba(100, 100, 120, 0.2)';
+
+                // Create gradient from blue to yellow to green
+                const r = Math.floor(100 + (intensity * 155));
+                const g = Math.floor(180 + (intensity * 75));
+                const b = Math.floor(255 - (intensity * 200));
+                return \`rgba(\${r}, \${g}, \${b}, \${0.6 + (intensity * 0.4)})\`;
+            });
+
+            // Custom plugin to draw hour labels
+            const hourLabelsPlugin = {
+                id: 'hourLabels',
+                afterDraw: (chart) => {
+                    const ctx = chart.ctx;
+                    const chartArea = chart.chartArea;
+                    const centerX = (chartArea.left + chartArea.right) / 2;
+                    const centerY = (chartArea.top + chartArea.bottom) / 2;
+                    const radius = Math.min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) / 2;
+
+                    ctx.save();
+                    ctx.font = '14px sans-serif';
+                    ctx.fillStyle = foregroundColor;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    // Draw hour markers at 6, 12, 18, 24
+                    const hours = [6, 12, 18, 24];
+                    hours.forEach(hour => {
+                        const angle = (hour / 24) * 2 * Math.PI - Math.PI / 2;
+                        const x = centerX + Math.cos(angle) * (radius * 1.15);
+                        const y = centerY + Math.sin(angle) * (radius * 1.15);
+                        ctx.fillText(hour.toString(), x, y);
+                    });
+
+                    ctx.restore();
+                }
+            };
+
+            new Chart(hourlyCtx, {
+                type: 'doughnut',
                 data: {
-                    labels: dayOfWeekLabels,
+                    labels: Array.from({ length: 24 }, (_, i) => \`\${i}:00\`),
                     datasets: [{
-                        label: 'Notes',
-                        data: dayOfWeekData,
-                        backgroundColor: dayOfWeekData.map((_, index) =>
-                            index === todayDayOfWeek ? '${THEME_COLORS.activity.notes.border}' : '${THEME_COLORS.activity.notes.fill}'
-                        ),
-                        borderColor: '${THEME_COLORS.activity.notes.border}',
-                        borderWidth: 2,
-                        borderRadius: 6
+                        data: hourlyCounts.map(c => c === 0 ? 0.5 : c), // Small value for empty slots
+                        backgroundColor: hourlyColors,
+                        borderColor: '${THEME_COLORS.chart.gridColor}',
+                        borderWidth: 0.5
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    cutout: '60%',
+                    rotation: -90,
+                    circumference: 360,
                     plugins: {
                         legend: {
                             display: false
                         },
                         tooltip: {
                             backgroundColor: '${THEME_COLORS.chart.tooltipBackground}',
-                            padding: 10,
-                            displayColors: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 11 }
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const hour = context.dataIndex;
+                                    const count = hourlyData[hour].count;
+                                    return \`\${hour}:00 - \${count} note\${count !== 1 ? 's' : ''}\`;
+                                }
                             }
-                        },
-                        y: {
-                            grid: {
-                                color: '${THEME_COLORS.chart.gridColor}',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 11 }
-                            },
-                            beginAtZero: true
                         }
                     }
-                }
+                },
+                plugins: [hourLabelsPlugin]
             });
 
             // Initialize Growth Over Time Chart

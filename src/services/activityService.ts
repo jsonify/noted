@@ -19,6 +19,14 @@ export interface WeeklyActivity {
 }
 
 /**
+ * Hourly activity data (24-hour format)
+ */
+export interface HourlyActivity {
+    hour: number; // 0-23
+    count: number;
+}
+
+/**
  * Service for collecting and analyzing activity metrics
  */
 export class ActivityService {
@@ -249,5 +257,42 @@ export class ActivityService {
             avgTagsPerWeek: weeks > 0 ? Math.round(totalTags / weeks) : 0,
             avgLinksPerWeek: weeks > 0 ? Math.round(totalLinks / weeks) : 0
         };
+    }
+
+    /**
+     * Get hourly activity distribution (24-hour format)
+     */
+    async getHourlyActivity(): Promise<HourlyActivity[]> {
+        const notesPath = getNotesPath();
+        if (!notesPath) {
+            return [];
+        }
+
+        // Initialize 24 hourly buckets
+        const hourlyData: HourlyActivity[] = Array.from({ length: 24 }, (_, i) => ({
+            hour: i,
+            count: 0
+        }));
+
+        // Collect all note files
+        const noteFiles = await this.collectAllNoteFiles(notesPath);
+
+        // Process each file to extract creation hour
+        for (const filePath of noteFiles) {
+            try {
+                const stats = await fs.promises.stat(filePath);
+                const content = await fs.promises.readFile(filePath, 'utf-8');
+
+                // Extract the creation date
+                const createdDate = await this.extractNoteDate(filePath, content, stats);
+                const hour = createdDate.getHours();
+
+                hourlyData[hour].count++;
+            } catch (error) {
+                continue;
+            }
+        }
+
+        return hourlyData;
     }
 }
