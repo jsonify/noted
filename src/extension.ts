@@ -1574,7 +1574,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command to show calendar view
     let showCalendar = vscode.commands.registerCommand('noted.showCalendar', async () => {
-        await showCalendarView(context, linkService, tagService);
+        await showCalendarView(context);
     });
 
     // Command to show graph view

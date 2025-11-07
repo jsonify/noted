@@ -607,4 +607,202 @@ export async function getGrowthData(notesPath: string, months: number = 6): Prom
     }
 }
 
+/**
+ * Get time-of-day analysis - when notes are created throughout the day
+ * Returns hourly breakdown (0-23) with note counts
+ */
+export async function getTimeOfDayAnalysis(notesPath: string): Promise<Array<{hour: number, count: number, percentage: number}>> {
+    const hourCounts = new Array(24).fill(0);
+    let totalNotes = 0;
+
+    try {
+        for await (const { date } of iterateNoteFiles(notesPath)) {
+            const hour = date.getHours();
+            hourCounts[hour]++;
+            totalNotes++;
+        }
+
+        // Convert to percentage and create result array
+        return hourCounts.map((count, hour) => ({
+            hour,
+            count,
+            percentage: totalNotes > 0 ? Math.round((count / totalNotes) * 100) : 0
+        }));
+    } catch (error) {
+        console.error('[NOTED] Error getting time-of-day analysis:', error);
+        return hourCounts.map((count, hour) => ({ hour, count, percentage: 0 }));
+    }
+}
+
+/**
+ * Get "On This Day" memories - notes from previous years on the same date
+ */
+export async function getOnThisDayMemories(notesPath: string, currentDate: Date = new Date()): Promise<Array<{year: number, notes: Array<{name: string, path: string}>}>> {
+    const currentMonth = currentDate.getMonth();
+    const currentDay = currentDate.getDate();
+    const currentYear = currentDate.getFullYear();
+
+    const memoriesByYear = new Map<number, Array<{name: string, path: string}>>();
+
+    try {
+        for await (const { filePath, date } of iterateNoteFiles(notesPath)) {
+            // Check if same month and day, but different year
+            if (date.getMonth() === currentMonth &&
+                date.getDate() === currentDay &&
+                date.getFullYear() !== currentYear) {
+
+                const year = date.getFullYear();
+                if (!memoriesByYear.has(year)) {
+                    memoriesByYear.set(year, []);
+                }
+
+                memoriesByYear.get(year)!.push({
+                    name: path.basename(filePath, path.extname(filePath)),
+                    path: filePath
+                });
+            }
+        }
+
+        // Convert map to sorted array (most recent years first)
+        const result = Array.from(memoriesByYear.entries())
+            .map(([year, notes]) => ({ year, notes }))
+            .sort((a, b) => b.year - a.year);
+
+        return result;
+    } catch (error) {
+        console.error('[NOTED] Error getting on this day memories:', error);
+        return [];
+    }
+}
+
+/**
+ * Get "On This Month" memories - notes from previous months on the same day
+ */
+export async function getOnThisMonthMemories(notesPath: string, currentDate: Date = new Date()): Promise<Array<{monthsAgo: number, yearMonth: string, notes: Array<{name: string, path: string}>}>> {
+    const currentDay = currentDate.getDate();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    const memoriesByMonthsAgo = new Map<number, {yearMonth: string, notes: Array<{name: string, path: string}>}>();
+
+    try {
+        for await (const { filePath, date } of iterateNoteFiles(notesPath)) {
+            // Check if same day of month, but different month
+            if (date.getDate() === currentDay &&
+                (date.getFullYear() !== currentYear || date.getMonth() !== currentMonth)) {
+
+                // Calculate how many months ago
+                const monthsDiff = (currentYear - date.getFullYear()) * 12 + (currentMonth - date.getMonth());
+
+                if (monthsDiff > 0) {
+                    const yearMonth = date.toLocaleString('en-US', { year: 'numeric', month: 'long' });
+
+                    if (!memoriesByMonthsAgo.has(monthsDiff)) {
+                        memoriesByMonthsAgo.set(monthsDiff, {
+                            yearMonth,
+                            notes: []
+                        });
+                    }
+
+                    memoriesByMonthsAgo.get(monthsDiff)!.notes.push({
+                        name: path.basename(filePath, path.extname(filePath)),
+                        path: filePath
+                    });
+                }
+            }
+        }
+
+        // Convert map to sorted array (most recent months first)
+        const result = Array.from(memoriesByMonthsAgo.entries())
+            .map(([monthsAgo, data]) => ({ monthsAgo, ...data }))
+            .sort((a, b) => a.monthsAgo - b.monthsAgo);
+
+        return result;
+    } catch (error) {
+        console.error('[NOTED] Error getting on this month memories:', error);
+        return [];
+    }
+}
+
+/**
+ * Get perfect week data - which days of the current week have notes
+ */
+export async function getPerfectWeekData(notesPath: string): Promise<{
+    daysWithNotes: boolean[],
+    daysComplete: number,
+    totalDays: number,
+    perfectWeeksThisMonth: number
+}> {
+    const now = new Date();
+
+    // Get start of current week (Sunday)
+    const startOfWeek = new Date(now);
+    startOfWeek.setHours(0, 0, 0, 0);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+
+    // Get end of current week (Saturday)
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    // Initialize days array (Sunday = 0, Saturday = 6)
+    const daysWithNotes = new Array(7).fill(false);
+
+    // Get start of current month
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    // Track perfect weeks in current month
+    const weekDays = new Map<string, Set<number>>(); // weekKey -> set of days with notes
+
+    try {
+        for await (const { date } of iterateNoteFiles(notesPath)) {
+            // Check if in current week
+            if (date >= startOfWeek && date <= endOfWeek) {
+                const dayOfWeek = date.getDay();
+                daysWithNotes[dayOfWeek] = true;
+            }
+
+            // Check if in current month for perfect week tracking
+            if (date >= startOfMonth && date <= endOfMonth) {
+                // Get week key (ISO week start)
+                const weekStart = new Date(date);
+                weekStart.setDate(date.getDate() - date.getDay());
+                weekStart.setHours(0, 0, 0, 0);
+                const weekKey = `${weekStart.getFullYear()}-${(weekStart.getMonth() + 1).toString().padStart(2, '0')}-${weekStart.getDate().toString().padStart(2, '0')}`;
+
+                if (!weekDays.has(weekKey)) {
+                    weekDays.set(weekKey, new Set());
+                }
+                weekDays.get(weekKey)!.add(date.getDay());
+            }
+        }
+
+        // Count perfect weeks (all 7 days have notes)
+        let perfectWeeksThisMonth = 0;
+        for (const days of weekDays.values()) {
+            if (days.size === 7) {
+                perfectWeeksThisMonth++;
+            }
+        }
+
+        const daysComplete = daysWithNotes.filter(Boolean).length;
+
+        return {
+            daysWithNotes,
+            daysComplete,
+            totalDays: 7,
+            perfectWeeksThisMonth
+        };
+    } catch (error) {
+        console.error('[NOTED] Error getting perfect week data:', error);
+        return {
+            daysWithNotes: new Array(7).fill(false),
+            daysComplete: 0,
+            totalDays: 7,
+            perfectWeeksThisMonth: 0
+        };
+    }
+}
+
 export { isTodayDate };

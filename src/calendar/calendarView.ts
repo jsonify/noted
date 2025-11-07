@@ -1,18 +1,13 @@
 import * as vscode from 'vscode';
 import { getNotesPath, getFileFormat } from '../services/configService';
-import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap, getMonthlyTrend, getDayOfWeekAnalysis, getGrowthData, getNoteDateRange } from './calendarHelpers';
-import { ActivityService } from '../services/activityService';
-import { LinkService } from '../services/linkService';
-import { TagService } from '../services/tagService';
+import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap, getMonthlyTrend, getTimeOfDayAnalysis, getOnThisDayMemories, getOnThisMonthMemories, getPerfectWeekData } from './calendarHelpers';
 import { THEME_COLORS } from '../constants/themeColors';
 
 /**
  * Show the calendar view webview
  */
 export async function showCalendarView(
-    context: vscode.ExtensionContext,
-    linkService: LinkService,
-    tagService: TagService
+    context: vscode.ExtensionContext
 ): Promise<void> {
     const notesPath = getNotesPath();
     if (!notesPath) {
@@ -35,12 +30,8 @@ export async function showCalendarView(
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
 
-    // Create activity service and get weekly data
-    const activityService = new ActivityService(linkService, tagService);
-    const weeklyActivity = await activityService.getWeeklyActivity(12);
-
     // Set the initial HTML
-    panel.webview.html = await getCalendarHtml(currentYear, currentMonth, notesPath, weeklyActivity);
+    panel.webview.html = await getCalendarHtml(currentYear, currentMonth, notesPath);
 
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
@@ -61,7 +52,7 @@ export async function showCalendarView(
                     panel.webview.postMessage({ command: 'showNotes', notes: updatedNotes, year: message.year, month: message.month, day: message.day });
                     break;
                 case 'changeMonth':
-                    panel.webview.html = await getCalendarHtml(message.year, message.month, notesPath, weeklyActivity);
+                    panel.webview.html = await getCalendarHtml(message.year, message.month, notesPath);
                     break;
             }
         },
@@ -73,7 +64,7 @@ export async function showCalendarView(
 /**
  * Generate the HTML content for the calendar webview
  */
-async function getCalendarHtml(year: number, month: number, notesPath: string, weeklyActivity: any[]): Promise<string> {
+async function getCalendarHtml(year: number, month: number, notesPath: string): Promise<string> {
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
@@ -107,21 +98,23 @@ async function getCalendarHtml(year: number, month: number, notesPath: string, w
     const mostActiveDay = await getMostActiveDay(notesPath, year, month);
     const recentActivity = await getRecentActivity(notesPath);
 
-    // Calculate streak and visualization data in parallel for better performance
+    // Calculate streak and widget data in parallel for better performance
     const [
         currentStreak,
         longestStreak,
         streakHeatmap,
-        dayOfWeekAnalysis,
-        growthData,
-        dateRange
+        timeOfDayData,
+        onThisDayMemories,
+        onThisMonthMemories,
+        perfectWeekData
     ] = await Promise.all([
         getCurrentStreak(notesPath),
         getLongestStreak(notesPath),
         getStreakHeatmap(notesPath, 30),
-        getDayOfWeekAnalysis(notesPath),
-        getGrowthData(notesPath, 6),
-        getNoteDateRange(notesPath)
+        getTimeOfDayAnalysis(notesPath),
+        getOnThisDayMemories(notesPath),
+        getOnThisMonthMemories(notesPath),
+        getPerfectWeekData(notesPath)
     ]);
 
     // Generate 6 weeks to accommodate all possible month layouts
@@ -264,7 +257,14 @@ async function getCalendarHtml(year: number, month: number, notesPath: string, w
                 display: flex;
                 flex-direction: column;
                 overflow-y: auto;
+                overflow-x: hidden;
                 padding-left: 12px;
+                min-height: 0;
+            }
+            #statsContent {
+                flex: 1;
+                overflow-y: auto;
+                overflow-x: hidden;
             }
 
             .header {
@@ -766,6 +766,206 @@ async function getCalendarHtml(year: number, month: number, notesPath: string, w
                 font-weight: 600;
             }
 
+            /* Widget Sections */
+            .widget-section {
+                margin-bottom: 16px;
+                padding: 16px;
+                background: linear-gradient(135deg, rgba(120, 100, 200, 0.08), rgba(140, 120, 240, 0.03));
+                border: 1px solid var(--vscode-panel-border);
+                border-radius: 12px;
+                transition: all 0.2s ease;
+            }
+            .widget-section:hover {
+                border-color: var(--vscode-focusBorder);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            .widget-header {
+                margin-bottom: 12px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .widget-title {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--vscode-foreground);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .widget-icon {
+                font-size: 18px;
+            }
+            .widget-toggle {
+                display: flex;
+                gap: 4px;
+                background: rgba(100, 100, 120, 0.15);
+                border-radius: 6px;
+                padding: 2px;
+            }
+            .widget-toggle-btn {
+                padding: 4px 10px;
+                font-size: 10px;
+                font-weight: 600;
+                border: none;
+                border-radius: 4px;
+                background: transparent;
+                color: var(--vscode-descriptionForeground);
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .widget-toggle-btn:hover {
+                color: var(--vscode-foreground);
+                background: rgba(100, 100, 120, 0.2);
+            }
+            .widget-toggle-btn.active {
+                background: var(--vscode-button-background);
+                color: var(--vscode-button-foreground);
+            }
+
+            /* Time of Day Chart */
+            .time-of-day-chart {
+                position: relative;
+                display: flex;
+                align-items: flex-end;
+                height: 80px;
+                gap: 1px;
+                padding: 24px 8px 28px 8px;
+            }
+            .time-bar-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                height: 100%;
+                position: relative;
+            }
+            .time-bar {
+                width: 100%;
+                background: linear-gradient(to top, rgba(140, 120, 240, 0.7), rgba(150, 130, 255, 0.5));
+                border-radius: 2px 2px 0 0;
+                transition: all 0.2s ease;
+            }
+            .time-bar:hover {
+                background: linear-gradient(to top, rgba(150, 130, 255, 1), rgba(160, 140, 255, 0.8));
+                transform: scaleY(1.1);
+            }
+            .time-label {
+                position: absolute;
+                bottom: -20px;
+                font-size: 8px;
+                color: var(--vscode-descriptionForeground);
+                font-weight: 500;
+                white-space: nowrap;
+            }
+            .time-peak {
+                position: absolute;
+                bottom: 4px;
+                right: 8px;
+                font-size: 10px;
+                font-weight: 600;
+                color: rgba(150, 130, 255, 1);
+                background: rgba(0, 0, 0, 0.3);
+                padding: 3px 8px;
+                border-radius: 4px;
+            }
+
+            /* Perfect Week Section */
+            .perfect-week-content {
+                padding: 4px 0;
+            }
+            .week-labels {
+                display: flex;
+                gap: 4px;
+                margin-bottom: 6px;
+            }
+            .week-label {
+                flex: 1;
+                text-align: center;
+                font-size: 9px;
+                font-weight: 600;
+                color: var(--vscode-descriptionForeground);
+            }
+            .week-days {
+                display: flex;
+                gap: 4px;
+                margin-bottom: 12px;
+            }
+            .week-day {
+                flex: 1;
+                aspect-ratio: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                border-radius: 6px;
+                background: rgba(100, 100, 120, 0.1);
+                border: 1px solid rgba(128, 128, 128, 0.2);
+                transition: all 0.2s ease;
+            }
+            .week-day.complete {
+                background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(56, 142, 60, 0.2));
+                border-color: rgba(76, 175, 80, 0.5);
+            }
+            .week-day:hover {
+                transform: scale(1.1);
+            }
+            .week-progress {
+                text-align: center;
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--vscode-foreground);
+                margin-bottom: 6px;
+            }
+            .week-stats {
+                text-align: center;
+                font-size: 10px;
+                color: var(--vscode-descriptionForeground);
+            }
+
+            /* Memories Section */
+            .memories-content {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .memory-year {
+                padding: 10px 12px;
+                background: rgba(100, 180, 255, 0.05);
+                border-left: 3px solid rgba(100, 180, 255, 0.4);
+                border-radius: 4px;
+            }
+            .memory-header {
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--vscode-foreground);
+                margin-bottom: 6px;
+            }
+            .memory-note {
+                font-size: 12px;
+                color: var(--vscode-textLink-foreground);
+                padding: 4px 0;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .memory-note:hover {
+                color: var(--vscode-textLink-activeForeground);
+                transform: translateX(4px);
+            }
+            .memory-more {
+                font-size: 10px;
+                color: var(--vscode-descriptionForeground);
+                font-style: italic;
+                padding-top: 4px;
+            }
+            .empty-message {
+                font-size: 12px;
+                color: var(--vscode-descriptionForeground);
+                font-style: italic;
+                text-align: center;
+                padding: 20px;
+            }
+
             /* Chart Sections */
             .chart-section {
                 margin-bottom: 16px;
@@ -1159,10 +1359,10 @@ async function getCalendarHtml(year: number, month: number, notesPath: string, w
                 currentStreak: ${currentStreak},
                 longestStreak: ${longestStreak},
                 streakHeatmap: ${JSON.stringify(streakHeatmap.map(h => ({date: h.date.toISOString(), count: h.count, hasNote: h.hasNote})))},
-                weeklyActivity: ${JSON.stringify(weeklyActivity)},
-                dayOfWeekAnalysis: ${JSON.stringify(dayOfWeekAnalysis)},
-                growthData: ${JSON.stringify(growthData)},
-                dateRange: ${dateRange ? `{firstDate: '${dateRange.firstDate.toISOString()}', lastDate: '${dateRange.lastDate.toISOString()}', daySpan: ${dateRange.daySpan}}` : 'null'}
+                timeOfDayData: ${JSON.stringify(timeOfDayData)},
+                onThisDayMemories: ${JSON.stringify(onThisDayMemories)},
+                onThisMonthMemories: ${JSON.stringify(onThisMonthMemories)},
+                perfectWeekData: ${JSON.stringify(perfectWeekData)}
             };
 
             let selectedDay = null;
@@ -1197,43 +1397,100 @@ async function getCalendarHtml(year: number, month: number, notesPath: string, w
                 }
             }
 
-            // Helper: Calculate insights using actual date range
-            function calculateInsights() {
-                // Calculate average per day using actual date range
-                let avgPerDay = 0;
-                if (statistics.total > 0 && statistics.dateRange) {
-                    avgPerDay = (statistics.total / statistics.dateRange.daySpan).toFixed(1);
-                } else if (statistics.total > 0) {
-                    // Fallback to 365 if date range is not available
-                    avgPerDay = (statistics.total / 365).toFixed(1);
+            // Helper: Render time-of-day heatmap
+            function renderTimeOfDayHeatmap() {
+                const data = statistics.timeOfDayData || [];
+                const maxCount = Math.max(...data.map(d => d.count), 1);
+
+                // Find peak hours
+                const peakHour = data.reduce((max, d) => d.count > max.count ? d : max, {hour: 0, count: 0, percentage: 0});
+                const peakLabel = peakHour.hour === 0 ? '12 AM' :
+                                 peakHour.hour < 12 ? \`\${peakHour.hour} AM\` :
+                                 peakHour.hour === 12 ? '12 PM' : \`\${peakHour.hour - 12} PM\`;
+
+                return data.map(d => {
+                    const height = maxCount > 0 ? Math.max((d.count / maxCount) * 100, 2) : 2;
+                    const label = d.hour === 0 ? '12a' : d.hour < 12 ? \`\${d.hour}a\` : d.hour === 12 ? '12p' : \`\${d.hour - 12}p\`;
+                    return \`<div class="time-bar-container" title="\${label}: \${d.count} notes (\${d.percentage}%)">
+                        <div class="time-bar" style="height: \${height}%"></div>
+                        \${d.hour % 3 === 0 ? \`<div class="time-label">\${label}</div>\` : ''}
+                    </div>\`;
+                }).join('') + \`<div class="time-peak">Peak: \${peakLabel} (\${peakHour.percentage}%)</div>\`;
+            }
+
+            // State for memories toggle
+            let memoriesMode = 'years'; // 'years' or 'months'
+
+            // Helper: Render "On This Day" memories
+            function renderOnThisDayMemories(mode = 'years') {
+                if (mode === 'years') {
+                    const memories = statistics.onThisDayMemories || [];
+                    if (memories.length === 0) {
+                        return '<div class="empty-message">No notes from previous years on this date</div>';
+                    }
+
+                    return memories.slice(0, 3).map(m => {
+                        const yearsAgo = new Date().getFullYear() - m.year;
+                        return \`<div class="memory-year">
+                            <div class="memory-header">🕐 \${yearsAgo} year\${yearsAgo !== 1 ? 's' : ''} ago (\${m.year})</div>
+                            \${m.notes.slice(0, 2).map(n =>
+                                \`<div class="memory-note" data-path="\${n.path}">• \${n.name}</div>\`
+                            ).join('')}
+                            \${m.notes.length > 2 ? \`<div class="memory-more">+\${m.notes.length - 2} more</div>\` : ''}
+                        </div>\`;
+                    }).join('');
+                } else {
+                    const memories = statistics.onThisMonthMemories || [];
+                    if (memories.length === 0) {
+                        return '<div class="empty-message">No notes from previous months on this date</div>';
+                    }
+
+                    return memories.slice(0, 3).map(m => {
+                        return \`<div class="memory-year">
+                            <div class="memory-header">🕐 \${m.monthsAgo} month\${m.monthsAgo !== 1 ? 's' : ''} ago (\${m.yearMonth})</div>
+                            \${m.notes.slice(0, 2).map(n =>
+                                \`<div class="memory-note" data-path="\${n.path}">• \${n.name}</div>\`
+                            ).join('')}
+                            \${m.notes.length > 2 ? \`<div class="memory-more">+\${m.notes.length - 2} more</div>\` : ''}
+                        </div>\`;
+                    }).join('');
                 }
+            }
 
-                const favoriteDay = statistics.dayOfWeekAnalysis.reduce((max, d) => d.count > max.count ? d : max, {count: 0, day: 'None'});
+            // Helper: Render perfect week tracker
+            function renderPerfectWeekTracker() {
+                const weekData = statistics.perfectWeekData || {daysWithNotes: [], daysComplete: 0, totalDays: 7, perfectWeeksThisMonth: 0};
+                const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-                // Calculate best week from activity data
-                const bestWeek = statistics.weeklyActivity.reduce((max, w) =>
-                    (w.notesCreated + w.tagsAdded + w.linksCreated) > (max.notesCreated + max.tagsAdded + max.linksCreated) ? w : max,
-                    {weekLabel: 'None', notesCreated: 0, tagsAdded: 0, linksCreated: 0}
-                );
+                const daysHtml = weekData.daysWithNotes.map((hasNote, i) =>
+                    \`<div class="week-day \${hasNote ? 'complete' : ''}">\${hasNote ? '✅' : '⭕'}</div>\`
+                ).join('');
 
-                return { avgPerDay, bestWeek, favoriteDay };
+                return \`
+                    <div class="week-labels">\${dayLabels.map(l => \`<div class="week-label">\${l}</div>\`).join('')}</div>
+                    <div class="week-days">\${daysHtml}</div>
+                    <div class="week-progress">\${weekData.daysComplete}/\${weekData.totalDays} days • Keep going! 🔥</div>
+                    <div class="week-stats">Perfect weeks this month: \${weekData.perfectWeeksThisMonth}</div>
+                \`;
             }
 
             // Display overview statistics on load
             function showOverviewStatistics() {
                 const statsContent = document.getElementById('statsContent');
                 const statsTitle = document.getElementById('statsTitle');
-                statsTitle.textContent = 'Statistics';
+                statsTitle.textContent = 'Insights';
 
                 const streakHeatmapHtml = renderStreakHeatmap();
                 const streakMessage = getStreakMessage();
-                const { avgPerDay, bestWeek, favoriteDay } = calculateInsights();
+                const timeOfDayHtml = renderTimeOfDayHeatmap();
+                const memoriesHtml = renderOnThisDayMemories();
+                const perfectWeekHtml = renderPerfectWeekTracker();
 
                 statsContent.innerHTML = \`
-                    <div class="streak-section">
-                        <div class="streak-header">
-                            <div class="streak-title">
-                                <span class="streak-icon">\${statistics.currentStreak > 0 ? '🔥' : '📝'}</span>
+                    <div class="widget-section streak-section">
+                        <div class="widget-header">
+                            <div class="widget-title">
+                                <span class="widget-icon">\${statistics.currentStreak > 0 ? '🔥' : '📝'}</span>
                                 <span>Daily Streak</span>
                             </div>
                         </div>
@@ -1255,275 +1512,103 @@ async function getCalendarHtml(year: number, month: number, notesPath: string, w
                         </div>
                     </div>
 
-                    <div class="chart-section">
-                        <div class="chart-header">
-                            <div class="chart-title">📊 Activity Chart</div>
-                            <div class="chart-subtitle">Last 12 weeks: Notes, Tags & Links</div>
+                    <div class="widget-section time-of-day-section">
+                        <div class="widget-header">
+                            <div class="widget-title">
+                                <span class="widget-icon">⏰</span>
+                                <span>Your Writing Hours</span>
+                            </div>
                         </div>
-                        <div style="position: relative; height: 160px; margin-top: 8px;">
-                            <canvas id="activityChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-section">
-                        <div class="chart-header">
-                            <div class="chart-title">📅 Day of Week Patterns</div>
-                            <div class="chart-subtitle">When you write most</div>
-                        </div>
-                        <div style="position: relative; height: 140px; margin-top: 8px;">
-                            <canvas id="dayOfWeekChart"></canvas>
+                        <div class="time-of-day-chart">
+                            \${timeOfDayHtml}
                         </div>
                     </div>
 
-                    <div class="chart-section">
-                        <div class="chart-header">
-                            <div class="chart-title">📊 Growth Over Time</div>
-                            <div class="chart-subtitle">Cumulative notes</div>
+                    <div class="widget-section perfect-week-section">
+                        <div class="widget-header">
+                            <div class="widget-title">
+                                <span class="widget-icon">🏆</span>
+                                <span>Perfect Week</span>
+                            </div>
                         </div>
-                        <div style="position: relative; height: 140px; margin-top: 8px;">
-                            <canvas id="growthChart"></canvas>
+                        <div class="perfect-week-content">
+                            \${perfectWeekHtml}
+                        </div>
+                    </div>
+
+                    <div class="widget-section memories-section">
+                        <div class="widget-header">
+                            <div class="widget-title">
+                                <span class="widget-icon">📅</span>
+                                <span>On This Day...</span>
+                            </div>
+                            <div class="widget-toggle">
+                                <button class="widget-toggle-btn \${memoriesMode === 'years' ? 'active' : ''}" id="toggleYears">Years</button>
+                                <button class="widget-toggle-btn \${memoriesMode === 'months' ? 'active' : ''}" id="toggleMonths">Months</button>
+                            </div>
+                        </div>
+                        <div class="memories-content" id="memoriesContent">
+                            \${memoriesHtml}
                         </div>
                     </div>
                 \`;
+
+                // Add click handlers for memory notes
+                document.querySelectorAll('.memory-note').forEach(note => {
+                    note.addEventListener('click', () => {
+                        vscode.postMessage({
+                            command: 'openNote',
+                            filePath: note.getAttribute('data-path')
+                        });
+                    });
+                });
+
+                // Add click handlers for toggle buttons
+                document.getElementById('toggleYears')?.addEventListener('click', () => {
+                    memoriesMode = 'years';
+                    updateMemoriesView();
+                });
+
+                document.getElementById('toggleMonths')?.addEventListener('click', () => {
+                    memoriesMode = 'months';
+                    updateMemoriesView();
+                });
+            }
+
+            // Helper: Update memories view when toggle changes
+            function updateMemoriesView() {
+                const memoriesContent = document.getElementById('memoriesContent');
+                const toggleYearsBtn = document.getElementById('toggleYears');
+                const toggleMonthsBtn = document.getElementById('toggleMonths');
+
+                if (memoriesContent && toggleYearsBtn && toggleMonthsBtn) {
+                    // Update button states
+                    if (memoriesMode === 'years') {
+                        toggleYearsBtn.classList.add('active');
+                        toggleMonthsBtn.classList.remove('active');
+                    } else {
+                        toggleYearsBtn.classList.remove('active');
+                        toggleMonthsBtn.classList.add('active');
+                    }
+
+                    // Re-render memories content
+                    memoriesContent.innerHTML = renderOnThisDayMemories(memoriesMode);
+
+                    // Re-attach click handlers for memory notes
+                    document.querySelectorAll('.memory-note').forEach(note => {
+                        note.addEventListener('click', () => {
+                            vscode.postMessage({
+                                command: 'openNote',
+                                filePath: note.getAttribute('data-path')
+                            });
+                        });
+                    });
+                }
             }
 
 
             // Initialize statistics display
             showOverviewStatistics();
-
-            // Initialize Activity Chart
-            const activityCtx = document.getElementById('activityChart').getContext('2d');
-            const activityLabels = statistics.weeklyActivity.map(w => w.weekLabel);
-            const notesData = statistics.weeklyActivity.map(w => w.notesCreated);
-            const linksData = statistics.weeklyActivity.map(w => w.linksCreated);
-            const tagsData = statistics.weeklyActivity.map(w => w.tagsAdded);
-
-            // Get computed VS Code theme colors
-            const computedStyle = getComputedStyle(document.body);
-            const foregroundColor = computedStyle.getPropertyValue('--vscode-foreground').trim() || '#cccccc';
-
-            new Chart(activityCtx, {
-                type: 'line',
-                data: {
-                    labels: activityLabels,
-                    datasets: [
-                        {
-                            label: 'Notes Created',
-                            data: notesData,
-                            backgroundColor: '${THEME_COLORS.activity.notes.fill}',
-                            borderColor: '${THEME_COLORS.activity.notes.border}',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 0,
-                            pointHoverRadius: 4
-                        },
-                        {
-                            label: 'Links Created',
-                            data: linksData,
-                            backgroundColor: '${THEME_COLORS.activity.links.fill}',
-                            borderColor: '${THEME_COLORS.activity.links.border}',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 0,
-                            pointHoverRadius: 4
-                        },
-                        {
-                            label: 'Tags Added',
-                            data: tagsData,
-                            backgroundColor: '${THEME_COLORS.activity.tags.fill}',
-                            borderColor: '${THEME_COLORS.activity.tags.border}',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 0,
-                            pointHoverRadius: 4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 10,
-                            displayColors: true
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: '${THEME_COLORS.chart.gridColor}',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            }
-                        },
-                        y: {
-                            stacked: true,
-                            grid: {
-                                color: '${THEME_COLORS.chart.gridColor}',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            },
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-
-            // Initialize Day of Week Chart
-            const dayOfWeekCtx = document.getElementById('dayOfWeekChart').getContext('2d');
-            const dayOfWeekLabels = statistics.dayOfWeekAnalysis.map(d => d.day);
-            const dayOfWeekData = statistics.dayOfWeekAnalysis.map(d => d.count);
-            const todayDayOfWeek = new Date().getDay();
-
-            new Chart(dayOfWeekCtx, {
-                type: 'bar',
-                data: {
-                    labels: dayOfWeekLabels,
-                    datasets: [{
-                        label: 'Notes',
-                        data: dayOfWeekData,
-                        backgroundColor: dayOfWeekData.map((_, index) =>
-                            index === todayDayOfWeek ? '${THEME_COLORS.activity.notes.border}' : '${THEME_COLORS.activity.notes.fill}'
-                        ),
-                        borderColor: '${THEME_COLORS.activity.notes.border}',
-                        borderWidth: 2,
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '${THEME_COLORS.chart.tooltipBackground}',
-                            padding: 10,
-                            displayColors: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: '${THEME_COLORS.chart.gridColor}',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            },
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-
-            // Initialize Growth Over Time Chart
-            const growthCtx = document.getElementById('growthChart').getContext('2d');
-            const growthLabels = statistics.growthData.map(g => g.month);
-            const growthData = statistics.growthData.map(g => g.cumulative);
-
-            new Chart(growthCtx, {
-                type: 'line',
-                data: {
-                    labels: growthLabels,
-                    datasets: [{
-                        label: 'Cumulative Notes',
-                        data: growthData,
-                        backgroundColor: '${THEME_COLORS.activity.links.fill}',
-                        borderColor: '${THEME_COLORS.activity.links.border}',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        pointHoverBackgroundColor: '${THEME_COLORS.activity.links.border}',
-                        pointHoverBorderColor: '#fff',
-                        pointHoverBorderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '${THEME_COLORS.chart.tooltipBackground}',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: '${THEME_COLORS.accent.primaryGlow}',
-                            borderWidth: 1,
-                            padding: 12,
-                            displayColors: true,
-                            callbacks: {
-                                title: function(context) {
-                                    return context[0].label;
-                                },
-                                label: function(context) {
-                                    const total = context.parsed.y;
-                                    return 'Total: ' + (total === 1 ? '1 note' : total + ' notes');
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: '${THEME_COLORS.chart.gridColor}',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: '${THEME_COLORS.chart.gridColor}',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: foregroundColor,
-                                font: { size: 10 }
-                            },
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
 
             // ===== RESIZE FUNCTIONALITY =====
 
