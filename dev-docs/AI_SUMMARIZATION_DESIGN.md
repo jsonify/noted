@@ -374,44 +374,8 @@ New settings in `package.json`:
    - Option to exclude specific folders
    - Consider adding keyword filters (future)
 
-## Implementation Phases
-
-### Phase 1: Core Functionality (MVP)
-- [x] Design document
-- [ ] Add Language Model API to package.json
-- [ ] Implement SummarizationService
-- [ ] Add "Summarize Note" command
-- [ ] Basic summary display in new editor
-- [ ] Error handling for missing Copilot
-
-**Estimated effort:** 2-3 days
-
-### Phase 2: Enhanced Features
-- [ ] Batch summarization (week/month)
-- [ ] Cache implementation
-- [ ] Progress indicators
-- [ ] Summary formatting options
-- [ ] Configuration settings
-
-**Estimated effort:** 2-3 days
-
-### Phase 3: Polish & Integration
-- [ ] Search results summarization
-- [ ] Export with summaries
-- [ ] Hover tooltips with previews
-- [ ] Action item extraction
-- [ ] Keyword generation
-
-**Estimated effort:** 2-3 days
-
-### Phase 4: Advanced Features (Future)
-- [ ] Custom prompt templates
-- [ ] Summary history/versions
-- [ ] Comparison between note versions
-- [ ] Semantic search using embeddings
-- [ ] Auto-tagging based on content
-
-**Estimated effort:** 4-5 days
+## Plan
+- See the "AI_SUMMARIZATION_PLAN.md" file
 
 ## Testing Strategy
 
