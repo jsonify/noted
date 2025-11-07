@@ -16,6 +16,7 @@ import { formatTimestamp } from '../utils/dateHelpers';
 import { getAllFolders } from '../utils/folderHelpers';
 import { BUILT_IN_TEMPLATE_INFO, DEFAULTS } from '../constants';
 import { SearchResult } from '../services/searchService';
+import { SummarizationService } from '../services/summarizationService';
 
 /**
  * Register a function to refresh the tree view
