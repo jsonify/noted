@@ -559,7 +559,7 @@ function getActivityHtml(weeklyData: WeeklyActivity[], stats: ActivityStats, hou
                     const outerRadius = radius; // Start from outer edge of donut
                     const tickLength = radius * 0.12; // Length of tick marks
 
-                    ctx.strokeStyle = '#ffffff';
+                    ctx.strokeStyle = foregroundColor;
                     ctx.lineWidth = 2;
                     ctx.lineCap = 'round';
 
