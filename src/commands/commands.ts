@@ -794,7 +794,7 @@ export async function handleShowStats() {
     vscode.window.showInformationMessage(message);
 }
 
-export async function handleExportNotes(summarizationService?: any) {
+export async function handleExportNotes(summarizationService?: SummarizationService) {
     const options = await vscode.window.showQuickPick(
         ['This Week', 'This Month', 'All Notes'],
         { placeHolder: 'Select export range' }
