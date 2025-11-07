@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getNotesPath, getFileFormat } from '../services/configService';
-import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap, getMonthlyTrend } from './calendarHelpers';
+import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap, getMonthlyTrend, getTimeOfDayAnalysis, getOnThisDayMemories, getPerfectWeekData } from './calendarHelpers';
 import { THEME_COLORS } from '../constants/themeColors';
 
 /**
@@ -98,15 +98,21 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
     const mostActiveDay = await getMostActiveDay(notesPath, year, month);
     const recentActivity = await getRecentActivity(notesPath);
 
-    // Calculate streak data in parallel for better performance
+    // Calculate streak and widget data in parallel for better performance
     const [
         currentStreak,
         longestStreak,
-        streakHeatmap
+        streakHeatmap,
+        timeOfDayData,
+        onThisDayMemories,
+        perfectWeekData
     ] = await Promise.all([
         getCurrentStreak(notesPath),
         getLongestStreak(notesPath),
-        getStreakHeatmap(notesPath, 30)
+        getStreakHeatmap(notesPath, 30),
+        getTimeOfDayAnalysis(notesPath),
+        getOnThisDayMemories(notesPath),
+        getPerfectWeekData(notesPath)
     ]);
 
     // Generate 6 weeks to accommodate all possible month layouts
@@ -751,6 +757,177 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 font-weight: 600;
             }
 
+            /* Widget Sections */
+            .widget-section {
+                margin-bottom: 16px;
+                padding: 16px;
+                background: linear-gradient(135deg, rgba(120, 100, 200, 0.08), rgba(140, 120, 240, 0.03));
+                border: 1px solid var(--vscode-panel-border);
+                border-radius: 12px;
+                transition: all 0.2s ease;
+            }
+            .widget-section:hover {
+                border-color: var(--vscode-focusBorder);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            .widget-header {
+                margin-bottom: 12px;
+            }
+            .widget-title {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--vscode-foreground);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .widget-icon {
+                font-size: 18px;
+            }
+
+            /* Time of Day Chart */
+            .time-of-day-chart {
+                position: relative;
+                display: flex;
+                align-items: flex-end;
+                height: 80px;
+                gap: 1px;
+                padding: 24px 8px 28px 8px;
+            }
+            .time-bar-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                height: 100%;
+                position: relative;
+            }
+            .time-bar {
+                width: 100%;
+                background: linear-gradient(to top, rgba(140, 120, 240, 0.7), rgba(150, 130, 255, 0.5));
+                border-radius: 2px 2px 0 0;
+                transition: all 0.2s ease;
+            }
+            .time-bar:hover {
+                background: linear-gradient(to top, rgba(150, 130, 255, 1), rgba(160, 140, 255, 0.8));
+                transform: scaleY(1.1);
+            }
+            .time-label {
+                position: absolute;
+                bottom: -20px;
+                font-size: 8px;
+                color: var(--vscode-descriptionForeground);
+                font-weight: 500;
+                white-space: nowrap;
+            }
+            .time-peak {
+                position: absolute;
+                bottom: 4px;
+                right: 8px;
+                font-size: 10px;
+                font-weight: 600;
+                color: rgba(150, 130, 255, 1);
+                background: rgba(0, 0, 0, 0.3);
+                padding: 3px 8px;
+                border-radius: 4px;
+            }
+
+            /* Perfect Week Section */
+            .perfect-week-content {
+                padding: 4px 0;
+            }
+            .week-labels {
+                display: flex;
+                gap: 4px;
+                margin-bottom: 6px;
+            }
+            .week-label {
+                flex: 1;
+                text-align: center;
+                font-size: 9px;
+                font-weight: 600;
+                color: var(--vscode-descriptionForeground);
+            }
+            .week-days {
+                display: flex;
+                gap: 4px;
+                margin-bottom: 12px;
+            }
+            .week-day {
+                flex: 1;
+                aspect-ratio: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                border-radius: 6px;
+                background: rgba(100, 100, 120, 0.1);
+                border: 1px solid rgba(128, 128, 128, 0.2);
+                transition: all 0.2s ease;
+            }
+            .week-day.complete {
+                background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(56, 142, 60, 0.2));
+                border-color: rgba(76, 175, 80, 0.5);
+            }
+            .week-day:hover {
+                transform: scale(1.1);
+            }
+            .week-progress {
+                text-align: center;
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--vscode-foreground);
+                margin-bottom: 6px;
+            }
+            .week-stats {
+                text-align: center;
+                font-size: 10px;
+                color: var(--vscode-descriptionForeground);
+            }
+
+            /* Memories Section */
+            .memories-content {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .memory-year {
+                padding: 10px 12px;
+                background: rgba(100, 180, 255, 0.05);
+                border-left: 3px solid rgba(100, 180, 255, 0.4);
+                border-radius: 4px;
+            }
+            .memory-header {
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--vscode-foreground);
+                margin-bottom: 6px;
+            }
+            .memory-note {
+                font-size: 12px;
+                color: var(--vscode-textLink-foreground);
+                padding: 4px 0;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .memory-note:hover {
+                color: var(--vscode-textLink-activeForeground);
+                transform: translateX(4px);
+            }
+            .memory-more {
+                font-size: 10px;
+                color: var(--vscode-descriptionForeground);
+                font-style: italic;
+                padding-top: 4px;
+            }
+            .empty-message {
+                font-size: 12px;
+                color: var(--vscode-descriptionForeground);
+                font-style: italic;
+                text-align: center;
+                padding: 20px;
+            }
+
             /* Chart Sections */
             .chart-section {
                 margin-bottom: 16px;
@@ -1143,7 +1320,10 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 recentActivity: ${JSON.stringify(recentActivity.map(a => ({date: a.date.toISOString(), count: a.count})))},
                 currentStreak: ${currentStreak},
                 longestStreak: ${longestStreak},
-                streakHeatmap: ${JSON.stringify(streakHeatmap.map(h => ({date: h.date.toISOString(), count: h.count, hasNote: h.hasNote})))}
+                streakHeatmap: ${JSON.stringify(streakHeatmap.map(h => ({date: h.date.toISOString(), count: h.count, hasNote: h.hasNote})))},
+                timeOfDayData: ${JSON.stringify(timeOfDayData)},
+                onThisDayMemories: ${JSON.stringify(onThisDayMemories)},
+                perfectWeekData: ${JSON.stringify(perfectWeekData)}
             };
 
             let selectedDay = null;
@@ -1178,21 +1358,81 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 }
             }
 
+            // Helper: Render time-of-day heatmap
+            function renderTimeOfDayHeatmap() {
+                const data = statistics.timeOfDayData || [];
+                const maxCount = Math.max(...data.map(d => d.count), 1);
+
+                // Find peak hours
+                const peakHour = data.reduce((max, d) => d.count > max.count ? d : max, {hour: 0, count: 0, percentage: 0});
+                const peakLabel = peakHour.hour === 0 ? '12 AM' :
+                                 peakHour.hour < 12 ? \`\${peakHour.hour} AM\` :
+                                 peakHour.hour === 12 ? '12 PM' : \`\${peakHour.hour - 12} PM\`;
+
+                return data.map(d => {
+                    const height = maxCount > 0 ? Math.max((d.count / maxCount) * 100, 2) : 2;
+                    const label = d.hour === 0 ? '12a' : d.hour < 12 ? \`\${d.hour}a\` : d.hour === 12 ? '12p' : \`\${d.hour - 12}p\`;
+                    return \`<div class="time-bar-container" title="\${label}: \${d.count} notes (\${d.percentage}%)">
+                        <div class="time-bar" style="height: \${height}%"></div>
+                        \${d.hour % 3 === 0 ? \`<div class="time-label">\${label}</div>\` : ''}
+                    </div>\`;
+                }).join('') + \`<div class="time-peak">Peak: \${peakLabel} (\${peakHour.percentage}%)</div>\`;
+            }
+
+            // Helper: Render "On This Day" memories
+            function renderOnThisDayMemories() {
+                const memories = statistics.onThisDayMemories || [];
+                if (memories.length === 0) {
+                    return '<div class="empty-message">No notes from previous years on this date</div>';
+                }
+
+                return memories.slice(0, 3).map(m => {
+                    const yearsAgo = new Date().getFullYear() - m.year;
+                    return \`<div class="memory-year">
+                        <div class="memory-header">🕐 \${yearsAgo} year\${yearsAgo !== 1 ? 's' : ''} ago (\${m.year})</div>
+                        \${m.notes.slice(0, 2).map(n =>
+                            \`<div class="memory-note" data-path="\${n.path}">• \${n.name}</div>\`
+                        ).join('')}
+                        \${m.notes.length > 2 ? \`<div class="memory-more">+\${m.notes.length - 2} more</div>\` : ''}
+                    </div>\`;
+                }).join('');
+            }
+
+            // Helper: Render perfect week tracker
+            function renderPerfectWeekTracker() {
+                const weekData = statistics.perfectWeekData || {daysWithNotes: [], daysComplete: 0, totalDays: 7, perfectWeeksThisMonth: 0};
+                const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+                const daysHtml = weekData.daysWithNotes.map((hasNote, i) =>
+                    \`<div class="week-day \${hasNote ? 'complete' : ''}">\${hasNote ? '✅' : '⭕'}</div>\`
+                ).join('');
+
+                return \`
+                    <div class="week-labels">\${dayLabels.map(l => \`<div class="week-label">\${l}</div>\`).join('')}</div>
+                    <div class="week-days">\${daysHtml}</div>
+                    <div class="week-progress">\${weekData.daysComplete}/\${weekData.totalDays} days • Keep going! 🔥</div>
+                    <div class="week-stats">Perfect weeks this month: \${weekData.perfectWeeksThisMonth}</div>
+                \`;
+            }
+
             // Display overview statistics on load
             function showOverviewStatistics() {
                 const statsContent = document.getElementById('statsContent');
                 const statsTitle = document.getElementById('statsTitle');
-                statsTitle.textContent = 'Daily Streak';
+                statsTitle.textContent = 'Insights';
 
                 const streakHeatmapHtml = renderStreakHeatmap();
                 const streakMessage = getStreakMessage();
+                const timeOfDayHtml = renderTimeOfDayHeatmap();
+                const memoriesHtml = renderOnThisDayMemories();
+                const perfectWeekHtml = renderPerfectWeekTracker();
 
                 statsContent.innerHTML = \`
-                    <div class="streak-section">
-                        <div class="streak-header">
-                            <div class="streak-title">
-                                <span class="streak-icon">\${statistics.currentStreak > 0 ? '🔥' : '📝'}</span>
-                                <span>Keep the momentum going!</span>
+                    <div class="widget-section streak-section">
+                        <div class="widget-header">
+                            <div class="widget-title">
+                                <span class="widget-icon">\${statistics.currentStreak > 0 ? '🔥' : '📝'}</span>
+                                <span>Daily Streak</span>
                             </div>
                         </div>
                         <div class="streak-values">
@@ -1212,7 +1452,53 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                             \${streakMessage}
                         </div>
                     </div>
+
+                    <div class="widget-section time-of-day-section">
+                        <div class="widget-header">
+                            <div class="widget-title">
+                                <span class="widget-icon">⏰</span>
+                                <span>Your Writing Hours</span>
+                            </div>
+                        </div>
+                        <div class="time-of-day-chart">
+                            \${timeOfDayHtml}
+                        </div>
+                    </div>
+
+                    <div class="widget-section perfect-week-section">
+                        <div class="widget-header">
+                            <div class="widget-title">
+                                <span class="widget-icon">🏆</span>
+                                <span>Perfect Week</span>
+                            </div>
+                        </div>
+                        <div class="perfect-week-content">
+                            \${perfectWeekHtml}
+                        </div>
+                    </div>
+
+                    <div class="widget-section memories-section">
+                        <div class="widget-header">
+                            <div class="widget-title">
+                                <span class="widget-icon">📅</span>
+                                <span>On This Day...</span>
+                            </div>
+                        </div>
+                        <div class="memories-content">
+                            \${memoriesHtml}
+                        </div>
+                    </div>
                 \`;
+
+                // Add click handlers for memory notes
+                document.querySelectorAll('.memory-note').forEach(note => {
+                    note.addEventListener('click', () => {
+                        vscode.postMessage({
+                            command: 'openNote',
+                            filePath: note.getAttribute('data-path')
+                        });
+                    });
+                });
             }
 
 
