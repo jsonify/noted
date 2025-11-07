@@ -277,9 +277,9 @@ function getActivityHtml(weeklyData: WeeklyActivity[], stats: ActivityStats, hou
 
             .secondary-charts-grid {
                 display: grid;
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: 1fr 2fr;
                 gap: 10px;
-                flex: 1;
+                flex: 1.4;
                 min-height: 0;
             }
 
@@ -530,19 +530,19 @@ function getActivityHtml(weeklyData: WeeklyActivity[], stats: ActivityStats, hou
             const hourlyCounts = hourlyData.map(h => h.count);
             const maxCount = Math.max(...hourlyCounts);
 
-            // Generate gradient colors based on intensity
+            // Generate colors based on intensity using theme colors
             const hourlyColors = hourlyCounts.map(count => {
                 const intensity = maxCount > 0 ? count / maxCount : 0;
-                if (intensity === 0) return 'rgba(100, 100, 120, 0.2)';
+                if (intensity === 0) return '${THEME_COLORS.calendar.intensity0}';
 
-                // Create gradient from blue to yellow to green
-                const r = Math.floor(100 + (intensity * 155));
-                const g = Math.floor(180 + (intensity * 75));
-                const b = Math.floor(255 - (intensity * 200));
-                return \`rgba(\${r}, \${g}, \${b}, \${0.6 + (intensity * 0.4)})\`;
+                if (intensity < 0.2) return '${THEME_COLORS.calendar.intensity1}';
+                if (intensity < 0.4) return '${THEME_COLORS.calendar.intensity2}';
+                if (intensity < 0.6) return '${THEME_COLORS.calendar.intensity3}';
+                if (intensity < 0.8) return '${THEME_COLORS.calendar.intensity4}';
+                return '${THEME_COLORS.calendar.intensity5}';
             });
 
-            // Custom plugin to draw hour labels
+            // Custom plugin to draw clock-like tick marks and hour labels
             const hourLabelsPlugin = {
                 id: 'hourLabels',
                 afterDraw: (chart) => {
@@ -553,18 +553,52 @@ function getActivityHtml(weeklyData: WeeklyActivity[], stats: ActivityStats, hou
                     const radius = Math.min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) / 2;
 
                     ctx.save();
-                    ctx.font = \`14px \${computedStyle.getPropertyValue('--vscode-font-family')}\`;
+
+                    // Draw tick marks for every 3 hours (8 total)
+                    const tickHours = [0, 3, 6, 9, 12, 15, 18, 21];
+                    const outerRadius = radius; // Start from outer edge of donut
+                    const tickLength = radius * 0.12; // Length of tick marks
+
+                    ctx.strokeStyle = foregroundColor;
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'round';
+
+                    tickHours.forEach(hour => {
+                        const angle = (hour / 24) * 2 * Math.PI - Math.PI / 2;
+                        const x1 = centerX + Math.cos(angle) * outerRadius;
+                        const y1 = centerY + Math.sin(angle) * outerRadius;
+                        const x2 = centerX + Math.cos(angle) * (outerRadius + tickLength);
+                        const y2 = centerY + Math.sin(angle) * (outerRadius + tickLength);
+
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.stroke();
+                    });
+
+                    // Draw hour labels (every 3 hours, outside tick marks)
+                    ctx.font = \`11px \${computedStyle.getPropertyValue('--vscode-font-family')}\`;
                     ctx.fillStyle = foregroundColor;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
-                    // Draw hour markers at 6, 12, 18, 0 (midnight)
-                    const hours = [6, 12, 18, 0];
-                    hours.forEach(hour => {
-                        const angle = (hour / 24) * 2 * Math.PI - Math.PI / 2;
-                        const x = centerX + Math.cos(angle) * (radius * 1.15);
-                        const y = centerY + Math.sin(angle) * (radius * 1.15);
-                        ctx.fillText(hour.toString(), x, y);
+                    const hourMarkers = [
+                        { hour: 0, label: '12am' },
+                        { hour: 3, label: '3am' },
+                        { hour: 6, label: '6am' },
+                        { hour: 9, label: '9am' },
+                        { hour: 12, label: '12pm' },
+                        { hour: 15, label: '3pm' },
+                        { hour: 18, label: '6pm' },
+                        { hour: 21, label: '9pm' }
+                    ];
+
+                    hourMarkers.forEach(marker => {
+                        const angle = (marker.hour / 24) * 2 * Math.PI - Math.PI / 2;
+                        const labelDistance = outerRadius + tickLength + (radius * 0.22);
+                        const x = centerX + Math.cos(angle) * labelDistance;
+                        const y = centerY + Math.sin(angle) * labelDistance;
+                        ctx.fillText(marker.label, x, y);
                     });
 
                     ctx.restore();
@@ -578,8 +612,8 @@ function getActivityHtml(weeklyData: WeeklyActivity[], stats: ActivityStats, hou
                     datasets: [{
                         data: hourlyCounts.map(c => c === 0 ? 0.5 : c), // Small value for empty slots
                         backgroundColor: hourlyColors,
-                        borderColor: '${THEME_COLORS.chart.gridColor}',
-                        borderWidth: 0.5
+                        borderColor: 'rgba(0, 0, 0, 0.3)',
+                        borderWidth: 1
                     }]
                 },
                 options: {
@@ -596,13 +630,23 @@ function getActivityHtml(weeklyData: WeeklyActivity[], stats: ActivityStats, hou
                             backgroundColor: '${THEME_COLORS.chart.tooltipBackground}',
                             titleColor: '#fff',
                             bodyColor: '#fff',
+                            borderColor: '${THEME_COLORS.accent.primaryGlow}',
+                            borderWidth: 1,
                             padding: 12,
                             displayColors: false,
                             callbacks: {
+                                title: function(context) {
+                                    const hour = context[0].dataIndex;
+                                    // Convert to 12-hour format
+                                    if (hour === 0) return '12:00 am';
+                                    if (hour < 12) return \`\${hour}:00 am\`;
+                                    if (hour === 12) return '12:00 pm';
+                                    return \`\${hour - 12}:00 pm\`;
+                                },
                                 label: function(context) {
                                     const hour = context.dataIndex;
                                     const count = hourlyData[hour].count;
-                                    return \`\${hour}:00 - \${count} note\${count !== 1 ? 's' : ''}\`;
+                                    return \`\${count} note\${count !== 1 ? 's' : ''}\`;
                                 }
                             }
                         }

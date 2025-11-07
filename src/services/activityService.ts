@@ -168,6 +168,37 @@ export class ActivityService {
     }
 
     /**
+     * Extract the creation timestamp from a note, prioritizing sources with time information.
+     * This is used for hourly activity analysis where we need accurate hour data.
+     * Priority:
+     * 1. Frontmatter 'created' field (may include time)
+     * 2. File creation timestamp (birthtime) - PRIORITIZED for actual creation hour
+     * 3. File modification timestamp (mtime) - fallback if birthtime is unreliable
+     *
+     * Note: We skip filename parsing here because YYYY-MM-DD format doesn't include
+     * time information and would incorrectly default all notes to midnight (00:00:00).
+     */
+    private async extractNoteTimestamp(filePath: string, content: string, stats: fs.Stats): Promise<Date> {
+        // Strategy 1: Parse frontmatter 'created' field (may have explicit time)
+        const frontmatter = parseFrontmatter(content);
+        if (frontmatter.created) {
+            const createdDate = new Date(frontmatter.created);
+            if (!isNaN(createdDate.getTime())) {
+                return createdDate;
+            }
+        }
+
+        // Strategy 2: Use file creation timestamp (birthtime) - best source for actual creation hour
+        // This gives us the real hour/minute/second when the file was created
+        if (stats.birthtime && stats.birthtime.getTime() > 0) {
+            return stats.birthtime;
+        }
+
+        // Strategy 3: Fallback to modification time if birthtime is not available or invalid
+        return stats.mtime;
+    }
+
+    /**
      * Recursively collect all note files
      */
     private async collectAllNoteFiles(dirPath: string): Promise<string[]> {
@@ -283,9 +314,9 @@ export class ActivityService {
                 const stats = await fs.promises.stat(filePath);
                 const content = await fs.promises.readFile(filePath, 'utf-8');
 
-                // Extract the creation date
-                const createdDate = await this.extractNoteDate(filePath, content, stats);
-                const hour = createdDate.getHours();
+                // Extract the creation timestamp (prioritizes birthtime for accurate hour data)
+                const createdTimestamp = await this.extractNoteTimestamp(filePath, content, stats);
+                const hour = createdTimestamp.getHours();
 
                 hourlyData[hour].count++;
             } catch (error) {
