@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.36.6](https://github.com/jsonify/noted/compare/v1.36.5...v1.36.6) (2025-11-07)
+
+
+### Documentation
+
+* add comprehensive AI summarization feature design ([#70](https://github.com/jsonify/noted/issues/70)) ([c9767bb](https://github.com/jsonify/noted/commit/c9767bb4e3ad44bd703472e4e6e894de0e92006c))
+
 ### [1.36.5](https://github.com/jsonify/noted/compare/v1.36.4...v1.36.5) (2025-11-07)
 
 ### [1.36.4](https://github.com/jsonify/noted/compare/v1.36.3...v1.36.4) (2025-11-06)
