@@ -676,6 +676,55 @@ export async function getOnThisDayMemories(notesPath: string, currentDate: Date 
 }
 
 /**
+ * Get "On This Month" memories - notes from previous months on the same day
+ */
+export async function getOnThisMonthMemories(notesPath: string, currentDate: Date = new Date()): Promise<Array<{monthsAgo: number, yearMonth: string, notes: Array<{name: string, path: string}>}>> {
+    const currentDay = currentDate.getDate();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    const memoriesByMonthsAgo = new Map<number, {yearMonth: string, notes: Array<{name: string, path: string}>}>();
+
+    try {
+        for await (const { filePath, date } of iterateNoteFiles(notesPath)) {
+            // Check if same day of month, but different month
+            if (date.getDate() === currentDay &&
+                (date.getFullYear() !== currentYear || date.getMonth() !== currentMonth)) {
+
+                // Calculate how many months ago
+                const monthsDiff = (currentYear - date.getFullYear()) * 12 + (currentMonth - date.getMonth());
+
+                if (monthsDiff > 0) {
+                    const yearMonth = date.toLocaleString('en-US', { year: 'numeric', month: 'long' });
+
+                    if (!memoriesByMonthsAgo.has(monthsDiff)) {
+                        memoriesByMonthsAgo.set(monthsDiff, {
+                            yearMonth,
+                            notes: []
+                        });
+                    }
+
+                    memoriesByMonthsAgo.get(monthsDiff)!.notes.push({
+                        name: path.basename(filePath, path.extname(filePath)),
+                        path: filePath
+                    });
+                }
+            }
+        }
+
+        // Convert map to sorted array (most recent months first)
+        const result = Array.from(memoriesByMonthsAgo.entries())
+            .map(([monthsAgo, data]) => ({ monthsAgo, ...data }))
+            .sort((a, b) => a.monthsAgo - b.monthsAgo);
+
+        return result;
+    } catch (error) {
+        console.error('[NOTED] Error getting on this month memories:', error);
+        return [];
+    }
+}
+
+/**
  * Get perfect week data - which days of the current week have notes
  */
 export async function getPerfectWeekData(notesPath: string): Promise<{

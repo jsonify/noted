@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getNotesPath, getFileFormat } from '../services/configService';
-import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap, getMonthlyTrend, getTimeOfDayAnalysis, getOnThisDayMemories, getPerfectWeekData } from './calendarHelpers';
+import { getNotesForDate, openNoteForDate, countNotesForDate, isTodayDate, getTotalNotesCount, getMonthlyStats, getMostActiveDay, getRecentActivity, getCurrentStreak, getLongestStreak, getStreakHeatmap, getMonthlyTrend, getTimeOfDayAnalysis, getOnThisDayMemories, getOnThisMonthMemories, getPerfectWeekData } from './calendarHelpers';
 import { THEME_COLORS } from '../constants/themeColors';
 
 /**
@@ -105,6 +105,7 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
         streakHeatmap,
         timeOfDayData,
         onThisDayMemories,
+        onThisMonthMemories,
         perfectWeekData
     ] = await Promise.all([
         getCurrentStreak(notesPath),
@@ -112,6 +113,7 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
         getStreakHeatmap(notesPath, 30),
         getTimeOfDayAnalysis(notesPath),
         getOnThisDayMemories(notesPath),
+        getOnThisMonthMemories(notesPath),
         getPerfectWeekData(notesPath)
     ]);
 
@@ -255,7 +257,14 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 display: flex;
                 flex-direction: column;
                 overflow-y: auto;
+                overflow-x: hidden;
                 padding-left: 12px;
+                min-height: 0;
+            }
+            #statsContent {
+                flex: 1;
+                overflow-y: auto;
+                overflow-x: hidden;
             }
 
             .header {
@@ -772,6 +781,9 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
             }
             .widget-header {
                 margin-bottom: 12px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
             }
             .widget-title {
                 font-size: 14px;
@@ -783,6 +795,32 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
             }
             .widget-icon {
                 font-size: 18px;
+            }
+            .widget-toggle {
+                display: flex;
+                gap: 4px;
+                background: rgba(100, 100, 120, 0.15);
+                border-radius: 6px;
+                padding: 2px;
+            }
+            .widget-toggle-btn {
+                padding: 4px 10px;
+                font-size: 10px;
+                font-weight: 600;
+                border: none;
+                border-radius: 4px;
+                background: transparent;
+                color: var(--vscode-descriptionForeground);
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .widget-toggle-btn:hover {
+                color: var(--vscode-foreground);
+                background: rgba(100, 100, 120, 0.2);
+            }
+            .widget-toggle-btn.active {
+                background: var(--vscode-button-background);
+                color: var(--vscode-button-foreground);
             }
 
             /* Time of Day Chart */
@@ -1323,6 +1361,7 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 streakHeatmap: ${JSON.stringify(streakHeatmap.map(h => ({date: h.date.toISOString(), count: h.count, hasNote: h.hasNote})))},
                 timeOfDayData: ${JSON.stringify(timeOfDayData)},
                 onThisDayMemories: ${JSON.stringify(onThisDayMemories)},
+                onThisMonthMemories: ${JSON.stringify(onThisMonthMemories)},
                 perfectWeekData: ${JSON.stringify(perfectWeekData)}
             };
 
@@ -1379,23 +1418,43 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                 }).join('') + \`<div class="time-peak">Peak: \${peakLabel} (\${peakHour.percentage}%)</div>\`;
             }
 
-            // Helper: Render "On This Day" memories
-            function renderOnThisDayMemories() {
-                const memories = statistics.onThisDayMemories || [];
-                if (memories.length === 0) {
-                    return '<div class="empty-message">No notes from previous years on this date</div>';
-                }
+            // State for memories toggle
+            let memoriesMode = 'years'; // 'years' or 'months'
 
-                return memories.slice(0, 3).map(m => {
-                    const yearsAgo = new Date().getFullYear() - m.year;
-                    return \`<div class="memory-year">
-                        <div class="memory-header">🕐 \${yearsAgo} year\${yearsAgo !== 1 ? 's' : ''} ago (\${m.year})</div>
-                        \${m.notes.slice(0, 2).map(n =>
-                            \`<div class="memory-note" data-path="\${n.path}">• \${n.name}</div>\`
-                        ).join('')}
-                        \${m.notes.length > 2 ? \`<div class="memory-more">+\${m.notes.length - 2} more</div>\` : ''}
-                    </div>\`;
-                }).join('');
+            // Helper: Render "On This Day" memories
+            function renderOnThisDayMemories(mode = 'years') {
+                if (mode === 'years') {
+                    const memories = statistics.onThisDayMemories || [];
+                    if (memories.length === 0) {
+                        return '<div class="empty-message">No notes from previous years on this date</div>';
+                    }
+
+                    return memories.slice(0, 3).map(m => {
+                        const yearsAgo = new Date().getFullYear() - m.year;
+                        return \`<div class="memory-year">
+                            <div class="memory-header">🕐 \${yearsAgo} year\${yearsAgo !== 1 ? 's' : ''} ago (\${m.year})</div>
+                            \${m.notes.slice(0, 2).map(n =>
+                                \`<div class="memory-note" data-path="\${n.path}">• \${n.name}</div>\`
+                            ).join('')}
+                            \${m.notes.length > 2 ? \`<div class="memory-more">+\${m.notes.length - 2} more</div>\` : ''}
+                        </div>\`;
+                    }).join('');
+                } else {
+                    const memories = statistics.onThisMonthMemories || [];
+                    if (memories.length === 0) {
+                        return '<div class="empty-message">No notes from previous months on this date</div>';
+                    }
+
+                    return memories.slice(0, 3).map(m => {
+                        return \`<div class="memory-year">
+                            <div class="memory-header">🕐 \${m.monthsAgo} month\${m.monthsAgo !== 1 ? 's' : ''} ago (\${m.yearMonth})</div>
+                            \${m.notes.slice(0, 2).map(n =>
+                                \`<div class="memory-note" data-path="\${n.path}">• \${n.name}</div>\`
+                            ).join('')}
+                            \${m.notes.length > 2 ? \`<div class="memory-more">+\${m.notes.length - 2} more</div>\` : ''}
+                        </div>\`;
+                    }).join('');
+                }
             }
 
             // Helper: Render perfect week tracker
@@ -1483,8 +1542,12 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                                 <span class="widget-icon">📅</span>
                                 <span>On This Day...</span>
                             </div>
+                            <div class="widget-toggle">
+                                <button class="widget-toggle-btn \${memoriesMode === 'years' ? 'active' : ''}" id="toggleYears">Years</button>
+                                <button class="widget-toggle-btn \${memoriesMode === 'months' ? 'active' : ''}" id="toggleMonths">Months</button>
+                            </div>
                         </div>
-                        <div class="memories-content">
+                        <div class="memories-content" id="memoriesContent">
                             \${memoriesHtml}
                         </div>
                     </div>
@@ -1499,6 +1562,48 @@ async function getCalendarHtml(year: number, month: number, notesPath: string): 
                         });
                     });
                 });
+
+                // Add click handlers for toggle buttons
+                document.getElementById('toggleYears')?.addEventListener('click', () => {
+                    memoriesMode = 'years';
+                    updateMemoriesView();
+                });
+
+                document.getElementById('toggleMonths')?.addEventListener('click', () => {
+                    memoriesMode = 'months';
+                    updateMemoriesView();
+                });
+            }
+
+            // Helper: Update memories view when toggle changes
+            function updateMemoriesView() {
+                const memoriesContent = document.getElementById('memoriesContent');
+                const toggleYearsBtn = document.getElementById('toggleYears');
+                const toggleMonthsBtn = document.getElementById('toggleMonths');
+
+                if (memoriesContent && toggleYearsBtn && toggleMonthsBtn) {
+                    // Update button states
+                    if (memoriesMode === 'years') {
+                        toggleYearsBtn.classList.add('active');
+                        toggleMonthsBtn.classList.remove('active');
+                    } else {
+                        toggleYearsBtn.classList.remove('active');
+                        toggleMonthsBtn.classList.add('active');
+                    }
+
+                    // Re-render memories content
+                    memoriesContent.innerHTML = renderOnThisDayMemories(memoriesMode);
+
+                    // Re-attach click handlers for memory notes
+                    document.querySelectorAll('.memory-note').forEach(note => {
+                        note.addEventListener('click', () => {
+                            vscode.postMessage({
+                                command: 'openNote',
+                                filePath: note.getAttribute('data-path')
+                            });
+                        });
+                    });
+                }
             }
 
 
