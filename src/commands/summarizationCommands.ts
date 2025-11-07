@@ -5,17 +5,40 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { SummarizationService } from '../services/summarizationService';
+import { SummarizationService, SummaryOptions } from '../services/summarizationService';
+import { AutoTagService } from '../services/autoTagService';
 import { NoteItem } from '../providers/treeItems';
 import { getNotesPath } from '../services/configService';
 import { readDirectoryWithTypes } from '../services/fileSystemService';
+import { formatTagForDisplay } from '../utils/tagHelpers';
+import { PromptTemplateService } from '../services/promptTemplateService';
+
+/**
+ * Prompt user to select a template for summarization
+ */
+async function promptForTemplate(
+    context: vscode.ExtensionContext
+): Promise<SummaryOptions | null> {
+    const promptTemplateService = new PromptTemplateService(context);
+
+    const template = await promptTemplateService.pickTemplate();
+
+    if (!template) {
+        return null; // User cancelled
+    }
+
+    return {
+        promptTemplate: template
+    };
+}
 
 /**
  * Handle summarizing a single note from tree view
  */
 export async function handleSummarizeNote(
     summarizationService: SummarizationService,
-    noteItem: NoteItem
+    noteItem: NoteItem,
+    context: vscode.ExtensionContext
 ): Promise<void> {
     if (noteItem.type !== 'note') {
         vscode.window.showErrorMessage('Please select a note to summarize');
@@ -23,6 +46,12 @@ export async function handleSummarizeNote(
     }
 
     try {
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
         await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
@@ -35,7 +64,7 @@ export async function handleSummarizeNote(
                 }
 
                 progress.report({ message: path.basename(noteItem.filePath) });
-                const summary = await summarizationService.summarizeNote(noteItem.filePath);
+                const summary = await summarizationService.summarizeNote(noteItem.filePath, options);
 
                 if (!token.isCancellationRequested) {
                     await displaySummary(summary, path.basename(noteItem.filePath), [noteItem.filePath]);
@@ -51,7 +80,8 @@ export async function handleSummarizeNote(
  * Handle summarizing the currently open note
  */
 export async function handleSummarizeCurrentNote(
-    summarizationService: SummarizationService
+    summarizationService: SummarizationService,
+    context: vscode.ExtensionContext
 ): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -75,6 +105,12 @@ export async function handleSummarizeCurrentNote(
     }
 
     try {
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
         await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
@@ -87,7 +123,7 @@ export async function handleSummarizeCurrentNote(
                 }
 
                 progress.report({ message: path.basename(filePath) });
-                const summary = await summarizationService.summarizeNote(filePath);
+                const summary = await summarizationService.summarizeNote(filePath, options);
 
                 if (!token.isCancellationRequested) {
                     await displaySummary(summary, path.basename(filePath), [filePath]);
@@ -103,7 +139,8 @@ export async function handleSummarizeCurrentNote(
  * Handle summarizing recent notes (last 7 days)
  */
 export async function handleSummarizeRecent(
-    summarizationService: SummarizationService
+    summarizationService: SummarizationService,
+    context: vscode.ExtensionContext
 ): Promise<void> {
     const notesPath = getNotesPath();
     if (!notesPath) {
@@ -123,11 +160,18 @@ export async function handleSummarizeRecent(
             return;
         }
 
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
         await summarizeWithProgress(
             summarizationService,
             recentNotes,
             `Recent Notes (Last 7 Days)`,
-            `Analyzing ${recentNotes.length} notes from the last 7 days...`
+            `Analyzing ${recentNotes.length} notes from the last 7 days...`,
+            options
         );
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
@@ -138,7 +182,8 @@ export async function handleSummarizeRecent(
  * Handle summarizing notes from this week
  */
 export async function handleSummarizeWeek(
-    summarizationService: SummarizationService
+    summarizationService: SummarizationService,
+    context: vscode.ExtensionContext
 ): Promise<void> {
     const notesPath = getNotesPath();
     if (!notesPath) {
@@ -160,11 +205,18 @@ export async function handleSummarizeWeek(
             return;
         }
 
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
         await summarizeWithProgress(
             summarizationService,
             weekNotes,
             `This Week (${startOfWeek.toLocaleDateString()})`,
-            `Analyzing ${weekNotes.length} notes from this week...`
+            `Analyzing ${weekNotes.length} notes from this week...`,
+            options
         );
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
@@ -175,7 +227,8 @@ export async function handleSummarizeWeek(
  * Handle summarizing notes from this month
  */
 export async function handleSummarizeMonth(
-    summarizationService: SummarizationService
+    summarizationService: SummarizationService,
+    context: vscode.ExtensionContext
 ): Promise<void> {
     const notesPath = getNotesPath();
     if (!notesPath) {
@@ -195,11 +248,18 @@ export async function handleSummarizeMonth(
             return;
         }
 
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
         await summarizeWithProgress(
             summarizationService,
             monthNotes,
             `This Month (${startOfMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })})`,
-            `Analyzing ${monthNotes.length} notes from this month...`
+            `Analyzing ${monthNotes.length} notes from this month...`,
+            options
         );
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
@@ -210,7 +270,8 @@ export async function handleSummarizeMonth(
  * Handle summarizing notes from a custom date range
  */
 export async function handleSummarizeCustomRange(
-    summarizationService: SummarizationService
+    summarizationService: SummarizationService,
+    context: vscode.ExtensionContext
 ): Promise<void> {
     const notesPath = getNotesPath();
     if (!notesPath) {
@@ -267,11 +328,18 @@ export async function handleSummarizeCustomRange(
             return;
         }
 
+        // Prompt for template selection
+        const options = await promptForTemplate(context);
+        if (!options) {
+            return; // User cancelled template selection
+        }
+
         await summarizeWithProgress(
             summarizationService,
             rangeNotes,
             `Custom Range (${startDateStr} to ${endDateStr})`,
-            `Analyzing ${rangeNotes.length} notes from custom range...`
+            `Analyzing ${rangeNotes.length} notes from custom range...`,
+            options
         );
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
@@ -305,9 +373,15 @@ export async function handleClearSummaryCache(
 }
 
 /**
- * Display summary in a new editor tab
+ * Display summary in a new editor tab with optional auto-tagging prompt
  */
-async function displaySummary(summary: string, title: string, sourcePaths: string[]): Promise<void> {
+async function displaySummary(
+    summary: string,
+    title: string,
+    sourcePaths: string[],
+    autoTagService?: any,
+    offerAutoTag: boolean = false
+): Promise<void> {
     // Create a new untitled document with the summary
     const timestamp = new Date().toLocaleString();
     const sourceList = sourcePaths.map(p => `  - ${path.basename(p)}`).join('\n');
@@ -330,6 +404,12 @@ Generated by GitHub Copilot • Noted Extension`;
     });
 
     await vscode.window.showTextDocument(doc, { preview: false });
+
+    // Offer auto-tagging if enabled and service provided
+    if (offerAutoTag && autoTagService && sourcePaths.length === 1) {
+        // TODO: Implement promptForAutoTagging function
+        // await promptForAutoTagging(autoTagService, sourcePaths[0], summary);
+    }
 }
 
 /**
@@ -339,7 +419,8 @@ async function summarizeWithProgress(
     summarizationService: SummarizationService,
     notePaths: string[],
     title: string,
-    progressTitle: string
+    progressTitle: string,
+    options?: SummaryOptions
 ): Promise<void> {
     await vscode.window.withProgress(
         {
@@ -376,7 +457,7 @@ async function summarizeWithProgress(
                     });
 
                     try {
-                        const summary = await summarizationService.summarizeNote(notePath);
+                        const summary = await summarizationService.summarizeNote(notePath, options);
                         summaries.push(`### ${noteBasename}\n${summary}\n`);
                     } catch (error) {
                         summaries.push(`### ${noteBasename}\n*Error: ${error instanceof Error ? error.message : String(error)}*\n`);
@@ -388,7 +469,7 @@ async function summarizeWithProgress(
                 await displaySummary(combinedSummary, title, notePaths);
             } else {
                 // For 10 or fewer notes, use batch summarization
-                const summary = await summarizationService.summarizeNotes(notePaths);
+                const summary = await summarizationService.summarizeNotes(notePaths, options);
                 await displaySummary(summary, title, notePaths);
             }
         }

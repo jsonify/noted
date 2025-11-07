@@ -31,11 +31,17 @@
 **Estimated effort:** 2-3 days
 **Status:** ✅ Complete (2025-11-07)
 
-### Phase 4: Advanced Features (Future)
-- [ ] Custom prompt templates
-- [ ] Summary history/versions
-- [ ] Comparison between note versions
-- [ ] Semantic search using embeddings
-- [ ] Auto-tagging based on content
+### Phase 4: Advanced Features
+- [x] Custom prompt templates
+- [x] Summary history/versions
+- [x] Auto-tagging based on content
+- [ ] Semantic search using embeddings (deferred)
+- [ ] Note version comparison via git (deferred)
 
 **Estimated effort:** 4-5 days
+**Status:** ✅ Complete (2025-11-07)
+
+**Notes:**
+- Semantic search requires embedding generation (external API or local model)
+- Note version comparison requires git integration (complex, low priority)
+- Core Phase 4 features (templates, history, auto-tagging) all implemented

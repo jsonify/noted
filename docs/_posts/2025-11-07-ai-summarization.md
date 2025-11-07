@@ -649,13 +649,87 @@ Features:
 - Technical terms and project names prioritized
 - Overarching themes for multi-note summaries
 
+## Phase 4 Features (v1.39.0)
+
+**Custom Prompt Templates:**
+Create and use your own AI summarization prompts for specific use cases.
+
+Built-in templates include:
+- **Default** - Balanced summary with key points and action items
+- **Technical Deep Dive** - Focus on architecture, implementation details, technical decisions
+- **Meeting Summary** - Emphasize decisions, action items, attendees, outcomes
+- **Code Review** - Highlight code changes, issues found, improvement suggestions
+- **Brainstorm Session** - Capture ideas, possibilities, creative solutions
+
+Commands:
+- `Noted: Create Prompt Template` - Create custom template with variables
+- `Noted: Edit Prompt Template` - Modify existing custom templates
+- `Noted: Delete Prompt Template` - Remove custom templates
+- `Noted: Duplicate Prompt Template` - Copy template as starting point
+- `Noted: List Prompt Templates` - View all available templates
+- `Noted: View Template Variables Reference` - See all available variables
+
+Template picker appears before each summarization, remembering your last selection.
+
+**Summary History/Versions:**
+Track every summary version with full metadata and comparison tools.
+
+Each version stores:
+- Summary text and generation timestamp
+- Options used (length, format, action items, keywords)
+- AI model name and prompt template
+- Note's last modified time
+
+Commands:
+- `Noted: Show Summary History` - View all versions for current note
+- `Noted: Compare Summary Versions` - Side-by-side diff of two versions
+- `Noted: Restore Summary Version` - Open old version for review
+- `Noted: Clear Summary History` - Clear history for note or all notes
+- `Noted: Show Summary History Stats` - View storage statistics
+
+Features:
+- Automatic version saving (up to 10 per note with LRU eviction)
+- Stored in `.noted-cache/summaries/` as JSON
+- Quick pick with "Version 2 of 5 • 3 days ago • medium/structured" format
+- VS Code diff editor for visual comparison
+
+**Auto-Tagging from Summaries:**
+Automatically generate and apply tags based on AI summary keyword extraction.
+
+How it works:
+1. Generate summary with `includeKeywords: true`
+2. Extract hashtags from keywords section
+3. Validate and filter generic words
+4. Show preview with current vs. suggested tags
+5. Apply with user confirmation
+
+Commands:
+- `Noted: Auto-Tag Note from Summary` - Tag single note (also in context menu)
+- `Noted: Auto-Tag Current Note` - Tag currently open note
+- `Noted: Batch Auto-Tag Notes` - Tag multiple notes with time period picker
+- `Noted: Suggest Tags for Current Note` - Preview only, no modifications
+
+Batch options:
+- This Week - Notes from current week
+- This Month - Notes from current month
+- Last 7 Days - Recent notes
+- All Untagged - Notes with fewer than 3 tags
+
+Features:
+- Hierarchical tags: `#project/frontend`
+- Smart filtering of generic words
+- Tag modes: Append (add to existing), Replace (replace all), Suggest (preview)
+- Frontmatter creation/update: `tags: [tag1, tag2, tag3]`
+- Progress tracking with cancellation
+- Context menu integration
+
 ## Future Enhancements
 
-**Phase 4 (Future):**
-- Custom prompt templates
-- Summary history/versions
-- Version comparison
-- Semantic search
-- Auto-tagging from content
+**Beyond Phase 4:**
+- Semantic search using embeddings
+- Note version comparison via git integration
+- Custom model selection (beyond GitHub Copilot)
+- Summary templates marketplace
+- AI-powered note linking suggestions
 
 See [AI_SUMMARIZATION_PLAN.md](https://github.com/jsonify/noted/blob/main/dev-docs/AI_SUMMARIZATION_PLAN.md) for roadmap details.

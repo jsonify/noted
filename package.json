@@ -543,9 +543,84 @@
         "icon": "$(clear-all)"
       },
       {
+        "command": "noted.autoTagNote",
+        "title": "Noted: Auto-Tag Note from Summary",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "noted.autoTagCurrentNote",
+        "title": "Noted: Auto-Tag Current Note",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "noted.autoTagBatch",
+        "title": "Noted: Batch Auto-Tag Notes",
+        "icon": "$(tag-add)"
+      },
+      {
+        "command": "noted.suggestTags",
+        "title": "Noted: Suggest Tags for Current Note",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "noted.showSummaryHistory",
+        "title": "Noted: Show Summary History",
+        "icon": "$(history)"
+      },
+      {
+        "command": "noted.compareSummaries",
+        "title": "Noted: Compare Summary Versions",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "noted.restoreSummaryVersion",
+        "title": "Noted: Restore Summary Version",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "noted.clearSummaryHistory",
+        "title": "Noted: Clear Summary History",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "noted.showSummaryHistoryStats",
+        "title": "Noted: Show Summary History Stats",
+        "icon": "$(info)"
+      },
+      {
         "command": "noted.summarizeSearchResults",
         "title": "Noted: Summarize Search Results",
         "icon": "$(sparkle)"
+      },
+      {
+        "command": "noted.createPromptTemplate",
+        "title": "Noted: Create Prompt Template",
+        "icon": "$(add)"
+      },
+      {
+        "command": "noted.editPromptTemplate",
+        "title": "Noted: Edit Prompt Template",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "noted.deletePromptTemplate",
+        "title": "Noted: Delete Prompt Template",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "noted.duplicatePromptTemplate",
+        "title": "Noted: Duplicate Prompt Template",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "noted.listPromptTemplates",
+        "title": "Noted: List Prompt Templates",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "noted.viewTemplateVariables",
+        "title": "Noted: View Template Variables Reference",
+        "icon": "$(question)"
       }
     ],
     "keybindings": [
@@ -824,6 +899,11 @@
           "command": "noted.summarizeNote",
           "when": "view == notedView && viewItem == note",
           "group": "ai@1"
+        },
+        {
+          "command": "noted.autoTagNote",
+          "when": "view == notedView && viewItem == note",
+          "group": "ai@2"
         },
         {
           "command": "noted.searchTag",

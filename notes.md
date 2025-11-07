@@ -760,6 +760,31 @@ pnpm run test
 
 ## Recent Updates
 
+### AI Summarization Phase 4 (v1.39.0 - 2025-11-07)
+- **Custom Prompt Templates**: Create and use custom prompts for AI summarization
+  - Built-in templates: Default, Technical Deep Dive, Meeting Summary, Code Review, Brainstorm
+  - Template picker before each summarization
+  - Template variables: `{content}`, `{length}`, `{format}`, `{filename}`, `{date}`, etc.
+  - CRUD operations: Create, Edit, Delete, Duplicate, List templates
+  - Stored in `.noted-templates/prompts/` as JSON files
+  - Last used template remembered per workspace
+- **Summary History/Versions**: Track and compare summary versions over time
+  - Auto-saves each summary with metadata (timestamp, options, model, template)
+  - Max 10 versions per note with LRU eviction
+  - Stored in `.noted-cache/summaries/` as JSON files
+  - Commands: Show History, Compare Versions, Restore Version, Clear History, Show Stats
+  - Side-by-side diff view for version comparison
+  - Comprehensive version metadata display
+- **Auto-Tagging from Summaries**: Automatically generate and apply tags based on AI analysis
+  - Extracts hashtags from summary keywords section
+  - Smart filtering of generic words
+  - Hierarchical tag support: `#project/component`
+  - Tag application modes: Append, Replace, Suggest
+  - Batch auto-tagging: This Week, This Month, Last 7 Days, All Untagged
+  - User confirmation with preview before applying
+  - Frontmatter creation/update with tags array
+  - Context menu integration: Right-click → "Auto-Tag Note from Summary"
+
 ### AI Summarization Phase 3 (v1.38.0 - 2025-11-07)
 - **Search Results Summarization**: Summarize search results directly from search interface
   - After performing search, prompt appears: "Summarize Results?"

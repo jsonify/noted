@@ -55,6 +55,7 @@ import {
 } from './commands/bulkCommands';
 import { UndoService } from './services/undoService';
 import { SummarizationService } from './services/summarizationService';
+import { AutoTagService } from './services/autoTagService';
 import {
     trackDeleteNote,
     trackDeleteFolder,
@@ -79,6 +80,27 @@ import {
     handleSummarizeCustomRange,
     handleClearSummaryCache
 } from './commands/summarizationCommands';
+import {
+    handleAutoTagNote,
+    handleAutoTagCurrentNote,
+    handleAutoTagBatch,
+    handleSuggestTags
+} from './commands/autoTagCommands';
+import {
+    handleCreatePromptTemplate,
+    handleEditPromptTemplate,
+    handleDeletePromptTemplate,
+    handleDuplicatePromptTemplate,
+    handleListPromptTemplates,
+    handleViewTemplateVariables
+} from './commands/promptTemplateCommands';
+import {
+    handleShowSummaryHistory,
+    handleCompareSummaries,
+    handleRestoreSummaryVersion,
+    handleClearSummaryHistory,
+    handleShowSummaryHistoryStats
+} from './commands/summaryHistoryCommands';
 import { markdownItWikilinkEmbed, warmUpPathCache, clearPathResolutionCache } from './features/preview/wikilink-embed';
 import { showMarkdownPreview } from './preview/markdownPreview';
 import { FOLDER_PATTERNS, SPECIAL_FOLDERS, MONTH_NAMES } from './constants';
@@ -490,7 +512,10 @@ export function activate(context: vscode.ExtensionContext) {
     undoService.setLinkService(linkService);
 
     // Initialize AI summarization service
-    const summarizationService = new SummarizationService(context);
+    const summarizationService = new SummarizationService(context, notesPath || undefined);
+
+    // Initialize auto-tagging service (Phase 4)
+    const autoTagService = new AutoTagService();
 
     // Register hover provider for AI summary previews
     const summaryHoverProvider = new SummaryHoverProvider(linkService, summarizationService);
@@ -1850,31 +1875,109 @@ export function activate(context: vscode.ExtensionContext) {
     // ============================================================================
 
     let summarizeNote = vscode.commands.registerCommand('noted.summarizeNote', async (item: NoteItem) => {
-        await handleSummarizeNote(summarizationService, item);
+        await handleSummarizeNote(summarizationService, item, context);
     });
 
     let summarizeCurrentNote = vscode.commands.registerCommand('noted.summarizeCurrentNote', async () => {
-        await handleSummarizeCurrentNote(summarizationService);
+        await handleSummarizeCurrentNote(summarizationService, context);
     });
 
     let summarizeRecent = vscode.commands.registerCommand('noted.summarizeRecent', async () => {
-        await handleSummarizeRecent(summarizationService);
+        await handleSummarizeRecent(summarizationService, context);
     });
 
     let summarizeWeek = vscode.commands.registerCommand('noted.summarizeWeek', async () => {
-        await handleSummarizeWeek(summarizationService);
+        await handleSummarizeWeek(summarizationService, context);
     });
 
     let summarizeMonth = vscode.commands.registerCommand('noted.summarizeMonth', async () => {
-        await handleSummarizeMonth(summarizationService);
+        await handleSummarizeMonth(summarizationService, context);
     });
 
     let summarizeCustomRange = vscode.commands.registerCommand('noted.summarizeCustomRange', async () => {
-        await handleSummarizeCustomRange(summarizationService);
+        await handleSummarizeCustomRange(summarizationService, context);
     });
 
     let clearSummaryCache = vscode.commands.registerCommand('noted.clearSummaryCache', async () => {
         await handleClearSummaryCache(summarizationService);
+    });
+
+    // ============================================================================
+    // Auto-Tagging Commands (Phase 4)
+    // ============================================================================
+
+    let autoTagNote = vscode.commands.registerCommand('noted.autoTagNote', async (item: NoteItem) => {
+        await handleAutoTagNote(summarizationService, autoTagService, item);
+    });
+
+    let autoTagCurrentNote = vscode.commands.registerCommand('noted.autoTagCurrentNote', async () => {
+        await handleAutoTagCurrentNote(summarizationService, autoTagService);
+    });
+
+    let autoTagBatch = vscode.commands.registerCommand('noted.autoTagBatch', async () => {
+        await handleAutoTagBatch(summarizationService, autoTagService);
+    });
+
+    let suggestTags = vscode.commands.registerCommand('noted.suggestTags', async () => {
+        await handleSuggestTags(summarizationService, autoTagService);
+    });
+
+    // ============================================================================
+    // Prompt Template Commands
+    // ============================================================================
+
+    let createPromptTemplate = vscode.commands.registerCommand('noted.createPromptTemplate', async () => {
+        const { PromptTemplateService } = await import('./services/promptTemplateService');
+        const promptTemplateService = new PromptTemplateService(context);
+        await handleCreatePromptTemplate(promptTemplateService);
+    });
+
+    let editPromptTemplate = vscode.commands.registerCommand('noted.editPromptTemplate', async () => {
+        const { PromptTemplateService } = await import('./services/promptTemplateService');
+        const promptTemplateService = new PromptTemplateService(context);
+        await handleEditPromptTemplate(promptTemplateService);
+    });
+
+    let deletePromptTemplate = vscode.commands.registerCommand('noted.deletePromptTemplate', async () => {
+        const { PromptTemplateService } = await import('./services/promptTemplateService');
+        const promptTemplateService = new PromptTemplateService(context);
+        await handleDeletePromptTemplate(promptTemplateService);
+    });
+
+    let duplicatePromptTemplate = vscode.commands.registerCommand('noted.duplicatePromptTemplate', async () => {
+        const { PromptTemplateService } = await import('./services/promptTemplateService');
+        const promptTemplateService = new PromptTemplateService(context);
+        await handleDuplicatePromptTemplate(promptTemplateService);
+    });
+
+    let listPromptTemplates = vscode.commands.registerCommand('noted.listPromptTemplates', async () => {
+        const { PromptTemplateService } = await import('./services/promptTemplateService');
+        const promptTemplateService = new PromptTemplateService(context);
+        await handleListPromptTemplates(promptTemplateService);
+    });
+
+    let viewTemplateVariables = vscode.commands.registerCommand('noted.viewTemplateVariables', async () => {
+        await handleViewTemplateVariables();
+    });
+
+    let showSummaryHistory = vscode.commands.registerCommand('noted.showSummaryHistory', async () => {
+        await handleShowSummaryHistory(summarizationService);
+    });
+
+    let compareSummaries = vscode.commands.registerCommand('noted.compareSummaries', async () => {
+        await handleCompareSummaries(summarizationService);
+    });
+
+    let restoreSummaryVersion = vscode.commands.registerCommand('noted.restoreSummaryVersion', async () => {
+        await handleRestoreSummaryVersion(summarizationService);
+    });
+
+    let clearSummaryHistory = vscode.commands.registerCommand('noted.clearSummaryHistory', async () => {
+        await handleClearSummaryHistory(summarizationService);
+    });
+
+    let showSummaryHistoryStats = vscode.commands.registerCommand('noted.showSummaryHistoryStats', async () => {
+        await handleShowSummaryHistoryStats(summarizationService);
     });
 
     let summarizeSearchResults = vscode.commands.registerCommand('noted.summarizeSearchResults', async () => {
@@ -1898,6 +2001,8 @@ export function activate(context: vscode.ExtensionContext) {
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol,
         summarizeNote, summarizeCurrentNote, summarizeRecent, summarizeWeek, summarizeMonth, summarizeCustomRange, clearSummaryCache, summarizeSearchResults,
+        showSummaryHistory, compareSummaries, restoreSummaryVersion, clearSummaryHistory, showSummaryHistoryStats,
+        createPromptTemplate, editPromptTemplate, deletePromptTemplate, duplicatePromptTemplate, listPromptTemplates, viewTemplateVariables,
         refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource, openTagReference
     );
 
@@ -1910,6 +2015,7 @@ export function activate(context: vscode.ExtensionContext) {
                 await tagService.updateNotesPath(newNotesPath);
                 await linkService.updateNotesPath(newNotesPath);
                 archiveService.updateNotesPath(newNotesPath);
+                summarizationService.setHistoryService(newNotesPath);
 
                 // Clear path resolution cache for embeds
                 clearPathResolutionCache();

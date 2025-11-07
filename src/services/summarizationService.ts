@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { readFile } from './fileSystemService';
 import * as crypto from 'crypto';
+import { PromptTemplate } from './promptTemplateService';
+import { SummaryHistoryService } from './summaryHistoryService';
 
 /**
  * Options for note summarization
@@ -10,6 +12,8 @@ export interface SummaryOptions {
     format?: 'paragraph' | 'bullets' | 'structured';
     includeActionItems?: boolean;
     includeKeywords?: boolean;
+    customPrompt?: string; // Custom prompt to use instead of default
+    promptTemplate?: PromptTemplate; // Template to use for prompt generation
 }
 
 /**
@@ -31,10 +35,30 @@ export class SummarizationService {
     private cache: Map<string, CachedSummary> = new Map();
     private static readonly CACHE_KEY = 'noted.summaryCache';
     private static readonly MAX_CACHE_SIZE = 100;
+    private historyService: SummaryHistoryService | null = null;
 
-    constructor(context: vscode.ExtensionContext) {
+    constructor(context: vscode.ExtensionContext, notesPath?: string) {
         this.context = context;
         this.loadCache();
+
+        // Initialize history service if notes path is provided
+        if (notesPath) {
+            this.historyService = new SummaryHistoryService(notesPath);
+        }
+    }
+
+    /**
+     * Set or update the history service (useful when notes path changes)
+     */
+    setHistoryService(notesPath: string): void {
+        this.historyService = new SummaryHistoryService(notesPath);
+    }
+
+    /**
+     * Get the history service instance
+     */
+    getHistoryService(): SummaryHistoryService | null {
+        return this.historyService;
     }
 
     /**
@@ -289,8 +313,23 @@ Summary requirements:
             ? content.substring(0, maxChars) + '\n\n[Note truncated for summarization]'
             : content;
 
-        // Build prompt
-        const prompt = this.buildSingleNotePrompt(truncatedContent, finalOptions);
+        // Build prompt (use custom prompt if provided, otherwise use template or default)
+        let prompt: string;
+        if (finalOptions.customPrompt) {
+            prompt = finalOptions.customPrompt;
+        } else if (finalOptions.promptTemplate) {
+            // Use template service to replace variables
+            const { PromptTemplateService } = await import('./promptTemplateService');
+            const templateService = new PromptTemplateService(this.context);
+            prompt = templateService.replaceVariables(finalOptions.promptTemplate, {
+                content: truncatedContent,
+                length: finalOptions.maxLength || 'medium',
+                format: finalOptions.format || 'structured',
+                filename: filePath.split(/[\\/]/).pop() || filePath
+            });
+        } else {
+            prompt = this.buildSingleNotePrompt(truncatedContent, finalOptions);
+        }
 
         // Call Language Model API
         try {
@@ -309,21 +348,43 @@ Summary requirements:
                 summary += chunk;
             }
 
+            // Get file modification time
+            const stat = await vscode.workspace.fs.stat(vscode.Uri.file(filePath));
+            const fileModifiedAt = new Date(stat.mtime);
+
             // Cache the result
             if (cacheEnabled) {
-                const stat = await vscode.workspace.fs.stat(vscode.Uri.file(filePath));
                 const cacheKey = await this.getCacheKey(filePath, finalOptions);
 
                 this.cache.set(cacheKey, {
                     filePath,
                     summary,
                     generatedAt: new Date(),
-                    fileModifiedAt: new Date(stat.mtime),
+                    fileModifiedAt,
                     options: finalOptions
                 });
 
                 this.evictOldestIfNeeded();
                 await this.saveCache();
+            }
+
+            // Save to history
+            if (this.historyService) {
+                try {
+                    const modelName = this.getModelName(model);
+                    const templateName = finalOptions.promptTemplate?.name;
+                    await this.historyService.addVersion(
+                        filePath,
+                        summary,
+                        finalOptions,
+                        modelName,
+                        templateName,
+                        fileModifiedAt
+                    );
+                } catch (error) {
+                    console.error('Failed to save summary to history:', error);
+                    // Don't fail the summarization if history save fails
+                }
             }
 
             return summary;
@@ -365,8 +426,31 @@ Summary requirements:
             })
         );
 
-        // Build prompt
-        const prompt = this.buildMultiNotePrompt(notes, finalOptions);
+        // Build prompt (use custom prompt if provided, otherwise use template or default)
+        let prompt: string;
+        if (finalOptions.customPrompt) {
+            prompt = finalOptions.customPrompt;
+        } else if (finalOptions.promptTemplate) {
+            // Use template service to replace variables
+            const { PromptTemplateService } = await import('./promptTemplateService');
+            const templateService = new PromptTemplateService(this.context);
+
+            // Combine all note contents for multi-note summarization
+            const combinedContent = notes.map(note => `
+### ${note.date} - ${note.path}
+${note.content}
+`).join('\n');
+
+            prompt = templateService.replaceVariables(finalOptions.promptTemplate, {
+                content: combinedContent,
+                length: finalOptions.maxLength || 'medium',
+                format: finalOptions.format || 'structured',
+                filename: `${notes.length} notes`,
+                noteCount: notes.length
+            });
+        } else {
+            prompt = this.buildMultiNotePrompt(notes, finalOptions);
+        }
 
         // Call Language Model API
         try {
@@ -436,5 +520,19 @@ Summary requirements:
             size: this.cache.size,
             maxSize: SummarizationService.MAX_CACHE_SIZE
         };
+    }
+
+    /**
+     * Get model name from language model
+     */
+    private getModelName(model: vscode.LanguageModelChat): string {
+        // Try to extract model info
+        if ('id' in model && typeof model.id === 'string') {
+            return model.id;
+        }
+        if ('name' in model && typeof model.name === 'string') {
+            return model.name;
+        }
+        return 'GitHub Copilot';
     }
 }
