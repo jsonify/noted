@@ -268,7 +268,7 @@ New settings in `package.json`:
 "noted.ai.autoSummarize": {
   "type": "boolean",
   "default": false,
-  "description": "Automatically generate summaries for new notes after 1 minute"
+  "description": "Automatically generate summaries for new notes after 1 minute of inactivity."
 },
 "noted.ai.includeActionItems": {
   "type": "boolean",
