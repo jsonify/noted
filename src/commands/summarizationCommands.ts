@@ -379,7 +379,7 @@ async function displaySummary(
     summary: string,
     title: string,
     sourcePaths: string[],
-    autoTagService?: any,
+    autoTagService?: AutoTagService,
     offerAutoTag: boolean = false
 ): Promise<void> {
     // Create a new untitled document with the summary
