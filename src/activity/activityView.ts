@@ -163,7 +163,7 @@ function getActivityHtml(weeklyData: WeeklyActivity[], stats: ActivityStats, hou
             }
 
             .chart-container.main {
-                flex: 0.8;
+                flex: 1.2;
                 min-height: 0;
             }
 
@@ -177,15 +177,14 @@ function getActivityHtml(weeklyData: WeeklyActivity[], stats: ActivityStats, hou
                 flex: 1;
                 min-height: 0;
                 width: 100%;
-                padding: 30px;
             }
 
             .chart-wrapper canvas {
                 position: absolute;
-                top: 30px;
-                left: 30px;
-                width: calc(100% - 60px) !important;
-                height: calc(100% - 60px) !important;
+                top: 0;
+                left: 0;
+                width: 100% !important;
+                height: 100% !important;
             }
 
             .legend-container {
