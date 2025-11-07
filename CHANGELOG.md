@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.37.1](https://github.com/jsonify/noted/compare/v1.37.0...v1.37.1) (2025-11-07)
+
+
+### Documentation
+
+* updated docs for implementation ([dca2652](https://github.com/jsonify/noted/commit/dca265295b1c85fe5c0dd6e74a792e0669b74200))
+
 ## [1.37.0](https://github.com/jsonify/noted/compare/v1.36.7...v1.37.0) (2025-11-07)
 
 
