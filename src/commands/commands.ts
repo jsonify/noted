@@ -854,7 +854,7 @@ export async function handleShowConfig() {
 // Search Results Summarization Commands
 // ============================================================================
 
-export async function handleSummarizeSearchResults(summarizationService: any) {
+export async function handleSummarizeSearchResults(summarizationService: SummarizationService) {
     if (!lastSearchResults || lastSearchResults.length === 0) {
         vscode.window.showWarningMessage('No search results available. Please perform a search first.');
         return;
