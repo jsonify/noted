@@ -425,7 +425,7 @@ Provide only the summary without preamble. Be open-minded and capture the creati
         let prompt = template.prompt;
 
         // Calculate word count based on length
-        const wordCount = this.getWordCount(variables.length as any);
+        const wordCount = this.getWordCount(variables.length as 'short' | 'medium' | 'long');
 
         // Build action items prompt section
         const actionItemsPrompt = this.buildActionItemsPrompt();

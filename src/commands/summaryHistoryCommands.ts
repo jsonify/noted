@@ -155,13 +155,20 @@ export async function handleCompareSummaries(
         const leftContent = formatSummaryForComparison(filePath, first.version, first.index, versions.length);
         const rightContent = formatSummaryForComparison(filePath, second.version, second.index, versions.length);
 
-        const leftUri = vscode.Uri.parse(`untitled:Summary Version ${first.index + 1}`);
-        const rightUri = vscode.Uri.parse(`untitled:Summary Version ${second.index + 1}`);
+        // Create untitled documents with content
+        const leftDoc = await vscode.workspace.openTextDocument({
+            content: leftContent,
+            language: 'markdown'
+        });
+        const rightDoc = await vscode.workspace.openTextDocument({
+            content: rightContent,
+            language: 'markdown'
+        });
 
         // Open diff editor
         await vscode.commands.executeCommand('vscode.diff',
-            leftUri.with({ scheme: 'data', path: leftContent }),
-            rightUri.with({ scheme: 'data', path: rightContent }),
+            leftDoc.uri,
+            rightDoc.uri,
             `Version ${first.index + 1} ↔ Version ${second.index + 1}`
         );
 
