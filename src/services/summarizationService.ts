@@ -133,13 +133,19 @@ Summary requirements:
      */
     private getDateRange(notes: { path: string; date: string; content: string }[]): string {
         if (notes.length === 0) return 'no dates';
-        if (notes.length === 1) return notes[0].date;
 
-        const dates = notes.map(n => new Date(n.date)).sort((a, b) => a.getTime() - b.getTime());
-        const start = dates[0].toLocaleDateString();
-        const end = dates[dates.length - 1].toLocaleDateString();
+        const validDates = notes
+            .map(n => new Date(n.date))
+            .filter(d => !isNaN(d.getTime()))
+            .sort((a, b) => a.getTime() - b.getTime());
 
-        return `${start} to ${end}`;
+        if (validDates.length === 0) return 'an unknown date range';
+        if (validDates.length === 1) return validDates[0].toLocaleDateString();
+
+        const start = validDates[0].toLocaleDateString();
+        const end = validDates[validDates.length - 1].toLocaleDateString();
+
+        return start === end ? start : `${start} to ${end}`;
     }
 
     /**
@@ -156,9 +162,17 @@ Summary requirements:
      */
     private loadCache(): void {
         try {
-            const cached = this.context.globalState.get<Record<string, CachedSummary>>(SummarizationService.CACHE_KEY);
+            const cached = this.context.globalState.get<Record<string, any>>(SummarizationService.CACHE_KEY);
             if (cached) {
-                this.cache = new Map(Object.entries(cached));
+                const hydratedCache = new Map<string, CachedSummary>();
+                for (const [key, value] of Object.entries(cached)) {
+                    hydratedCache.set(key, {
+                        ...value,
+                        generatedAt: new Date(value.generatedAt),
+                        fileModifiedAt: new Date(value.fileModifiedAt),
+                    });
+                }
+                this.cache = hydratedCache;
             }
         } catch (error) {
             console.error('Failed to load summary cache:', error);
@@ -239,11 +253,7 @@ Summary requirements:
             const cached = this.cache.get(cacheKey);
 
             if (cached) {
-                // Verify file hasn't been modified since cache
-                const stat = await vscode.workspace.fs.stat(vscode.Uri.file(filePath));
-                if (stat.mtime === cached.fileModifiedAt.getTime()) {
-                    return cached.summary;
-                }
+                return cached.summary;
             }
         }
 
@@ -368,11 +378,7 @@ Summary requirements:
         const cached = this.cache.get(cacheKey);
 
         if (cached) {
-            // Verify file hasn't been modified
-            const stat = await vscode.workspace.fs.stat(vscode.Uri.file(filePath));
-            if (stat.mtime === cached.fileModifiedAt.getTime()) {
-                return cached.summary;
-            }
+            return cached.summary;
         }
 
         return null;
