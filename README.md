@@ -81,6 +81,10 @@ Visual monthly calendar for daily notes with highlighted indicators showing days
 
 Identify orphaned notes (no incoming or outgoing links) and placeholder links (references to notes that don't exist yet). The Orphans panel shows three categories: isolated notes, notes with no backlinks, and notes with no outgoing links. The Placeholders panel groups broken links by target, showing all source locations with context snippets and line numbers.
 
+### AI-powered summarization with GitHub Copilot
+
+Generate intelligent summaries of your notes using GitHub Copilot. Summarize single notes instantly or batch process multiple notes by time period (week, month, custom range). Summaries extract key insights, action items, and keywords with smart caching for instant access. Use custom prompt templates for different contexts (meeting notes, technical reviews, brainstorm sessions) and track summary versions over time. Auto-tag notes based on AI-extracted keywords.
+
 ---
 
 ## Quick Commands
@@ -213,21 +217,24 @@ With Noted, your notes folder is like your home—you can visit from anywhere, a
 
 ## Features at a Glance
 
-✅ Wiki-style `[[links]]` with autocomplete  
-✅ Interactive graph visualization with customizable physics  
-✅ Real-time connections panel showing backlinks and outgoing links  
-✅ Note, image, and diagram embeds with `![[embed]]` syntax  
-✅ Powerful regex + tag + date search  
-✅ Visual calendar for daily notes  
-✅ Flexible tagging system (inline `#tags` and YAML frontmatter)  
-✅ Orphan and placeholder detection  
-✅ Undo/redo for all destructive operations  
-✅ Bulk operations (move, delete, archive multiple notes)  
-✅ Custom templates with 10+ dynamic variables  
-✅ Markdown preview with embedded content rendering  
-✅ Pinned notes for quick access  
-✅ Archive system to keep workspace clean  
-✅ Cross-workspace access from single notes folder  
+✅ Wiki-style `[[links]]` with autocomplete
+✅ Interactive graph visualization with customizable physics
+✅ Real-time connections panel showing backlinks and outgoing links
+✅ Note, image, and diagram embeds with `![[embed]]` syntax
+✅ AI-powered summarization with GitHub Copilot (single notes & batch processing)
+✅ Custom prompt templates and summary history tracking
+✅ Auto-tagging from AI-extracted keywords
+✅ Powerful regex + tag + date search
+✅ Visual calendar for daily notes
+✅ Flexible tagging system (inline `#tags` and YAML frontmatter)
+✅ Orphan and placeholder detection
+✅ Undo/redo for all destructive operations
+✅ Bulk operations (move, delete, archive multiple notes)
+✅ Custom templates with 10+ dynamic variables
+✅ Markdown preview with embedded content rendering
+✅ Pinned notes for quick access
+✅ Archive system to keep workspace clean
+✅ Cross-workspace access from single notes folder
 ✅ 100% local, plain markdown files you own  
 
 ---
@@ -238,10 +245,12 @@ With Noted, your notes folder is like your home—you can visit from anywhere, a
 - **Project Documentation** - Keep all project notes linked and searchable across repositories
 - **Research Notes** - Build a personal research database with bidirectional links
 - **Daily Journaling** - Track daily progress with calendar navigation and daily notes
+- **Weekly Reviews** - AI-summarize your week's notes to track progress and extract action items
 - **Technical Writing** - Draft articles with embedded diagrams and cross-references
-- **Meeting Minutes** - Capture decisions and link to relevant project context
+- **Meeting Minutes** - Capture decisions and link to relevant project context, then summarize for status updates
 - **Learning & Study** - Create connected notes on topics with tags and backlinks
 - **Bug Tracking** - Document bugs with links to related issues and solutions
+- **Knowledge Transfer** - Generate AI summaries of project history for onboarding team members
 
 ---
 
@@ -254,6 +263,17 @@ Access settings via VS Code Settings (search for "Noted"):
 - **noted.fileFormat**: File format - "txt" or "md" (default: "md")
 - **noted.tagAutoComplete**: Tag suggestions when typing # (default: true)
 - **noted.autoBacklinks**: Auto-append backlinks sections (default: true)
+
+### AI Summarization Settings
+
+- **noted.ai.enabled**: Enable AI-powered features (default: true)
+- **noted.ai.summaryLength**: Summary length - "short", "medium", or "long" (default: "medium")
+- **noted.ai.summaryFormat**: Format - "paragraph", "bullets", or "structured" (default: "structured")
+- **noted.ai.includeActionItems**: Extract action items in summaries (default: true)
+- **noted.ai.includeKeywords**: Generate keywords/tags from content (default: false)
+- **noted.ai.cacheEnabled**: Cache summaries for performance (default: true)
+
+**Requirements:** GitHub Copilot extension with active subscription
 
 ### Graph View Settings
 
@@ -317,6 +337,7 @@ pnpm dlx @vscode/vsce package
 - Tags System
 - Advanced Search
 - Calendar View
+- AI Summarization (GitHub Copilot)
 - Bulk Operations & Undo/Redo
 - Templates Guide
 - Pinned Notes & Archive
