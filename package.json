@@ -2,7 +2,7 @@
   "name": "noted",
   "displayName": "Noted",
   "description": "Comprehensive workspace notes with wiki-style links, diagram embeds (Draw.io & Excalidraw), graph visualization, templates, advanced search, and daily tracking",
-  "version": "1.36.7",
+  "version": "1.37.0",
   "icon": "icon.png",
   "publisher": "jsonify",
   "repository": {
@@ -967,13 +967,21 @@
         },
         "noted.ai.summaryLength": {
           "type": "string",
-          "enum": ["short", "medium", "long"],
+          "enum": [
+            "short",
+            "medium",
+            "long"
+          ],
           "default": "medium",
           "description": "Default summary length"
         },
         "noted.ai.summaryFormat": {
           "type": "string",
-          "enum": ["paragraph", "bullets", "structured"],
+          "enum": [
+            "paragraph",
+            "bullets",
+            "structured"
+          ],
           "default": "structured",
           "description": "Default summary format"
         },

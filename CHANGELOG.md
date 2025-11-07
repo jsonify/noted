@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.37.0](https://github.com/jsonify/noted/compare/v1.36.7...v1.37.0) (2025-11-07)
+
+
+### Features
+
+* implement AI summarization Phase 1 (MVP) ([#71](https://github.com/jsonify/noted/issues/71)) ([a2ad9df](https://github.com/jsonify/noted/commit/a2ad9dfc889a236a84609867cf04411715bd72ff))
+
 ### [1.36.7](https://github.com/jsonify/noted/compare/v1.36.6...v1.36.7) (2025-11-07)
 
 ### [1.36.6](https://github.com/jsonify/noted/compare/v1.36.5...v1.36.6) (2025-11-07)
