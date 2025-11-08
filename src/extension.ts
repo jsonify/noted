@@ -1203,47 +1203,77 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Command to search notes with advanced filters
+    // Command to search notes with AI-powered smart search
     let searchNotes = vscode.commands.registerCommand('noted.searchNotes', async () => {
-        const { advancedSearch, parseSearchQuery } = await import('./services/searchService');
+        const { SearchOrchestrator } = await import('./search/SearchOrchestrator');
 
         const query = await vscode.window.showInputBox({
-            prompt: 'Search notes (supports: regex:, case:, tag:tagname, from:YYYY-MM-DD, to:YYYY-MM-DD)',
-            placeHolder: 'Enter search term with optional filters...'
+            prompt: 'Search notes with AI-powered semantic search (try natural language!)',
+            placeHolder: 'e.g., "bugs fixed last week" or "authentication issues" or "What did I work on yesterday?"',
+            value: ''
         });
 
-        if (query) {
-            try {
-                const options = parseSearchQuery(query);
-                const results = await advancedSearch(options, tagService);
+        if (!query || query.trim().length === 0) {
+            return;
+        }
+
+        try {
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: 'Searching notes...',
+                cancellable: true
+            }, async (progress, token) => {
+                const orchestrator = new SearchOrchestrator(tagService);
+
+                const results = await orchestrator.search(query, {
+                    progressCallback: (message, increment) => {
+                        progress.report({ message, increment });
+                    },
+                    cancellationToken: token
+                });
 
                 if (results.length === 0) {
-                    vscode.window.showInformationMessage('No results found');
-                } else {
-                    const items = results.map(r => {
-                        const fileName = path.basename(r.file);
-                        const matchInfo = r.matches > 0 ? ` (${r.matches} match${r.matches > 1 ? 'es' : ''})` : '';
-                        const tagInfo = r.tags.length > 0 ? ` [${r.tags.join(', ')}]` : '';
-
-                        return {
-                            label: `${fileName}${matchInfo}`,
-                            description: r.preview,
-                            detail: `${r.file}${tagInfo}`,
-                            filePath: r.file
-                        };
-                    });
-
-                    const selected = await vscode.window.showQuickPick(items, {
-                        placeHolder: `Found ${results.length} result(s) - Use filters: regex:, case:, tag:, from:, to:`
-                    });
-
-                    if (selected && selected.filePath) {
-                        const document = await vscode.workspace.openTextDocument(selected.filePath);
-                        await vscode.window.showTextDocument(document);
-                    }
+                    vscode.window.showInformationMessage('No results found. Try a different query or check your filters.');
+                    return;
                 }
-            } catch (error) {
-                vscode.window.showErrorMessage(`Search error: ${error instanceof Error ? error.message : String(error)}`);
+
+                // Create enhanced quick pick items
+                const items = results.map(r => {
+                    const scorePercent = Math.round(r.score * 100);
+                    const icon = r.matchType === 'semantic' || r.matchType === 'both' ? '$(sparkle)' : '$(search)';
+                    const matchTypeLabel = r.matchType === 'both' ? 'Hybrid' :
+                                          r.matchType === 'semantic' ? 'Semantic' : 'Keyword';
+
+                    return {
+                        label: `${icon} ${r.fileName}`,
+                        description: `${scorePercent}% · ${matchTypeLabel}`,
+                        detail: r.preview,
+                        filePath: r.filePath,
+                        score: r.score
+                    };
+                });
+
+                const selected = await vscode.window.showQuickPick(items, {
+                    placeHolder: `Found ${results.length} result(s) - sorted by relevance`,
+                    matchOnDescription: true,
+                    matchOnDetail: true
+                });
+
+                if (selected && selected.filePath) {
+                    const document = await vscode.workspace.openTextDocument(selected.filePath);
+                    await vscode.window.showTextDocument(document);
+                }
+            });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+
+            // Check if it's a Copilot availability error
+            if (errorMessage.includes('Copilot') || errorMessage.includes('LLM')) {
+                vscode.window.showWarningMessage(
+                    `Semantic search requires GitHub Copilot. Error: ${errorMessage}`
+                );
+            } else {
+                vscode.window.showErrorMessage(`Search error: ${errorMessage}`);
             }
         }
     });
