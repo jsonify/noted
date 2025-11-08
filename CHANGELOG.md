@@ -16,6 +16,18 @@ All notable changes to this project will be documented in this file. See [standa
   - Full caching support for performance optimization
   - Compatible with existing tag system (inline #hashtags and frontmatter tags)
 
+* **Smart Auto-Tagging (Phase 3 - UI Integration)**: Connect infrastructure to VS Code UI
+  - Add `noted.generateTags` command for AI-powered tag generation
+  - Add `noted.generateTagsCurrentNote` command for current note
+  - Add `noted.batchGenerateTags` command for batch processing
+  - Add `noted.manageNoteTags` command for manual tag management
+  - Add `noted.addCustomTag` command for adding custom tags
+  - Context menu integration in notes tree view (right-click on notes)
+  - Commands available via Command Palette
+  - Interactive quick pick UI for reviewing and selecting suggested tags
+  - Progress indicators for batch operations
+  - Full error handling with user-friendly messages
+
 ## [1.39.0](https://github.com/jsonify/noted/compare/v1.38.1...v1.39.0) (2025-11-08)
 
 

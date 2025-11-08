@@ -1923,6 +1923,35 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // ============================================================================
+    // Smart Auto-Tagging Commands (Phase 1 - Direct LLM Analysis)
+    // ============================================================================
+
+    let generateTags = vscode.commands.registerCommand('noted.generateTags', async (item?: NoteItem) => {
+        const { generateTagsForNote } = await import('./tagging/autoTagCommands');
+        await generateTagsForNote(item?.filePath ? vscode.Uri.file(item.filePath) : undefined);
+    });
+
+    let generateTagsCurrentNote = vscode.commands.registerCommand('noted.generateTagsCurrentNote', async () => {
+        const { generateTagsForActiveNote } = await import('./tagging/autoTagCommands');
+        await generateTagsForActiveNote();
+    });
+
+    let batchGenerateTags = vscode.commands.registerCommand('noted.batchGenerateTags', async () => {
+        const { tagAllNotes } = await import('./tagging/autoTagCommands');
+        await tagAllNotes();
+    });
+
+    let manageNoteTags = vscode.commands.registerCommand('noted.manageNoteTags', async () => {
+        const { manageNoteTags } = await import('./tagging/autoTagCommands');
+        await manageNoteTags();
+    });
+
+    let addCustomTag = vscode.commands.registerCommand('noted.addCustomTag', async () => {
+        const { addCustomTag } = await import('./tagging/autoTagCommands');
+        await addCustomTag();
+    });
+
+    // ============================================================================
     // Prompt Template Commands
     // ============================================================================
 
@@ -2004,6 +2033,7 @@ export function activate(context: vscode.ExtensionContext) {
         showSummaryHistory, compareSummaries, restoreSummaryVersion, clearSummaryHistory, showSummaryHistoryStats,
         createPromptTemplate, editPromptTemplate, deletePromptTemplate, duplicatePromptTemplate, listPromptTemplates, viewTemplateVariables,
         autoTagNote, autoTagCurrentNote, autoTagBatch, suggestTags,
+        generateTags, generateTagsCurrentNote, batchGenerateTags, manageNoteTags, addCustomTag,
         refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource, openTagReference
     );
 

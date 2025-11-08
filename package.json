@@ -563,6 +563,31 @@
         "icon": "$(lightbulb)"
       },
       {
+        "command": "noted.generateTags",
+        "title": "Noted: Generate Tags with AI",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "noted.generateTagsCurrentNote",
+        "title": "Noted: Generate Tags for Current Note",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "noted.batchGenerateTags",
+        "title": "Noted: Batch Generate Tags",
+        "icon": "$(tag-add)"
+      },
+      {
+        "command": "noted.manageNoteTags",
+        "title": "Noted: Manage Note Tags",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "noted.addCustomTag",
+        "title": "Noted: Add Custom Tag",
+        "icon": "$(tag)"
+      },
+      {
         "command": "noted.showSummaryHistory",
         "title": "Noted: Show Summary History",
         "icon": "$(history)"
@@ -904,6 +929,16 @@
           "command": "noted.autoTagNote",
           "when": "view == notedView && viewItem == note",
           "group": "ai@2"
+        },
+        {
+          "command": "noted.generateTags",
+          "when": "view == notedView && viewItem == note",
+          "group": "ai@3"
+        },
+        {
+          "command": "noted.manageNoteTags",
+          "when": "view == notedView && viewItem == note",
+          "group": "ai@4"
         },
         {
           "command": "noted.searchTag",
