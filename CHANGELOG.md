@@ -2,47 +2,7 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## [Unreleased]
-
-### Features
-
-* **Smart Auto-Tagging (Phase 1 - Infrastructure)**: Implement core auto-tagging infrastructure
-  - Add `TagParser` for YAML frontmatter tag storage with metadata
-  - Add `TagManager` for comprehensive tag operations (CRUD, search, rename, merge)
-  - Add `TagGenerator` with VS Code LLM API integration for AI-powered tag suggestions
-  - Add configuration settings for tagging (enabled, maxTags, customCategories, excludePatterns)
-  - Install `js-yaml` dependency for frontmatter parsing
-  - Tags stored in frontmatter format: `tags: [tag1, tag2, tag3]`
-  - Full caching support for performance optimization
-  - Compatible with existing tag system (inline #hashtags and frontmatter tags)
-
-* **Smart Auto-Tagging (Phase 3 - UI Integration)**: Connect infrastructure to VS Code UI
-  - Add `noted.generateTags` command for AI-powered tag generation
-  - Add `noted.generateTagsCurrentNote` command for current note
-  - Add `noted.batchGenerateTags` command for batch processing
-  - Add `noted.manageNoteTags` command for manual tag management
-  - Add `noted.addCustomTag` command for adding custom tags
-  - Context menu integration in notes tree view (right-click on notes)
-  - Commands available via Command Palette
-  - Interactive quick pick UI for reviewing and selecting suggested tags
-  - Progress indicators for batch operations
-  - Full error handling with user-friendly messages
-
-* **Smart Auto-Tagging (Phase 4 - Advanced Features)**: Enhance tagging with smart automation
-  - Auto-tag on note creation (controlled by `noted.tagging.autoTagOnCreate` setting)
-    * Automatically tags new notes 2 seconds after creation
-    * Only applies high-confidence tags (>0.75) automatically
-    * Works for daily notes and template-based notes
-    * Non-blocking: runs in background without interrupting workflow
-    * Shows notification with option to view/manage tags
-  - Tag statistics and analytics
-    * `noted.showTagStats` - Quick summary of tag usage
-    * `noted.showTagStatsDetailed` - Beautiful webview with comprehensive statistics
-    * Shows total tags, tagged/untagged notes, average tags per note
-    * Displays most used tags with usage counts
-    * Tracks AI-generated vs manually added tags
-    * Shows recently added tags (last 24 hours)
-    * Visual progress bars and interactive charts
+### [1.39.1](https://github.com/jsonify/noted/compare/v1.39.0...v1.39.1) (2025-11-08)
 
 ## [1.39.0](https://github.com/jsonify/noted/compare/v1.38.1...v1.39.0) (2025-11-08)
 
