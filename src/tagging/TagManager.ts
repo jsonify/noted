@@ -309,13 +309,13 @@ export class TagManager {
             return [];
         }
 
-        const templatesPath = getTemplatesPath();
         const fileFormat = getFileFormat();
-        const noteFiles: string[] = [];
+        const pattern = new vscode.RelativePattern(notesPath, `**/*.${fileFormat}`);
 
-        await this.scanDirectory(notesPath, noteFiles, fileFormat, templatesPath);
+        // Exclude templates folder. The `getTemplatesPath` helper could be used to get the exact folder name if needed.
+        const files = await vscode.workspace.findFiles(pattern, '**/.noted-templates/**');
 
-        return noteFiles;
+        return files.map(uri => uri.fsPath);
     }
 
     /**
