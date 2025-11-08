@@ -30,10 +30,6 @@ export class KeywordSearch {
             useFuzzy?: boolean;
         } = {}
     ): Promise<SmartSearchResult[]> {
-        console.log('[NOTED DEBUG KeywordSearch] Called with query:', query);
-        console.log('[NOTED DEBUG KeywordSearch] Filters:', filters);
-        console.log('[NOTED DEBUG KeywordSearch] Options:', options);
-
         // Build search options for legacy search
         const legacyOptions: LegacySearchOptions = {
             query,
@@ -45,11 +41,8 @@ export class KeywordSearch {
             maxResults: options.maxResults || 50,
         };
 
-        console.log('[NOTED DEBUG KeywordSearch] Legacy options:', legacyOptions);
-
         // Perform legacy search
         const legacyResults = await advancedSearch(legacyOptions, this.tagService);
-        console.log('[NOTED DEBUG KeywordSearch] Legacy search returned:', legacyResults.length, 'results');
 
         // Convert to SmartSearchResult with scoring
         const results: SmartSearchResult[] = [];
