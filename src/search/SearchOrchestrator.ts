@@ -41,7 +41,10 @@ export class SearchOrchestrator {
             cancellationToken?: vscode.CancellationToken;
         }
     ): Promise<SmartSearchResult[]> {
+        console.log('[NOTED DEBUG] Search called with query:', rawQuery);
+
         if (!rawQuery || rawQuery.trim().length === 0) {
+            console.log('[NOTED DEBUG] Empty query, returning no results');
             return [];
         }
 
@@ -49,6 +52,12 @@ export class SearchOrchestrator {
         const analyzedQuery = QueryAnalyzer.analyzeQuery(rawQuery, {
             maxResults: this.getConfig<number>('noted.search.maxResults', 20),
             minRelevanceScore: this.getConfig<number>('noted.search.minRelevanceScore', 0.5),
+        });
+
+        console.log('[NOTED DEBUG] Query analyzed:', {
+            intent: analyzedQuery.intent,
+            semanticQuery: analyzedQuery.semanticQuery,
+            filters: analyzedQuery.filters
         });
 
         options?.progressCallback?.('Analyzing query...');
@@ -79,15 +88,20 @@ export class SearchOrchestrator {
             cancellationToken?: vscode.CancellationToken;
         }
     ): Promise<SmartSearchResult[]> {
+        console.log('[NOTED DEBUG] Starting keyword search');
         options?.progressCallback?.('Collecting notes...', 20);
 
         // Get all note files and apply comprehensive filtering
         const allFiles = await this.getAllNoteFiles();
+        console.log('[NOTED DEBUG] Found', allFiles.length, 'note files');
+
         const filteredFiles = await this.applyFilters(allFiles, query.filters);
+        console.log('[NOTED DEBUG] After filtering:', filteredFiles.length, 'files');
 
         options?.progressCallback?.('Searching with keywords...', 50);
 
         const cleanedQuery = query.semanticQuery || query.rawQuery;
+        console.log('[NOTED DEBUG] Searching for:', cleanedQuery);
 
         // Use filtered files for keyword search
         // Pass empty filters to keywordSearch since we already filtered
@@ -99,6 +113,8 @@ export class SearchOrchestrator {
             useFuzzy: this.getConfig<boolean>('noted.search.enableFuzzyMatch', false),
         });
 
+        console.log('[NOTED DEBUG] Keyword search returned', results.length, 'results');
+
         // Additional filtering by format and template
         let finalResults = results;
         if (query.filters.fileFormat && query.filters.fileFormat !== 'both') {
@@ -108,6 +124,8 @@ export class SearchOrchestrator {
 
         // Filter by min score
         finalResults = finalResults.filter(r => r.score >= (query.options.minRelevanceScore || 0));
+
+        console.log('[NOTED DEBUG] Final results after filtering:', finalResults.length);
 
         options?.progressCallback?.('Search complete', 100);
         return finalResults;
