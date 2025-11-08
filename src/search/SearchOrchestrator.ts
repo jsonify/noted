@@ -122,6 +122,15 @@ export class SearchOrchestrator {
             finalResults = finalResults.filter(r => r.filePath.endsWith(ext));
         }
 
+        // Log scores before filtering
+        if (results.length > 0) {
+            console.log('[NOTED DEBUG] Score distribution:', results.map(r => ({
+                file: r.fileName,
+                score: r.score
+            })).slice(0, 5));
+            console.log('[NOTED DEBUG] Min relevance score threshold:', query.options.minRelevanceScore || 0);
+        }
+
         // Filter by min score
         finalResults = finalResults.filter(r => r.score >= (query.options.minRelevanceScore || 0));
 
