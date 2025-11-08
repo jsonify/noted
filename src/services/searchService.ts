@@ -190,6 +190,7 @@ export async function advancedSearch(
 
     const results: SearchResult[] = [];
     const hasTextSearch = options.query.length > 0;
+    console.log('[NOTED DEBUG advancedSearch] hasTextSearch:', hasTextSearch, 'query:', options.query);
 
     // Prepare regex pattern if needed
     let searchPattern: RegExp | null = null;
@@ -202,10 +203,20 @@ export async function advancedSearch(
                 throw new Error(`Invalid regex pattern: ${error instanceof Error ? error.message : String(error)}`);
             }
         } else {
-            // Escape special regex characters for literal search
-            const escaped = options.query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Split multi-word queries and search for any keyword
+            // "authentication issues" becomes /(authentication|issues)/gi
+            const keywords = options.query.trim().split(/\s+/).filter(k => k.length > 0);
+            if (keywords.length === 0) {
+                return [];
+            }
+
+            // Escape special regex characters for each keyword
+            const escapedKeywords = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            const pattern = escapedKeywords.length === 1
+                ? escapedKeywords[0]
+                : `(${escapedKeywords.join('|')})`;
             const flags = options.caseSensitive ? 'g' : 'gi';
-            searchPattern = new RegExp(escaped, flags);
+            searchPattern = new RegExp(pattern, flags);
         }
     }
 
@@ -251,6 +262,7 @@ export async function advancedSearch(
                         // Apply text search if specified
                         if (hasTextSearch && searchPattern) {
                             const matches = content.match(searchPattern);
+
                             if (!matches || matches.length === 0) {
                                 continue;
                             }

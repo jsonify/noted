@@ -215,45 +215,6 @@ With Noted, your notes folder is like your home—you can visit from anywhere, a
 
 ---
 
-## Features at a Glance
-
-✅ Wiki-style `[[links]]` with autocomplete
-✅ Interactive graph visualization with customizable physics
-✅ Real-time connections panel showing backlinks and outgoing links
-✅ Note, image, and diagram embeds with `![[embed]]` syntax
-✅ AI-powered summarization with GitHub Copilot (single notes & batch processing)
-✅ Custom prompt templates and summary version history
-✅ Auto-tagging from AI-extracted keywords
-✅ Powerful regex + tag + date search
-✅ Visual calendar for daily notes
-✅ Flexible tagging system (inline `#tags` and YAML frontmatter)
-✅ Orphan and placeholder detection
-✅ Undo/redo for all destructive operations
-✅ Bulk operations (move, delete, archive multiple notes)
-✅ Custom templates with 10+ dynamic variables
-✅ Markdown preview with embedded content rendering
-✅ Pinned notes for quick access
-✅ Archive system to keep workspace clean
-✅ Cross-workspace access from single notes folder
-✅ 100% local, plain markdown files you own  
-
----
-
-## Use Cases
-
-- **Second Brain** - Capture and connect your knowledge over time, building a personal wiki
-- **Project Documentation** - Keep all project notes linked and searchable across repositories
-- **Research Notes** - Build a personal research database with bidirectional links
-- **Daily Journaling** - Track daily progress with calendar navigation and daily notes
-- **Weekly Reviews** - AI-summarize your week's notes to track progress and extract action items
-- **Technical Writing** - Draft articles with embedded diagrams and cross-references
-- **Meeting Minutes** - Capture decisions and link to relevant project context, then summarize for status updates
-- **Learning & Study** - Create connected notes on topics with tags and backlinks
-- **Bug Tracking** - Document bugs with links to related issues and solutions
-- **Knowledge Transfer** - Generate AI summaries of project history for onboarding team members
-
----
-
 ## Configuration
 
 Access settings via VS Code Settings (search for "Noted"):

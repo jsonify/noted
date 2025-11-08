@@ -132,34 +132,43 @@ export class SearchOrchestrator {
             return this.keywordOnlySearch(query, options);
         }
 
-        options?.progressCallback?.('Collecting notes...');
+        try {
+            options?.progressCallback?.('Collecting notes...');
 
-        // Get all note files
-        const noteFiles = await this.getAllNoteFiles();
+            // Get all note files
+            const noteFiles = await this.getAllNoteFiles();
 
-        // Apply filters first
-        const filtered = await this.applyFilters(noteFiles, query.filters);
+            // Apply filters first
+            const filtered = await this.applyFilters(noteFiles, query.filters);
 
-        options?.progressCallback?.(`Analyzing ${filtered.length} notes with AI...`, 20);
+            options?.progressCallback?.(`Analyzing ${filtered.length} notes with AI...`, 20);
 
-        // Perform semantic search
-        const results = await this.semanticSearch.search(
-            query.semanticQuery || query.rawQuery,
-            filtered,
-            {
-                maxResults: query.options.maxResults,
-                progressCallback: (current, total) => {
-                    const percent = Math.round((current / total) * 80) + 20; // 20-100%
-                    options?.progressCallback?.(
-                        `Analyzing ${current}/${total} notes...`,
-                        percent
-                    );
-                },
-            }
-        );
+            // Perform semantic search
+            const results = await this.semanticSearch.search(
+                query.semanticQuery || query.rawQuery,
+                filtered,
+                {
+                    maxResults: query.options.maxResults,
+                    progressCallback: (current, total) => {
+                        const percent = Math.round((current / total) * 80) + 20; // 20-100%
+                        options?.progressCallback?.(
+                            `Analyzing ${current}/${total} notes...`,
+                            percent
+                        );
+                    },
+                }
+            );
 
-        options?.progressCallback?.('Search complete', 100);
-        return results;
+            options?.progressCallback?.('Search complete', 100);
+            return results;
+        } catch (error) {
+            // If semantic search fails (rate limiting, API errors, etc.), fall back to keyword
+            console.warn('[NOTED] Semantic search failed, falling back to keyword search:', error);
+            vscode.window.showWarningMessage(
+                'AI search encountered an error (possibly rate limiting). Using keyword search instead.'
+            );
+            return this.keywordOnlySearch(query, options);
+        }
     }
 
     /**
@@ -208,34 +217,43 @@ export class SearchOrchestrator {
             return filteredResults.slice(0, query.options.maxResults);
         }
 
-        // Step 3: Semantic re-ranking on top candidates
-        const maxCandidates = this.getConfig<number>('noted.search.hybridCandidates', 20);
-        const topCandidates = filteredResults.slice(0, maxCandidates);
+        try {
+            // Step 3: Semantic re-ranking on top candidates
+            const maxCandidates = this.getConfig<number>('noted.search.hybridCandidates', 20);
+            const topCandidates = filteredResults.slice(0, maxCandidates);
 
-        options?.progressCallback?.(`Re-ranking top ${topCandidates.length} with AI...`, 40);
+            options?.progressCallback?.(`Re-ranking top ${topCandidates.length} with AI...`, 40);
 
-        const candidateFiles = topCandidates.map(r => r.filePath);
-        const semanticResults = await this.semanticSearch.search(
-            query.semanticQuery || query.rawQuery,
-            candidateFiles,
-            {
-                maxResults: query.options.maxResults,
-                progressCallback: (current, total) => {
-                    const percent = Math.round((current / total) * 50) + 40; // 40-90%
-                    options?.progressCallback?.(
-                        `AI analyzing ${current}/${total} notes...`,
-                        percent
-                    );
-                },
-            }
-        );
+            const candidateFiles = topCandidates.map(r => r.filePath);
+            const semanticResults = await this.semanticSearch.search(
+                query.semanticQuery || query.rawQuery,
+                candidateFiles,
+                {
+                    maxResults: query.options.maxResults,
+                    progressCallback: (current, total) => {
+                        const percent = Math.round((current / total) * 50) + 40; // 40-90%
+                        options?.progressCallback?.(
+                            `AI analyzing ${current}/${total} notes...`,
+                            percent
+                        );
+                    },
+                }
+            );
 
-        // Step 4: Merge results
-        options?.progressCallback?.('Merging results...', 95);
-        const merged = this.mergeResults(filteredResults, semanticResults);
+            // Step 4: Merge results
+            options?.progressCallback?.('Merging results...', 95);
+            const merged = this.mergeResults(filteredResults, semanticResults);
 
-        options?.progressCallback?.('Search complete', 100);
-        return merged.slice(0, query.options.maxResults);
+            options?.progressCallback?.('Search complete', 100);
+            return merged.slice(0, query.options.maxResults);
+        } catch (error) {
+            // If semantic re-ranking fails, return keyword results
+            console.warn('[NOTED] Semantic re-ranking failed, returning keyword results:', error);
+            vscode.window.showWarningMessage(
+                'AI re-ranking encountered an error (possibly rate limiting). Showing keyword results only.'
+            );
+            return filteredResults.slice(0, query.options.maxResults);
+        }
     }
 
     /**

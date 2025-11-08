@@ -17,7 +17,9 @@ const path = require('path');
 const DEPS_TO_BUNDLE = [
   'marked',
   'markdown-it-regex',
-  'js-yaml'
+  'js-yaml',
+  'chrono-node',
+  'fuse.js'
 ];
 
 const OUT_DIR = path.join(__dirname, '..', 'out', 'node_modules');
