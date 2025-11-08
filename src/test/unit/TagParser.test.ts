@@ -1,7 +1,18 @@
 import { expect } from 'chai';
+import * as sinon from 'sinon';
 import { TagParser, NoteMetadata, NoteTag } from '../../tagging/TagParser';
 
 describe('TagParser', () => {
+  let clock: sinon.SinonFakeTimers;
+
+  beforeEach(() => {
+    // Use a fixed date for deterministic testing: 2024-01-15T12:00:00.000Z
+    clock = sinon.useFakeTimers(new Date('2024-01-15T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    clock.restore();
+  });
   describe('hasFrontmatter', () => {
     it('should return true for content with YAML frontmatter', () => {
       const content = `---
@@ -166,7 +177,10 @@ Content`;
       };
 
       const result = TagParser.writeTags(content, metadata);
-      expect(result).to.include('tagged-at:');
+      // YAML may quote the timestamp string, so check for both formats
+      const hasTimestamp = result.includes('tagged-at: 2024-01-15T12:00:00.000Z') ||
+                          result.includes("tagged-at: '2024-01-15T12:00:00.000Z'");
+      expect(hasTimestamp).to.be.true;
     });
 
     it('should remove tags field when metadata has empty tags', () => {
