@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.39.0](https://github.com/jsonify/noted/compare/v1.38.1...v1.39.0) (2025-11-08)
+
+
+### Features
+
+* add Smart Auto-Tagging feature design and implementation task list ([6264a83](https://github.com/jsonify/noted/commit/6264a83a456f5dfdba9c34cb6446bb4166312a5a))
+
 ### [1.38.1](https://github.com/jsonify/noted/compare/v1.38.0...v1.38.1) (2025-11-07)
 
 
