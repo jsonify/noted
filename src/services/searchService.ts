@@ -216,6 +216,9 @@ export async function advancedSearch(
         }
     }
 
+    let filesProcessed = 0;
+    let filesWithMatches = 0;
+
     async function searchDir(dir: string): Promise<void> {
         try {
             const entries = await readDirectoryWithTypes(dir);
@@ -226,6 +229,8 @@ export async function advancedSearch(
                 if (entry.isDirectory()) {
                     await searchDir(fullPath);
                 } else if (SUPPORTED_EXTENSIONS.some(ext => entry.name.endsWith(ext))) {
+                    filesProcessed++;
+
                     // Skip if not in tag filter
                     if (tagFilteredFiles && !tagFilteredFiles.has(fullPath)) {
                         continue;
@@ -258,9 +263,23 @@ export async function advancedSearch(
                         // Apply text search if specified
                         if (hasTextSearch && searchPattern) {
                             const matches = content.match(searchPattern);
+
+                            if (filesProcessed <= 2) {
+                                // Log first 2 files for debugging
+                                console.log(`[NOTED DEBUG advancedSearch] File ${filesProcessed}: ${entry.name}`);
+                                console.log(`[NOTED DEBUG advancedSearch]   Content length: ${content.length}`);
+                                console.log(`[NOTED DEBUG advancedSearch]   Search pattern: ${searchPattern}`);
+                                console.log(`[NOTED DEBUG advancedSearch]   Matches: ${matches ? matches.length : 0}`);
+                                if (content.length > 0) {
+                                    console.log(`[NOTED DEBUG advancedSearch]   First 200 chars: ${content.substring(0, 200)}`);
+                                }
+                            }
+
                             if (!matches || matches.length === 0) {
                                 continue;
                             }
+
+                            filesWithMatches++;
 
                             // Generate preview showing first match
                             const lines = content.split('\n');
@@ -314,7 +333,9 @@ export async function advancedSearch(
 
     await searchDir(notesPath);
 
-    console.log('[NOTED DEBUG advancedSearch] Search complete. Found', results.length, 'results');
+    console.log('[NOTED DEBUG advancedSearch] Search complete. Processed', filesProcessed, 'files');
+    console.log('[NOTED DEBUG advancedSearch] Files with matches:', filesWithMatches);
+    console.log('[NOTED DEBUG advancedSearch] Results collected:', results.length);
 
     // Sort by modification date (newest first)
     results.sort((a, b) => b.modified.getTime() - a.modified.getTime());
