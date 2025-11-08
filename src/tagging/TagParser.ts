@@ -23,7 +23,7 @@ export interface NoteMetadata {
  * Simple frontmatter structure for storage
  */
 interface SimpleFrontmatter {
-    tags?: string;
+    tags?: string | string[];  // Support both old string format and new array format
     'tagged-at'?: string;
     [key: string]: any;
 }
@@ -68,12 +68,24 @@ export class TagParser {
                 tagVersion: '1.0'
             };
 
-            // Parse tags from comma-separated string
-            if (parsed.tags && typeof parsed.tags === 'string') {
-                const tagNames = parsed.tags
-                    .split(',')
-                    .map(t => t.trim())
-                    .filter(t => t.length > 0);
+            // Parse tags - handle both string and array formats
+            if (parsed.tags) {
+                let tagNames: string[] = [];
+
+                if (Array.isArray(parsed.tags)) {
+                    // New array format: tags: [tag1, tag2, tag3]
+                    tagNames = parsed.tags
+                        .map(t => String(t).trim())
+                        .filter(t => t.length > 0);
+                } else if (typeof parsed.tags === 'string') {
+                    // Old string format: tags: '[tag1, tag2, tag3]' or tags: 'tag1, tag2, tag3'
+                    // Remove brackets if present
+                    let tagsStr = parsed.tags.replace(/^\[|\]$/g, '');
+                    tagNames = tagsStr
+                        .split(',')
+                        .map(t => t.trim())
+                        .filter(t => t.length > 0);
+                }
 
                 // For now, tags from frontmatter are assumed to be manual
                 // We don't store full NoteTag metadata in frontmatter yet
@@ -108,7 +120,8 @@ export class TagParser {
         // Format: tags: [tag1, tag2, tag3]
         if (metadata.tags.length > 0) {
             const tagNames = metadata.tags.map(t => t.name);
-            frontmatter.tags = `[${tagNames.join(', ')}]`;
+            // Store as actual array so yaml.dump formats it correctly without quotes
+            frontmatter.tags = tagNames;
             frontmatter['tagged-at'] = new Date().toISOString();
         }
 
@@ -136,7 +149,8 @@ export class TagParser {
     private static addFrontmatter(fileContent: string, frontmatter: SimpleFrontmatter): string {
         const yamlContent = yaml.dump(frontmatter, {
             lineWidth: -1, // Don't wrap lines
-            noRefs: true
+            noRefs: true,
+            flowLevel: 1  // Use inline flow style for arrays: [tag1, tag2, tag3]
         });
 
         return `---\n${yamlContent}---\n\n${fileContent}`;
@@ -166,7 +180,8 @@ export class TagParser {
 
             const yamlContent = yaml.dump(merged, {
                 lineWidth: -1,
-                noRefs: true
+                noRefs: true,
+                flowLevel: 1  // Use inline flow style for arrays: [tag1, tag2, tag3]
             });
 
             // Replace frontmatter

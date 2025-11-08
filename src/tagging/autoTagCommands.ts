@@ -99,6 +99,9 @@ async function generateTagsForFile(filePath: string): Promise<void> {
             vscode.window.showInformationMessage(
                 `Successfully tagged with: ${selectedTags.map(t => t.name).join(', ')}`
             );
+
+            // Refresh tags panel to show new tags
+            await vscode.commands.executeCommand('noted.refreshTags');
         });
 
     } catch (error) {
@@ -272,6 +275,9 @@ export async function tagAllNotes(): Promise<void> {
     vscode.window.showInformationMessage(
         `Batch tagging complete: ${tagged} tagged, ${skipped} skipped, ${failed} failed`
     );
+
+    // Refresh tags panel to show new tags
+    await vscode.commands.executeCommand('noted.refreshTags');
 }
 
 /**
@@ -359,6 +365,9 @@ export async function manageNoteTags(): Promise<void> {
             `Tags updated: ${finalTags.map(t => t.name).join(', ') || 'none'}`
         );
 
+        // Refresh tags panel to show updated tags
+        await vscode.commands.executeCommand('noted.refreshTags');
+
     } catch (error) {
         vscode.window.showErrorMessage(
             `Failed to manage tags: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -413,6 +422,9 @@ export async function addCustomTag(): Promise<void> {
 
         await tagManager.tagNote(filePath, [customTag], true);
         vscode.window.showInformationMessage(`Added tag: #${tagName}`);
+
+        // Refresh tags panel to show new tag
+        await vscode.commands.executeCommand('noted.refreshTags');
 
     } catch (error) {
         vscode.window.showErrorMessage(

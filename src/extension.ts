@@ -81,9 +81,6 @@ import {
     handleClearSummaryCache
 } from './commands/summarizationCommands';
 import {
-    handleAutoTagNote,
-    handleAutoTagCurrentNote,
-    handleAutoTagBatch,
     handleSuggestTags
 } from './commands/autoTagCommands';
 import {
@@ -1906,18 +1903,6 @@ export function activate(context: vscode.ExtensionContext) {
     // Auto-Tagging Commands (Phase 4)
     // ============================================================================
 
-    let autoTagNote = vscode.commands.registerCommand('noted.autoTagNote', async (item: NoteItem) => {
-        await handleAutoTagNote(summarizationService, autoTagService, item);
-    });
-
-    let autoTagCurrentNote = vscode.commands.registerCommand('noted.autoTagCurrentNote', async () => {
-        await handleAutoTagCurrentNote(summarizationService, autoTagService);
-    });
-
-    let autoTagBatch = vscode.commands.registerCommand('noted.autoTagBatch', async () => {
-        await handleAutoTagBatch(summarizationService, autoTagService);
-    });
-
     let suggestTags = vscode.commands.registerCommand('noted.suggestTags', async () => {
         await handleSuggestTags(summarizationService, autoTagService);
     });
@@ -1926,14 +1911,10 @@ export function activate(context: vscode.ExtensionContext) {
     // Smart Auto-Tagging Commands (Phase 1 - Direct LLM Analysis)
     // ============================================================================
 
-    let generateTags = vscode.commands.registerCommand('noted.generateTags', async (item?: NoteItem) => {
+    let generateTagsCurrentNote = vscode.commands.registerCommand('noted.generateTagsCurrentNote', async (item?: NoteItem) => {
         const { generateTagsForNote } = await import('./tagging/autoTagCommands');
+        // If called from context menu with item, use that file path; otherwise use active editor
         await generateTagsForNote(item?.filePath ? vscode.Uri.file(item.filePath) : undefined);
-    });
-
-    let generateTagsCurrentNote = vscode.commands.registerCommand('noted.generateTagsCurrentNote', async () => {
-        const { generateTagsForActiveNote } = await import('./tagging/autoTagCommands');
-        await generateTagsForActiveNote();
     });
 
     let batchGenerateTags = vscode.commands.registerCommand('noted.batchGenerateTags', async () => {
@@ -2042,8 +2023,8 @@ export function activate(context: vscode.ExtensionContext) {
         summarizeNote, summarizeCurrentNote, summarizeRecent, summarizeWeek, summarizeMonth, summarizeCustomRange, clearSummaryCache, summarizeSearchResults,
         showSummaryHistory, compareSummaries, restoreSummaryVersion, clearSummaryHistory, showSummaryHistoryStats,
         createPromptTemplate, editPromptTemplate, deletePromptTemplate, duplicatePromptTemplate, listPromptTemplates, viewTemplateVariables,
-        autoTagNote, autoTagCurrentNote, autoTagBatch, suggestTags,
-        generateTags, generateTagsCurrentNote, batchGenerateTags, manageNoteTags, addCustomTag, showTagStats, showTagStatsDetailed,
+        suggestTags,
+        generateTagsCurrentNote, batchGenerateTags, manageNoteTags, addCustomTag, showTagStats, showTagStatsDetailed,
         refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource, openTagReference
     );
 

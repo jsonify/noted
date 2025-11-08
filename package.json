@@ -134,7 +134,7 @@
       },
       {
         "command": "noted.extractSelectionToNote",
-        "title": "Noted: Extract Selection to New Note",
+        "title": "Extract Selection to New Note",
         "icon": "$(arrow-both)"
       },
       {
@@ -181,7 +181,7 @@
       },
       {
         "command": "noted.deleteNote",
-        "title": "Noted: Delete Note"
+        "title": "Delete Note"
       },
       {
         "command": "noted.deleteCurrentNote",
@@ -189,19 +189,19 @@
       },
       {
         "command": "noted.renameNote",
-        "title": "Noted: Rename Note"
+        "title": "Rename Note"
       },
       {
         "command": "noted.duplicateNote",
-        "title": "Noted: Duplicate Note"
+        "title": "Duplicate Note"
       },
       {
         "command": "noted.copyPath",
-        "title": "Noted: Copy Path"
+        "title": "Copy Path"
       },
       {
         "command": "noted.revealInExplorer",
-        "title": "Noted: Show in System Explorer"
+        "title": "Show in System Explorer"
       },
       {
         "command": "noted.createCustomTemplate",
@@ -244,15 +244,15 @@
       },
       {
         "command": "noted.moveNote",
-        "title": "Noted: Move Note to Folder"
+        "title": "Move Note to Folder"
       },
       {
         "command": "noted.renameFolder",
-        "title": "Noted: Rename Folder"
+        "title": "Rename Folder"
       },
       {
         "command": "noted.deleteFolder",
-        "title": "Noted: Delete Folder"
+        "title": "Delete Folder"
       },
       {
         "command": "noted.showCalendar",
@@ -291,12 +291,12 @@
       },
       {
         "command": "noted.searchTag",
-        "title": "Noted: Search for Tag",
+        "title": "Search for Tag",
         "icon": "$(search)"
       },
       {
         "command": "noted.renameTag",
-        "title": "Noted: Rename Tag",
+        "title": "Rename Tag",
         "icon": "$(edit)"
       },
       {
@@ -306,7 +306,7 @@
       },
       {
         "command": "noted.deleteTag",
-        "title": "Noted: Delete Tag",
+        "title": "Delete Tag",
         "icon": "$(trash)"
       },
       {
@@ -316,12 +316,12 @@
       },
       {
         "command": "noted.togglePinNote",
-        "title": "Noted: Pin/Unpin Note",
+        "title": "Pin/Unpin Note",
         "icon": "$(pin)"
       },
       {
         "command": "noted.archiveNote",
-        "title": "Noted: Archive Note",
+        "title": "Archive Note",
         "icon": "$(archive)"
       },
       {
@@ -415,11 +415,11 @@
       },
       {
         "command": "noted.openConnection",
-        "title": "Noted: Open Connection"
+        "title": "Open Connection"
       },
       {
         "command": "noted.openConnectionSource",
-        "title": "Noted: Open Connection Source",
+        "title": "Open Connection Source",
         "icon": "$(go-to-file)"
       },
       {
@@ -434,12 +434,12 @@
       },
       {
         "command": "noted.createNoteFromPlaceholder",
-        "title": "Noted: Create Note from Placeholder",
+        "title": "Create Note from Placeholder",
         "icon": "$(add)"
       },
       {
         "command": "noted.openPlaceholderSource",
-        "title": "Noted: Open Placeholder Source",
+        "title": "Open Placeholder Source",
         "icon": "$(go-to-file)"
       },
       {
@@ -459,7 +459,7 @@
       },
       {
         "command": "noted.openDiagram",
-        "title": "Noted: Open Diagram",
+        "title": "Open Diagram",
         "icon": "$(go-to-file)"
       },
       {
@@ -479,27 +479,27 @@
       },
       {
         "command": "noted.editCollection",
-        "title": "Noted: Edit Collection",
+        "title": "Edit Collection",
         "icon": "$(edit)"
       },
       {
         "command": "noted.deleteCollection",
-        "title": "Noted: Delete Collection",
+        "title": "Delete Collection",
         "icon": "$(trash)"
       },
       {
         "command": "noted.runCollection",
-        "title": "Noted: Run Collection",
+        "title": "Run Collection",
         "icon": "$(play)"
       },
       {
         "command": "noted.togglePinCollection",
-        "title": "Noted: Pin/Unpin Collection",
+        "title": "Pin/Unpin Collection",
         "icon": "$(pin)"
       },
       {
         "command": "noted.duplicateCollection",
-        "title": "Noted: Duplicate Collection",
+        "title": "Duplicate Collection",
         "icon": "$(copy)"
       },
       {
@@ -509,12 +509,12 @@
       },
       {
         "command": "noted.summarizeNote",
-        "title": "Noted: Summarize Note",
+        "title": "Summarize Note",
         "icon": "$(sparkle)"
       },
       {
         "command": "noted.summarizeCurrentNote",
-        "title": "Noted: Summarize Current Note",
+        "title": "Summarize Current Note",
         "icon": "$(sparkle)"
       },
       {
@@ -543,33 +543,13 @@
         "icon": "$(clear-all)"
       },
       {
-        "command": "noted.autoTagNote",
-        "title": "Noted: Auto-Tag Note from Summary",
-        "icon": "$(tag)"
-      },
-      {
-        "command": "noted.autoTagCurrentNote",
-        "title": "Noted: Auto-Tag Current Note",
-        "icon": "$(tag)"
-      },
-      {
-        "command": "noted.autoTagBatch",
-        "title": "Noted: Batch Auto-Tag Notes",
-        "icon": "$(tag-add)"
-      },
-      {
         "command": "noted.suggestTags",
         "title": "Noted: Suggest Tags for Current Note",
         "icon": "$(lightbulb)"
       },
       {
-        "command": "noted.generateTags",
-        "title": "Noted: Generate Tags with AI",
-        "icon": "$(sparkle)"
-      },
-      {
         "command": "noted.generateTagsCurrentNote",
-        "title": "Noted: Generate Tags for Current Note",
+        "title": "Generate Tags for Current Note",
         "icon": "$(sparkle)"
       },
       {
@@ -579,7 +559,7 @@
       },
       {
         "command": "noted.manageNoteTags",
-        "title": "Noted: Manage Note Tags",
+        "title": "Manage Note Tags",
         "icon": "$(edit)"
       },
       {
@@ -684,17 +664,35 @@
         "when": "editorTextFocus"
       }
     ],
+    "submenus": [
+      {
+        "id": "noted.editorContext",
+        "label": "Noted"
+      }
+    ],
     "menus": {
-      "editor/context": [
+      "noted.editorContext": [
         {
           "command": "noted.extractSelectionToNote",
           "when": "editorHasSelection",
-          "group": "noted@1"
+          "group": "1_edit@1"
         },
         {
           "command": "noted.summarizeCurrentNote",
           "when": "resourcePath =~ /Notes.*\\.(txt|md)$/",
-          "group": "ai@1"
+          "group": "2_ai@1"
+        },
+        {
+          "command": "noted.generateTagsCurrentNote",
+          "when": "resourcePath =~ /Notes.*\\.(txt|md)$/",
+          "group": "2_ai@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "submenu": "noted.editorContext",
+          "when": "resourcePath =~ /Notes.*\\.(txt|md)$/ || editorHasSelection",
+          "group": "1_noted@1"
         }
       ],
       "view/title": [
@@ -794,24 +792,29 @@
           "group": "actions@2"
         },
         {
-          "command": "noted.searchTag",
+          "command": "noted.generateTagsCurrentNote",
           "when": "view == notedTagsView",
           "group": "navigation@1"
         },
         {
-          "command": "noted.sortTagsByName",
+          "command": "noted.searchTag",
           "when": "view == notedTagsView",
           "group": "navigation@2"
         },
         {
-          "command": "noted.sortTagsByFrequency",
+          "command": "noted.sortTagsByName",
           "when": "view == notedTagsView",
           "group": "navigation@3"
         },
         {
-          "command": "noted.refreshTags",
+          "command": "noted.sortTagsByFrequency",
           "when": "view == notedTagsView",
           "group": "navigation@4"
+        },
+        {
+          "command": "noted.refreshTags",
+          "when": "view == notedTagsView",
+          "group": "navigation@5"
         },
         {
           "command": "noted.renameTag",
@@ -936,14 +939,9 @@
           "group": "ai@1"
         },
         {
-          "command": "noted.autoTagNote",
+          "command": "noted.generateTagsCurrentNote",
           "when": "view == notedView && viewItem == note",
           "group": "ai@2"
-        },
-        {
-          "command": "noted.generateTags",
-          "when": "view == notedView && viewItem == note",
-          "group": "ai@3"
         },
         {
           "command": "noted.manageNoteTags",
