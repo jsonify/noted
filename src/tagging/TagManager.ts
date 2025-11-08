@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import * as path from 'path';
 import { TagParser, NoteTag, NoteMetadata } from './TagParser';
 import * as fileSystemService from '../services/fileSystemService';
