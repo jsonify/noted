@@ -1189,7 +1189,7 @@
     "pretest": "pnpm run compile",
     "test": "node ./out/test/runTest.js",
     "test:unit": "mocha --require out/test/setup.js out/test/unit/**/*.test.js",
-    "package": "mkdir -p out/node_modules && cp -rL node_modules/.pnpm/marked@16.4.1/node_modules/marked out/node_modules/ && cp -rL node_modules/.pnpm/markdown-it-regex@0.2.2/node_modules/markdown-it-regex out/node_modules/ && vsce package --no-dependencies",
+    "package": "node scripts/bundle-deps.js && vsce package --no-dependencies",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "release:patch": "standard-version --release-as patch && pnpm run package",
     "release:minor": "standard-version --release-as minor && pnpm run package",
