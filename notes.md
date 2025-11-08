@@ -317,20 +317,31 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - `cacheEnabled`: Cache summaries (default: true)
 - **Requirements**: GitHub Copilot extension must be installed and active
 
-### Search (ENHANCED v1.6.0)
-- **Full-Text Search**: Search across all notes with preview of matching lines
-- **Regex Search**: Use `regex:` flag in search to enable regular expression pattern matching
-- **Advanced Filters**:
-  - `tag:tagname` - Filter results by specific tags
-  - `from:YYYY-MM-DD` - Show only notes modified after this date
-  - `to:YYYY-MM-DD` - Show only notes modified before this date
-  - `case:` - Enable case-sensitive search
-- **Combined Filters**: Use multiple filters together (e.g., "regex: tag:work from:2025-01-01 bug.*fix")
+### Smart Search (v1.40.0) - AI-Powered Semantic Search
+- **Natural Language Queries**: Ask questions in plain English like "What bugs did I fix last week?" or "notes about authentication issues"
+- **Semantic Understanding**: Find notes by meaning, not just keywords
+  - Search "authentication problems" to find notes about "login errors" or "credential issues"
+  - Conceptual matching using AI-powered analysis
+  - Works even when exact keywords don't match
+- **Intelligent Search Strategy**: Automatically determines best approach
+  - **Keyword Search**: Fast exact matching for simple queries (e.g., "database")
+  - **Semantic Search**: AI-powered understanding for complex queries (e.g., "What did I work on yesterday?")
+  - **Hybrid Search**: Combines both for optimal results - uses keywords to pre-filter, then AI to re-rank
+- **Relevance Scoring**: All results show percentage match and search type
+  - ✨ Semantic matches: AI-determined relevance
+  - 🔍 Keyword matches: Traditional text matching
+  - 🔗 Hybrid matches: Best of both approaches
+- **Advanced Filters** (can be combined with semantic search):
+  - `#tagname` - Filter by hashtags inline in query
+  - `tag:tagname` - Alternative tag filter syntax
+  - `from:DATE` - Notes after date (supports natural language: "from:yesterday", "from:last week")
+  - `to:DATE` - Notes before date (supports: "to:today", "to:last month")
+  - `format:txt` or `format:md` - Filter by file format
+  - `template:meeting` - Filter by template type
+- **Context Previews**: See AI-generated excerpts showing why notes matched
+- **Requires GitHub Copilot**: Semantic search uses VS Code LLM API (falls back to keyword search if unavailable)
 - **Quick Switcher**: Quickly access your 20 most recently modified notes
-- **Filter by Tag**: Filter notes by specific tags
-- **Enhanced Results**: See match counts, tags, modification dates, and rich previews
-- **Smart Sorting**: Results sorted by modification date (newest first)
-- **Quick Pick**: Select from search results to open notes
+- **Configurable**: 7 settings to customize search behavior (semantic on/off, max results, confidence threshold, etc.)
 
 ### Smart Collections (v1.35.0)
 - **Saved Search Queries**: Save complex search queries as reusable collections that auto-update

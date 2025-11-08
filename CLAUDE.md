@@ -53,6 +53,12 @@ The extension now uses a fully modular architecture with clear separation of con
   - `undoHelpers.ts`: Undo operation helpers (v1.13.0)
   - `graphService.ts`: Graph data preparation and analysis (v1.14.0)
   - `activityService.ts`: Activity metrics collection and analysis (v1.36.0)
+- **`src/search/`**: Smart Search with AI-powered semantic search (v1.40.0)
+  - `types.ts`: TypeScript interfaces for search system
+  - `QueryAnalyzer.ts`: Natural language query parsing and intent detection
+  - `KeywordSearch.ts`: Enhanced keyword search with relevance scoring
+  - `SemanticSearchEngine.ts`: AI-powered semantic search using VS Code LLM API
+  - `SearchOrchestrator.ts`: Hybrid search combining keyword and semantic
 - **`src/tagging/`**: Smart Auto-Tagging infrastructure (v1.40.0 - Phase 1)
   - `TagParser.ts`: YAML frontmatter tag parsing and writing
   - `TagManager.ts`: Tag CRUD operations, search, rename, merge
@@ -296,6 +302,13 @@ Settings in `package.json` contributions:
 - `noted.tagging.maxTags`: Maximum number of tags to suggest per note (default: 5, v1.40.0)
 - `noted.tagging.customCategories`: Custom tag categories for your domain (default: [], v1.40.0)
 - `noted.tagging.excludePatterns`: Tag patterns to exclude from suggestions (default: ["draft", "temp"], v1.40.0)
+- `noted.search.enableSemantic`: Enable AI-powered semantic search (default: true, v1.40.0)
+- `noted.search.maxResults`: Maximum number of search results (default: 20, v1.40.0)
+- `noted.search.minRelevanceScore`: Minimum relevance score 0.0-1.0 (default: 0.5, v1.40.0)
+- `noted.search.chunkSize`: Max characters per note for AI analysis (default: 3000, v1.40.0)
+- `noted.search.maxCandidates`: Max notes to analyze with AI (default: 20, v1.40.0)
+- `noted.search.hybridCandidates`: Top keyword results to re-rank with AI (default: 20, v1.40.0)
+- `noted.search.enableFuzzyMatch`: Enable fuzzy matching for typos (default: false, v1.40.0)
 
 ## Commands
 
@@ -315,8 +328,12 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.previewTemplateVariables` - Show webview with all available template variables
 - `noted.openTemplatesFolder` - Open the templates folder in system file explorer
 
-**Search Commands** (enhanced v1.6.0):
-- `noted.searchNotes` - Advanced search with regex and filters (regex:, case:, tag:, from:, to:) (Cmd+Shift+F)
+**Search Commands** (v1.40.0 - Smart Search):
+- `noted.searchNotes` - AI-powered semantic search with natural language queries (supports filters: #tag, from:, to:, format:) (Cmd+Shift+F)
+  - Analyzes query intent (keyword/semantic/hybrid)
+  - Uses GitHub Copilot for semantic understanding
+  - Shows relevance scores and match types (keyword/semantic/hybrid)
+  - Falls back to keyword search if Copilot unavailable
 - `noted.quickSwitcher` - Quick access to 20 most recent notes (Cmd+Shift+P)
 
 **Tag Commands** (redesigned v1.36.0):
@@ -369,11 +386,17 @@ All commands are registered in `activate()` and defined in package.json contribu
 
 1. **File I/O is asynchronous**: All operations use `fs.promises` API with async/await pattern
 2. **Comprehensive error handling**: All file operations wrapped in try/catch with user-friendly messages
-3. **Search functionality**:
-   - Legacy: `searchInNotes()` in `noteService.ts` for basic tag-filtered search
-   - Advanced (v1.6.0): `advancedSearch()` in `searchService.ts` with regex, date filters, and tag filtering
-   - Both are recursive and async for optimal performance
-4. **Search query parsing**: `parseSearchQuery()` extracts filters from query strings (regex:, case:, tag:, from:, to:)
+3. **Search functionality** (v1.40.0 - Smart Search):
+   - **Smart Search Architecture**: Modular system in `src/search/` with AI-powered semantic search
+   - **QueryAnalyzer**: Parses natural language queries, extracts filters, determines search intent (keyword/semantic/hybrid)
+   - **KeywordSearch**: Enhanced keyword search with relevance scoring and fuzzy matching (Fuse.js)
+   - **SemanticSearchEngine**: AI-powered search using VS Code LLM API (GitHub Copilot gpt-4o)
+   - **SearchOrchestrator**: Coordinates keyword and semantic search, implements hybrid pre-filtering strategy
+   - **Legacy**: `advancedSearch()` in `searchService.ts` still available for backward compatibility
+   - All search methods are recursive and async for optimal performance
+4. **Search query parsing**:
+   - Modern: `QueryAnalyzer.analyzeQuery()` for natural language queries with chrono-node date parsing
+   - Legacy: `parseSearchQuery()` extracts filters from query strings (regex:, case:, tag:, from:, to:)
 5. **Date formatting**: Uses `toLocaleString('en-US', ...)` for consistent formatting
 6. **Note names from templates**: Sanitized with `.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '')`
 7. **Tree view welcome**: Defined in package.json `viewsWelcome` with markdown buttons
