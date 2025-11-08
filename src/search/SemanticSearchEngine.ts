@@ -64,6 +64,8 @@ export class SemanticSearchEngine {
         const results: SmartSearchResult[] = [];
         const maxResults = options.maxResults || this.config.maxCandidates;
         const filesToProcess = noteFiles.slice(0, maxResults);
+        let consecutiveErrors = 0;
+        const MAX_CONSECUTIVE_ERRORS = 3;
 
         for (let i = 0; i < filesToProcess.length; i++) {
             const filePath = filesToProcess[i];
@@ -71,6 +73,11 @@ export class SemanticSearchEngine {
             try {
                 const content = await readFile(filePath);
                 const score = await this.scoreRelevance(query, content, filePath, model);
+
+                // Reset error counter on success
+                if (score > 0) {
+                    consecutiveErrors = 0;
+                }
 
                 if (score >= this.config.minConfidence) {
                     const preview = await this.generatePreview(query, content, model);
@@ -102,7 +109,17 @@ export class SemanticSearchEngine {
                     options.progressCallback(i + 1, filesToProcess.length);
                 }
             } catch (error) {
+                consecutiveErrors++;
                 console.error(`[NOTED] Error processing file ${filePath}:`, error);
+
+                // If we hit too many consecutive errors, LLM might be rate-limited or unavailable
+                if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                    const errorMsg = error instanceof Error ? error.message : String(error);
+                    throw new Error(
+                        `Semantic search failed after ${consecutiveErrors} consecutive errors. ` +
+                        `This might be due to rate limiting or API issues. Last error: ${errorMsg}`
+                    );
+                }
             }
         }
 
