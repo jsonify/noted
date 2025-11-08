@@ -79,19 +79,38 @@ export class SearchOrchestrator {
             cancellationToken?: vscode.CancellationToken;
         }
     ): Promise<SmartSearchResult[]> {
+        options?.progressCallback?.('Collecting notes...', 20);
+
+        // Get all note files and apply comprehensive filtering
+        const allFiles = await this.getAllNoteFiles();
+        const filteredFiles = await this.applyFilters(allFiles, query.filters);
+
         options?.progressCallback?.('Searching with keywords...', 50);
 
         const cleanedQuery = query.semanticQuery || query.rawQuery;
-        const results = await this.keywordSearch.search(cleanedQuery, query.filters, {
+
+        // Use filtered files for keyword search
+        // Pass empty filters to keywordSearch since we already filtered
+        const results = await this.keywordSearch.search(cleanedQuery, {
+            dateRange: query.filters.dateRange,
+            tags: query.filters.tags,
+        }, {
             maxResults: query.options.maxResults,
             useFuzzy: this.getConfig<boolean>('noted.search.enableFuzzyMatch', false),
         });
 
+        // Additional filtering by format and template
+        let finalResults = results;
+        if (query.filters.fileFormat && query.filters.fileFormat !== 'both') {
+            const ext = `.${query.filters.fileFormat}`;
+            finalResults = finalResults.filter(r => r.filePath.endsWith(ext));
+        }
+
         // Filter by min score
-        const filtered = results.filter(r => r.score >= (query.options.minRelevanceScore || 0));
+        finalResults = finalResults.filter(r => r.score >= (query.options.minRelevanceScore || 0));
 
         options?.progressCallback?.('Search complete', 100);
-        return filtered;
+        return finalResults;
     }
 
     /**
@@ -158,13 +177,25 @@ export class SearchOrchestrator {
 
         // Step 1: Fast keyword pre-filter to get candidates
         const cleanedQuery = query.semanticQuery || query.rawQuery;
-        const keywordResults = await this.keywordSearch.search(cleanedQuery, query.filters, {
+
+        // Use the same comprehensive filtering approach
+        const keywordResults = await this.keywordSearch.search(cleanedQuery, {
+            dateRange: query.filters.dateRange,
+            tags: query.filters.tags,
+        }, {
             maxResults: 50, // Get more candidates for semantic re-ranking
         });
 
-        options?.progressCallback?.(`Found ${keywordResults.length} keyword matches`, 30);
+        // Apply format and template filtering
+        let filteredResults = keywordResults;
+        if (query.filters.fileFormat && query.filters.fileFormat !== 'both') {
+            const ext = `.${query.filters.fileFormat}`;
+            filteredResults = filteredResults.filter(r => r.filePath.endsWith(ext));
+        }
 
-        if (keywordResults.length === 0) {
+        options?.progressCallback?.(`Found ${filteredResults.length} keyword matches`, 30);
+
+        if (filteredResults.length === 0) {
             return [];
         }
 
@@ -174,12 +205,12 @@ export class SearchOrchestrator {
             vscode.window.showInformationMessage(
                 'Semantic search unavailable. Showing keyword results only.'
             );
-            return keywordResults.slice(0, query.options.maxResults);
+            return filteredResults.slice(0, query.options.maxResults);
         }
 
         // Step 3: Semantic re-ranking on top candidates
         const maxCandidates = this.getConfig<number>('noted.search.hybridCandidates', 20);
-        const topCandidates = keywordResults.slice(0, maxCandidates);
+        const topCandidates = filteredResults.slice(0, maxCandidates);
 
         options?.progressCallback?.(`Re-ranking top ${topCandidates.length} with AI...`, 40);
 
@@ -201,7 +232,7 @@ export class SearchOrchestrator {
 
         // Step 4: Merge results
         options?.progressCallback?.('Merging results...', 95);
-        const merged = this.mergeResults(keywordResults, semanticResults);
+        const merged = this.mergeResults(filteredResults, semanticResults);
 
         options?.progressCallback?.('Search complete', 100);
         return merged.slice(0, query.options.maxResults);
@@ -247,7 +278,8 @@ export class SearchOrchestrator {
     }
 
     /**
-     * Apply filters to list of note files
+     * Apply comprehensive filters to list of note files
+     * Handles: date range, file format, tags, and templates
      */
     private async applyFilters(files: string[], filters: any): Promise<string[]> {
         let filtered = files;
@@ -277,7 +309,66 @@ export class SearchOrchestrator {
             filtered = filtered.filter(file => file.endsWith(ext));
         }
 
+        // Filter by tags (if tagService is available and tags are specified)
+        if (filters.tags && filters.tags.length > 0 && this.tagService) {
+            const notesWithTags = this.tagService.getNotesWithTags(filters.tags);
+            const taggedSet = new Set(notesWithTags);
+            filtered = filtered.filter(file => taggedSet.has(file));
+        }
+
+        // Filter by template type (check file content for template patterns)
+        if (filters.templates && filters.templates.length > 0) {
+            const { readFile } = await import('../services/fileSystemService');
+            const templateFiltered: string[] = [];
+
+            for (const file of filtered) {
+                try {
+                    const content = await readFile(file);
+                    const hasTemplate = filters.templates.some((template: string) => {
+                        return this.detectTemplate(content, template);
+                    });
+
+                    if (hasTemplate) {
+                        templateFiltered.push(file);
+                    }
+                } catch (error) {
+                    // If we can't read the file, skip it
+                    console.error(`[NOTED] Error reading file for template filter: ${file}`, error);
+                }
+            }
+
+            filtered = templateFiltered;
+        }
+
         return filtered;
+    }
+
+    /**
+     * Detect if content matches a specific template type
+     */
+    private detectTemplate(content: string, templateType: string): boolean {
+        const lowerContent = content.toLowerCase();
+
+        switch (templateType.toLowerCase()) {
+            case 'problem-solution':
+                return lowerContent.includes('problem:') && lowerContent.includes('solution:');
+
+            case 'meeting':
+                return lowerContent.includes('attendees:') ||
+                       (lowerContent.includes('meeting') && lowerContent.includes('agenda'));
+
+            case 'research':
+                return lowerContent.includes('research') &&
+                       (lowerContent.includes('questions:') || lowerContent.includes('findings:'));
+
+            case 'quick':
+                // Quick notes are harder to detect - just check for basic date header
+                return /^\d{4}-\d{2}-\d{2}/.test(content);
+
+            default:
+                // For custom templates, just check if the template name appears
+                return lowerContent.includes(templateType.toLowerCase());
+        }
     }
 
     /**

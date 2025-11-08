@@ -50,11 +50,17 @@ export class SemanticSearchEngine {
             return [];
         }
 
-        const available = await this.isAvailable();
-        if (!available) {
+        // Select model once at the beginning
+        const models = await vscode.lm.selectChatModels({
+            vendor: 'copilot',
+            family: 'gpt-4o',
+        });
+
+        if (models.length === 0) {
             throw new Error('Copilot LLM is not available. Please sign in to GitHub Copilot.');
         }
 
+        const model = models[0];
         const results: SmartSearchResult[] = [];
         const maxResults = options.maxResults || this.config.maxCandidates;
         const filesToProcess = noteFiles.slice(0, maxResults);
@@ -64,10 +70,10 @@ export class SemanticSearchEngine {
 
             try {
                 const content = await readFile(filePath);
-                const score = await this.scoreRelevance(query, content, filePath);
+                const score = await this.scoreRelevance(query, content, filePath, model);
 
                 if (score >= this.config.minConfidence) {
-                    const preview = await this.generatePreview(query, content);
+                    const preview = await this.generatePreview(query, content, model);
                     const stats = await getFileStats(filePath);
                     const fileName = path.basename(filePath);
 
@@ -109,17 +115,13 @@ export class SemanticSearchEngine {
     /**
      * Score how relevant a note is to the search query using LLM
      */
-    private async scoreRelevance(query: string, content: string, filePath: string): Promise<number> {
+    private async scoreRelevance(
+        query: string,
+        content: string,
+        filePath: string,
+        model: vscode.LanguageModelChat
+    ): Promise<number> {
         try {
-            const models = await vscode.lm.selectChatModels({
-                vendor: 'copilot',
-                family: 'gpt-4o',
-            });
-
-            if (models.length === 0) {
-                return 0;
-            }
-
             // Truncate content if too long
             const truncated = content.substring(0, this.config.truncateContent);
 
@@ -135,7 +137,7 @@ Consider semantic meaning, not just keyword matches.
 Examples: 0.95, 0.67, 0.12, 0.0`;
 
             const messages = [vscode.LanguageModelChatMessage.User(prompt)];
-            const response = await models[0].sendRequest(
+            const response = await model.sendRequest(
                 messages,
                 {},
                 new vscode.CancellationTokenSource().token
@@ -165,17 +167,12 @@ Examples: 0.95, 0.67, 0.12, 0.0`;
     /**
      * Generate a preview/excerpt from the note that's relevant to the query
      */
-    private async generatePreview(query: string, content: string): Promise<string> {
+    private async generatePreview(
+        query: string,
+        content: string,
+        model: vscode.LanguageModelChat
+    ): Promise<string> {
         try {
-            const models = await vscode.lm.selectChatModels({
-                vendor: 'copilot',
-                family: 'gpt-4o',
-            });
-
-            if (models.length === 0) {
-                return this.fallbackPreview(content);
-            }
-
             const truncated = content.substring(0, this.config.truncateContent);
 
             const prompt = `Extract the most relevant 1-2 sentence excerpt from this note that matches the query.
@@ -189,7 +186,7 @@ Return ONLY the excerpt, no explanation. Maximum 150 characters.
 If nothing is relevant, return the first sentence of the note.`;
 
             const messages = [vscode.LanguageModelChatMessage.User(prompt)];
-            const response = await models[0].sendRequest(
+            const response = await model.sendRequest(
                 messages,
                 {},
                 new vscode.CancellationTokenSource().token
