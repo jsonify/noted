@@ -170,24 +170,41 @@ export class KeywordSearch {
         const fileName = path.basename(filePath, path.extname(filePath));
         const queryLower = query.toLowerCase();
 
-        // Factor 1: Match count (normalized to 0-0.3)
-        const matchScore = Math.min(matchCount / 10, 0.3);
+        // Split multi-word queries into keywords for better scoring
+        const keywords = queryLower.trim().split(/\s+/).filter(k => k.length > 0);
+
+        // Factor 1: Match count (normalized to 0-0.4)
+        // Increased weight for match count since it's the primary signal
+        const matchScore = Math.min(matchCount / 10, 0.4);
         score += matchScore;
 
-        // Factor 2: Title match (0.3 boost)
-        if (fileName.toLowerCase().includes(queryLower)) {
-            score += 0.3;
+        // Factor 2: Title match (0.3 boost per keyword)
+        const fileNameLower = fileName.toLowerCase();
+        let titleMatchCount = 0;
+        for (const keyword of keywords) {
+            if (fileNameLower.includes(keyword)) {
+                titleMatchCount++;
+            }
+        }
+        if (titleMatchCount > 0) {
+            // Boost based on proportion of keywords matched in title
+            score += 0.3 * (titleMatchCount / keywords.length);
         }
 
         // Factor 3: Exact match in title (0.2 additional boost)
-        if (fileName.toLowerCase() === queryLower) {
+        if (fileNameLower === queryLower) {
             score += 0.2;
         }
 
-        // Factor 4: Preview relevance (0-0.2)
+        // Factor 4: Preview relevance (0-0.3)
+        // Count how many keywords appear in preview
         const previewLower = preview.toLowerCase();
-        const previewMatches = (previewLower.match(new RegExp(queryLower, 'gi')) || []).length;
-        score += Math.min(previewMatches / 5, 0.2);
+        let previewMatchCount = 0;
+        for (const keyword of keywords) {
+            const matches = (previewLower.match(new RegExp(keyword, 'gi')) || []).length;
+            previewMatchCount += matches;
+        }
+        score += Math.min(previewMatchCount / 5, 0.3);
 
         // Ensure score is between 0 and 1
         return Math.min(Math.max(score, 0), 1);
