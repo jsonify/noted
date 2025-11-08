@@ -1099,6 +1099,42 @@
           "type": "boolean",
           "default": true,
           "description": "Cache generated summaries for better performance"
+        },
+        "noted.tagging.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic tagging features"
+        },
+        "noted.tagging.autoTagOnCreate": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically tag new notes when created"
+        },
+        "noted.tagging.maxTags": {
+          "type": "number",
+          "default": 5,
+          "description": "Maximum number of tags to suggest per note",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "noted.tagging.customCategories": {
+          "type": "array",
+          "default": [],
+          "description": "Custom tag categories for your domain (e.g., project names, team names)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "noted.tagging.excludePatterns": {
+          "type": "array",
+          "default": [
+            "draft",
+            "temp"
+          ],
+          "description": "Tag patterns to exclude from suggestions",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }
@@ -1127,6 +1163,7 @@
   },
   "devDependencies": {
     "@types/chai": "4",
+    "@types/js-yaml": "^4.0.9",
     "@types/markdown-it": "^14.1.2",
     "@types/marked": "^6.0.0",
     "@types/mocha": "^10.0.10",
@@ -1144,6 +1181,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "js-yaml": "^4.1.0",
     "markdown-it-regex": "^0.2.2",
     "marked": "^16.4.1"
   }

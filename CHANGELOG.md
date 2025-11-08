@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [Unreleased]
+
+### Features
+
+* **Smart Auto-Tagging (Phase 1 - Infrastructure)**: Implement core auto-tagging infrastructure
+  - Add `TagParser` for YAML frontmatter tag storage with metadata
+  - Add `TagManager` for comprehensive tag operations (CRUD, search, rename, merge)
+  - Add `TagGenerator` with VS Code LLM API integration for AI-powered tag suggestions
+  - Add configuration settings for tagging (enabled, maxTags, customCategories, excludePatterns)
+  - Install `js-yaml` dependency for frontmatter parsing
+  - Tags stored in frontmatter format: `tags: [tag1, tag2, tag3]`
+  - Full caching support for performance optimization
+  - Compatible with existing tag system (inline #hashtags and frontmatter tags)
+
 ## [1.39.0](https://github.com/jsonify/noted/compare/v1.38.1...v1.39.0) (2025-11-08)
 
 
