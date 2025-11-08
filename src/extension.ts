@@ -81,9 +81,6 @@ import {
     handleClearSummaryCache
 } from './commands/summarizationCommands';
 import {
-    handleAutoTagNote,
-    handleAutoTagCurrentNote,
-    handleAutoTagBatch,
     handleSuggestTags
 } from './commands/autoTagCommands';
 import {
@@ -1906,20 +1903,43 @@ export function activate(context: vscode.ExtensionContext) {
     // Auto-Tagging Commands (Phase 4)
     // ============================================================================
 
-    let autoTagNote = vscode.commands.registerCommand('noted.autoTagNote', async (item: NoteItem) => {
-        await handleAutoTagNote(summarizationService, autoTagService, item);
-    });
-
-    let autoTagCurrentNote = vscode.commands.registerCommand('noted.autoTagCurrentNote', async () => {
-        await handleAutoTagCurrentNote(summarizationService, autoTagService);
-    });
-
-    let autoTagBatch = vscode.commands.registerCommand('noted.autoTagBatch', async () => {
-        await handleAutoTagBatch(summarizationService, autoTagService);
-    });
-
     let suggestTags = vscode.commands.registerCommand('noted.suggestTags', async () => {
         await handleSuggestTags(summarizationService, autoTagService);
+    });
+
+    // ============================================================================
+    // Smart Auto-Tagging Commands (Phase 1 - Direct LLM Analysis)
+    // ============================================================================
+
+    let generateTagsCurrentNote = vscode.commands.registerCommand('noted.generateTagsCurrentNote', async (item?: NoteItem) => {
+        const { generateTagsForNote } = await import('./tagging/autoTagCommands');
+        // If called from context menu with item, use that file path; otherwise use active editor
+        await generateTagsForNote(item?.filePath ? vscode.Uri.file(item.filePath) : undefined);
+    });
+
+    let batchGenerateTags = vscode.commands.registerCommand('noted.batchGenerateTags', async () => {
+        const { tagAllNotes } = await import('./tagging/autoTagCommands');
+        await tagAllNotes();
+    });
+
+    let manageNoteTags = vscode.commands.registerCommand('noted.manageNoteTags', async () => {
+        const { manageNoteTags } = await import('./tagging/autoTagCommands');
+        await manageNoteTags();
+    });
+
+    let addCustomTag = vscode.commands.registerCommand('noted.addCustomTag', async () => {
+        const { addCustomTag } = await import('./tagging/autoTagCommands');
+        await addCustomTag();
+    });
+
+    let showTagStats = vscode.commands.registerCommand('noted.showTagStats', async () => {
+        const { showTagStatisticsSummary } = await import('./tagging/tagStatistics');
+        await showTagStatisticsSummary();
+    });
+
+    let showTagStatsDetailed = vscode.commands.registerCommand('noted.showTagStatsDetailed', async () => {
+        const { showTagStatistics } = await import('./tagging/tagStatistics');
+        await showTagStatistics();
     });
 
     // ============================================================================
@@ -2003,7 +2023,8 @@ export function activate(context: vscode.ExtensionContext) {
         summarizeNote, summarizeCurrentNote, summarizeRecent, summarizeWeek, summarizeMonth, summarizeCustomRange, clearSummaryCache, summarizeSearchResults,
         showSummaryHistory, compareSummaries, restoreSummaryVersion, clearSummaryHistory, showSummaryHistoryStats,
         createPromptTemplate, editPromptTemplate, deletePromptTemplate, duplicatePromptTemplate, listPromptTemplates, viewTemplateVariables,
-        autoTagNote, autoTagCurrentNote, autoTagBatch, suggestTags,
+        suggestTags,
+        generateTagsCurrentNote, batchGenerateTags, manageNoteTags, addCustomTag, showTagStats, showTagStatsDetailed,
         refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource, openTagReference
     );
 
@@ -2354,11 +2375,13 @@ async function openDailyNote(templateType?: string) {
             await fsp.mkdir(noteFolder, { recursive: true });
         }
 
+        let isNewNote = false;
         try {
             await fsp.access(filePath);
         } catch {
             const content = await generateTemplate(templateType, now);
             await fsp.writeFile(filePath, content);
+            isNewNote = true;
         }
 
         const document = await vscode.workspace.openTextDocument(filePath);
@@ -2367,6 +2390,12 @@ async function openDailyNote(templateType?: string) {
         const lastLine = document.lineCount - 1;
         const lastCharacter = document.lineAt(lastLine).text.length;
         editor.selection = new vscode.Selection(lastLine, lastCharacter, lastLine, lastCharacter);
+
+        // Auto-tag new notes if enabled
+        if (isNewNote) {
+            const { autoTagNewNote } = await import('./tagging/autoTagOnCreate');
+            autoTagNewNote(filePath);
+        }
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to open daily note: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -2428,6 +2457,10 @@ async function createNoteFromTemplate(templateType: string) {
             const lastLine = document.lineCount - 1;
             const lastCharacter = document.lineAt(lastLine).text.length;
             editor.selection = new vscode.Selection(lastLine, lastCharacter, lastLine, lastCharacter);
+
+            // Auto-tag new notes if enabled
+            const { autoTagNewNote } = await import('./tagging/autoTagOnCreate');
+            autoTagNewNote(filePath);
         }
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to create note: ${error instanceof Error ? error.message : String(error)}`);

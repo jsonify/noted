@@ -53,6 +53,11 @@ The extension now uses a fully modular architecture with clear separation of con
   - `undoHelpers.ts`: Undo operation helpers (v1.13.0)
   - `graphService.ts`: Graph data preparation and analysis (v1.14.0)
   - `activityService.ts`: Activity metrics collection and analysis (v1.36.0)
+- **`src/tagging/`**: Smart Auto-Tagging infrastructure (v1.40.0 - Phase 1)
+  - `TagParser.ts`: YAML frontmatter tag parsing and writing
+  - `TagManager.ts`: Tag CRUD operations, search, rename, merge
+  - `TagGenerator.ts`: AI-powered tag generation using VS Code LLM API
+  - `autoTagCommands.ts`: Command handlers for auto-tagging features
 - **`src/providers/`**: VS Code tree view providers
   - `treeItems.ts`: Tree item classes (includes ConnectionSectionItem and ConnectionItem)
   - `templatesTreeProvider.ts`: Templates view
@@ -198,6 +203,42 @@ The extension now uses a fully modular architecture with clear separation of con
   - `openWorkspaceSearch()` opens VS Code search with tag regex pattern
   - `hasChildren()`, `getChildCount()` helper methods for hierarchy checks
 
+- **TagParser** (v1.40.0 - Smart Auto-Tagging Phase 1): YAML frontmatter tag parsing and writing
+  - `parseTags()` extracts tags from YAML frontmatter with metadata
+  - `writeTags()` inserts or updates frontmatter with tags in array format `[tag1, tag2, tag3]`
+  - `hasFrontmatter()` checks if file has YAML frontmatter block
+  - `removeTags()` removes all tags from a note
+  - Preserves existing frontmatter fields when updating
+  - Compatible with existing tag extraction system
+  - Stores tag metadata: name, confidence, source (ai/manual), addedAt timestamp
+
+- **TagManager** (v1.40.0 - Smart Auto-Tagging Phase 1): Comprehensive tag management operations
+  - `tagNote()` applies tags to a note file (merge or replace mode)
+  - `getNoteTags()` retrieves all tags from a specific note
+  - `findNotesByTag()` searches for notes containing a specific tag
+  - `getAllTags()` returns map of all unique tags with occurrence counts
+  - `removeTag()` removes a specific tag from a note
+  - `removeAllTags()` clears all tags from a note
+  - `renameTag()` renames a tag across all notes
+  - `mergeTags()` merges multiple tags into a single tag
+  - `deleteTag()` deletes a tag from all notes
+  - In-memory caching with TTL for performance (5 second cache)
+  - Singleton instance exported as `tagManager`
+  - Excludes template files from operations
+
+- **TagGenerator** (v1.40.0 - Smart Auto-Tagging Phase 1): AI-powered tag generation using VS Code LLM API
+  - `generateTags()` analyzes note content and generates tag suggestions with confidence scores
+  - Uses GitHub Copilot (gpt-4o) via VS Code Language Model API
+  - `buildTagPrompt()` constructs prompts with available categories and tagging rules
+  - `getCategories()` returns default + custom tag categories from configuration
+  - `parseTagResponse()` parses JSON response from LLM and filters by confidence (>0.6)
+  - Content hashing (SHA-256) for cache invalidation
+  - `needsRetagging()` checks if content has changed since last tagging
+  - Cache TTL: 1 hour
+  - Handles errors gracefully (Copilot not available, rate limiting, malformed responses)
+  - Default categories: note types, technologies, topics, status
+  - Singleton instance exported as `tagGenerator`
+
 ### File Organization Pattern
 
 Notes are stored in hierarchical structure:
@@ -250,6 +291,11 @@ Settings in `package.json` contributions:
 - `noted.template`: Template string (defined but not used - only built-in templates are used)
 - `noted.tagAutoComplete`: Enable tag autocomplete (default: true)
 - `noted.autoBacklinks`: Automatically append backlinks sections to notes (default: true, v1.24.0)
+- `noted.tagging.enabled`: Enable automatic tagging features (default: true, v1.40.0)
+- `noted.tagging.autoTagOnCreate`: Automatically tag new notes when created (default: false, v1.40.0)
+- `noted.tagging.maxTags`: Maximum number of tags to suggest per note (default: 5, v1.40.0)
+- `noted.tagging.customCategories`: Custom tag categories for your domain (default: [], v1.40.0)
+- `noted.tagging.excludePatterns`: Tag patterns to exclude from suggestions (default: ["draft", "temp"], v1.40.0)
 
 ## Commands
 
