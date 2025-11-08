@@ -2,7 +2,7 @@
   "name": "noted",
   "displayName": "Noted",
   "description": "Comprehensive workspace notes with wiki-style links, diagram embeds (Draw.io & Excalidraw), graph visualization, templates, advanced search, and daily tracking",
-  "version": "1.39.3",
+  "version": "1.39.4",
   "icon": "icon.png",
   "publisher": "jsonify",
   "repository": {
@@ -1195,8 +1195,8 @@
           "type": "number",
           "default": 0.5,
           "description": "Minimum relevance score (0.0-1.0) for search results",
-          "minimum": 0.0,
-          "maximum": 1.0
+          "minimum": 0,
+          "maximum": 1
         },
         "noted.search.chunkSize": {
           "type": "number",
