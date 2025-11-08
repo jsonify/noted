@@ -118,11 +118,14 @@ export class TagParser {
 
         // Convert tags to array format to match existing tag system
         // Format: tags: [tag1, tag2, tag3]
-        if (metadata.tags.length > 0) {
-            const tagNames = metadata.tags.map(t => t.name);
-            // Store as actual array so yaml.dump formats it correctly without quotes
-            frontmatter.tags = tagNames;
+        const tagNames = metadata.tags.map(t => t.name);
+        // Store as actual array so yaml.dump formats it correctly without quotes
+        frontmatter.tags = tagNames;
+        if (tagNames.length > 0) {
             frontmatter['tagged-at'] = new Date().toISOString();
+        } else {
+            // Ensure tagged-at is removed when tags are empty
+            frontmatter['tagged-at'] = undefined;
         }
 
         if (hasFrontmatter) {
@@ -173,7 +176,7 @@ export class TagParser {
             const merged = { ...existing, ...newData };
 
             // Remove tags field if empty
-            if (merged.tags === '') {
+            if (Array.isArray(merged.tags) && merged.tags.length === 0) {
                 delete merged.tags;
                 delete merged['tagged-at'];
             }
