@@ -28,6 +28,22 @@ All notable changes to this project will be documented in this file. See [standa
   - Progress indicators for batch operations
   - Full error handling with user-friendly messages
 
+* **Smart Auto-Tagging (Phase 4 - Advanced Features)**: Enhance tagging with smart automation
+  - Auto-tag on note creation (controlled by `noted.tagging.autoTagOnCreate` setting)
+    * Automatically tags new notes 2 seconds after creation
+    * Only applies high-confidence tags (>0.75) automatically
+    * Works for daily notes and template-based notes
+    * Non-blocking: runs in background without interrupting workflow
+    * Shows notification with option to view/manage tags
+  - Tag statistics and analytics
+    * `noted.showTagStats` - Quick summary of tag usage
+    * `noted.showTagStatsDetailed` - Beautiful webview with comprehensive statistics
+    * Shows total tags, tagged/untagged notes, average tags per note
+    * Displays most used tags with usage counts
+    * Tracks AI-generated vs manually added tags
+    * Shows recently added tags (last 24 hours)
+    * Visual progress bars and interactive charts
+
 ## [1.39.0](https://github.com/jsonify/noted/compare/v1.38.1...v1.39.0) (2025-11-08)
 
 

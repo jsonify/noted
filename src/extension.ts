@@ -1951,6 +1951,16 @@ export function activate(context: vscode.ExtensionContext) {
         await addCustomTag();
     });
 
+    let showTagStats = vscode.commands.registerCommand('noted.showTagStats', async () => {
+        const { showTagStatisticsSummary } = await import('./tagging/tagStatistics');
+        await showTagStatisticsSummary();
+    });
+
+    let showTagStatsDetailed = vscode.commands.registerCommand('noted.showTagStatsDetailed', async () => {
+        const { showTagStatistics } = await import('./tagging/tagStatistics');
+        await showTagStatistics();
+    });
+
     // ============================================================================
     // Prompt Template Commands
     // ============================================================================
@@ -2033,7 +2043,7 @@ export function activate(context: vscode.ExtensionContext) {
         showSummaryHistory, compareSummaries, restoreSummaryVersion, clearSummaryHistory, showSummaryHistoryStats,
         createPromptTemplate, editPromptTemplate, deletePromptTemplate, duplicatePromptTemplate, listPromptTemplates, viewTemplateVariables,
         autoTagNote, autoTagCurrentNote, autoTagBatch, suggestTags,
-        generateTags, generateTagsCurrentNote, batchGenerateTags, manageNoteTags, addCustomTag,
+        generateTags, generateTagsCurrentNote, batchGenerateTags, manageNoteTags, addCustomTag, showTagStats, showTagStatsDetailed,
         refreshOrphans, refreshPlaceholders, createNoteFromPlaceholder, openPlaceholderSource, openTagReference
     );
 
@@ -2384,11 +2394,13 @@ async function openDailyNote(templateType?: string) {
             await fsp.mkdir(noteFolder, { recursive: true });
         }
 
+        let isNewNote = false;
         try {
             await fsp.access(filePath);
         } catch {
             const content = await generateTemplate(templateType, now);
             await fsp.writeFile(filePath, content);
+            isNewNote = true;
         }
 
         const document = await vscode.workspace.openTextDocument(filePath);
@@ -2397,6 +2409,12 @@ async function openDailyNote(templateType?: string) {
         const lastLine = document.lineCount - 1;
         const lastCharacter = document.lineAt(lastLine).text.length;
         editor.selection = new vscode.Selection(lastLine, lastCharacter, lastLine, lastCharacter);
+
+        // Auto-tag new notes if enabled
+        if (isNewNote) {
+            const { autoTagNewNote } = await import('./tagging/autoTagOnCreate');
+            autoTagNewNote(filePath);
+        }
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to open daily note: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -2458,6 +2476,10 @@ async function createNoteFromTemplate(templateType: string) {
             const lastLine = document.lineCount - 1;
             const lastCharacter = document.lineAt(lastLine).text.length;
             editor.selection = new vscode.Selection(lastLine, lastCharacter, lastLine, lastCharacter);
+
+            // Auto-tag new notes if enabled
+            const { autoTagNewNote } = await import('./tagging/autoTagOnCreate');
+            autoTagNewNote(filePath);
         }
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to create note: ${error instanceof Error ? error.message : String(error)}`);

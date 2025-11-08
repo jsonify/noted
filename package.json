@@ -588,6 +588,16 @@
         "icon": "$(tag)"
       },
       {
+        "command": "noted.showTagStats",
+        "title": "Noted: Show Tag Statistics",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "noted.showTagStatsDetailed",
+        "title": "Noted: Show Detailed Tag Statistics",
+        "icon": "$(dashboard)"
+      },
+      {
         "command": "noted.showSummaryHistory",
         "title": "Noted: Show Summary History",
         "icon": "$(history)"
