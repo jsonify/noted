@@ -89,15 +89,16 @@ Built-in templates for meetings, research, and problem-solving. Create custom te
 
 [Learn more →](/noted/posts/templates/)
 
-## 🔍 Advanced Search
+## ✨ Smart Search - AI-Powered Semantic Search
 
-Powerful search with regex, date filters, and tag filtering to find exactly what you need.
+Search your notes using natural language questions. AI understands meaning, not just keywords.
 
-- **Regex Support**: Use `regex:pattern` for complex searches
-- **Date Filters**: Find notes with `from:2024-01-01 to:2024-12-31`
-- **Tag Filtering**: Search by tags with `tag:bug tag:critical`
-- **Case Sensitivity**: Control matching with `case:true`
-- **Quick Switcher**: `Cmd+Shift+P` for recent notes access
+- **Natural Language**: Ask "What bugs did I fix last week?"
+- **Semantic Understanding**: Find notes by concept, not exact words
+- **Hybrid Search**: Combines keyword speed with AI accuracy
+- **Relevance Scoring**: See 0-100% match confidence
+- **Smart Filters**: Natural language dates, tags, formats
+- **Requires GitHub Copilot**: Falls back to keyword search if unavailable
 
 [Learn more →](/noted/posts/search/)
 
