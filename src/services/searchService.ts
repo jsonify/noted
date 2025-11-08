@@ -173,13 +173,8 @@ export async function advancedSearch(
     tagService?: TagService,
     customNotesPath?: string
 ): Promise<SearchResult[]> {
-    console.log('[NOTED DEBUG advancedSearch] Called with options:', options);
-
     const notesPath = customNotesPath || getNotesPath();
-    console.log('[NOTED DEBUG advancedSearch] Notes path:', notesPath);
-
     if (!notesPath || !(await pathExists(notesPath))) {
-        console.log('[NOTED DEBUG advancedSearch] Notes path does not exist');
         return [];
     }
 
@@ -189,7 +184,6 @@ export async function advancedSearch(
         const notesWithTags = tagService.getNotesWithTags(options.tags);
         tagFilteredFiles = new Set(notesWithTags);
         if (tagFilteredFiles.size === 0) {
-            console.log('[NOTED DEBUG advancedSearch] No files match tag filter');
             return [];
         }
     }
