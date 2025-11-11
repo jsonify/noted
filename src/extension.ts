@@ -71,15 +71,7 @@ import {
     handleShowUndoHistory,
     handleClearUndoHistory
 } from './commands/undoCommands';
-import {
-    handleSummarizeNote,
-    handleSummarizeCurrentNote,
-    handleSummarizeRecent,
-    handleSummarizeWeek,
-    handleSummarizeMonth,
-    handleSummarizeCustomRange,
-    handleClearSummaryCache
-} from './commands/summarizationCommands';
+import { SummarizationCommands } from './commands/summarizationCommands';
 import {
     handleSuggestTags
 } from './commands/autoTagCommands';
@@ -510,6 +502,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Initialize AI summarization service
     const summarizationService = new SummarizationService(context, notesPath || undefined);
+
+    // Initialize summarization command handlers
+    const summarizationCommands = new SummarizationCommands(summarizationService, context, notesProvider);
 
     // Initialize auto-tagging service (Phase 4)
     const autoTagService = new AutoTagService();
@@ -1902,31 +1897,31 @@ export function activate(context: vscode.ExtensionContext) {
     // ============================================================================
 
     let summarizeNote = vscode.commands.registerCommand('noted.summarizeNote', async (item: NoteItem) => {
-        await handleSummarizeNote(summarizationService, item, context, notesProvider);
+        await summarizationCommands.handleSummarizeNote(item);
     });
 
     let summarizeCurrentNote = vscode.commands.registerCommand('noted.summarizeCurrentNote', async () => {
-        await handleSummarizeCurrentNote(summarizationService, context, notesProvider);
+        await summarizationCommands.handleSummarizeCurrentNote();
     });
 
     let summarizeRecent = vscode.commands.registerCommand('noted.summarizeRecent', async () => {
-        await handleSummarizeRecent(summarizationService, context, notesProvider);
+        await summarizationCommands.handleSummarizeRecent();
     });
 
     let summarizeWeek = vscode.commands.registerCommand('noted.summarizeWeek', async () => {
-        await handleSummarizeWeek(summarizationService, context, notesProvider);
+        await summarizationCommands.handleSummarizeWeek();
     });
 
     let summarizeMonth = vscode.commands.registerCommand('noted.summarizeMonth', async () => {
-        await handleSummarizeMonth(summarizationService, context, notesProvider);
+        await summarizationCommands.handleSummarizeMonth();
     });
 
     let summarizeCustomRange = vscode.commands.registerCommand('noted.summarizeCustomRange', async () => {
-        await handleSummarizeCustomRange(summarizationService, context, notesProvider);
+        await summarizationCommands.handleSummarizeCustomRange();
     });
 
     let clearSummaryCache = vscode.commands.registerCommand('noted.clearSummaryCache', async () => {
-        await handleClearSummaryCache(summarizationService);
+        await summarizationCommands.handleClearSummaryCache();
     });
 
     // ============================================================================
