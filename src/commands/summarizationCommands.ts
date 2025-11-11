@@ -404,7 +404,7 @@ async function displaySummary(
         baseFilename = `summary-${originalName}`;
     } else {
         // Multiple notes: sanitize the title
-        baseFilename = `summary-${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '')}`;
+        baseFilename = 'summary-' + title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-').replace(/^-+|-+$/g, '');
     }
 
     // Create full filename with timestamp to avoid collisions
