@@ -408,12 +408,13 @@ async function displaySummary(
     }
 
     // Create full filename with timestamp to avoid collisions
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const now = new Date();
+    const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-');
     const filename = `${baseFilename}-${timestamp}.${fileFormat}`;
     const filePath = path.join(inboxPath, filename);
 
     // Create file content
-    const timestampReadable = new Date().toLocaleString();
+    const timestampReadable = now.toLocaleString();
     const sourceList = sourcePaths.map(p => `  - ${path.basename(p)}`).join('\n');
 
     const fullContent = `# Summary: ${title}
