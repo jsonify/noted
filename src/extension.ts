@@ -1902,27 +1902,27 @@ export function activate(context: vscode.ExtensionContext) {
     // ============================================================================
 
     let summarizeNote = vscode.commands.registerCommand('noted.summarizeNote', async (item: NoteItem) => {
-        await handleSummarizeNote(summarizationService, item, context);
+        await handleSummarizeNote(summarizationService, item, context, notesProvider);
     });
 
     let summarizeCurrentNote = vscode.commands.registerCommand('noted.summarizeCurrentNote', async () => {
-        await handleSummarizeCurrentNote(summarizationService, context);
+        await handleSummarizeCurrentNote(summarizationService, context, notesProvider);
     });
 
     let summarizeRecent = vscode.commands.registerCommand('noted.summarizeRecent', async () => {
-        await handleSummarizeRecent(summarizationService, context);
+        await handleSummarizeRecent(summarizationService, context, notesProvider);
     });
 
     let summarizeWeek = vscode.commands.registerCommand('noted.summarizeWeek', async () => {
-        await handleSummarizeWeek(summarizationService, context);
+        await handleSummarizeWeek(summarizationService, context, notesProvider);
     });
 
     let summarizeMonth = vscode.commands.registerCommand('noted.summarizeMonth', async () => {
-        await handleSummarizeMonth(summarizationService, context);
+        await handleSummarizeMonth(summarizationService, context, notesProvider);
     });
 
     let summarizeCustomRange = vscode.commands.registerCommand('noted.summarizeCustomRange', async () => {
-        await handleSummarizeCustomRange(summarizationService, context);
+        await handleSummarizeCustomRange(summarizationService, context, notesProvider);
     });
 
     let clearSummaryCache = vscode.commands.registerCommand('noted.clearSummaryCache', async () => {

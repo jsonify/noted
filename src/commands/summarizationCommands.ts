@@ -8,6 +8,7 @@ import * as path from 'path';
 import { SummarizationService, SummaryOptions } from '../services/summarizationService';
 import { AutoTagService } from '../services/autoTagService';
 import { NoteItem } from '../providers/treeItems';
+import { NotesTreeProvider } from '../providers/notesTreeProvider';
 import { getNotesPath, getFileFormat } from '../services/configService';
 import { readDirectoryWithTypes, writeFile, createDirectory } from '../services/fileSystemService';
 import { formatTagForDisplay } from '../utils/tagHelpers';
@@ -39,7 +40,8 @@ async function promptForTemplate(
 export async function handleSummarizeNote(
     summarizationService: SummarizationService,
     noteItem: NoteItem,
-    context: vscode.ExtensionContext
+    context: vscode.ExtensionContext,
+    notesProvider?: NotesTreeProvider
 ): Promise<void> {
     if (noteItem.type !== 'note') {
         vscode.window.showErrorMessage('Please select a note to summarize');
@@ -68,7 +70,7 @@ export async function handleSummarizeNote(
                 const summary = await summarizationService.summarizeNote(noteItem.filePath, options);
 
                 if (!token.isCancellationRequested) {
-                    await displaySummary(summary, path.basename(noteItem.filePath), [noteItem.filePath]);
+                    await displaySummary(summary, path.basename(noteItem.filePath), [noteItem.filePath], notesProvider);
                 }
             }
         );
@@ -82,7 +84,8 @@ export async function handleSummarizeNote(
  */
 export async function handleSummarizeCurrentNote(
     summarizationService: SummarizationService,
-    context: vscode.ExtensionContext
+    context: vscode.ExtensionContext,
+    notesProvider?: NotesTreeProvider
 ): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -127,7 +130,7 @@ export async function handleSummarizeCurrentNote(
                 const summary = await summarizationService.summarizeNote(filePath, options);
 
                 if (!token.isCancellationRequested) {
-                    await displaySummary(summary, path.basename(filePath), [filePath]);
+                    await displaySummary(summary, path.basename(filePath), [filePath], notesProvider);
                 }
             }
         );
@@ -141,7 +144,8 @@ export async function handleSummarizeCurrentNote(
  */
 export async function handleSummarizeRecent(
     summarizationService: SummarizationService,
-    context: vscode.ExtensionContext
+    context: vscode.ExtensionContext,
+    notesProvider?: NotesTreeProvider
 ): Promise<void> {
     const notesPath = getNotesPath();
     if (!notesPath) {
@@ -172,7 +176,8 @@ export async function handleSummarizeRecent(
             recentNotes,
             `Recent Notes (Last 7 Days)`,
             `Analyzing ${recentNotes.length} notes from the last 7 days...`,
-            options
+            options,
+            notesProvider
         );
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
@@ -184,7 +189,8 @@ export async function handleSummarizeRecent(
  */
 export async function handleSummarizeWeek(
     summarizationService: SummarizationService,
-    context: vscode.ExtensionContext
+    context: vscode.ExtensionContext,
+    notesProvider?: NotesTreeProvider
 ): Promise<void> {
     const notesPath = getNotesPath();
     if (!notesPath) {
@@ -217,7 +223,8 @@ export async function handleSummarizeWeek(
             weekNotes,
             `This Week (${startOfWeek.toLocaleDateString()})`,
             `Analyzing ${weekNotes.length} notes from this week...`,
-            options
+            options,
+            notesProvider
         );
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
@@ -229,7 +236,8 @@ export async function handleSummarizeWeek(
  */
 export async function handleSummarizeMonth(
     summarizationService: SummarizationService,
-    context: vscode.ExtensionContext
+    context: vscode.ExtensionContext,
+    notesProvider?: NotesTreeProvider
 ): Promise<void> {
     const notesPath = getNotesPath();
     if (!notesPath) {
@@ -260,7 +268,8 @@ export async function handleSummarizeMonth(
             monthNotes,
             `This Month (${startOfMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })})`,
             `Analyzing ${monthNotes.length} notes from this month...`,
-            options
+            options,
+            notesProvider
         );
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
@@ -272,7 +281,8 @@ export async function handleSummarizeMonth(
  */
 export async function handleSummarizeCustomRange(
     summarizationService: SummarizationService,
-    context: vscode.ExtensionContext
+    context: vscode.ExtensionContext,
+    notesProvider?: NotesTreeProvider
 ): Promise<void> {
     const notesPath = getNotesPath();
     if (!notesPath) {
@@ -340,7 +350,8 @@ export async function handleSummarizeCustomRange(
             rangeNotes,
             `Custom Range (${startDateStr} to ${endDateStr})`,
             `Analyzing ${rangeNotes.length} notes from custom range...`,
-            options
+            options,
+            notesProvider
         );
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
@@ -381,6 +392,7 @@ async function displaySummary(
     summary: string,
     title: string,
     sourcePaths: string[],
+    notesProvider?: NotesTreeProvider,
     autoTagService?: AutoTagService,
     offerAutoTag: boolean = false
 ): Promise<void> {
@@ -436,6 +448,11 @@ Generated by GitHub Copilot • Noted Extension`;
     const doc = await vscode.workspace.openTextDocument(filePath);
     await vscode.window.showTextDocument(doc, { preview: false });
 
+    // Refresh the tree view to show the new file
+    if (notesProvider) {
+        notesProvider.refresh();
+    }
+
     // Show success message
     vscode.window.showInformationMessage(`Summary saved to: ${path.join(SPECIAL_FOLDERS.INBOX, filename)}`);
 
@@ -454,7 +471,8 @@ async function summarizeWithProgress(
     notePaths: string[],
     title: string,
     progressTitle: string,
-    options?: SummaryOptions
+    options?: SummaryOptions,
+    notesProvider?: NotesTreeProvider
 ): Promise<void> {
     await vscode.window.withProgress(
         {
@@ -500,11 +518,11 @@ async function summarizeWithProgress(
 
                 // Combine summaries
                 const combinedSummary = summaries.join('\n');
-                await displaySummary(combinedSummary, title, notePaths);
+                await displaySummary(combinedSummary, title, notePaths, notesProvider);
             } else {
                 // For 10 or fewer notes, use batch summarization
                 const summary = await summarizationService.summarizeNotes(notePaths, options);
-                await displaySummary(summary, title, notePaths);
+                await displaySummary(summary, title, notePaths, notesProvider);
             }
         }
     );
