@@ -219,6 +219,42 @@ Summary requirements:
 Provide only the summary without preamble. Be open-minded and capture the creative spirit.`,
                 variables: ['content', 'length', 'format', 'actionItemsPrompt', 'keywordsPrompt'],
                 builtIn: true
+            },
+            {
+                id: 'video-transcript',
+                name: 'Video Transcript',
+                description: 'Focus on step-by-step tutorials and UI walkthroughs from video content',
+                prompt: `You are analyzing a video transcript from a tutorial or walkthrough session.
+Provide a structured summary that captures the step-by-step process and UI navigation.
+
+Video transcript:
+---
+{content}
+---
+
+Summary requirements:
+- Length: {length}
+- Format: {format}
+- Structure:
+  1. Tutorial Overview: What application/website/feature is being demonstrated
+  2. Prerequisites: Any setup or requirements mentioned
+  3. Step-by-Step Instructions:
+     - Number each step clearly
+     - Include specific UI elements (buttons, menus, fields)
+     - Note exact navigation paths (e.g., "Settings > Privacy > Data")
+     - Capture keyboard shortcuts or special commands
+     - Include any warnings or important notes mentioned
+  4. Expected Results: What should happen at each step or final outcome
+  5. Tips & Tricks: Any additional insights or best practices mentioned
+  6. Troubleshooting: Common issues or alternative approaches discussed
+
+{actionItemsPrompt}
+
+{keywordsPrompt}
+
+Provide only the summary without preamble. Be precise with UI element names and navigation paths. Use numbered lists for sequential steps.`,
+                variables: ['content', 'length', 'format', 'actionItemsPrompt', 'keywordsPrompt'],
+                builtIn: true
             }
         ];
     }
