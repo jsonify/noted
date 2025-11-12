@@ -131,11 +131,14 @@ export async function handleOpenNote(filePath: string) {
 export async function handleDeleteNote(item: NoteItem) {
     const answer = await vscode.window.showWarningMessage(
         `Delete ${item.label}?`,
-        { modal: true },
-        'Delete',
-        'Cancel'
+        {
+            modal: true,
+            detail: 'This action cannot be undone.'
+        },
+        { title: 'Delete', isCloseAffordance: false },
+        { title: 'Cancel', isCloseAffordance: true }
     );
-    if (answer === 'Delete') {
+    if (answer?.title === 'Delete') {
         try {
             await deleteFile(item.filePath);
             refresh();
@@ -335,12 +338,15 @@ export async function handleDeleteFolder(item: NoteItem) {
 
     const answer = await vscode.window.showWarningMessage(
         `Delete folder "${item.label}" and all its contents?`,
-        { modal: true },
-        'Delete',
-        'Cancel'
+        {
+            modal: true,
+            detail: 'This action cannot be undone. All notes in this folder will be permanently deleted.'
+        },
+        { title: 'Delete', isCloseAffordance: false },
+        { title: 'Cancel', isCloseAffordance: true }
     );
 
-    if (answer !== 'Delete') {
+    if (answer?.title !== 'Delete') {
         return;
     }
 

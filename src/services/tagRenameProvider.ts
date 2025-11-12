@@ -98,11 +98,15 @@ export class TagRenameProvider implements vscode.RenameProvider {
             const response = await vscode.window.showWarningMessage(
                 `Tag "#${normalizedNewName}" already exists. ` +
                 'Renaming will merge these tags. Continue?',
-                { modal: true },
-                'Yes', 'No'
+                {
+                    modal: true,
+                    detail: 'All instances of both tags will be merged into one.'
+                },
+                { title: 'Yes', isCloseAffordance: false },
+                { title: 'No', isCloseAffordance: true }
             );
 
-            if (response !== 'Yes') {
+            if (response?.title !== 'Yes') {
                 return null;
             }
         }

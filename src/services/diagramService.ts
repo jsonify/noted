@@ -421,19 +421,22 @@ export class DiagramService {
 
         const selection = await vscode.window.showWarningMessage(
             `${extensionName} extension is not available. Install or enable it to edit ${type} diagrams.`,
-            { modal: true },
-            'Install Extension',
-            'Create Anyway',
-            "Don't Ask Again",
-            'Dismiss'
+            {
+                modal: true,
+                detail: 'The extension is required for creating and editing diagrams.'
+            },
+            { title: 'Install Extension', isCloseAffordance: false },
+            { title: 'Create Anyway', isCloseAffordance: false },
+            { title: "Don't Ask Again", isCloseAffordance: false },
+            { title: 'Dismiss', isCloseAffordance: true }
         );
 
-        if (selection === 'Install Extension') {
+        if (selection?.title === 'Install Extension') {
             await vscode.commands.executeCommand('workbench.extensions.installExtension', extensionId);
             return 'install';
-        } else if (selection === 'Create Anyway') {
+        } else if (selection?.title === 'Create Anyway') {
             return 'proceed';
-        } else if (selection === "Don't Ask Again") {
+        } else if (selection?.title === "Don't Ask Again") {
             this.setSuppressWarning(type, true);
             return 'proceed';
         }

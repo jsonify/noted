@@ -967,11 +967,14 @@ export function activate(context: vscode.ExtensionContext) {
 
         const answer = await vscode.window.showWarningMessage(
             `Delete ${item.label}?`,
-            { modal: true },
-            'Delete',
-            'Cancel'
+            {
+                modal: true,
+                detail: 'This action cannot be undone.'
+            },
+            { title: 'Delete', isCloseAffordance: false },
+            { title: 'Cancel', isCloseAffordance: true }
         );
-        if (answer === 'Delete') {
+        if (answer?.title === 'Delete') {
             try {
                 // Track operation for undo BEFORE deleting
                 await trackDeleteNote(undoService, item.filePath);
@@ -1010,12 +1013,15 @@ export function activate(context: vscode.ExtensionContext) {
         const fileName = path.basename(currentFilePath);
         const answer = await vscode.window.showWarningMessage(
             `Delete ${fileName}?`,
-            { modal: true },
-            'Delete',
-            'Cancel'
+            {
+                modal: true,
+                detail: 'This action cannot be undone.'
+            },
+            { title: 'Delete', isCloseAffordance: false },
+            { title: 'Cancel', isCloseAffordance: true }
         );
 
-        if (answer === 'Delete') {
+        if (answer?.title === 'Delete') {
             try {
                 // Close the editor first
                 await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
@@ -1091,11 +1097,14 @@ export function activate(context: vscode.ExtensionContext) {
     let archiveNote = vscode.commands.registerCommand('noted.archiveNote', async (item: NoteItem) => {
         const answer = await vscode.window.showWarningMessage(
             `Archive ${item.label}?`,
-            { modal: true },
-            'Archive',
-            'Cancel'
+            {
+                modal: true,
+                detail: 'The note will be moved to the archive folder.'
+            },
+            { title: 'Archive', isCloseAffordance: false },
+            { title: 'Cancel', isCloseAffordance: true }
         );
-        if (answer === 'Archive') {
+        if (answer?.title === 'Archive') {
             try {
                 const destinationPath = await archiveService.archiveNote(item.filePath);
 
@@ -1148,12 +1157,15 @@ export function activate(context: vscode.ExtensionContext) {
         const days = parseInt(daysInput);
         const answer = await vscode.window.showWarningMessage(
             `Archive all notes older than ${days} days?`,
-            { modal: true },
-            'Archive',
-            'Cancel'
+            {
+                modal: true,
+                detail: 'These notes will be moved to the archive folder.'
+            },
+            { title: 'Archive', isCloseAffordance: false },
+            { title: 'Cancel', isCloseAffordance: true }
         );
 
-        if (answer === 'Archive') {
+        if (answer?.title === 'Archive') {
             try {
                 const count = await archiveService.archiveOldNotes(days);
                 refreshAllProviders();

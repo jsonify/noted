@@ -111,11 +111,11 @@ export async function handleBulkDelete(
     const choice = await vscode.window.showWarningMessage(
         message,
         { modal: true, detail },
-        'Delete',
-        'Cancel'
+        { title: 'Delete', isCloseAffordance: false },
+        { title: 'Cancel', isCloseAffordance: true }
     );
 
-    if (choice !== 'Delete') {
+    if (choice?.title !== 'Delete') {
         return;
     }
 
@@ -204,11 +204,11 @@ export async function handleBulkMove(
     const choice = await vscode.window.showInformationMessage(
         message,
         { modal: true, detail },
-        'Move',
-        'Cancel'
+        { title: 'Move', isCloseAffordance: false },
+        { title: 'Cancel', isCloseAffordance: true }
     );
 
-    if (choice !== 'Move') {
+    if (choice?.title !== 'Move') {
         return;
     }
 
@@ -312,11 +312,11 @@ export async function handleBulkArchive(
     const choice = await vscode.window.showInformationMessage(
         message,
         { modal: true, detail },
-        'Archive',
-        'Cancel'
+        { title: 'Archive', isCloseAffordance: false },
+        { title: 'Cancel', isCloseAffordance: true }
     );
 
-    if (choice !== 'Archive') {
+    if (choice?.title !== 'Archive') {
         return;
     }
 
@@ -379,11 +379,11 @@ export async function handleBulkMerge(
     const choice = await vscode.window.showWarningMessage(
         message,
         { modal: true, detail },
-        'Merge',
-        'Cancel'
+        { title: 'Merge', isCloseAffordance: false },
+        { title: 'Cancel', isCloseAffordance: true }
     );
 
-    if (choice !== 'Merge') {
+    if (choice?.title !== 'Merge') {
         return;
     }
 
