@@ -303,3 +303,75 @@ async function openTemplate(templateId: string): Promise<void> {
         await vscode.window.showTextDocument(doc);
     }
 }
+
+/**
+ * Command: Select preferred AI model for template generation
+ */
+export async function handleSelectAIModel(): Promise<void> {
+    try {
+        // Get all available models
+        const models = await templateGenerator.getAvailableModels();
+
+        if (models.length === 0) {
+            vscode.window.showErrorMessage(
+                'No AI models available. Please install GitHub Copilot, Claude, or another LLM extension.'
+            );
+            return;
+        }
+
+        // Get current preference
+        const config = vscode.workspace.getConfiguration('noted');
+        const currentModelId = config.get<string>('templates.preferredModel');
+
+        // Build quick pick items
+        interface ModelQuickPickItem extends vscode.QuickPickItem {
+            modelId: string;
+        }
+
+        const items: ModelQuickPickItem[] = models.map(model => {
+            const isSelected = model.id === currentModelId;
+            const icon = isSelected ? '$(check)' : '$(circle-outline)';
+
+            return {
+                modelId: model.id,
+                label: `${icon} ${model.name}`,
+                description: `${model.vendor}`,
+                detail: model.description,
+                picked: isSelected
+            };
+        });
+
+        // Add "Automatic" option at the top
+        items.unshift({
+            modelId: '',
+            label: `${currentModelId === '' ? '$(check)' : '$(circle-outline)'} Automatic (Recommended)`,
+            description: 'Smart selection based on availability',
+            detail: 'Uses Claude > GPT > Gemini > any available model',
+            picked: currentModelId === ''
+        });
+
+        // Show picker
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select AI model for template generation',
+            title: 'AI Model Selection',
+            matchOnDescription: true,
+            matchOnDetail: true
+        });
+
+        if (!selected) {
+            return;
+        }
+
+        // Save preference
+        await config.update('templates.preferredModel', selected.modelId, vscode.ConfigurationTarget.Global);
+
+        const modelName = selected.modelId === '' ? 'Automatic selection' : selected.label.replace(/\$\(.*?\)\s/, '');
+        vscode.window.showInformationMessage(`AI model set to: ${modelName}`);
+    } catch (error) {
+        if (error instanceof Error) {
+            vscode.window.showErrorMessage(`Failed to select AI model: ${error.message}`);
+        } else {
+            vscode.window.showErrorMessage('Failed to select AI model: Unknown error');
+        }
+    }
+}

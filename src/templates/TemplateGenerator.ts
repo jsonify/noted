@@ -47,17 +47,8 @@ export class TemplateGenerator {
                 throw new Error('AI template generation is disabled in settings');
             }
 
-            // Select a language model (GitHub Copilot)
-            const models = await vscode.lm.selectChatModels({
-                vendor: 'copilot',
-                family: 'gpt-4o'
-            });
-
-            if (models.length === 0) {
-                throw new Error('GitHub Copilot is not available. Please sign in to use AI template generation.');
-            }
-
-            const model = models[0];
+            // Select the appropriate language model
+            const model = await this.selectModel();
 
             // Build the prompt
             const prompt = this.buildTemplateGenerationPrompt(description);
@@ -113,17 +104,8 @@ export class TemplateGenerator {
                 throw new Error('AI template enhancement is disabled in settings');
             }
 
-            // Select a language model
-            const models = await vscode.lm.selectChatModels({
-                vendor: 'copilot',
-                family: 'gpt-4o'
-            });
-
-            if (models.length === 0) {
-                throw new Error('GitHub Copilot is not available. Please sign in to use AI template enhancement.');
-            }
-
-            const model = models[0];
+            // Select the appropriate language model
+            const model = await this.selectModel();
 
             // Build the enhancement prompt
             const prompt = this.buildTemplateEnhancementPrompt(existingTemplate);
@@ -385,6 +367,128 @@ Return ONLY valid JSON, no other text.`;
             .createHash('sha256')
             .update(content)
             .digest('hex');
+    }
+
+    /**
+     * Select the appropriate AI model based on user preference and availability
+     * @returns Selected language model
+     * @throws Error if no models are available
+     */
+    private async selectModel(): Promise<vscode.LanguageModelChat> {
+        const config = vscode.workspace.getConfiguration('noted');
+        const preferredModelId = config.get<string>('templates.preferredModel');
+
+        // Get all available models
+        const allModels = await vscode.lm.selectChatModels({});
+
+        if (allModels.length === 0) {
+            throw new Error('No AI models available. Please install GitHub Copilot, Claude, or another LLM extension.');
+        }
+
+        // Try to use preferred model if set
+        if (preferredModelId) {
+            const preferred = allModels.find(m => m.id === preferredModelId);
+            if (preferred) {
+                return preferred;
+            }
+            // If preferred model not found, fall through to automatic selection
+        }
+
+        // Automatic selection with smart fallback
+        // Priority: Claude (best for structured output) > GPT > Gemini > any available
+        const claude = allModels.find(m => m.vendor === 'copilot' && m.family.includes('claude'));
+        if (claude) {
+            return claude;
+        }
+
+        const anthropic = allModels.find(m => m.vendor === 'anthropic');
+        if (anthropic) {
+            return anthropic;
+        }
+
+        const gpt = allModels.find(m => m.vendor === 'copilot' && m.family.includes('gpt'));
+        if (gpt) {
+            return gpt;
+        }
+
+        const gemini = allModels.find(m => m.vendor === 'copilot' && m.family.includes('gemini'));
+        if (gemini) {
+            return gemini;
+        }
+
+        // Return first available model
+        return allModels[0];
+    }
+
+    /**
+     * Get all available AI models for user selection
+     * @returns Array of available models with metadata
+     */
+    async getAvailableModels(): Promise<Array<{
+        id: string;
+        vendor: string;
+        family: string;
+        name: string;
+        description: string;
+    }>> {
+        const allModels = await vscode.lm.selectChatModels({});
+
+        return allModels.map(model => {
+            // Generate user-friendly name
+            let name = model.name || model.family;
+            let description = this.getModelDescription(model.vendor, model.family);
+
+            return {
+                id: model.id,
+                vendor: model.vendor,
+                family: model.family,
+                name,
+                description
+            };
+        });
+    }
+
+    /**
+     * Get user-friendly description for a model
+     * @param vendor - Model vendor
+     * @param family - Model family
+     * @returns Description string
+     */
+    private getModelDescription(vendor: string, family: string): string {
+        // Anthropic/Claude models
+        if (vendor === 'anthropic' || family.includes('claude')) {
+            if (family.includes('sonnet')) {
+                return 'Best for structured output and complex reasoning';
+            }
+            if (family.includes('opus')) {
+                return 'Most capable, best for complex tasks';
+            }
+            if (family.includes('haiku')) {
+                return 'Fast and efficient';
+            }
+            return 'Claude AI model';
+        }
+
+        // OpenAI models (via Copilot)
+        if (family.includes('gpt')) {
+            if (family.includes('4o') || family.includes('4')) {
+                return 'Advanced reasoning and generation';
+            }
+            if (family.includes('3.5')) {
+                return 'Fast and cost-effective';
+            }
+            return 'OpenAI GPT model';
+        }
+
+        // Google models
+        if (family.includes('gemini')) {
+            if (family.includes('pro')) {
+                return 'Long context window, multimodal';
+            }
+            return 'Google Gemini model';
+        }
+
+        return `${vendor} - ${family}`;
     }
 
     /**

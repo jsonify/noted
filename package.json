@@ -244,6 +244,11 @@
         "icon": "$(sparkle)"
       },
       {
+        "command": "noted.selectAIModel",
+        "title": "Noted: Select AI Model",
+        "icon": "$(settings-gear)"
+      },
+      {
         "command": "noted.showConfig",
         "title": "Noted: Show Configuration (Debug)"
       },
