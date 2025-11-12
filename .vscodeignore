@@ -1,10 +1,34 @@
 .vscode/**
-.gitignore
 tsconfig.json
 src/**
 !src/webview/**
-node_modules/**
-!out/node_modules/**
+/node_modules/**
 *.vsix
 pnpm-lock.yaml
 .DS_Store
+
+# Exclude test files from package
+out/test/**
+**/*.test.js
+**/*.test.js.map
+
+# Exclude development files
+dev-docs/**
+scripts/**
+.github/**
+.agent-os/**
+.claude/**
+
+# Exclude documentation (users can view on GitHub)
+docs/**
+CLAUDE.md
+notes.md
+plan.md
+export-format-example.md
+
+# Exclude lock files and configs
+.gitignore
+.versionrc.json
+
+# Exclude source maps in production (optional - uncomment to reduce size further)
+# **/*.map
