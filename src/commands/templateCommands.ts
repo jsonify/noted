@@ -55,14 +55,24 @@ export async function handleCreateTemplateWithAI(): Promise<void> {
 
             progress.report({ increment: 100, message: 'Done!' });
 
-            vscode.window.showInformationMessage(
-                `Template "${template.name}" created successfully!`,
-                'Open Template'
-            ).then((selection) => {
-                if (selection === 'Open Template') {
-                    openTemplate(template.id);
-                }
-            });
+            // Show success message with location info
+            const templatesPath = getTemplatesPath();
+            const templateFile = `${template.id}.json`;
+
+            const action = await vscode.window.showInformationMessage(
+                `✅ Template "${template.name}" created successfully!`,
+                'Open Template File',
+                'Open Templates Folder',
+                'Create Note from Template'
+            );
+
+            if (action === 'Open Template File') {
+                await openTemplate(template.id);
+            } else if (action === 'Open Templates Folder') {
+                await vscode.commands.executeCommand('noted.openTemplatesFolder');
+            } else if (action === 'Create Note from Template') {
+                await vscode.commands.executeCommand('noted.openWithTemplate', template.id);
+            }
         });
     } catch (error) {
         if (error instanceof Error) {
@@ -156,14 +166,21 @@ export async function handleEnhanceTemplate(): Promise<void> {
 
             progress.report({ increment: 100, message: 'Done!' });
 
-            vscode.window.showInformationMessage(
-                `Template "${enhancedTemplate.name}" enhanced successfully!`,
-                'Open Template'
-            ).then((selection) => {
-                if (selection === 'Open Template') {
-                    openTemplate(enhancedTemplate.id);
-                }
-            });
+            // Show success message with more options
+            const action = await vscode.window.showInformationMessage(
+                `✅ Template "${enhancedTemplate.name}" enhanced successfully!`,
+                'Open Template File',
+                'Open Templates Folder',
+                'Create Note from Template'
+            );
+
+            if (action === 'Open Template File') {
+                await openTemplate(enhancedTemplate.id);
+            } else if (action === 'Open Templates Folder') {
+                await vscode.commands.executeCommand('noted.openTemplatesFolder');
+            } else if (action === 'Create Note from Template') {
+                await vscode.commands.executeCommand('noted.openWithTemplate', enhancedTemplate.id);
+            }
         });
     } catch (error) {
         if (error instanceof Error) {
@@ -175,21 +192,34 @@ export async function handleEnhanceTemplate(): Promise<void> {
 }
 
 /**
- * Show a preview webview for a generated template
+ * Show a preview for a generated template using a text editor
  */
 async function showTemplatePreview(template: Template): Promise<boolean> {
-    // For now, use a simple modal dialog with preview
-    // TODO: Implement full webview in future enhancement
+    // Create a temporary document with the template preview
     const previewContent = generatePreviewText(template);
 
+    const doc = await vscode.workspace.openTextDocument({
+        content: previewContent,
+        language: 'markdown'
+    });
+
+    await vscode.window.showTextDocument(doc, {
+        preview: true,
+        viewColumn: vscode.ViewColumn.Beside
+    });
+
+    // Ask user if they want to accept
     const result = await vscode.window.showInformationMessage(
-        'Template Preview',
-        { modal: true, detail: previewContent },
-        'Accept',
+        `Template "${template.name}" preview is open. Accept this template?`,
+        { modal: true },
+        'Accept & Save',
         'Cancel'
     );
 
-    return result === 'Accept';
+    // Close the preview document
+    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+
+    return result === 'Accept & Save';
 }
 
 /**
@@ -199,18 +229,31 @@ async function showTemplateEnhancementPreview(
     original: Template,
     enhanced: Template
 ): Promise<boolean> {
-    // For now, use a simple modal dialog
-    // TODO: Implement side-by-side diff webview in future enhancement
-    const previewContent = `ENHANCEMENTS:\n\n${generateComparisonText(original, enhanced)}`;
+    // Create comparison content
+    const previewContent = generateComparisonText(original, enhanced);
 
+    const doc = await vscode.workspace.openTextDocument({
+        content: previewContent,
+        language: 'markdown'
+    });
+
+    await vscode.window.showTextDocument(doc, {
+        preview: true,
+        viewColumn: vscode.ViewColumn.Beside
+    });
+
+    // Ask user if they want to accept
     const result = await vscode.window.showInformationMessage(
-        'Template Enhancement Preview',
-        { modal: true, detail: previewContent },
-        'Accept',
+        `Template "${enhanced.name}" enhancements preview is open. Accept these changes?`,
+        { modal: true },
+        'Accept & Save',
         'Cancel'
     );
 
-    return result === 'Accept';
+    // Close the preview document
+    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+
+    return result === 'Accept & Save';
 }
 
 /**
@@ -218,23 +261,33 @@ async function showTemplateEnhancementPreview(
  */
 function generatePreviewText(template: Template): string {
     const lines = [
-        `Name: ${template.name}`,
-        `Description: ${template.description}`,
-        `Category: ${template.category}`,
-        `Tags: ${template.tags.join(', ')}`,
+        `# Template Preview: ${template.name}`,
         '',
-        'Variables:'
+        `**Description:** ${template.description}`,
+        `**Category:** ${template.category}`,
+        `**Tags:** ${template.tags.join(', ') || 'none'}`,
+        '',
+        '---',
+        '',
     ];
 
-    if (template.variables.length === 0) {
-        lines.push('  (none)');
-    } else {
+    if (template.variables.length > 0) {
+        lines.push('## Template Variables');
+        lines.push('');
         for (const v of template.variables) {
-            lines.push(`  - ${v.name} (${v.type})${v.required ? ' *required*' : ''}: ${v.prompt || ''}`);
+            lines.push(`- **${v.name}** (${v.type})${v.required ? ' *required*' : ''}`);
+            if (v.prompt) {
+                lines.push(`  - ${v.prompt}`);
+            }
         }
+        lines.push('', '---', '');
     }
 
-    lines.push('', 'Content:', '---', template.content, '---');
+    lines.push('## Template Content');
+    lines.push('');
+    lines.push('```markdown');
+    lines.push(template.content);
+    lines.push('```');
 
     return lines.join('\n');
 }
@@ -243,7 +296,12 @@ function generatePreviewText(template: Template): string {
  * Generate comparison text for before/after enhancement
  */
 function generateComparisonText(original: Template, enhanced: Template): string {
-    const lines = ['Changes:'];
+    const lines = [
+        `# Template Enhancement: ${enhanced.name}`,
+        '',
+        '## Changes Overview',
+        ''
+    ];
 
     // Compare variables
     const newVariables = enhanced.variables.filter(
@@ -251,19 +309,28 @@ function generateComparisonText(original: Template, enhanced: Template): string 
     );
 
     if (newVariables.length > 0) {
-        lines.push('', 'New Variables:');
+        lines.push('### New Variables Added:');
+        lines.push('');
         for (const v of newVariables) {
-            lines.push(`  + ${v.name} (${v.type}): ${v.prompt || ''}`);
+            lines.push(`- **${v.name}** (${v.type}): ${v.prompt || ''}`);
         }
+        lines.push('');
     }
 
     // Compare tags
     const newTags = enhanced.tags.filter(t => !original.tags.includes(t));
     if (newTags.length > 0) {
-        lines.push('', `New Tags: ${newTags.join(', ')}`);
+        lines.push(`### New Tags: ${newTags.join(', ')}`);
+        lines.push('');
     }
 
-    lines.push('', 'Enhanced Content:', '---', enhanced.content, '---');
+    lines.push('---');
+    lines.push('');
+    lines.push('## Enhanced Template Content');
+    lines.push('');
+    lines.push('```markdown');
+    lines.push(enhanced.content);
+    lines.push('```');
 
     return lines.join('\n');
 }
