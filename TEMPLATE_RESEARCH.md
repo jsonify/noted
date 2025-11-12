@@ -368,12 +368,11 @@ src/templates/
 src/commands/
   └── templateCommands.ts         # New template commands (split from commands.ts)
 
-.noted-templates/
-  ├── templates/                  # Individual templates (JSON)
-  │   ├── video-tutorial.json
-  │   └── tutorial-text-guide.json
-  └── bundles/                    # Multi-note bundles
-      └── video-tutorial-complete.bundle.json
+.noted-templates/                 # Flat structure, differentiate by file extension
+  ├── video-tutorial.json         # Individual template (JSON format)
+  ├── tutorial-text-guide.json    # Individual template (JSON format)
+  ├── my-template.md              # Legacy template (backward compatible)
+  └── video-tutorial-complete.bundle.json  # Multi-note bundle
 ```
 
 ### Updated Files:

@@ -24,7 +24,7 @@
 ```typescript
 // src/templates/TemplateGenerator.ts
 export class TemplateGenerator {
-  async generateFromDescription(description: string): Promise<TemplateMetadata> {
+  async generateFromDescription(description: string): Promise<Template> {
     // Use VS Code LLM API (like TagGenerator does)
     const model = await this.selectCopilotModel();
     const prompt = this.buildTemplateGenerationPrompt(description);
@@ -461,16 +461,24 @@ export async function handleShowTemplateBrowser() {
 ### Add to `extension.ts`
 
 ```typescript
-// Template commands
+// Template commands (Phase 1)
 context.subscriptions.push(
   vscode.commands.registerCommand('noted.createTemplateWithAI',
     () => handleCreateTemplateWithAI()),
   vscode.commands.registerCommand('noted.enhanceTemplate',
-    () => handleEnhanceTemplate()),
+    () => handleEnhanceTemplate())
+);
+
+// Template commands (Phase 2)
+context.subscriptions.push(
   vscode.commands.registerCommand('noted.createBundle',
     () => handleCreateBundle()),
   vscode.commands.registerCommand('noted.createBundleFromTemplates',
-    () => handleCreateBundleFromTemplates()),
+    () => handleCreateBundleFromTemplates())
+);
+
+// Template commands (Phase 3-4)
+context.subscriptions.push(
   vscode.commands.registerCommand('noted.showTemplateBrowser',
     () => handleShowTemplateBrowser()),
   vscode.commands.registerCommand('noted.migrateTemplates',
@@ -500,8 +508,18 @@ context.subscriptions.push(
         "category": "Noted"
       },
       {
+        "command": "noted.createBundleFromTemplates",
+        "title": "Create Bundle from Templates",
+        "category": "Noted"
+      },
+      {
         "command": "noted.showTemplateBrowser",
         "title": "Show Template Browser",
+        "category": "Noted"
+      },
+      {
+        "command": "noted.migrateTemplates",
+        "title": "Migrate Templates to JSON Format",
         "category": "Noted"
       }
     ]
