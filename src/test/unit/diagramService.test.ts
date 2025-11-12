@@ -44,20 +44,8 @@ describe('DiagramService', () => {
     describe('showExtensionWarning', () => {
         it('should show modal dialog with proper button objects for Draw.io', async () => {
             // Mock VS Code window and extensions API
-            const showWarningStub = sandbox.stub().resolves({ title: 'Dismiss', isCloseAffordance: true });
-
-            const mockWindow = {
-                showWarningMessage: showWarningStub,
-                showInformationMessage: sandbox.stub().resolves(),
-                showErrorMessage: sandbox.stub().resolves()
-            };
-
-            const mockExtensions = {
-                getExtension: sandbox.stub().returns(undefined) // Extension not installed
-            };
-
-            Object.assign(vscode.window, mockWindow);
-            Object.assign(vscode.extensions, mockExtensions);
+            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves({ title: 'Dismiss', isCloseAffordance: true } as any);
+            const getExtensionStub = sandbox.stub(vscode.extensions, 'getExtension').returns(undefined);
 
             // Trigger warning for drawio
             const result = await (diagramService as any).showExtensionWarning('drawio');
@@ -98,20 +86,8 @@ describe('DiagramService', () => {
 
         it('should show modal dialog with proper button objects for Excalidraw', async () => {
             // Mock VS Code window and extensions API
-            const showWarningStub = sandbox.stub().resolves({ title: 'Dismiss', isCloseAffordance: true });
-
-            const mockWindow = {
-                showWarningMessage: showWarningStub,
-                showInformationMessage: sandbox.stub().resolves(),
-                showErrorMessage: sandbox.stub().resolves()
-            };
-
-            const mockExtensions = {
-                getExtension: sandbox.stub().returns(undefined) // Extension not installed
-            };
-
-            Object.assign(vscode.window, mockWindow);
-            Object.assign(vscode.extensions, mockExtensions);
+            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves({ title: 'Dismiss', isCloseAffordance: true } as any);
+            const getExtensionStub = sandbox.stub(vscode.extensions, 'getExtension').returns(undefined);
 
             // Trigger warning for excalidraw
             const result = await (diagramService as any).showExtensionWarning('excalidraw');
@@ -125,26 +101,9 @@ describe('DiagramService', () => {
         });
 
         it('should return "install" when Install Extension button is clicked', async () => {
-            const showWarningStub = sandbox.stub().resolves({ title: 'Install Extension', isCloseAffordance: false });
-            const executeCommandStub = sandbox.stub().resolves();
-
-            const mockWindow = {
-                showWarningMessage: showWarningStub,
-                showInformationMessage: sandbox.stub().resolves(),
-                showErrorMessage: sandbox.stub().resolves()
-            };
-
-            const mockCommands = {
-                executeCommand: executeCommandStub
-            };
-
-            const mockExtensions = {
-                getExtension: sandbox.stub().returns(undefined)
-            };
-
-            Object.assign(vscode.window, mockWindow);
-            Object.assign(vscode.commands, mockCommands);
-            Object.assign(vscode.extensions, mockExtensions);
+            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves({ title: 'Install Extension', isCloseAffordance: false } as any);
+            const executeCommandStub = sandbox.stub(vscode.commands, 'executeCommand').resolves();
+            const getExtensionStub = sandbox.stub(vscode.extensions, 'getExtension').returns(undefined);
 
             // Trigger warning
             const result = await (diagramService as any).showExtensionWarning('drawio');
@@ -157,20 +116,8 @@ describe('DiagramService', () => {
         });
 
         it('should return "proceed" when Create Anyway button is clicked', async () => {
-            const showWarningStub = sandbox.stub().resolves({ title: 'Create Anyway', isCloseAffordance: false });
-
-            const mockWindow = {
-                showWarningMessage: showWarningStub,
-                showInformationMessage: sandbox.stub().resolves(),
-                showErrorMessage: sandbox.stub().resolves()
-            };
-
-            const mockExtensions = {
-                getExtension: sandbox.stub().returns(undefined)
-            };
-
-            Object.assign(vscode.window, mockWindow);
-            Object.assign(vscode.extensions, mockExtensions);
+            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves({ title: 'Create Anyway', isCloseAffordance: false } as any);
+            const getExtensionStub = sandbox.stub(vscode.extensions, 'getExtension').returns(undefined);
 
             // Trigger warning
             const result = await (diagramService as any).showExtensionWarning('drawio');
@@ -180,20 +127,8 @@ describe('DiagramService', () => {
         });
 
         it('should return "proceed" and suppress future warnings when "Don\'t Ask Again" is clicked', async () => {
-            const showWarningStub = sandbox.stub().resolves({ title: "Don't Ask Again", isCloseAffordance: false });
-
-            const mockWindow = {
-                showWarningMessage: showWarningStub,
-                showInformationMessage: sandbox.stub().resolves(),
-                showErrorMessage: sandbox.stub().resolves()
-            };
-
-            const mockExtensions = {
-                getExtension: sandbox.stub().returns(undefined)
-            };
-
-            Object.assign(vscode.window, mockWindow);
-            Object.assign(vscode.extensions, mockExtensions);
+            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves({ title: "Don't Ask Again", isCloseAffordance: false } as any);
+            const getExtensionStub = sandbox.stub(vscode.extensions, 'getExtension').returns(undefined);
 
             // Trigger warning
             const result = await (diagramService as any).showExtensionWarning('drawio');
@@ -209,20 +144,8 @@ describe('DiagramService', () => {
         });
 
         it('should return "dismiss" when dialog is dismissed with undefined', async () => {
-            const showWarningStub = sandbox.stub().resolves(undefined);
-
-            const mockWindow = {
-                showWarningMessage: showWarningStub,
-                showInformationMessage: sandbox.stub().resolves(),
-                showErrorMessage: sandbox.stub().resolves()
-            };
-
-            const mockExtensions = {
-                getExtension: sandbox.stub().returns(undefined)
-            };
-
-            Object.assign(vscode.window, mockWindow);
-            Object.assign(vscode.extensions, mockExtensions);
+            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves(undefined);
+            const getExtensionStub = sandbox.stub(vscode.extensions, 'getExtension').returns(undefined);
 
             // Trigger warning
             const result = await (diagramService as any).showExtensionWarning('drawio');

@@ -127,6 +127,10 @@ export const commands = {
   executeCommand: (command: string, ...args: any[]) => Promise.resolve()
 };
 
+export const extensions = {
+  getExtension: (extensionId: string) => undefined
+};
+
 // Export Event class which is used by VS Code API
 export class Event<T> {
   constructor(private listener: (e: T) => any) {}

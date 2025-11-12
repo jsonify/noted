@@ -50,29 +50,21 @@ describe('TagRenameProvider', () => {
             // Build tag index
             await tagService.buildTagIndex();
 
+            // Mock VS Code window API
+            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves({ title: 'No', isCloseAffordance: true } as any);
+
             // Create mock document and position
             const mockDocument = {
-                uri: { fsPath: notePath },
-                getText: (range?: vscode.Range) => 'bug',
-                lineAt: (line: number) => ({
+                uri: vscode.Uri.file(notePath),
+                getText: sandbox.stub().returns('#bug'),
+                lineAt: sandbox.stub().returns({
                     text: 'Content with #bug and #defect tags',
                     range: new vscode.Range(0, 0, 0, 37)
                 }),
                 lineCount: 1
             } as any;
 
-            const position = new vscode.Position(0, 14); // Position at 'bug'
-
-            // Mock VS Code window API
-            const showWarningStub = sandbox.stub().resolves({ title: 'No', isCloseAffordance: true });
-
-            const mockWindow = {
-                showWarningMessage: showWarningStub,
-                showInformationMessage: sandbox.stub().resolves(),
-                showErrorMessage: sandbox.stub().resolves()
-            };
-
-            Object.assign(vscode.window, mockWindow);
+            const position = new vscode.Position(0, 14); // Position at '#bug'
 
             // Try to rename 'bug' to 'defect' (which already exists)
             const result = await renameProvider.provideRenameEdits(
@@ -117,29 +109,21 @@ describe('TagRenameProvider', () => {
             // Build tag index
             await tagService.buildTagIndex();
 
+            // Mock VS Code window API - user clicks Yes
+            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves({ title: 'Yes', isCloseAffordance: false } as any);
+
             // Create mock document and position
             const mockDocument = {
-                uri: { fsPath: notePath },
-                getText: (range?: vscode.Range) => 'bug',
-                lineAt: (line: number) => ({
+                uri: vscode.Uri.file(notePath),
+                getText: sandbox.stub().returns('#bug'),
+                lineAt: sandbox.stub().returns({
                     text: 'Content with #bug and #defect tags',
                     range: new vscode.Range(0, 0, 0, 37)
                 }),
                 lineCount: 1
             } as any;
 
-            const position = new vscode.Position(0, 14); // Position at 'bug'
-
-            // Mock VS Code window API - user clicks Yes
-            const showWarningStub = sandbox.stub().resolves({ title: 'Yes', isCloseAffordance: false });
-
-            const mockWindow = {
-                showWarningMessage: showWarningStub,
-                showInformationMessage: sandbox.stub().resolves(),
-                showErrorMessage: sandbox.stub().resolves()
-            };
-
-            Object.assign(vscode.window, mockWindow);
+            const position = new vscode.Position(0, 14); // Position at '#bug'
 
             // Try to rename 'bug' to 'defect' (which already exists)
             const result = await renameProvider.provideRenameEdits(
@@ -163,29 +147,21 @@ describe('TagRenameProvider', () => {
             // Build tag index
             await tagService.buildTagIndex();
 
+            // Mock VS Code window API - user dismisses dialog
+            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves(undefined);
+
             // Create mock document and position
             const mockDocument = {
-                uri: { fsPath: notePath },
-                getText: (range?: vscode.Range) => 'bug',
-                lineAt: (line: number) => ({
+                uri: vscode.Uri.file(notePath),
+                getText: sandbox.stub().returns('#bug'),
+                lineAt: sandbox.stub().returns({
                     text: 'Content with #bug and #defect tags',
                     range: new vscode.Range(0, 0, 0, 37)
                 }),
                 lineCount: 1
             } as any;
 
-            const position = new vscode.Position(0, 14); // Position at 'bug'
-
-            // Mock VS Code window API - user dismisses dialog
-            const showWarningStub = sandbox.stub().resolves(undefined);
-
-            const mockWindow = {
-                showWarningMessage: showWarningStub,
-                showInformationMessage: sandbox.stub().resolves(),
-                showErrorMessage: sandbox.stub().resolves()
-            };
-
-            Object.assign(vscode.window, mockWindow);
+            const position = new vscode.Position(0, 14); // Position at '#bug'
 
             // Try to rename 'bug' to 'defect'
             const result = await renameProvider.provideRenameEdits(
