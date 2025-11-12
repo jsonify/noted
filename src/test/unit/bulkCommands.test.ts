@@ -279,11 +279,13 @@ describe('bulkCommands', () => {
             const mockWorkspace = {
                 getConfiguration: () => ({
                     get: () => tempDir
-                }),
-                workspaceFolders: [{ uri: { fsPath: tempDir } }]
+                })
             };
 
+            // Need to delete workspaceFolders first as it's readonly
+            delete (vscode.workspace as any).workspaceFolders;
             Object.assign(vscode.workspace, mockWorkspace);
+            (vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: tempDir } }];
 
             // Execute bulk move
             await handleBulkMove(bulkService);

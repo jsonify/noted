@@ -16,6 +16,9 @@ describe('DiagramService', () => {
         sandbox = sinon.createSandbox();
         cleanupMocks();
 
+        // Create a stateful globalState mock that actually stores values
+        const globalStateStore = new Map<string, any>();
+
         // Create mock extension context
         const mockContext = {
             subscriptions: [],
@@ -24,8 +27,13 @@ describe('DiagramService', () => {
                 update: sandbox.stub()
             },
             globalState: {
-                get: sandbox.stub(),
-                update: sandbox.stub()
+                get: sandbox.stub().callsFake((key: string, defaultValue?: any) => {
+                    return globalStateStore.has(key) ? globalStateStore.get(key) : defaultValue;
+                }),
+                update: sandbox.stub().callsFake((key: string, value: any) => {
+                    globalStateStore.set(key, value);
+                    return Promise.resolve();
+                })
             },
             extensionPath: '/mock/extension/path',
             storagePath: '/mock/storage/path',

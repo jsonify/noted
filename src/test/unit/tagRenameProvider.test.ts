@@ -11,6 +11,7 @@ import * as os from 'os';
 import { TagRenameProvider } from '../../services/tagRenameProvider';
 import { TagService } from '../../services/tagService';
 import { TagEditService } from '../../services/tagEditService';
+import * as dialogHelpers from '../../utils/dialogHelpers';
 import { cleanupMocks } from '../setup';
 
 describe('TagRenameProvider', () => {
@@ -41,6 +42,29 @@ describe('TagRenameProvider', () => {
     });
 
     describe('provideRenameEdits', () => {
+        it('should index tags from test file correctly', async () => {
+            // Create test file with multiple tags
+            const noteDir = path.join(tempDir, '2025', '11-November');
+            await fs.mkdir(noteDir, { recursive: true });
+            const notePath = path.join(noteDir, '2025-11-11.txt');
+            await fs.writeFile(notePath, 'Content with #bug and #defect tags');
+
+            // Build tag index
+            await tagService.buildTagIndex();
+
+            // Verify tags were indexed
+            const allTags = tagService.getAllTagLabels();
+            expect(allTags).to.include('bug');
+            expect(allTags).to.include('defect');
+
+            // Verify getTagAtPosition can find tags
+            // 'Content with #bug and #defect tags'
+            // Position 14 is at 'b' in '#bug'
+            const tagAtPos = tagService.getTagAtPosition(notePath, 0, 14);
+            expect(tagAtPos).to.not.be.null;
+            expect(tagAtPos?.tag).to.equal('bug');
+        });
+
         it('should show modal dialog with button objects when tag already exists', async () => {
             // Create test file with multiple tags
             const noteDir = path.join(tempDir, '2025', '11-November');
@@ -51,12 +75,13 @@ describe('TagRenameProvider', () => {
             // Build tag index
             await tagService.buildTagIndex();
 
-            // Mock VS Code window API
-            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves({ title: 'No', isCloseAffordance: true } as any);
+            // Mock dialog helpers showModalWarning
+            const showWarningStub = sandbox.stub(dialogHelpers, 'showModalWarning').resolves({ title: 'No', isCloseAffordance: true } as any);
 
             // Create mock document and position
             const mockDocument = {
                 uri: vscode.Uri.file(notePath),
+                fileName: notePath,  // IMPORTANT: provideRenameEdits uses document.fileName
                 getText: sandbox.stub().returns('#bug'),
                 lineAt: sandbox.stub().returns({
                     text: 'Content with #bug and #defect tags',
@@ -75,16 +100,17 @@ describe('TagRenameProvider', () => {
                 {} as any
             );
 
-            // Verify showWarningMessage was called with correct format
+            // Verify showModalWarning was called with correct format
             expect(showWarningStub.calledOnce).to.be.true;
 
             const args = showWarningStub.firstCall.args;
+
+            // Verify message
             expect(args[0]).to.include('already exists');
             expect(args[0]).to.include('merge');
 
-            // Verify options object with modal: true and detail
+            // Verify options object with detail
             expect(args[1]).to.be.an('object');
-            expect(args[1].modal).to.be.true;
             expect(args[1].detail).to.be.a('string');
 
             // Verify button objects (not strings)
@@ -110,12 +136,13 @@ describe('TagRenameProvider', () => {
             // Build tag index
             await tagService.buildTagIndex();
 
-            // Mock VS Code window API - user clicks Yes
-            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves({ title: 'Yes', isCloseAffordance: false } as any);
+            // Mock dialog helpers showModalWarning - user clicks Yes
+            const showWarningStub = sandbox.stub(dialogHelpers, 'showModalWarning').resolves({ title: 'Yes', isCloseAffordance: false } as any);
 
             // Create mock document and position
             const mockDocument = {
                 uri: vscode.Uri.file(notePath),
+                fileName: notePath,  // IMPORTANT: provideRenameEdits uses document.fileName
                 getText: sandbox.stub().returns('#bug'),
                 lineAt: sandbox.stub().returns({
                     text: 'Content with #bug and #defect tags',
@@ -148,12 +175,13 @@ describe('TagRenameProvider', () => {
             // Build tag index
             await tagService.buildTagIndex();
 
-            // Mock VS Code window API - user dismisses dialog
-            const showWarningStub = sandbox.stub(vscode.window, 'showWarningMessage').resolves(undefined);
+            // Mock dialog helpers showModalWarning - user dismisses dialog
+            const showWarningStub = sandbox.stub(dialogHelpers, 'showModalWarning').resolves(undefined);
 
             // Create mock document and position
             const mockDocument = {
                 uri: vscode.Uri.file(notePath),
+                fileName: notePath,  // IMPORTANT: provideRenameEdits uses document.fileName
                 getText: sandbox.stub().returns('#bug'),
                 lineAt: sandbox.stub().returns({
                     text: 'Content with #bug and #defect tags',
