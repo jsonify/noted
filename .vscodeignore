@@ -1,10 +1,8 @@
 .vscode/**
-.gitignore
-.versionrc.json
 tsconfig.json
 src/**
 !src/webview/**
-node_modules/**
+/node_modules/**
 *.vsix
 pnpm-lock.yaml
 .DS_Store
