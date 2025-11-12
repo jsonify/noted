@@ -1,5 +1,6 @@
 .vscode/**
 tsconfig.json
+esbuild.js
 src/**
 !src/webview/**
 /node_modules/**
@@ -30,5 +31,9 @@ export-format-example.md
 .gitignore
 .versionrc.json
 
-# Exclude source maps in production (optional - uncomment to reduce size further)
-# **/*.map
+# With esbuild bundling, we only need out/extension.js (and optionally .map)
+# Exclude all other compiled files if they exist from tsc
+out/**/*.js
+out/**/*.js.map
+!out/extension.js
+!out/extension.js.map
