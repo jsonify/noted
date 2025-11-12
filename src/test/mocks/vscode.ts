@@ -244,3 +244,35 @@ export class Hover {
     this.range = range;
   }
 }
+
+// WorkspaceEdit class for rename operations
+export class WorkspaceEdit {
+  private edits: Map<string, any[]> = new Map();
+
+  replace(uri: Uri, range: Range, newText: string): void {
+    if (!this.edits.has(uri.fsPath)) {
+      this.edits.set(uri.fsPath, []);
+    }
+    this.edits.get(uri.fsPath)!.push({ range, newText });
+  }
+
+  set(uri: Uri, edits: any[]): void {
+    this.edits.set(uri.fsPath, edits);
+  }
+
+  get(uri: Uri): any[] {
+    return this.edits.get(uri.fsPath) || [];
+  }
+
+  has(uri: Uri): boolean {
+    return this.edits.has(uri.fsPath);
+  }
+
+  entries(): [Uri, any[]][] {
+    const result: [Uri, any[]][] = [];
+    for (const [path, edits] of this.edits.entries()) {
+      result.push([Uri.file(path), edits]);
+    }
+    return result;
+  }
+}
