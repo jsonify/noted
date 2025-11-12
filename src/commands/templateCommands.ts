@@ -208,23 +208,29 @@ async function showTemplatePreview(template: Template): Promise<boolean> {
         viewColumn: vscode.ViewColumn.Beside
     });
 
-    // Show initial non-blocking notification
+    // Show non-blocking notification
     vscode.window.showInformationMessage(
-        `📄 Template preview opened on the right. Take your time to review it!`
+        `📄 Template preview opened on the right. Review it, then use the picker below to accept or decline.`
     );
 
-    // Wait a moment for user to start reading
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Now show the decision dialog as a modal (after they've seen the preview)
-    const result = await vscode.window.showInformationMessage(
-        `Ready to save "${template.name}"?`,
+    // Use QuickPick instead of modal - it's persistent but doesn't block the UI
+    const choice = await vscode.window.showQuickPick(
+        [
+            {
+                label: '$(check) Accept & Save Template',
+                description: 'Save this template to your collection',
+                action: 'accept'
+            },
+            {
+                label: '$(x) Decline',
+                description: 'Discard this template and start over',
+                action: 'decline'
+            }
+        ],
         {
-            modal: true,
-            detail: 'The template preview is open on the right. Review it, then choose:\n\n• "Accept & Save" to keep this template\n• "Cancel" to discard and start over'
-        },
-        'Accept & Save Template',
-        'Cancel'
+            placeHolder: `Review "${template.name}" in the preview panel, then choose an action`,
+            ignoreFocusOut: true // Keeps the picker open even if user clicks elsewhere
+        }
     );
 
     // Close the preview document without save prompt
@@ -239,7 +245,7 @@ async function showTemplatePreview(template: Template): Promise<boolean> {
         // Ignore errors - untitled documents don't need deletion
     }
 
-    return result === 'Accept & Save Template';
+    return choice?.action === 'accept';
 }
 
 /**
@@ -262,23 +268,29 @@ async function showTemplateEnhancementPreview(
         viewColumn: vscode.ViewColumn.Beside
     });
 
-    // Show initial non-blocking notification
+    // Show non-blocking notification
     vscode.window.showInformationMessage(
-        `📄 Enhancement preview opened on the right. Take your time to review the changes!`
+        `📄 Enhancement preview opened on the right. Review the changes, then use the picker below.`
     );
 
-    // Wait a moment for user to start reading
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Now show the decision dialog as a modal (after they've seen the preview)
-    const result = await vscode.window.showInformationMessage(
-        `Ready to save enhanced "${enhanced.name}"?`,
+    // Use QuickPick instead of modal - it's persistent but doesn't block the UI
+    const choice = await vscode.window.showQuickPick(
+        [
+            {
+                label: '$(check) Accept & Save Changes',
+                description: 'Apply the AI enhancements to your template',
+                action: 'accept'
+            },
+            {
+                label: '$(x) Keep Original',
+                description: 'Discard the enhancements and keep the original',
+                action: 'decline'
+            }
+        ],
         {
-            modal: true,
-            detail: 'The enhancement preview is open on the right. Review the changes, then choose:\n\n• "Accept & Save Changes" to keep the enhancements\n• "Cancel" to keep the original version'
-        },
-        'Accept & Save Changes',
-        'Cancel'
+            placeHolder: `Review enhancements to "${enhanced.name}" in the preview panel, then choose an action`,
+            ignoreFocusOut: true // Keeps the picker open even if user clicks elsewhere
+        }
     );
 
     // Close the preview document without save prompt
@@ -293,7 +305,7 @@ async function showTemplateEnhancementPreview(
         // Ignore errors - untitled documents don't need deletion
     }
 
-    return result === 'Accept & Save Changes';
+    return choice?.action === 'accept';
 }
 
 /**
