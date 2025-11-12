@@ -17,6 +17,7 @@ import { getAllFolders } from '../utils/folderHelpers';
 import { BUILT_IN_TEMPLATE_INFO, DEFAULTS } from '../constants';
 import { SearchResult } from '../services/searchService';
 import { SummarizationService } from '../services/summarizationService';
+import { showModalWarning, StandardButtons, StandardDetails } from '../utils/dialogHelpers';
 
 /**
  * Register a function to refresh the tree view
@@ -129,14 +130,11 @@ export async function handleOpenNote(filePath: string) {
 }
 
 export async function handleDeleteNote(item: NoteItem) {
-    const answer = await vscode.window.showWarningMessage(
+    const answer = await showModalWarning(
         `Delete ${item.label}?`,
-        {
-            modal: true,
-            detail: 'This action cannot be undone.'
-        },
-        { title: 'Delete', isCloseAffordance: false },
-        { title: 'Cancel', isCloseAffordance: true }
+        { detail: StandardDetails.CannotUndo },
+        StandardButtons.Delete,
+        StandardButtons.Cancel
     );
     if (answer?.title === 'Delete') {
         try {
@@ -336,14 +334,11 @@ export async function handleDeleteFolder(item: NoteItem) {
         return;
     }
 
-    const answer = await vscode.window.showWarningMessage(
+    const answer = await showModalWarning(
         `Delete folder "${item.label}" and all its contents?`,
-        {
-            modal: true,
-            detail: 'This action cannot be undone. All notes in this folder will be permanently deleted.'
-        },
-        { title: 'Delete', isCloseAffordance: false },
-        { title: 'Cancel', isCloseAffordance: true }
+        { detail: StandardDetails.DeleteFolderWarning },
+        StandardButtons.Delete,
+        StandardButtons.Cancel
     );
 
     if (answer?.title !== 'Delete') {

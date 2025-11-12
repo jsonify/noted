@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { TagService } from './tagService';
 import { TagEditService } from './tagEditService';
+import { showModalWarning, StandardButtons, StandardDetails } from '../utils/dialogHelpers';
 
 /**
  * Rename provider for tags
@@ -95,15 +96,12 @@ export class TagRenameProvider implements vscode.RenameProvider {
 
         if (normalizedExistingTags.includes(normalizedNewName.toLowerCase()) &&
             oldTag.toLowerCase() !== normalizedNewName.toLowerCase()) {
-            const response = await vscode.window.showWarningMessage(
+            const response = await showModalWarning(
                 `Tag "#${normalizedNewName}" already exists. ` +
                 'Renaming will merge these tags. Continue?',
-                {
-                    modal: true,
-                    detail: 'All instances of both tags will be merged into one.'
-                },
-                { title: 'Yes', isCloseAffordance: false },
-                { title: 'No', isCloseAffordance: true }
+                { detail: StandardDetails.TagMergeWarning },
+                StandardButtons.Yes,
+                StandardButtons.No
             );
 
             if (response?.title !== 'Yes') {

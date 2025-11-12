@@ -39,6 +39,7 @@ describe('DiagramService', () => {
 
     afterEach(() => {
         sandbox.restore();
+        cleanupMocks(); // Reset mock objects after restoring stubs
     });
 
     describe('showExtensionWarning', () => {

@@ -33,6 +33,7 @@ describe('bulkCommands', () => {
 
     afterEach(async () => {
         sandbox.restore();
+        cleanupMocks(); // Reset mock objects after restoring stubs
         // Clean up temporary directory
         await fs.rm(tempDir, { recursive: true, force: true });
     });
