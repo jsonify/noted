@@ -20,14 +20,22 @@ const esbuildProblemMatcherPlugin = {
 
   setup(build) {
     build.onStart(() => {
-      console.log('[watch] build started');
+      console.log('[build] build started');
     });
     build.onEnd(result => {
       result.errors.forEach(({ text, location }) => {
         console.error(`✘ [ERROR] ${text}`);
-        console.error(`    ${location.file}:${location.line}:${location.column}:`);
+        if (location) {
+          console.error(`    ${location.file}:${location.line}:${location.column}:`);
+        }
       });
-      console.log('[watch] build finished');
+      result.warnings.forEach(({ text, location }) => {
+        console.warn(`⚠ [WARNING] ${text}`);
+        if (location) {
+          console.warn(`    ${location.file}:${location.line}:${location.column}:`);
+        }
+      });
+      console.log('[build] build finished');
     });
   },
 };

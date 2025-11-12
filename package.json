@@ -1234,7 +1234,7 @@
     "watch": "node esbuild.js --watch",
     "pretest": "pnpm run compile:tests",
     "test": "node ./out/test/runTest.js",
-    "test:unit": "mocha --require out/test/setup.js out/test/unit/**/*.test.js",
+    "test:unit": "pnpm run compile:tests && mocha --require out/test/setup.js out/test/unit/**/*.test.js",
     "package": "vsce package --no-dependencies",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "release:patch": "standard-version --release-as patch && pnpm run package",
