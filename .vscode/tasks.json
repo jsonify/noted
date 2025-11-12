@@ -4,7 +4,14 @@
     {
       "type": "npm",
       "script": "watch",
-      "problemMatcher": "$tsc-watch",
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\[build\\] build started",
+          "endsPattern": "^\\[build\\] build finished"
+        }
+      },
       "isBackground": true,
       "presentation": {
         "reveal": "never"
@@ -17,7 +24,7 @@
     {
       "type": "npm",
       "script": "compile",
-      "problemMatcher": "$tsc",
+      "problemMatcher": [],
       "presentation": {
         "reveal": "never"
       },
