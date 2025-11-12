@@ -2,6 +2,7 @@
 tsconfig.json
 esbuild.js
 src/**
+!src/webview/**
 /node_modules/**
 *.vsix
 pnpm-lock.yaml
