@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.40.0](https://github.com/jsonify/noted/compare/v1.39.7...v1.40.0) (2025-11-12)
+
+
+### Features
+
+* add modal option to warning messages for delete, archive, and e… ([#81](https://github.com/jsonify/noted/issues/81)) ([d10d4da](https://github.com/jsonify/noted/commit/d10d4dae78a6881b55189ca30501fab72f89dbf2))
+
 ### [1.39.7](https://github.com/jsonify/noted/compare/v1.39.6...v1.39.7) (2025-11-11)
 
 ### [1.39.6](https://github.com/jsonify/noted/compare/v1.39.5...v1.39.6) (2025-11-11)
