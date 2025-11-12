@@ -208,30 +208,20 @@ async function showTemplatePreview(template: Template): Promise<boolean> {
         viewColumn: vscode.ViewColumn.Beside
     });
 
-    // Show non-blocking notification
-    vscode.window.showInformationMessage(
-        `📄 Template preview opened on the right. Review it, then use the picker below to accept or decline.`
-    );
+    // Show persistent bottom-right notification - keep re-prompting until user makes a choice
+    let result: string | undefined;
+    while (!result) {
+        result = await vscode.window.showInformationMessage(
+            `📄 Review "${template.name}" in the preview on the right, then choose:`,
+            'Accept & Save',
+            'Decline'
+        );
 
-    // Use QuickPick instead of modal - it's persistent but doesn't block the UI
-    const choice = await vscode.window.showQuickPick(
-        [
-            {
-                label: '$(check) Accept & Save Template',
-                description: 'Save this template to your collection',
-                action: 'accept'
-            },
-            {
-                label: '$(x) Decline',
-                description: 'Discard this template and start over',
-                action: 'decline'
-            }
-        ],
-        {
-            placeHolder: `Review "${template.name}" in the preview panel, then choose an action`,
-            ignoreFocusOut: true // Keeps the picker open even if user clicks elsewhere
+        // If dismissed (undefined), show it again after a short delay
+        if (!result) {
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
-    );
+    }
 
     // Close the preview document without save prompt
     const uri = editor.document.uri;
@@ -245,7 +235,7 @@ async function showTemplatePreview(template: Template): Promise<boolean> {
         // Ignore errors - untitled documents don't need deletion
     }
 
-    return choice?.action === 'accept';
+    return result === 'Accept & Save';
 }
 
 /**
@@ -268,30 +258,20 @@ async function showTemplateEnhancementPreview(
         viewColumn: vscode.ViewColumn.Beside
     });
 
-    // Show non-blocking notification
-    vscode.window.showInformationMessage(
-        `📄 Enhancement preview opened on the right. Review the changes, then use the picker below.`
-    );
+    // Show persistent bottom-right notification - keep re-prompting until user makes a choice
+    let result: string | undefined;
+    while (!result) {
+        result = await vscode.window.showInformationMessage(
+            `📄 Review enhancements to "${enhanced.name}" in the preview on the right, then choose:`,
+            'Accept & Save',
+            'Keep Original'
+        );
 
-    // Use QuickPick instead of modal - it's persistent but doesn't block the UI
-    const choice = await vscode.window.showQuickPick(
-        [
-            {
-                label: '$(check) Accept & Save Changes',
-                description: 'Apply the AI enhancements to your template',
-                action: 'accept'
-            },
-            {
-                label: '$(x) Keep Original',
-                description: 'Discard the enhancements and keep the original',
-                action: 'decline'
-            }
-        ],
-        {
-            placeHolder: `Review enhancements to "${enhanced.name}" in the preview panel, then choose an action`,
-            ignoreFocusOut: true // Keeps the picker open even if user clicks elsewhere
+        // If dismissed (undefined), show it again after a short delay
+        if (!result) {
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
-    );
+    }
 
     // Close the preview document without save prompt
     const uri = editor.document.uri;
@@ -305,7 +285,7 @@ async function showTemplateEnhancementPreview(
         // Ignore errors - untitled documents don't need deletion
     }
 
-    return choice?.action === 'accept';
+    return result === 'Accept & Save';
 }
 
 /**

@@ -1768,8 +1768,14 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // Phase 1: AI-Powered Template Creation Commands
-    let createTemplateWithAI = vscode.commands.registerCommand('noted.createTemplateWithAI', handleCreateTemplateWithAI);
-    let enhanceTemplate = vscode.commands.registerCommand('noted.enhanceTemplate', handleEnhanceTemplate);
+    let createTemplateWithAI = vscode.commands.registerCommand('noted.createTemplateWithAI', async () => {
+        await handleCreateTemplateWithAI();
+        templatesProvider.refresh(); // Refresh to show new template
+    });
+    let enhanceTemplate = vscode.commands.registerCommand('noted.enhanceTemplate', async () => {
+        await handleEnhanceTemplate();
+        templatesProvider.refresh(); // Refresh to show updated template
+    });
     let selectAIModel = vscode.commands.registerCommand('noted.selectAIModel', handleSelectAIModel);
 
     // Command to setup custom folder
