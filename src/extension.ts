@@ -967,6 +967,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         const answer = await vscode.window.showWarningMessage(
             `Delete ${item.label}?`,
+            { modal: true },
             'Delete',
             'Cancel'
         );
@@ -1009,6 +1010,7 @@ export function activate(context: vscode.ExtensionContext) {
         const fileName = path.basename(currentFilePath);
         const answer = await vscode.window.showWarningMessage(
             `Delete ${fileName}?`,
+            { modal: true },
             'Delete',
             'Cancel'
         );
@@ -1089,6 +1091,7 @@ export function activate(context: vscode.ExtensionContext) {
     let archiveNote = vscode.commands.registerCommand('noted.archiveNote', async (item: NoteItem) => {
         const answer = await vscode.window.showWarningMessage(
             `Archive ${item.label}?`,
+            { modal: true },
             'Archive',
             'Cancel'
         );
@@ -1145,6 +1148,7 @@ export function activate(context: vscode.ExtensionContext) {
         const days = parseInt(daysInput);
         const answer = await vscode.window.showWarningMessage(
             `Archive all notes older than ${days} days?`,
+            { modal: true },
             'Archive',
             'Cancel'
         );

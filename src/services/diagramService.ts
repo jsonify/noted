@@ -421,6 +421,7 @@ export class DiagramService {
 
         const selection = await vscode.window.showWarningMessage(
             `${extensionName} extension is not available. Install or enable it to edit ${type} diagrams.`,
+            { modal: true },
             'Install Extension',
             'Create Anyway',
             "Don't Ask Again",

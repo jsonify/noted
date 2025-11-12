@@ -131,6 +131,7 @@ export async function handleOpenNote(filePath: string) {
 export async function handleDeleteNote(item: NoteItem) {
     const answer = await vscode.window.showWarningMessage(
         `Delete ${item.label}?`,
+        { modal: true },
         'Delete',
         'Cancel'
     );
