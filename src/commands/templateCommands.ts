@@ -208,9 +208,21 @@ async function showTemplatePreview(template: Template): Promise<boolean> {
         viewColumn: vscode.ViewColumn.Beside
     });
 
-    // Show non-modal message so user can review the preview
+    // Show initial non-blocking notification
+    vscode.window.showInformationMessage(
+        `📄 Template preview opened on the right. Take your time to review it!`
+    );
+
+    // Wait a moment for user to start reading
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Now show the decision dialog as a modal (after they've seen the preview)
     const result = await vscode.window.showInformationMessage(
-        `📄 Review the template preview on the right, then choose an action:`,
+        `Ready to save "${template.name}"?`,
+        {
+            modal: true,
+            detail: 'The template preview is open on the right. Review it, then choose:\n\n• "Accept & Save" to keep this template\n• "Cancel" to discard and start over'
+        },
         'Accept & Save Template',
         'Cancel'
     );
@@ -250,9 +262,21 @@ async function showTemplateEnhancementPreview(
         viewColumn: vscode.ViewColumn.Beside
     });
 
-    // Show non-modal message so user can review the enhancements
+    // Show initial non-blocking notification
+    vscode.window.showInformationMessage(
+        `📄 Enhancement preview opened on the right. Take your time to review the changes!`
+    );
+
+    // Wait a moment for user to start reading
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Now show the decision dialog as a modal (after they've seen the preview)
     const result = await vscode.window.showInformationMessage(
-        `📄 Review the enhancements on the right, then choose an action:`,
+        `Ready to save enhanced "${enhanced.name}"?`,
+        {
+            modal: true,
+            detail: 'The enhancement preview is open on the right. Review the changes, then choose:\n\n• "Accept & Save Changes" to keep the enhancements\n• "Cancel" to keep the original version'
+        },
         'Accept & Save Changes',
         'Cancel'
     );
@@ -279,7 +303,7 @@ function generatePreviewText(template: Template): string {
     const lines = [
         `# 📄 Template Preview: ${template.name}`,
         '',
-        '> **Review this template preview, then click "Accept & Save Template" in the notification below.**',
+        '> **Scroll through this preview and review the template. When ready, click your choice in the dialog.**',
         '',
         '---',
         '',
@@ -314,13 +338,6 @@ function generatePreviewText(template: Template): string {
     lines.push('```markdown');
     lines.push(template.content);
     lines.push('```');
-    lines.push('');
-    lines.push('---');
-    lines.push('');
-    lines.push('💡 **Next Steps:**');
-    lines.push('- Click **"Accept & Save Template"** to save this template');
-    lines.push('- Click **"Cancel"** to discard and start over');
-    lines.push('- After saving, find it in the Templates panel under any category');
 
     return lines.join('\n');
 }
@@ -332,7 +349,7 @@ function generateComparisonText(original: Template, enhanced: Template): string 
     const lines = [
         `# ✨ Template Enhancement: ${enhanced.name}`,
         '',
-        '> **Review the AI improvements below, then click "Accept & Save Changes" in the notification.**',
+        '> **Scroll through this preview to see what changed. When ready, click your choice in the dialog.**',
         '',
         '---',
         '',
@@ -373,12 +390,6 @@ function generateComparisonText(original: Template, enhanced: Template): string 
     lines.push('```markdown');
     lines.push(enhanced.content);
     lines.push('```');
-    lines.push('');
-    lines.push('---');
-    lines.push('');
-    lines.push('💡 **Next Steps:**');
-    lines.push('- Click **"Accept & Save Changes"** to save the enhanced template');
-    lines.push('- Click **"Cancel"** to keep the original version');
 
     return lines.join('\n');
 }
