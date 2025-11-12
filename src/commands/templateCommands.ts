@@ -203,23 +203,31 @@ async function showTemplatePreview(template: Template): Promise<boolean> {
         language: 'markdown'
     });
 
-    await vscode.window.showTextDocument(doc, {
-        preview: true,
+    const editor = await vscode.window.showTextDocument(doc, {
+        preview: false, // Don't use preview mode to avoid save prompts
         viewColumn: vscode.ViewColumn.Beside
     });
 
-    // Ask user if they want to accept
+    // Show non-modal message so user can review the preview
     const result = await vscode.window.showInformationMessage(
-        `Template "${template.name}" preview is open. Accept this template?`,
-        { modal: true },
-        'Accept & Save',
+        `📄 Review the template preview on the right, then choose an action:`,
+        'Accept & Save Template',
         'Cancel'
     );
 
-    // Close the preview document
+    // Close the preview document without save prompt
+    const uri = editor.document.uri;
+    await vscode.window.showTextDocument(editor.document, { preview: true }); // Switch to preview mode
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
 
-    return result === 'Accept & Save';
+    // Delete from workspace if it's an untitled document
+    try {
+        await vscode.workspace.fs.delete(uri, { useTrash: false });
+    } catch {
+        // Ignore errors - untitled documents don't need deletion
+    }
+
+    return result === 'Accept & Save Template';
 }
 
 /**
@@ -237,23 +245,31 @@ async function showTemplateEnhancementPreview(
         language: 'markdown'
     });
 
-    await vscode.window.showTextDocument(doc, {
-        preview: true,
+    const editor = await vscode.window.showTextDocument(doc, {
+        preview: false, // Don't use preview mode to avoid save prompts
         viewColumn: vscode.ViewColumn.Beside
     });
 
-    // Ask user if they want to accept
+    // Show non-modal message so user can review the enhancements
     const result = await vscode.window.showInformationMessage(
-        `Template "${enhanced.name}" enhancements preview is open. Accept these changes?`,
-        { modal: true },
-        'Accept & Save',
+        `📄 Review the enhancements on the right, then choose an action:`,
+        'Accept & Save Changes',
         'Cancel'
     );
 
-    // Close the preview document
+    // Close the preview document without save prompt
+    const uri = editor.document.uri;
+    await vscode.window.showTextDocument(editor.document, { preview: true }); // Switch to preview mode
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
 
-    return result === 'Accept & Save';
+    // Delete from workspace if it's an untitled document
+    try {
+        await vscode.workspace.fs.delete(uri, { useTrash: false });
+    } catch {
+        // Ignore errors - untitled documents don't need deletion
+    }
+
+    return result === 'Accept & Save Changes';
 }
 
 /**
@@ -261,18 +277,24 @@ async function showTemplateEnhancementPreview(
  */
 function generatePreviewText(template: Template): string {
     const lines = [
-        `# Template Preview: ${template.name}`,
+        `# 📄 Template Preview: ${template.name}`,
+        '',
+        '> **Review this template preview, then click "Accept & Save Template" in the notification below.**',
+        '',
+        '---',
         '',
         `**Description:** ${template.description}`,
         `**Category:** ${template.category}`,
         `**Tags:** ${template.tags.join(', ') || 'none'}`,
         '',
-        '---',
-        '',
     ];
 
     if (template.variables.length > 0) {
+        lines.push('---');
+        lines.push('');
         lines.push('## Template Variables');
+        lines.push('');
+        lines.push('These placeholders will be filled in when you create a note:');
         lines.push('');
         for (const v of template.variables) {
             lines.push(`- **${v.name}** (${v.type})${v.required ? ' *required*' : ''}`);
@@ -280,14 +302,25 @@ function generatePreviewText(template: Template): string {
                 lines.push(`  - ${v.prompt}`);
             }
         }
-        lines.push('', '---', '');
+        lines.push('');
     }
 
+    lines.push('---');
+    lines.push('');
     lines.push('## Template Content');
+    lines.push('');
+    lines.push('This is what your notes will look like when using this template:');
     lines.push('');
     lines.push('```markdown');
     lines.push(template.content);
     lines.push('```');
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+    lines.push('💡 **Next Steps:**');
+    lines.push('- Click **"Accept & Save Template"** to save this template');
+    lines.push('- Click **"Cancel"** to discard and start over');
+    lines.push('- After saving, find it in the Templates panel under any category');
 
     return lines.join('\n');
 }
@@ -297,7 +330,11 @@ function generatePreviewText(template: Template): string {
  */
 function generateComparisonText(original: Template, enhanced: Template): string {
     const lines = [
-        `# Template Enhancement: ${enhanced.name}`,
+        `# ✨ Template Enhancement: ${enhanced.name}`,
+        '',
+        '> **Review the AI improvements below, then click "Accept & Save Changes" in the notification.**',
+        '',
+        '---',
         '',
         '## Changes Overview',
         ''
@@ -309,18 +346,21 @@ function generateComparisonText(original: Template, enhanced: Template): string 
     );
 
     if (newVariables.length > 0) {
-        lines.push('### New Variables Added:');
+        lines.push('### ✅ New Variables Added:');
         lines.push('');
         for (const v of newVariables) {
             lines.push(`- **${v.name}** (${v.type}): ${v.prompt || ''}`);
         }
+        lines.push('');
+    } else {
+        lines.push('_No new variables added_');
         lines.push('');
     }
 
     // Compare tags
     const newTags = enhanced.tags.filter(t => !original.tags.includes(t));
     if (newTags.length > 0) {
-        lines.push(`### New Tags: ${newTags.join(', ')}`);
+        lines.push(`### ✅ New Tags: ${newTags.join(', ')}`);
         lines.push('');
     }
 
@@ -328,9 +368,17 @@ function generateComparisonText(original: Template, enhanced: Template): string 
     lines.push('');
     lines.push('## Enhanced Template Content');
     lines.push('');
+    lines.push('This is what your enhanced template will contain:');
+    lines.push('');
     lines.push('```markdown');
     lines.push(enhanced.content);
     lines.push('```');
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+    lines.push('💡 **Next Steps:**');
+    lines.push('- Click **"Accept & Save Changes"** to save the enhanced template');
+    lines.push('- Click **"Cancel"** to keep the original version');
 
     return lines.join('\n');
 }
