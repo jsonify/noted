@@ -1259,14 +1259,10 @@
           "default": false,
           "description": "Show template browser instead of quick pick (Phase 4 feature)"
         },
-        "noted.templates.aiModel": {
+        "noted.templates.preferredModel": {
           "type": "string",
-          "default": "gpt-4o",
-          "enum": [
-            "gpt-4o",
-            "gpt-3.5-turbo"
-          ],
-          "description": "AI model to use for template generation"
+          "default": "",
+          "description": "Preferred AI model ID for template generation (empty = automatic selection). Use 'Noted: Select AI Model' command to choose from available models."
         },
         "noted.templates.defaultAuthor": {
           "type": "string",
