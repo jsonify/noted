@@ -19,6 +19,7 @@ import {
     trackBulkMove,
     trackBulkArchive
 } from '../services/undoHelpers';
+import { showModalWarning, showModalInfo, StandardButtons } from '../utils/dialogHelpers';
 
 /**
  * Toggle select mode on/off
@@ -108,14 +109,14 @@ export async function handleBulkDelete(
     const message = `Delete ${selectedNotes.length} note${selectedNotes.length > 1 ? 's' : ''}?`;
     const detail = `The following notes will be permanently deleted:\n\n${noteNames.slice(0, 10).join('\n')}${selectedNotes.length > 10 ? `\n...and ${selectedNotes.length - 10} more` : ''}`;
 
-    const choice = await vscode.window.showWarningMessage(
+    const choice = await showModalWarning(
         message,
-        { modal: true, detail },
-        'Delete',
-        'Cancel'
+        { detail },
+        StandardButtons.Delete,
+        StandardButtons.Cancel
     );
 
-    if (choice !== 'Delete') {
+    if (choice?.title !== 'Delete') {
         return;
     }
 
@@ -201,14 +202,14 @@ export async function handleBulkMove(
     const message = `Move ${selectedNotes.length} note${selectedNotes.length > 1 ? 's' : ''} to ${selected.label}?`;
     const detail = `Notes to move:\n\n${noteNames.slice(0, 10).join('\n')}${selectedNotes.length > 10 ? `\n...and ${selectedNotes.length - 10} more` : ''}`;
 
-    const choice = await vscode.window.showInformationMessage(
+    const choice = await showModalInfo(
         message,
-        { modal: true, detail },
-        'Move',
-        'Cancel'
+        { detail },
+        StandardButtons.Move,
+        StandardButtons.Cancel
     );
 
-    if (choice !== 'Move') {
+    if (choice?.title !== 'Move') {
         return;
     }
 
@@ -309,14 +310,14 @@ export async function handleBulkArchive(
     const message = `Archive ${selectedNotes.length} note${selectedNotes.length > 1 ? 's' : ''}?`;
     const detail = `The following notes will be moved to the archive:\n\n${noteNames.slice(0, 10).join('\n')}${selectedNotes.length > 10 ? `\n...and ${selectedNotes.length - 10} more` : ''}`;
 
-    const choice = await vscode.window.showInformationMessage(
+    const choice = await showModalInfo(
         message,
-        { modal: true, detail },
-        'Archive',
-        'Cancel'
+        { detail },
+        StandardButtons.Archive,
+        StandardButtons.Cancel
     );
 
-    if (choice !== 'Archive') {
+    if (choice?.title !== 'Archive') {
         return;
     }
 
@@ -376,14 +377,14 @@ export async function handleBulkMerge(
     const message = `Merge ${selectedNotes.length} notes?`;
     const detail = `The following notes will be merged:\n\n${noteNames.slice(0, 10).join('\n')}${selectedNotes.length > 10 ? `\n...and ${selectedNotes.length - 10} more` : ''}`;
 
-    const choice = await vscode.window.showWarningMessage(
+    const choice = await showModalWarning(
         message,
-        { modal: true, detail },
-        'Merge',
-        'Cancel'
+        { detail },
+        StandardButtons.Merge,
+        StandardButtons.Cancel
     );
 
-    if (choice !== 'Merge') {
+    if (choice?.title !== 'Merge') {
         return;
     }
 

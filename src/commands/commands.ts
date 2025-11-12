@@ -17,6 +17,7 @@ import { getAllFolders } from '../utils/folderHelpers';
 import { BUILT_IN_TEMPLATE_INFO, DEFAULTS } from '../constants';
 import { SearchResult } from '../services/searchService';
 import { SummarizationService } from '../services/summarizationService';
+import { showModalWarning, StandardButtons, StandardDetails } from '../utils/dialogHelpers';
 
 /**
  * Register a function to refresh the tree view
@@ -129,12 +130,13 @@ export async function handleOpenNote(filePath: string) {
 }
 
 export async function handleDeleteNote(item: NoteItem) {
-    const answer = await vscode.window.showWarningMessage(
+    const answer = await showModalWarning(
         `Delete ${item.label}?`,
-        'Delete',
-        'Cancel'
+        { detail: StandardDetails.CannotUndo },
+        StandardButtons.Delete,
+        StandardButtons.Cancel
     );
-    if (answer === 'Delete') {
+    if (answer?.title === 'Delete') {
         try {
             await deleteFile(item.filePath);
             refresh();
@@ -332,14 +334,14 @@ export async function handleDeleteFolder(item: NoteItem) {
         return;
     }
 
-    const answer = await vscode.window.showWarningMessage(
+    const answer = await showModalWarning(
         `Delete folder "${item.label}" and all its contents?`,
-        { modal: true },
-        'Delete',
-        'Cancel'
+        { detail: StandardDetails.DeleteFolderWarning },
+        StandardButtons.Delete,
+        StandardButtons.Cancel
     );
 
-    if (answer !== 'Delete') {
+    if (answer?.title !== 'Delete') {
         return;
     }
 

@@ -93,6 +93,7 @@ import {
 import { markdownItWikilinkEmbed, warmUpPathCache, clearPathResolutionCache } from './features/preview/wikilink-embed';
 import { showMarkdownPreview } from './preview/markdownPreview';
 import { FOLDER_PATTERNS, SPECIAL_FOLDERS, MONTH_NAMES } from './constants';
+import { showModalWarning, showModalInfo, StandardButtons, StandardDetails } from './utils/dialogHelpers';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Noted extension is now active');
@@ -960,12 +961,13 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }
 
-        const answer = await vscode.window.showWarningMessage(
+        const answer = await showModalWarning(
             `Delete ${item.label}?`,
-            'Delete',
-            'Cancel'
+            { detail: StandardDetails.CannotUndo },
+            StandardButtons.Delete,
+            StandardButtons.Cancel
         );
-        if (answer === 'Delete') {
+        if (answer?.title === 'Delete') {
             try {
                 // Track operation for undo BEFORE deleting
                 await trackDeleteNote(undoService, item.filePath);
@@ -1002,13 +1004,14 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         const fileName = path.basename(currentFilePath);
-        const answer = await vscode.window.showWarningMessage(
+        const answer = await showModalWarning(
             `Delete ${fileName}?`,
-            'Delete',
-            'Cancel'
+            { detail: StandardDetails.CannotUndo },
+            StandardButtons.Delete,
+            StandardButtons.Cancel
         );
 
-        if (answer === 'Delete') {
+        if (answer?.title === 'Delete') {
             try {
                 // Close the editor first
                 await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
@@ -1082,12 +1085,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command to archive note
     let archiveNote = vscode.commands.registerCommand('noted.archiveNote', async (item: NoteItem) => {
-        const answer = await vscode.window.showWarningMessage(
+        const answer = await showModalWarning(
             `Archive ${item.label}?`,
-            'Archive',
-            'Cancel'
+            { detail: StandardDetails.WillBeArchived },
+            StandardButtons.Archive,
+            StandardButtons.Cancel
         );
-        if (answer === 'Archive') {
+        if (answer?.title === 'Archive') {
             try {
                 const destinationPath = await archiveService.archiveNote(item.filePath);
 
@@ -1138,13 +1142,14 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         const days = parseInt(daysInput);
-        const answer = await vscode.window.showWarningMessage(
+        const answer = await showModalWarning(
             `Archive all notes older than ${days} days?`,
-            'Archive',
-            'Cancel'
+            { detail: StandardDetails.WillBeMovedToArchive },
+            StandardButtons.Archive,
+            StandardButtons.Cancel
         );
 
-        if (answer === 'Archive') {
+        if (answer?.title === 'Archive') {
             try {
                 const count = await archiveService.archiveOldNotes(days);
                 refreshAllProviders();

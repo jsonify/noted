@@ -1,5 +1,8 @@
 import { expect } from 'chai';
+import * as sinon from 'sinon';
+import * as vscode from 'vscode';
 import { generateTemplate, getCustomTemplates, getTemplatePreview, getTemplateVariables, getCustomTemplatePath } from '../../services/templateService';
+import { cleanupMocks } from '../setup';
 
 describe('Template Service', () => {
   describe('generateTemplate', () => {
@@ -262,9 +265,31 @@ Weekday: {weekday}, Month Name: {month_name}`;
 
     describe('getCustomTemplatePath', () => {
       it('should return null when templates path not configured', () => {
-        // In test environment without VS Code workspace configuration
-        const result = getCustomTemplatePath('test-template');
-        expect(result).to.be.null;
+        const sandbox = sinon.createSandbox();
+
+        try {
+          // Save and clear workspace folders (delete to avoid readonly error)
+          const originalWorkspaceFolders = vscode.workspace.workspaceFolders;
+          delete (vscode.workspace as any).workspaceFolders;
+          (vscode.workspace as any).workspaceFolders = undefined;
+
+          // Mock configuration to return relative path (not absolute)
+          const getStub = sandbox.stub().returns('Notes'); // Default relative path
+          const configStub = sandbox.stub(vscode.workspace, 'getConfiguration').returns({
+            get: getStub,
+            update: sandbox.stub().resolves()
+          } as any);
+
+          // In test environment without VS Code workspace configuration
+          const result = getCustomTemplatePath('test-template');
+          expect(result).to.be.null;
+
+          // Restore workspace folders
+          delete (vscode.workspace as any).workspaceFolders;
+          (vscode.workspace as any).workspaceFolders = originalWorkspaceFolders;
+        } finally {
+          sandbox.restore();
+        }
       });
     });
   });

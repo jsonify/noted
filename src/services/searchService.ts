@@ -125,7 +125,9 @@ export function parseSearchQuery(query: string): SearchOptions {
             options.dateFrom = dynamicDate;
         }
     } else if (fromStaticMatch) {
-        options.dateFrom = new Date(fromStaticMatch[1]);
+        // Parse date in local timezone to avoid UTC midnight issues
+        const [year, month, day] = fromStaticMatch[1].split('-').map(Number);
+        options.dateFrom = new Date(year, month - 1, day);
     }
 
     const toDynamicMatch = /to:(TODAY|YESTERDAY|THIS\s+WEEK|THIS\s+MONTH|THIS\s+YEAR|LAST\s+\d+\s+DAYS?)\b/i.exec(query);
@@ -137,7 +139,9 @@ export function parseSearchQuery(query: string): SearchOptions {
             options.dateTo = dynamicDate;
         }
     } else if (toStaticMatch) {
-        options.dateTo = new Date(toStaticMatch[1]);
+        // Parse date in local timezone to avoid UTC midnight issues
+        const [year, month, day] = toStaticMatch[1].split('-').map(Number);
+        options.dateTo = new Date(year, month - 1, day);
     }
 
     // Check for regex mode

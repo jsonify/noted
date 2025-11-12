@@ -39,6 +39,23 @@ export function cleanupMocks() {
     return;
   }
 
-  // Note: We don't try to clear require.cache for 'vscode'
-  // since it's not a real module that can be resolved
+  // Reset vscode.window methods to their original mock implementations
+  // This prevents "already stubbed" errors in tests
+  if (vscode.window) {
+    vscode.window.showInputBox = () => Promise.resolve('');
+    vscode.window.showQuickPick = () => Promise.resolve(undefined);
+    vscode.window.showInformationMessage = () => Promise.resolve(undefined);
+    vscode.window.showWarningMessage = () => Promise.resolve(undefined);
+    vscode.window.showErrorMessage = () => Promise.resolve(undefined);
+  }
+
+  // Reset vscode.commands
+  if (vscode.commands) {
+    vscode.commands.executeCommand = (command: string, ...args: any[]) => Promise.resolve();
+  }
+
+  // Reset vscode.extensions
+  if (vscode.extensions) {
+    vscode.extensions.getExtension = (extensionId: string) => undefined;
+  }
 }

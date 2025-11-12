@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { getNotesPath } from './configService';
+import { showModalWarning, ModalButton, StandardDetails } from '../utils/dialogHelpers';
 
 /**
  * Template for new Draw.io diagram files
@@ -419,20 +420,27 @@ export class DiagramService {
         const extensionName = type === 'drawio' ? 'Draw.io Integration' : 'Excalidraw';
         const extensionId = type === 'drawio' ? 'hediet.vscode-drawio' : 'pomdtr.excalidraw-editor';
 
-        const selection = await vscode.window.showWarningMessage(
+        // Define buttons for this specific dialog
+        const installBtn: ModalButton = { title: 'Install Extension', isCloseAffordance: false };
+        const createBtn: ModalButton = { title: 'Create Anyway', isCloseAffordance: false };
+        const dontAskBtn: ModalButton = { title: "Don't Ask Again", isCloseAffordance: false };
+        const dismissBtn: ModalButton = { title: 'Dismiss', isCloseAffordance: true };
+
+        const selection = await showModalWarning(
             `${extensionName} extension is not available. Install or enable it to edit ${type} diagrams.`,
-            'Install Extension',
-            'Create Anyway',
-            "Don't Ask Again",
-            'Dismiss'
+            { detail: StandardDetails.ExtensionRequired },
+            installBtn,
+            createBtn,
+            dontAskBtn,
+            dismissBtn
         );
 
-        if (selection === 'Install Extension') {
+        if (selection?.title === 'Install Extension') {
             await vscode.commands.executeCommand('workbench.extensions.installExtension', extensionId);
             return 'install';
-        } else if (selection === 'Create Anyway') {
+        } else if (selection?.title === 'Create Anyway') {
             return 'proceed';
-        } else if (selection === "Don't Ask Again") {
+        } else if (selection?.title === "Don't Ask Again") {
             this.setSuppressWarning(type, true);
             return 'proceed';
         }
