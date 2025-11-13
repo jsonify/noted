@@ -5,6 +5,7 @@ import { promises as fsp } from 'fs';
 import { showCalendarView } from './calendar/calendarView';
 import { showGraphView } from './graph/graphView';
 import { showActivityView } from './activity/activityView';
+import { showTemplateBrowser } from './templates/templateBrowserView';
 import { MarkdownToolbarService } from './services/markdownToolbarService';
 import { TagService } from './services/tagService';
 import { TagRenameProvider } from './services/tagRenameProvider';
@@ -1805,6 +1806,11 @@ export function activate(context: vscode.ExtensionContext) {
         templatesProvider.refresh(); // Refresh to show migrated templates
     });
 
+    // Phase 4: Template Browser UI
+    let showTemplateBrowserCmd = vscode.commands.registerCommand('noted.showTemplateBrowser', async () => {
+        await showTemplateBrowser(context);
+    });
+
     // Command to setup custom folder
     let setupCustomFolder = vscode.commands.registerCommand('noted.setupCustomFolder', async () => {
         try {
@@ -2089,7 +2095,7 @@ export function activate(context: vscode.ExtensionContext) {
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
         createTemplateWithAI, enhanceTemplate, selectAIModel,
         createBundle, createBundleFromTemplates, editBundle, deleteBundle,
-        migrateTemplates,
+        migrateTemplates, showTemplateBrowserCmd,
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph, showActivity,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive, bulkMerge,

@@ -1,5 +1,7 @@
 # Noted - Your Personal Knowledge Base in VS Code
 
+> **💖 Love Noted? Help us grow!** This extension is built and maintained by the community. If you find Noted useful, please [**rate and review it on the VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=jsonify.noted&ssr=false#review-details) — your feedback helps others discover Noted and motivates us to keep improving. Every star counts! ⭐
+
 ---
 [Repository](https://github.com/jsonify/noted)  |  [Issues](https://github.com/jsonify/noted/issues)  |  [Documentation](https://jsonify.github.io/noted/)
 
@@ -84,6 +86,10 @@ Identify orphaned notes (no incoming or outgoing links) and placeholder links (r
 ### AI-powered summarization with GitHub Copilot
 
 Generate intelligent summaries of your notes using GitHub Copilot. Summarize single notes instantly or batch process multiple notes by time period (week, month, custom range). Summaries extract key insights, action items, and keywords with smart caching for instant access. Use custom prompt templates for different contexts (meeting notes, technical reviews, brainstorm sessions) and track summary versions over time. Auto-tag notes based on AI-extracted keywords.
+
+### Browse templates visually
+
+Visual template browser with grid/list views, real-time search, and category filtering. See all your built-in and custom templates in one place with quick actions to create, edit, duplicate, export, or delete. Search by name, description, or tags to find the perfect template instantly. Track usage statistics and organize templates by category for efficient note creation.
 
 ### Create multi-note workflows with bundles
 

@@ -274,6 +274,11 @@
         "icon": "$(file-symlink-file)"
       },
       {
+        "command": "noted.showTemplateBrowser",
+        "title": "Noted: Show Template Browser",
+        "icon": "$(library)"
+      },
+      {
         "command": "noted.showConfig",
         "title": "Noted: Show Configuration (Debug)"
       },

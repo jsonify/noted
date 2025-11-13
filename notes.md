@@ -38,6 +38,19 @@ Templates support powerful variable substitution with 10 built-in placeholders:
 
 **Template Variables Reference**: View all available variables with descriptions via the command palette or Templates view.
 
+#### Template Browser (v1.44.0) ⭐ NEW
+- **Visual Template Browser**: Browse and manage all templates in a beautiful grid/list view interface
+- **Command**: `noted.showTemplateBrowser` - Opens comprehensive template management UI
+- **Features**:
+  - Grid and list view modes with instant switching
+  - Real-time search by name, description, or tags
+  - Filter by category (All, Built-in, Custom, etc.)
+  - Template statistics dashboard showing total, custom, and built-in counts
+  - Quick actions for each template: Create, Edit, Duplicate, Export, Delete
+  - Visual template cards with metadata (version, usage count, author)
+  - Category badges and tag display
+  - Works with both JSON templates and legacy .txt/.md templates
+
 ### Timestamps
 - **Insert Timestamp**: Insert `[HH:MM AM/PM]` at cursor position
 
