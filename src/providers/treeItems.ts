@@ -17,15 +17,16 @@ export class SectionItem extends TreeItem {
         super(label, vscode.TreeItemCollapsibleState.Collapsed);
 
         // Set appropriate icon based on section type
-        if (sectionType === 'recent') {
-            this.iconPath = new vscode.ThemeIcon('history');
-        } else if (sectionType === 'pinned') {
-            this.iconPath = new vscode.ThemeIcon('pin');
-        } else if (sectionType === 'archive') {
-            this.iconPath = new vscode.ThemeIcon('archive');
-        } else {
-            this.iconPath = new vscode.ThemeIcon('folder');
-        }
+        const iconMap: Record<string, string> = {
+            recent: 'history',
+            pinned: 'pin',
+            archive: 'archive',
+            standard: 'book',
+            custom: 'file-code',
+            manage: 'settings-gear',
+        };
+        const iconName = iconMap[this.sectionType] || 'folder';
+        this.iconPath = new vscode.ThemeIcon(iconName);
     }
 }
 
