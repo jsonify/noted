@@ -47,7 +47,37 @@ NEXT STEPS:
 
 
 `,
-    'quick': () => ``
+    'quick': () => ``,
+    'user-story': () => `# User Story: {filename}
+
+**Created:** {date} | **Author:** {user}
+
+## Story Title
+[Brief title for the user story]
+
+## Description
+As a [user type],
+I want [goal],
+So that [benefit].
+
+### Tasks
+- [ ] Task 1
+- [ ] Task 2
+- [ ] Task 3
+
+## Acceptance Criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+- [ ] Criterion 3
+
+## Estimate
+**Time to Complete:** [X hours/days]
+
+## Notes
+[Additional context, dependencies, or references]
+
+---
+`
 };
 
 /**
@@ -57,6 +87,7 @@ export const BUILT_IN_TEMPLATE_INFO = [
     { label: 'Problem/Solution', value: 'problem-solution', description: 'Document bugs and troubleshooting' },
     { label: 'Meeting', value: 'meeting', description: 'Organize meeting notes and action items' },
     { label: 'Research', value: 'research', description: 'Structure your research and findings' },
+    { label: 'User Story', value: 'user-story', description: 'Agile user stories with tasks, criteria, and estimates' },
     { label: 'Quick', value: 'quick', description: 'Simple dated note' }
 ];
 
@@ -131,7 +162,9 @@ export const TEMPLATE_CATEGORY_KEYWORDS: Record<string, string> = {
     'project': 'Projects',
     'video': 'Content Creation',
     'tutorial': 'Content Creation',
-    'research': 'Research'
+    'research': 'Research',
+    'user-story': 'User Stories',
+    'story': 'User Stories'
 };
 
 /**
@@ -205,6 +238,12 @@ export const DEFAULT_CATEGORIES: Record<string, CategoryConfig> = {
         icon: '📋',
         templates: ['problem-solution'],
         description: 'Project notes and problem-solving'
+    },
+    'User Stories': {
+        folder: 'User Stories',
+        icon: '📝',
+        templates: ['user-story'],
+        description: 'Agile user stories with acceptance criteria'
     },
     'Quick': {
         folder: 'Quick',
