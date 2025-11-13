@@ -558,10 +558,18 @@ export function activate(context: vscode.ExtensionContext) {
                 { label: 'Problem/Solution', value: 'problem-solution', description: 'Document bugs and troubleshooting' },
                 { label: 'Meeting', value: 'meeting', description: 'Organize meeting notes and action items' },
                 { label: 'Research', value: 'research', description: 'Structure your research and findings' },
+                { label: 'User Story', value: 'user-story', description: 'Agile user stories with tasks, criteria, and estimates' },
                 { label: 'Quick', value: 'quick', description: 'Simple dated note' }
             ];
 
             const items = [
+                // AI-enhanced option at the top
+                {
+                    label: '$(sparkle) User Story with AI',
+                    description: 'AI-powered user story from brief description',
+                    detail: 'AI-Enhanced',
+                    value: '__ai_user_story__'
+                },
                 ...builtInTemplates.map(t => ({
                     label: t.label,
                     description: t.description,
@@ -581,6 +589,13 @@ export function activate(context: vscode.ExtensionContext) {
             });
 
             if (!selected) {
+                return;
+            }
+
+            // Handle AI user story option
+            if (selected.value === '__ai_user_story__') {
+                await handleCreateUserStoryWithAI();
+                refreshAllProviders();
                 return;
             }
 

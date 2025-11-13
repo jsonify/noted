@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { templateGenerator } from '../templates/TemplateGenerator';
 import { Template } from '../templates/TemplateTypes';
-import { getTemplatesPath, getFileFormat } from '../services/configService';
+import { getTemplatesPath, getFileFormat, getNotesPath } from '../services/configService';
 import { writeFile, readFile, pathExists, createDirectory } from '../services/fileSystemService';
 import { getCustomTemplates } from '../services/templateService';
 import { BUILT_IN_PLACEHOLDER_NAMES, TEMPLATE_CATEGORY_KEYWORDS } from '../constants';
@@ -920,14 +920,12 @@ function parseUserStoryResponse(response: string, fallbackDescription: string): 
  * Create a note file with the populated user story content
  */
 async function createUserStoryNote(userStory: UserStory): Promise<void> {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
-        throw new Error('No workspace folder open');
+    const notesPath = getNotesPath();
+    if (!notesPath) {
+        throw new Error('Notes folder is not configured. Please set up your notes folder first.');
     }
 
-    const config = vscode.workspace.getConfiguration('noted');
-    const notesFolder = config.get<string>('notesFolder', 'Notes');
-    const fileFormat = config.get<string>('fileFormat', 'md');
+    const fileFormat = getFileFormat();
 
     // Sanitize title for filename
     const sanitizedTitle = userStory.title
@@ -936,7 +934,7 @@ async function createUserStoryNote(userStory: UserStory): Promise<void> {
         .replace(/[^a-z0-9-_]/g, '');
 
     // Create the file path in the "User Stories" folder
-    const userStoriesFolder = path.join(workspaceFolders[0].uri.fsPath, notesFolder, 'User Stories');
+    const userStoriesFolder = path.join(notesPath, 'User Stories');
     await createDirectory(userStoriesFolder);
 
     const fileName = `${sanitizedTitle}.${fileFormat}`;
