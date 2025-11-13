@@ -10,7 +10,11 @@ import { BulkOperationsService } from '../services/bulkOperationsService';
 
 /**
  * Tree data provider for templates view
- * Shows 3 organized folders: Standard (built-in), Custom (user/AI created), and Manage (settings)
+ * Features:
+ * - Template Browser: Primary interface for browsing, searching, and managing templates
+ * - Standard Templates: Built-in templates (Problem/Solution, Meeting, Research, Quick Note)
+ * - Custom Templates: User/AI-created templates
+ * - Manage: AI features and utilities (CRUD operations moved to Template Browser)
  */
 export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
@@ -46,16 +50,26 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
 
     async getChildren(element?: TreeItem): Promise<TreeItem[]> {
         if (!element) {
-            // Root level - show primary action, 3 template folders, and recent notes
+            // Root level - show primary actions, 3 template folders, and recent notes
             const items: TreeItem[] = [];
 
-            // Primary action button at top
+            // Template Browser - primary interface for browsing and managing templates
+            items.push(
+                new ActionButtonItem(
+                    '📖 Template Browser',
+                    'noted.showTemplateBrowser',
+                    'library',
+                    'Browse, search, and manage all templates with advanced features'
+                )
+            );
+
+            // Quick create action
             items.push(
                 new ActionButtonItem(
                     '+ New Note...',
                     'noted.openWithTemplate',
                     'add',
-                    'Create a new note from template picker'
+                    'Quick create a new note from template picker'
                 )
             );
 
@@ -136,6 +150,7 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
 
     /**
      * Get management action items
+     * Note: CRUD operations (Create/Edit/Delete/Duplicate) are available in Template Browser
      */
     private async getManagementActions(): Promise<TreeItem[]> {
         return [
@@ -152,46 +167,22 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                 'Improve an existing template with AI suggestions'
             ),
             new ActionButtonItem(
-                '⚙️  Select AI Model',
+                '⚙️ Select AI Model',
                 'noted.selectAIModel',
                 'settings-gear',
                 'Choose which AI model to use for template generation'
             ),
             new ActionButtonItem(
-                'Create Template',
-                'noted.createCustomTemplate',
-                'add',
-                'Create a new custom template'
-            ),
-            new ActionButtonItem(
-                'Edit Template',
-                'noted.editCustomTemplate',
-                'edit',
-                'Edit an existing template'
-            ),
-            new ActionButtonItem(
-                'Delete Template',
-                'noted.deleteCustomTemplate',
-                'trash',
-                'Delete a custom template'
-            ),
-            new ActionButtonItem(
-                'Duplicate Template',
-                'noted.duplicateCustomTemplate',
-                'copy',
-                'Duplicate an existing template'
-            ),
-            new ActionButtonItem(
                 'Template Variables',
                 'noted.previewTemplateVariables',
-                'question',
-                'View available template variables'
+                'symbol-variable',
+                'View all available template variables and their usage'
             ),
             new ActionButtonItem(
                 'Open Templates Folder',
                 'noted.openTemplatesFolder',
                 'folder-opened',
-                'Open the templates folder in system explorer'
+                'Open the templates folder in system file explorer'
             )
         ];
     }
