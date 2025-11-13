@@ -249,6 +249,11 @@
         "icon": "$(settings-gear)"
       },
       {
+        "command": "noted.createUserStoryWithAI",
+        "title": "Noted: Create User Story with AI",
+        "icon": "$(notebook)"
+      },
+      {
         "command": "noted.createBundle",
         "title": "Noted: Create Notes from Bundle",
         "icon": "$(package)"

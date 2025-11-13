@@ -80,7 +80,8 @@ import {
     handleCreateTemplateWithAI,
     handleEnhanceTemplate,
     handleSelectAIModel,
-    handleMigrateTemplates
+    handleMigrateTemplates,
+    handleCreateUserStoryWithAI
 } from './commands/templateCommands';
 import {
     handleCreateBundle,
@@ -1806,6 +1807,12 @@ export function activate(context: vscode.ExtensionContext) {
         templatesProvider.refresh(); // Refresh to show migrated templates
     });
 
+    // AI-Enhanced User Story Creation
+    let createUserStoryWithAI = vscode.commands.registerCommand('noted.createUserStoryWithAI', async () => {
+        await handleCreateUserStoryWithAI();
+        notesProvider.refresh(); // Refresh to show new user story
+    });
+
     // Phase 4: Template Browser UI
     let showTemplateBrowserCmd = vscode.commands.registerCommand('noted.showTemplateBrowser', async () => {
         await showTemplateBrowser(context, templatesProvider);
@@ -2095,7 +2102,7 @@ export function activate(context: vscode.ExtensionContext) {
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
         createTemplateWithAI, enhanceTemplate, selectAIModel,
         createBundle, createBundleFromTemplates, editBundle, deleteBundle,
-        migrateTemplates, showTemplateBrowserCmd,
+        migrateTemplates, createUserStoryWithAI, showTemplateBrowserCmd,
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph, showActivity,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive, bulkMerge,

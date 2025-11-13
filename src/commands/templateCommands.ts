@@ -740,3 +740,304 @@ export function extractVariablesFromContent(content: string): Template['variable
 
     return variables;
 }
+
+/**
+ * Command: Create a user story with AI-populated content
+ * Specifically designed for the user-story template
+ */
+export async function handleCreateUserStoryWithAI(): Promise<void> {
+    try {
+        // Prompt user for a brief description of the user story
+        const description = await vscode.window.showInputBox({
+            prompt: 'Brief description of the user story',
+            placeHolder: 'e.g., "Allow users to reset their password via email link"',
+            validateInput: (value) => {
+                if (!value || value.trim().length < 5) {
+                    return 'Please provide a brief description (at least 5 characters)';
+                }
+                return null;
+            }
+        });
+
+        if (!description) {
+            return;
+        }
+
+        // Show progress indicator
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Generating user story with AI...',
+            cancellable: false
+        }, async (progress) => {
+            progress.report({ increment: 0, message: 'Analyzing description...' });
+
+            // Build a specialized prompt for user story generation
+            const userStoryPrompt = buildUserStoryPrompt(description);
+
+            // Select the appropriate language model
+            const model = await selectAIModel();
+
+            // Create messages for the LLM
+            const messages = [
+                vscode.LanguageModelChatMessage.User(userStoryPrompt)
+            ];
+
+            // Send request with cancellation support
+            const cancellationToken = new vscode.CancellationTokenSource().token;
+            const response = await model.sendRequest(messages, {}, cancellationToken);
+
+            progress.report({ increment: 50, message: 'Populating user story...' });
+
+            // Collect the full response
+            let fullResponse = '';
+            for await (const fragment of response.text) {
+                fullResponse += fragment;
+            }
+
+            // Parse the AI response
+            const userStory = parseUserStoryResponse(fullResponse, description);
+
+            progress.report({ increment: 75, message: 'Creating note...' });
+
+            // Create the note with the populated content
+            await createUserStoryNote(userStory);
+
+            progress.report({ increment: 100, message: 'Done!' });
+
+            vscode.window.showInformationMessage(
+                `✅ User story "${userStory.title}" created successfully!`
+            );
+        });
+    } catch (error) {
+        if (error instanceof Error) {
+            vscode.window.showErrorMessage(`Failed to create user story: ${error.message}`);
+        } else {
+            vscode.window.showErrorMessage('Failed to create user story: Unknown error');
+        }
+    }
+}
+
+/**
+ * Build a specialized prompt for user story generation
+ */
+function buildUserStoryPrompt(description: string): string {
+    return `You are a user story generation assistant for agile software development.
+
+User wants to create a user story for: "${description}"
+
+Generate a complete user story with:
+1. A concise story title
+2. User story description in the format "As a [user type], I want [goal], So that [benefit]"
+3. A list of 3-5 specific, actionable tasks needed to complete this story
+4. A list of 3-5 acceptance criteria that define when the story is complete
+5. A realistic time estimate (in hours or days)
+
+Output format (JSON):
+{
+  "title": "Brief title for the user story",
+  "user_type": "type of user (e.g., customer, admin, developer)",
+  "goal": "what the user wants to achieve",
+  "benefit": "why this is valuable",
+  "tasks": [
+    "Task 1 - specific implementation step",
+    "Task 2 - specific implementation step",
+    "Task 3 - specific implementation step"
+  ],
+  "acceptance_criteria": [
+    "Criterion 1 - specific, testable outcome",
+    "Criterion 2 - specific, testable outcome",
+    "Criterion 3 - specific, testable outcome"
+  ],
+  "time_estimate": "X hours" or "X days"
+}
+
+RULES:
+- Make the user_type, goal, and benefit specific to the context
+- Tasks should be actionable development steps
+- Acceptance criteria should be specific and testable
+- Time estimates should be realistic for the complexity described
+- All fields are required
+
+Return ONLY valid JSON, no other text.`;
+}
+
+/**
+ * Parse the AI response into a structured user story object
+ */
+interface UserStory {
+    title: string;
+    user_type: string;
+    goal: string;
+    benefit: string;
+    tasks: string[];
+    acceptance_criteria: string[];
+    time_estimate: string;
+}
+
+function parseUserStoryResponse(response: string, fallbackDescription: string): UserStory {
+    try {
+        // Remove markdown code blocks if present
+        const cleaned = response
+            .replace(/```json\n?/gi, '')
+            .replace(/```\n?/g, '')
+            .trim();
+
+        // Parse JSON
+        const parsed = JSON.parse(cleaned);
+
+        // Validate required fields
+        if (!parsed.title || !parsed.user_type || !parsed.goal || !parsed.benefit) {
+            throw new Error('Response missing required fields');
+        }
+
+        return {
+            title: parsed.title,
+            user_type: parsed.user_type,
+            goal: parsed.goal,
+            benefit: parsed.benefit,
+            tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
+            acceptance_criteria: Array.isArray(parsed.acceptance_criteria) ? parsed.acceptance_criteria : [],
+            time_estimate: parsed.time_estimate || 'TBD'
+        };
+    } catch (error) {
+        console.error('Failed to parse user story response:', error);
+        console.error('Response was:', response);
+
+        // Fallback to basic structure
+        return {
+            title: fallbackDescription,
+            user_type: 'user',
+            goal: fallbackDescription,
+            benefit: 'improve the system',
+            tasks: ['Implement the feature', 'Write tests', 'Deploy to production'],
+            acceptance_criteria: ['Feature works as expected', 'Tests pass', 'No regressions'],
+            time_estimate: 'TBD'
+        };
+    }
+}
+
+/**
+ * Create a note file with the populated user story content
+ */
+async function createUserStoryNote(userStory: UserStory): Promise<void> {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+        throw new Error('No workspace folder open');
+    }
+
+    const config = vscode.workspace.getConfiguration('noted');
+    const notesFolder = config.get<string>('notesFolder', 'Notes');
+    const fileFormat = config.get<string>('fileFormat', 'md');
+
+    // Sanitize title for filename
+    const sanitizedTitle = userStory.title
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-_]/g, '');
+
+    // Create the file path in the "User Stories" folder
+    const userStoriesFolder = path.join(workspaceFolders[0].uri.fsPath, notesFolder, 'User Stories');
+    await createDirectory(userStoriesFolder);
+
+    const fileName = `${sanitizedTitle}.${fileFormat}`;
+    const filePath = path.join(userStoriesFolder, fileName);
+
+    // Build the note content
+    const date = new Date();
+    const dateStr = date.toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    const user = require('os').userInfo().username;
+
+    // Format tasks as checklist
+    const tasksList = userStory.tasks.map(task => `- [ ] ${task}`).join('\n');
+
+    // Format acceptance criteria as checklist
+    const acceptanceCriteriaList = userStory.acceptance_criteria.map(criterion => `- [ ] ${criterion}`).join('\n');
+
+    const content = `---
+tags: [user-story]
+created: ${date.toISOString()}
+status: draft
+---
+
+# User Story: ${userStory.title}
+
+**Created:** ${dateStr} | **Author:** ${user}
+
+## Story Title
+${userStory.title}
+
+## Description
+As a ${userStory.user_type},
+I want ${userStory.goal},
+So that ${userStory.benefit}.
+
+### Tasks
+${tasksList}
+
+## Acceptance Criteria
+${acceptanceCriteriaList}
+
+## Estimate
+**Time to Complete:** ${userStory.time_estimate}
+
+## Notes
+[Additional context, dependencies, or references]
+
+---
+`;
+
+    // Write the file
+    await writeFile(filePath, content);
+
+    // Open the file
+    const doc = await vscode.workspace.openTextDocument(filePath);
+    await vscode.window.showTextDocument(doc);
+}
+
+/**
+ * Select the appropriate AI model based on user preference and availability
+ * (Re-using the same pattern as TemplateGenerator)
+ */
+async function selectAIModel(): Promise<vscode.LanguageModelChat> {
+    const config = vscode.workspace.getConfiguration('noted');
+    const preferredModelId = config.get<string>('templates.preferredModel');
+
+    // Get all available models
+    const allModels = await vscode.lm.selectChatModels({});
+
+    if (allModels.length === 0) {
+        throw new Error('No AI models available. Please install GitHub Copilot, Claude, or another LLM extension.');
+    }
+
+    // Try to use preferred model if set
+    if (preferredModelId) {
+        const preferred = allModels.find(m => m.id === preferredModelId);
+        if (preferred) {
+            return preferred;
+        }
+    }
+
+    // Automatic selection with smart fallback
+    const claude = allModels.find(m => m.vendor === 'copilot' && m.family.includes('claude'));
+    if (claude) {
+        return claude;
+    }
+
+    const anthropic = allModels.find(m => m.vendor === 'anthropic');
+    if (anthropic) {
+        return anthropic;
+    }
+
+    const gpt = allModels.find(m => m.vendor === 'copilot' && m.family.includes('gpt'));
+    if (gpt) {
+        return gpt;
+    }
+
+    // Return first available model
+    return allModels[0];
+}
