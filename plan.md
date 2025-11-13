@@ -118,6 +118,108 @@ src/
 
 ---
 
+## 🎯 AI-Powered Template System
+
+**Status**: ✅ Phase 2 Complete (v1.42.0)
+
+Enhanced template system with AI-powered generation and multi-note workflow bundles for complex note-taking scenarios.
+
+### Phase 1: AI-Powered Template Creation ✅ (v1.41.0)
+- [x] **AI Template Generation** (v1.41.0)
+  - Command: `noted.createTemplateWithAI` - Natural language template creation
+  - Uses GitHub Copilot (gpt-4o) via VS Code LLM API
+  - Preview webview with edit capability before saving
+  - JSON template format with rich metadata
+  - Automatic variable extraction from descriptions
+
+- [x] **Template Enhancement** (v1.41.0)
+  - Command: `noted.enhanceTemplate` - AI-powered template improvements
+  - Analyzes existing templates and suggests enhancements
+  - Preview changes before applying
+
+- [x] **AI Model Selection** (v1.41.0)
+  - Command: `noted.selectAIModel` - Choose preferred AI model
+  - Configuration: `noted.templates.preferredModel`
+  - Automatic model selection from available Copilot models
+
+### Phase 2: Multi-Note Workflow Bundles ✅ (v1.42.0)
+- [x] **Bundle Creation** (v1.42.0)
+  - Command: `noted.createBundle` - Create notes from workflow bundles
+  - Command: `noted.createBundleFromTemplates` - Build bundles from templates
+  - Command: `noted.editBundle` - Edit existing bundles
+  - Command: `noted.deleteBundle` - Remove bundles
+  - Multi-step variable collection UI
+  - Automatic folder creation and organization
+
+- [x] **Bundle Features** (v1.42.0)
+  - Support for 5 variable types: string, number, enum, date, boolean
+  - Variable replacement in note names, folders, and content
+  - Automatic wiki-links between related notes
+  - Post-creation actions: auto-open notes, custom messages
+  - BundleService for centralized bundle management
+  - Automatic variable extraction from templates (from `.json` templates)
+
+- [x] **Example Bundles** (v1.42.0)
+  - `video-tutorial.bundle.json` - Script + guide + resources
+  - `project-planning.bundle.json` - Overview + tasks + meetings + resources
+  - Stored in `.noted-templates/bundles/` directory
+
+- [x] **Configuration** (v1.42.0)
+  - `noted.templates.enableBundles` (default: true)
+  - `noted.templates.useAI` (default: true)
+  - `noted.templates.defaultCategory` (default: "General")
+
+### Phase 3: Enhanced Template Metadata 🔜 (v1.43.0)
+- [ ] **JSON Template Migration**
+  - Migrate legacy `.txt`/`.md` templates to structured JSON format
+  - Command: `noted.migrateTemplates` - Automatic migration
+  - Backward compatibility with existing templates
+  - Enhanced metadata: version, author, usage count
+
+- [ ] **Advanced Variable Types**
+  - Complex variable validation
+  - Conditional variables (show only if another variable has specific value)
+  - Variable dependencies and cascading
+
+- [ ] **Template Categories and Tags**
+  - Organize templates by category
+  - Tag-based template search
+  - Template usage analytics
+
+### Phase 4: Template Browser UI 🔜 (v1.44.0)
+- [ ] **Visual Template Browser**
+  - Command: `noted.showTemplateBrowser` - Grid/list view of templates
+  - Filter by category, tags, author
+  - Fuzzy search by name, description, content
+  - Hover previews and usage statistics
+
+- [ ] **Template Management**
+  - Template ratings and favorites
+  - Template export/import for sharing
+  - Template versioning
+  - Most-used templates tracking
+
+### Implementation Architecture
+```
+src/
+├── templates/
+│   ├── TemplateTypes.ts          # Interfaces for Template, TemplateBundle
+│   ├── TemplateGenerator.ts      # AI-powered generation (Phase 1)
+│   └── BundleService.ts          # Multi-note bundles (Phase 2)
+├── commands/
+│   ├── templateCommands.ts       # AI template commands (Phase 1)
+│   └── bundleCommands.ts         # Bundle commands (Phase 2)
+└── extension.ts                   # Command registration
+```
+
+### Success Metrics
+- ✅ Phase 1: AI template generation working with Copilot integration
+- ✅ Phase 2: Bundle system creating multi-note workflows with links
+- 🔜 Phase 3: JSON migration complete, all templates use new format
+- 🔜 Phase 4: Template browser launched, user adoption tracked
+
+---
+
 ## Planned Features & Ideas
 
 ### Enhanced Link Features (inspired by Markdown Memo)

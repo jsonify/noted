@@ -249,6 +249,26 @@
         "icon": "$(settings-gear)"
       },
       {
+        "command": "noted.createBundle",
+        "title": "Noted: Create Notes from Bundle",
+        "icon": "$(package)"
+      },
+      {
+        "command": "noted.createBundleFromTemplates",
+        "title": "Noted: Create Bundle from Templates",
+        "icon": "$(package)"
+      },
+      {
+        "command": "noted.editBundle",
+        "title": "Noted: Edit Bundle",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "noted.deleteBundle",
+        "title": "Noted: Delete Bundle",
+        "icon": "$(trash)"
+      },
+      {
         "command": "noted.showConfig",
         "title": "Noted: Show Configuration (Debug)"
       },

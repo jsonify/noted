@@ -89,6 +89,18 @@ Built-in templates for meetings, research, and problem-solving. Create custom te
 
 [Learn more →](/noted/posts/templates/)
 
+## 🎁 Multi-Note Workflow Bundles ⭐ NEW
+
+Create multiple related notes at once with automatic wiki-links. Perfect for recurring workflows like video tutorials, project planning, or research papers.
+
+- **Built-in Bundles**: Video tutorials, project planning workflows
+- **Variable Prompting**: Get prompted for project name, dates, priorities
+- **Auto-Linking**: Notes automatically link to each other
+- **Custom Bundles**: Build your own multi-note workflows
+- **5 Variable Types**: String, number, date, enum, boolean
+
+[Learn more →](/noted/posts/bundles/) | [Complete Guide →](/noted/bundles.html)
+
 ## ✨ Smart Search - AI-Powered Semantic Search
 
 Search your notes using natural language questions. AI understands meaning, not just keywords.

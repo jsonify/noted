@@ -81,6 +81,12 @@ import {
     handleSelectAIModel
 } from './commands/templateCommands';
 import {
+    handleCreateBundle,
+    handleCreateBundleFromTemplates,
+    handleEditBundle,
+    handleDeleteBundle
+} from './commands/bundleCommands';
+import {
     handleCreatePromptTemplate,
     handleEditPromptTemplate,
     handleDeletePromptTemplate,
@@ -1778,6 +1784,20 @@ export function activate(context: vscode.ExtensionContext) {
     });
     let selectAIModel = vscode.commands.registerCommand('noted.selectAIModel', handleSelectAIModel);
 
+    // Phase 2: Multi-Note Workflow Bundles Commands
+    let createBundle = vscode.commands.registerCommand('noted.createBundle', async () => {
+        await handleCreateBundle();
+    });
+    let createBundleFromTemplates = vscode.commands.registerCommand('noted.createBundleFromTemplates', async () => {
+        await handleCreateBundleFromTemplates();
+    });
+    let editBundle = vscode.commands.registerCommand('noted.editBundle', async () => {
+        await handleEditBundle();
+    });
+    let deleteBundle = vscode.commands.registerCommand('noted.deleteBundle', async () => {
+        await handleDeleteBundle();
+    });
+
     // Command to setup custom folder
     let setupCustomFolder = vscode.commands.registerCommand('noted.setupCustomFolder', async () => {
         try {
@@ -2061,6 +2081,7 @@ export function activate(context: vscode.ExtensionContext) {
         createCustomTemplate, editCustomTemplateCmd, deleteCustomTemplateCmd,
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
         createTemplateWithAI, enhanceTemplate, selectAIModel,
+        createBundle, createBundleFromTemplates, editBundle, deleteBundle,
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph, showActivity,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive, bulkMerge,
