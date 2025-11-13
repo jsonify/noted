@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as crypto from 'crypto';
-import { Template, TemplateVariable, AIGenerationConfig } from './TemplateMetadata';
+import * as os from 'os';
+import { Template, TemplateVariable, AIGenerationConfig } from './TemplateTypes';
 
 /**
  * Cache entry for template generation results
@@ -503,6 +504,12 @@ Return ONLY valid JSON, no other text.`;
         }
 
         const [major, minor, patch] = parts.map(p => parseInt(p, 10));
+
+        // Validate that all parts are valid numbers
+        if (isNaN(major) || isNaN(minor) || isNaN(patch)) {
+            return '1.0.0';
+        }
+
         return `${major}.${minor + 1}.${patch}`;
     }
 

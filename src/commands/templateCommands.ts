@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { templateGenerator } from '../templates/TemplateGenerator';
-import { Template } from '../templates/TemplateMetadata';
+import { Template } from '../templates/TemplateTypes';
 import { getTemplatesPath, getFileFormat } from '../services/configService';
-import { writeFile, readFile, pathExists } from '../services/fileSystemService';
+import { writeFile, readFile, pathExists, createDirectory } from '../services/fileSystemService';
 import { getCustomTemplates } from '../services/templateService';
 
 /**
@@ -209,6 +209,10 @@ async function showTemplatePreview(template: Template): Promise<boolean> {
     });
 
     // Show persistent bottom-right notification - keep re-prompting until user makes a choice
+    // NOTE: This while loop is intentional UX design. Modal dialogs block the entire UI,
+    // preventing users from reading the preview. Non-modal notifications auto-dismiss when
+    // users click to read the preview. This approach ensures the notification stays visible
+    // while allowing users to freely interact with the preview panel.
     let result: string | undefined;
     while (!result) {
         result = await vscode.window.showInformationMessage(
@@ -259,6 +263,10 @@ async function showTemplateEnhancementPreview(
     });
 
     // Show persistent bottom-right notification - keep re-prompting until user makes a choice
+    // NOTE: This while loop is intentional UX design. Modal dialogs block the entire UI,
+    // preventing users from reading the preview. Non-modal notifications auto-dismiss when
+    // users click to read the preview. This approach ensures the notification stays visible
+    // while allowing users to freely interact with the preview panel.
     let result: string | undefined;
     while (!result) {
         result = await vscode.window.showInformationMessage(
@@ -396,8 +404,7 @@ async function saveTemplateAsJSON(template: Template): Promise<void> {
     }
 
     // Ensure templates directory exists
-    const fs = require('fs').promises;
-    await fs.mkdir(templatesPath, { recursive: true });
+    await createDirectory(templatesPath);
 
     // Save as JSON with pretty formatting
     const jsonPath = path.join(templatesPath, `${template.id}.json`);

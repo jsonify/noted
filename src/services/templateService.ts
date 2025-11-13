@@ -4,7 +4,7 @@ import { BUILT_IN_TEMPLATES, TEMPLATE_PLACEHOLDERS, DEFAULTS, DAY_NAMES, MONTH_N
 import { getTemplatesPath, getFileFormat } from './configService';
 import { pathExists, readFile, readDirectory } from './fileSystemService';
 import { formatDateForNote, formatTimeForNote } from '../utils/dateHelpers';
-import { Template } from '../templates/TemplateMetadata';
+import { Template } from '../templates/TemplateTypes';
 import * as os from 'os';
 
 /**
