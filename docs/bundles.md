@@ -2,6 +2,48 @@
 
 Create multiple related notes at once with automatic links between them.
 
+## ⚠️ Important: Templates vs Bundles
+
+**Confused about variables and prompting?** You're not alone! Here's the key difference:
+
+| Feature | AI Templates (Phase 1) | Bundles (Phase 2) |
+|---------|------------------------|-------------------|
+| **Command** | `Create Template with AI` | `Create Notes from Bundle` |
+| **Creates** | Single note template | Multiple connected notes |
+| **Variables defined?** | ✅ Yes (in JSON) | ✅ Yes (in JSON) |
+| **Variable prompting?** | ❌ **NO** - You never get prompted! | ✅ **YES** - You get prompted for each! |
+| **Variables replaced?** | ❌ NO - They stay as `{placeholders}` | ✅ YES - Automatically replaced |
+
+### The Common Confusion
+
+**What happens:**
+1. You run `Create Template with AI`
+2. AI generates a template with variables like `{application_name}`, `{tutorial_goal}`
+3. You use the template to create a note
+4. The note contains literal `{application_name}` text - no prompting happened!
+
+**Why:** AI Templates (Phase 1) create variables but **don't have UI to collect them**. That's what bundles are for!
+
+### How to Get Variable Prompting
+
+**If you want to be prompted for variables**, you need to convert your template to a bundle:
+
+1. Run: `Noted: Create Bundle from Templates`
+2. Select your AI-generated template
+3. Give the bundle a name
+4. Edit the bundle and copy the `variables` array from your template
+5. Now run `Noted: Create Notes from Bundle` - you'll get prompted! ✨
+
+**Quick rule:**
+- Want a single note? Use **templates** (manual fill-in)
+- Want variable prompting? Use **bundles** (automatic prompting)
+
+### What About `{Placeholders}` in Template Content?
+
+If your template has many `{placeholders}` like `{First_Action_Title}` or `{setting_name}`, these are **intentionally left as reminders** - you're meant to fill them in manually as you write.
+
+**Only variables explicitly listed in the bundle's `"variables"` array get prompted.** Everything else stays as a placeholder guide.
+
 ## Overview
 
 **Bundles** let you create entire workflows of connected notes in one step. Instead of manually creating multiple notes and linking them together, bundles automate the process - perfect for recurring workflows like video tutorials, project planning, or research papers.
@@ -452,6 +494,39 @@ If you don't use bundles:
 2. Verify JSON is valid (use a JSON validator)
 3. Ensure `"id"` field matches filename (without `.bundle.json`)
 4. Reload VS Code window
+
+### Not Getting Prompted for Variables
+
+**Problem**: When I run "Create Notes from Bundle", it just opens the JSON file instead of prompting me for variables
+
+**Solution**: Your bundle's `"variables"` array is empty or missing!
+
+**What happened:**
+- You used `Create Bundle from Templates` to convert an AI template
+- The command has a bug - it doesn't copy variables from the template
+- Result: Empty `"variables": []` means nothing to prompt for
+
+**How to fix:**
+1. Run: `Noted: Edit Bundle` → select your bundle
+2. Find your original template file (e.g., `application-tutorial-walkthrough.json`)
+3. Copy the entire `"variables"` array from the template
+4. Paste it into your bundle, replacing the empty `"variables": []`
+5. Save and close
+6. Try again: `Create Notes from Bundle` - now you'll get prompted! ✨
+
+**Example:** If your template has:
+```json
+"variables": [
+  {
+    "name": "application_name",
+    "type": "string",
+    "required": true,
+    "prompt": "What is the application name?"
+  }
+]
+```
+
+Copy that entire section into your bundle.
 
 ### Variables Not Replacing
 
