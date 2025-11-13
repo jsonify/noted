@@ -1,0 +1,64 @@
+{
+  "id": "project-planning",
+  "name": "Project Planning Workflow",
+  "description": "Complete project setup with overview, tasks, and meeting notes",
+  "version": "1.0.0",
+  "author": "Noted Extension",
+  "variables": [
+    {
+      "name": "project_name",
+      "type": "string",
+      "required": true,
+      "prompt": "Project name",
+      "description": "The name of your project"
+    },
+    {
+      "name": "start_date",
+      "type": "date",
+      "required": true,
+      "prompt": "Project start date",
+      "description": "When the project begins"
+    },
+    {
+      "name": "priority",
+      "type": "enum",
+      "values": ["low", "medium", "high", "critical"],
+      "default": "medium",
+      "prompt": "Project priority",
+      "description": "The priority level of this project"
+    }
+  ],
+  "notes": [
+    {
+      "name": "{project_name}-overview",
+      "template": "quick",
+      "folder": "Projects/{project_name}",
+      "description": "Project overview and goals"
+    },
+    {
+      "name": "{project_name}-tasks",
+      "template": "quick",
+      "folder": "Projects/{project_name}",
+      "description": "Task list and tracking",
+      "links": ["{project_name}-overview"]
+    },
+    {
+      "name": "{project_name}-meetings",
+      "template": "meeting",
+      "folder": "Projects/{project_name}",
+      "description": "Meeting notes and decisions",
+      "links": ["{project_name}-overview", "{project_name}-tasks"]
+    },
+    {
+      "name": "{project_name}-resources",
+      "template": "quick",
+      "folder": "Projects/{project_name}",
+      "description": "Links and resources",
+      "links": ["{project_name}-overview"]
+    }
+  ],
+  "post_create": {
+    "open_notes": ["{project_name}-overview", "{project_name}-tasks"],
+    "message": "Project '{project_name}' created successfully! Priority: {priority}, Start date: {start_date}"
+  }
+}

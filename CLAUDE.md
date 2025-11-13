@@ -64,6 +64,10 @@ The extension now uses a fully modular architecture with clear separation of con
   - `TagManager.ts`: Tag CRUD operations, search, rename, merge
   - `TagGenerator.ts`: AI-powered tag generation using VS Code LLM API
   - `autoTagCommands.ts`: Command handlers for auto-tagging features
+- **`src/templates/`**: Enhanced Template System (v1.41.0+ - Phases 1-2)
+  - `TemplateTypes.ts`: TypeScript interfaces for templates and bundles
+  - `TemplateGenerator.ts`: AI-powered template generation using VS Code LLM API (Phase 1)
+  - `BundleService.ts`: Multi-note workflow bundle creation and management (Phase 2)
 - **`src/providers/`**: VS Code tree view providers
   - `treeItems.ts`: Tree item classes (includes ConnectionSectionItem and ConnectionItem)
   - `templatesTreeProvider.ts`: Templates view
@@ -73,6 +77,7 @@ The extension now uses a fully modular architecture with clear separation of con
   - `commands.ts`: Main command handlers
   - `tagCommands.ts`: Tag management commands
   - `bulkCommands.ts`: Bulk operation commands (v1.10.0)
+  - `bundleCommands.ts`: Multi-note workflow bundle commands (v1.42.0)
 - **`src/calendar/`**: Calendar view functionality
   - `calendarHelpers.ts`: Calendar date operations
   - `calendarView.ts`: Webview and HTML generation
@@ -288,6 +293,33 @@ Templates support 10 powerful placeholders via `replacePlaceholders()` function 
 - `getTemplateVariables()`: Returns list of all available variables with descriptions
 - `replacePlaceholders()`: Core function that replaces all variables in template content
 
+**Multi-Note Workflow Bundles** (Phase 2 - v1.42.0):
+- Create multiple related notes at once with automatic wiki-links between them
+- Bundles stored in `{notesPath}/.templates/bundles/` as `.bundle.json` files
+- Support for template variables with types: string, number, enum, date, boolean
+- Automatic folder creation and note linking
+- Post-creation actions: auto-open notes, custom success messages
+
+**Bundle Structure**:
+- `BundleService`: Manages bundle loading, variable collection, and note creation
+  - `loadBundle()`: Loads bundle from JSON file
+  - `getAllBundles()`: Returns all available bundles
+  - `saveBundle()`: Saves bundle to JSON file
+  - `collectVariables()`: Multi-step input for variable values
+  - `replaceVariables()`: Replaces {variables} in strings
+  - `createFromBundle()`: Creates all notes from bundle with links
+  - `createBundleFromTemplates()`: Creates bundle from selected templates
+
+**Bundle Commands** (v1.42.0):
+- `noted.createBundle` - Show picker of available bundles and create notes
+- `noted.createBundleFromTemplates` - Select templates and create a bundle
+- `noted.editBundle` - Edit existing bundle file
+- `noted.deleteBundle` - Delete a bundle with confirmation
+
+**Example Bundles**:
+- `video-tutorial.bundle.json` - Script + guide + resources for tutorial videos
+- `project-planning.bundle.json` - Overview + tasks + meetings + resources for projects
+
 ### Configuration
 
 Settings in `package.json` contributions:
@@ -297,6 +329,9 @@ Settings in `package.json` contributions:
 - `noted.template`: Template string (defined but not used - only built-in templates are used)
 - `noted.tagAutoComplete`: Enable tag autocomplete (default: true)
 - `noted.autoBacklinks`: Automatically append backlinks sections to notes (default: true, v1.24.0)
+- `noted.templates.enableBundles`: Enable multi-note workflow bundles (default: true, v1.42.0)
+- `noted.templates.useAI`: Use AI to enhance template creation (default: true, v1.41.0)
+- `noted.templates.defaultCategory`: Default category for new templates (default: "General", v1.41.0)
 - `noted.tagging.enabled`: Enable automatic tagging features (default: true, v1.40.0)
 - `noted.tagging.autoTagOnCreate`: Automatically tag new notes when created (default: false, v1.40.0)
 - `noted.tagging.maxTags`: Maximum number of tags to suggest per note (default: 5, v1.40.0)
@@ -327,6 +362,12 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.duplicateCustomTemplate` - Duplicate a template as starting point for new one
 - `noted.previewTemplateVariables` - Show webview with all available template variables
 - `noted.openTemplatesFolder` - Open the templates folder in system file explorer
+
+**Bundle Commands** (v1.42.0 - Phase 2):
+- `noted.createBundle` - Create notes from a multi-note workflow bundle
+- `noted.createBundleFromTemplates` - Create a new bundle from selected templates
+- `noted.editBundle` - Edit an existing bundle file
+- `noted.deleteBundle` - Delete a bundle with confirmation
 
 **Search Commands** (v1.40.0 - Smart Search):
 - `noted.searchNotes` - AI-powered semantic search with natural language queries (supports filters: #tag, from:, to:, format:) (Cmd+Shift+F)

@@ -1,0 +1,57 @@
+{
+  "id": "video-tutorial-complete",
+  "name": "Video Tutorial Workflow",
+  "description": "Script + text guide + resources for tutorial videos",
+  "version": "1.0.0",
+  "author": "Noted Extension",
+  "variables": [
+    {
+      "name": "topic",
+      "type": "string",
+      "required": true,
+      "prompt": "Tutorial topic (e.g., 'VS Code Debugging')",
+      "description": "The main topic of your tutorial video"
+    },
+    {
+      "name": "duration",
+      "type": "number",
+      "default": 10,
+      "prompt": "Estimated duration in minutes",
+      "description": "How long the tutorial video will be"
+    },
+    {
+      "name": "level",
+      "type": "enum",
+      "values": ["beginner", "intermediate", "advanced"],
+      "default": "beginner",
+      "prompt": "Target audience level",
+      "description": "The skill level of your target audience"
+    }
+  ],
+  "notes": [
+    {
+      "name": "{topic}-script",
+      "template": "quick",
+      "folder": "Tutorials/Scripts",
+      "description": "Video script and outline"
+    },
+    {
+      "name": "{topic}-guide",
+      "template": "quick",
+      "folder": "Tutorials/Guides",
+      "description": "Written companion guide",
+      "links": ["{topic}-script"]
+    },
+    {
+      "name": "{topic}-resources",
+      "template": "quick",
+      "folder": "Tutorials/Resources",
+      "description": "Assets and resource tracking",
+      "links": ["{topic}-script", "{topic}-guide"]
+    }
+  ],
+  "post_create": {
+    "open_notes": ["{topic}-script"],
+    "message": "Tutorial workflow created! Start with the script, then create the guide and resources."
+  }
+}
