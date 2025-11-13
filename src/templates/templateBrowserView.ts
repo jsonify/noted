@@ -45,6 +45,15 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext): Pro
     // Set the initial HTML
     panel.webview.html = getTemplateBrowserHtml(templates);
 
+    // Helper function to refresh webview templates
+    const refreshWebviewTemplates = async () => {
+        const updatedTemplates = await loadAllTemplates();
+        panel.webview.postMessage({
+            command: 'updateTemplates',
+            templates: updatedTemplates
+        });
+    };
+
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
         async message => {
@@ -59,22 +68,12 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext): Pro
 
                 case 'deleteTemplate':
                     await handleDeleteTemplate(message.templateId);
-                    // Reload templates after deletion
-                    const updatedTemplates = await loadAllTemplates();
-                    panel.webview.postMessage({
-                        command: 'updateTemplates',
-                        templates: updatedTemplates
-                    });
+                    await refreshWebviewTemplates();
                     break;
 
                 case 'duplicateTemplate':
                     await handleDuplicateTemplate(message.templateId);
-                    // Reload templates after duplication
-                    const refreshedTemplates = await loadAllTemplates();
-                    panel.webview.postMessage({
-                        command: 'updateTemplates',
-                        templates: refreshedTemplates
-                    });
+                    await refreshWebviewTemplates();
                     break;
 
                 case 'exportTemplate':
@@ -82,17 +81,35 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext): Pro
                     break;
 
                 case 'refresh':
-                    const allTemplates = await loadAllTemplates();
-                    panel.webview.postMessage({
-                        command: 'updateTemplates',
-                        templates: allTemplates
-                    });
+                    await refreshWebviewTemplates();
                     break;
             }
         },
         undefined,
         context.subscriptions
     );
+}
+
+/**
+ * Helper function to find a template file (JSON or legacy)
+ * Returns { path: string, type: 'json' | 'txt' | 'md' } or null if not found
+ */
+async function findTemplateFile(templatesPath: string, templateId: string): Promise<{ path: string; type: 'json' | 'txt' | 'md' } | null> {
+    // Try JSON first
+    const jsonPath = path.join(templatesPath, `${templateId}.json`);
+    if (await pathExists(jsonPath)) {
+        return { path: jsonPath, type: 'json' };
+    }
+
+    // Try both .md and .txt
+    for (const ext of ['md', 'txt'] as const) {
+        const legacyPath = path.join(templatesPath, `${templateId}.${ext}`);
+        if (await pathExists(legacyPath)) {
+            return { path: legacyPath, type: ext };
+        }
+    }
+
+    return null;
 }
 
 /**
@@ -156,6 +173,7 @@ async function loadAllTemplates(): Promise<TemplateDisplayInfo[]> {
                             fileType: 'json'
                         });
                     } catch (error) {
+                        vscode.window.showWarningMessage(`Failed to parse template file: ${file}`);
                         console.error(`Failed to parse JSON template ${file}:`, error);
                     }
                 } else if (ext === '.txt' || ext === '.md') {
@@ -180,6 +198,7 @@ async function loadAllTemplates(): Promise<TemplateDisplayInfo[]> {
             }
         }
     } catch (error) {
+        vscode.window.showWarningMessage('Failed to load custom templates. Check the developer console for details.');
         console.error('Failed to load custom templates:', error);
     }
 
@@ -191,7 +210,7 @@ async function loadAllTemplates(): Promise<TemplateDisplayInfo[]> {
  */
 async function handleCreateFromTemplate(templateId: string): Promise<void> {
     // Execute the openWithTemplate command with the template ID
-    await vscode.commands.executeCommand('noted.openWithTemplate');
+    await vscode.commands.executeCommand('noted.openWithTemplate', templateId);
 }
 
 /**
@@ -204,24 +223,13 @@ async function handleEditTemplate(templateId: string): Promise<void> {
         return;
     }
 
-    // Try JSON first, then fall back to legacy format
-    const jsonPath = path.join(templatesPath, `${templateId}.json`);
-    if (await pathExists(jsonPath)) {
-        const document = await vscode.workspace.openTextDocument(jsonPath);
+    const templateFile = await findTemplateFile(templatesPath, templateId);
+    if (templateFile) {
+        const document = await vscode.workspace.openTextDocument(templateFile.path);
         await vscode.window.showTextDocument(document);
-        return;
+    } else {
+        vscode.window.showErrorMessage(`Template not found: ${templateId}`);
     }
-
-    // Try legacy formats
-    const fileFormat = getFileFormat();
-    const legacyPath = path.join(templatesPath, `${templateId}.${fileFormat}`);
-    if (await pathExists(legacyPath)) {
-        const document = await vscode.workspace.openTextDocument(legacyPath);
-        await vscode.window.showTextDocument(document);
-        return;
-    }
-
-    vscode.window.showErrorMessage(`Template not found: ${templateId}`);
 }
 
 /**
@@ -244,24 +252,13 @@ async function handleDeleteTemplate(templateId: string): Promise<void> {
         return;
     }
 
-    // Try to delete JSON first, then legacy format
-    const jsonPath = path.join(templatesPath, `${templateId}.json`);
-    if (await pathExists(jsonPath)) {
-        await vscode.workspace.fs.delete(vscode.Uri.file(jsonPath));
+    const templateFile = await findTemplateFile(templatesPath, templateId);
+    if (templateFile) {
+        await vscode.workspace.fs.delete(vscode.Uri.file(templateFile.path));
         vscode.window.showInformationMessage(`Template "${templateId}" deleted`);
-        return;
+    } else {
+        vscode.window.showErrorMessage(`Template not found: ${templateId}`);
     }
-
-    // Try legacy formats
-    const fileFormat = getFileFormat();
-    const legacyPath = path.join(templatesPath, `${templateId}.${fileFormat}`);
-    if (await pathExists(legacyPath)) {
-        await vscode.workspace.fs.delete(vscode.Uri.file(legacyPath));
-        vscode.window.showInformationMessage(`Template "${templateId}" deleted`);
-        return;
-    }
-
-    vscode.window.showErrorMessage(`Template not found: ${templateId}`);
 }
 
 /**
@@ -289,10 +286,14 @@ async function handleDuplicateTemplate(templateId: string): Promise<void> {
         return;
     }
 
-    // Try JSON first
-    const jsonPath = path.join(templatesPath, `${templateId}.json`);
-    if (await pathExists(jsonPath)) {
-        const content = await readFile(jsonPath);
+    const templateFile = await findTemplateFile(templatesPath, templateId);
+    if (!templateFile) {
+        vscode.window.showErrorMessage(`Template not found: ${templateId}`);
+        return;
+    }
+
+    if (templateFile.type === 'json') {
+        const content = await readFile(templateFile.path);
         const template: Template = JSON.parse(content);
 
         // Update template metadata
@@ -304,21 +305,13 @@ async function handleDuplicateTemplate(templateId: string): Promise<void> {
         const newPath = path.join(templatesPath, `${newName}.json`);
         await writeFile(newPath, JSON.stringify(template, null, 2));
         vscode.window.showInformationMessage(`Template duplicated as "${newName}"`);
-        return;
-    }
-
-    // Try legacy format
-    const fileFormat = getFileFormat();
-    const legacyPath = path.join(templatesPath, `${templateId}.${fileFormat}`);
-    if (await pathExists(legacyPath)) {
-        const content = await readFile(legacyPath);
-        const newPath = path.join(templatesPath, `${newName}.${fileFormat}`);
+    } else {
+        // Legacy template
+        const content = await readFile(templateFile.path);
+        const newPath = path.join(templatesPath, `${newName}.${templateFile.type}`);
         await writeFile(newPath, content);
         vscode.window.showInformationMessage(`Template duplicated as "${newName}"`);
-        return;
     }
-
-    vscode.window.showErrorMessage(`Template not found: ${templateId}`);
 }
 
 /**
@@ -331,44 +324,26 @@ async function handleExportTemplate(templateId: string): Promise<void> {
         return;
     }
 
-    // Try JSON first
-    const jsonPath = path.join(templatesPath, `${templateId}.json`);
-    if (await pathExists(jsonPath)) {
-        const uri = await vscode.window.showSaveDialog({
-            defaultUri: vscode.Uri.file(`${templateId}.json`),
-            filters: {
-                'JSON': ['json']
-            }
-        });
-
-        if (uri) {
-            const content = await readFile(jsonPath);
-            await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
-            vscode.window.showInformationMessage(`Template exported to ${uri.fsPath}`);
-        }
+    const templateFile = await findTemplateFile(templatesPath, templateId);
+    if (!templateFile) {
+        vscode.window.showErrorMessage(`Template not found: ${templateId}`);
         return;
     }
 
-    // Try legacy format
-    const fileFormat = getFileFormat();
-    const legacyPath = path.join(templatesPath, `${templateId}.${fileFormat}`);
-    if (await pathExists(legacyPath)) {
-        const uri = await vscode.window.showSaveDialog({
-            defaultUri: vscode.Uri.file(`${templateId}.${fileFormat}`),
-            filters: {
-                'Text': ['txt', 'md']
-            }
-        });
+    const filters = templateFile.type === 'json'
+        ? { 'JSON': ['json'] }
+        : { 'Text': ['txt', 'md'] };
 
-        if (uri) {
-            const content = await readFile(legacyPath);
-            await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
-            vscode.window.showInformationMessage(`Template exported to ${uri.fsPath}`);
-        }
-        return;
+    const uri = await vscode.window.showSaveDialog({
+        defaultUri: vscode.Uri.file(`${templateId}.${templateFile.type}`),
+        filters: filters
+    });
+
+    if (uri) {
+        const content = await readFile(templateFile.path);
+        await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
+        vscode.window.showInformationMessage(`Template exported to ${uri.fsPath}`);
     }
-
-    vscode.window.showErrorMessage(`Template not found: ${templateId}`);
 }
 
 /**
@@ -672,6 +647,17 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         let activeCategory = 'all';
         let searchQuery = '';
 
+        // HTML escaping function to prevent XSS
+        function escapeHtml(unsafe) {
+            const text = typeof unsafe === 'string' ? unsafe : String(unsafe);
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         // Initialize
         renderFilters();
         renderStats();
@@ -696,9 +682,9 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             filtersContainer.innerHTML = categories.map(cat =>
                 \`<button
                     class="filter-btn \${cat === activeCategory ? 'active' : ''}"
-                    onclick="setCategory('\${cat}')"
+                    onclick="setCategory('\${escapeHtml(cat)}')"
                 >
-                    \${cat.charAt(0).toUpperCase() + cat.slice(1)} (\${cat === 'all' ? templates.length : templates.filter(t => t.category === cat).length})
+                    \${escapeHtml(cat.charAt(0).toUpperCase() + cat.slice(1))} (\${cat === 'all' ? templates.length : templates.filter(t => t.category === cat).length})
                 </button>\`
             ).join('');
         }
@@ -755,25 +741,25 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 <div class="template-card">
                     <div class="template-header">
                         <div>
-                            <div class="template-title">\${t.name}</div>
-                            <span class="template-category">\${t.category}</span>
+                            <div class="template-title">\${escapeHtml(t.name)}</div>
+                            <span class="template-category">\${escapeHtml(t.category)}</span>
                         </div>
                     </div>
-                    <div class="template-description">\${t.description}</div>
+                    <div class="template-description">\${escapeHtml(t.description)}</div>
                     <div class="template-tags">
-                        \${t.tags.map(tag => \`<span class="tag">#\${tag}</span>\`).join('')}
+                        \${t.tags.map(tag => \`<span class="tag">#\${escapeHtml(tag)}</span>\`).join('')}
                     </div>
                     <div class="template-meta">
-                        <span>v\${t.version}</span>
-                        \${t.usage_count ? \`<span>Used \${t.usage_count} times</span>\` : ''}
+                        <span>v\${escapeHtml(t.version)}</span>
+                        \${t.usage_count ? \`<span>Used \${escapeHtml(t.usage_count)} times</span>\` : ''}
                     </div>
                     <div class="template-actions">
-                        <button class="action-btn primary" onclick="createFromTemplate('\${t.id}')">Create</button>
+                        <button class="action-btn primary" onclick="createFromTemplate('\${escapeHtml(t.id)}')">Create</button>
                         \${!t.isBuiltIn ? \`
-                            <button class="action-btn" onclick="editTemplate('\${t.id}')">Edit</button>
-                            <button class="action-btn" onclick="duplicateTemplate('\${t.id}')">Duplicate</button>
-                            <button class="action-btn" onclick="exportTemplate('\${t.id}')">Export</button>
-                            <button class="action-btn danger" onclick="deleteTemplate('\${t.id}')">Delete</button>
+                            <button class="action-btn" onclick="editTemplate('\${escapeHtml(t.id)}')">Edit</button>
+                            <button class="action-btn" onclick="duplicateTemplate('\${escapeHtml(t.id)}')">Duplicate</button>
+                            <button class="action-btn" onclick="exportTemplate('\${escapeHtml(t.id)}')">Export</button>
+                            <button class="action-btn danger" onclick="deleteTemplate('\${escapeHtml(t.id)}')">Delete</button>
                         \` : ''}
                     </div>
                 </div>
