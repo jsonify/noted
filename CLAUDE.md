@@ -64,10 +64,11 @@ The extension now uses a fully modular architecture with clear separation of con
   - `TagManager.ts`: Tag CRUD operations, search, rename, merge
   - `TagGenerator.ts`: AI-powered tag generation using VS Code LLM API
   - `autoTagCommands.ts`: Command handlers for auto-tagging features
-- **`src/templates/`**: Enhanced Template System (v1.41.0+ - Phases 1-2)
+- **`src/templates/`**: Enhanced Template System (v1.41.0+ - Phases 1-4)
   - `TemplateTypes.ts`: TypeScript interfaces for templates and bundles
   - `TemplateGenerator.ts`: AI-powered template generation using VS Code LLM API (Phase 1)
   - `BundleService.ts`: Multi-note workflow bundle creation and management (Phase 2)
+  - `templateBrowserView.ts`: Visual template browser webview UI (Phase 4)
 - **`src/providers/`**: VS Code tree view providers
   - `treeItems.ts`: Tree item classes (includes ConnectionSectionItem and ConnectionItem)
   - `templatesTreeProvider.ts`: Templates view
@@ -320,6 +321,20 @@ Templates support 10 powerful placeholders via `replacePlaceholders()` function 
 - `video-tutorial.bundle.json` - Script + guide + resources for tutorial videos
 - `project-planning.bundle.json` - Overview + tasks + meetings + resources for projects
 
+**Template Browser UI** (Phase 4 - v1.44.0):
+- Visual webview interface for browsing and managing templates
+- Command: `noted.showTemplateBrowser` - Opens template browser panel
+- Grid/list view toggle for different display modes
+- Real-time search by name, description, or tags
+- Category-based filtering (All, Built-in, Custom, etc.)
+- Statistics dashboard showing template counts by type
+- Template cards display: name, description, category, tags, version, usage count
+- Quick actions per template: Create, Edit, Duplicate, Export, Delete
+- Built-in templates are read-only (only "Create" action available)
+- Works with JSON templates, legacy .txt/.md templates, and built-in templates
+- Implementation in `src/templates/templateBrowserView.ts`
+- Similar architecture to existing webviews (graph, calendar, activity)
+
 ### Configuration
 
 Settings in `package.json` contributions:
@@ -368,6 +383,9 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.createBundleFromTemplates` - Create a new bundle from selected templates
 - `noted.editBundle` - Edit an existing bundle file
 - `noted.deleteBundle` - Delete a bundle with confirmation
+
+**Template Browser Commands** (v1.44.0 - Phase 4):
+- `noted.showTemplateBrowser` - Open visual template browser with grid/list views, search, filtering, and quick actions
 
 **Search Commands** (v1.40.0 - Smart Search):
 - `noted.searchNotes` - AI-powered semantic search with natural language queries (supports filters: #tag, from:, to:, format:) (Cmd+Shift+F)
