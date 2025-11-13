@@ -295,7 +295,7 @@ Return ONLY valid JSON, no other text.`;
                 category: category || parsed.category || 'Custom',
                 tags: Array.isArray(parsed.tags) ? parsed.tags : [],
                 version: '1.0.0',
-                author: vscode.workspace.getConfiguration('noted').get<string>('templates.defaultAuthor') || 'user',
+                author: vscode.workspace.getConfiguration('noted').get<string>('templates.defaultAuthor') || os.userInfo().username,
                 variables: this.parseVariables(parsed.variables || []),
                 content: parsed.content,
                 created: new Date().toISOString(),
