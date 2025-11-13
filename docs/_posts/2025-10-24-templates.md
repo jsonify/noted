@@ -112,6 +112,56 @@ Templates support 10 dynamic placeholders:
 
 ## Custom Templates
 
+### Template Browser (v1.44.0)
+
+**Visual template management interface** with grid/list views, search, and quick actions.
+
+#### Opening the Template Browser
+
+```
+Command: Noted: Show Template Browser
+Shortcut: Command Palette → "Template Browser"
+```
+
+#### Features
+
+**View Modes**:
+- **Grid View**: Visual cards with template previews
+- **List View**: Compact list for quick scanning
+- Toggle instantly with view buttons
+
+**Search & Filter**:
+- **Real-time search**: Filter by name, description, or tags
+- **Category filters**: All, Built-in, Custom, and more
+- **Statistics dashboard**: See total, custom, and built-in counts
+
+**Template Cards Display**:
+- Template name and description
+- Category badge
+- Tags for organization
+- Version number
+- Usage count (if available)
+
+**Quick Actions**:
+- **Create**: Start new note from template immediately
+- **Edit**: Modify template content (custom only)
+- **Duplicate**: Copy template as starting point
+- **Export**: Save template to file
+- **Delete**: Remove template (custom only)
+
+**Benefits**:
+- Browse all templates visually
+- Search across names, descriptions, and tags
+- One-click note creation
+- Organize by category
+- Track template usage
+
+**Pro Tips**:
+- Use search to quickly find templates
+- Filter by category for focused browsing
+- Duplicate templates to create variations
+- Export templates to share with team
+
 ### Creating Custom Templates
 
 1. Open Command Palette

@@ -87,6 +87,10 @@ Identify orphaned notes (no incoming or outgoing links) and placeholder links (r
 
 Generate intelligent summaries of your notes using GitHub Copilot. Summarize single notes instantly or batch process multiple notes by time period (week, month, custom range). Summaries extract key insights, action items, and keywords with smart caching for instant access. Use custom prompt templates for different contexts (meeting notes, technical reviews, brainstorm sessions) and track summary versions over time. Auto-tag notes based on AI-extracted keywords.
 
+### Browse templates visually
+
+Visual template browser with grid/list views, real-time search, and category filtering. See all your built-in and custom templates in one place with quick actions to create, edit, duplicate, export, or delete. Search by name, description, or tags to find the perfect template instantly. Track usage statistics and organize templates by category for efficient note creation.
+
 ### Create multi-note workflows with bundles
 
 ![Screenshot showing bundle creation interface with variable prompts, followed by multiple related notes created with automatic wiki-links between them](./assets/bundles.gif)
