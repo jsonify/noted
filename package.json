@@ -269,6 +269,11 @@
         "icon": "$(trash)"
       },
       {
+        "command": "noted.migrateTemplates",
+        "title": "Noted: Migrate Templates to JSON Format",
+        "icon": "$(file-symlink-file)"
+      },
+      {
         "command": "noted.showConfig",
         "title": "Noted: Show Configuration (Debug)"
       },
