@@ -330,7 +330,7 @@ async function handleExportTemplate(templateId: string): Promise<void> {
         return;
     }
 
-    const filters = templateFile.type === 'json'
+    const filters: { [name: string]: string[] } = templateFile.type === 'json'
         ? { 'JSON': ['json'] }
         : { 'Text': ['txt', 'md'] };
 
