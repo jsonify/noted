@@ -5,6 +5,7 @@ import { Template } from '../templates/TemplateTypes';
 import { getTemplatesPath, getFileFormat } from '../services/configService';
 import { writeFile, readFile, pathExists, createDirectory } from '../services/fileSystemService';
 import { getCustomTemplates } from '../services/templateService';
+import { BUILT_IN_PLACEHOLDER_NAMES, TEMPLATE_CATEGORY_KEYWORDS } from '../constants';
 
 /**
  * Command: Create a new template using AI generation
@@ -633,6 +634,32 @@ export async function findLegacyTemplates(): Promise<Array<{ name: string; path:
 }
 
 /**
+ * Determine template category based on name keywords
+ * Exported for testing
+ */
+export function determineTemplateCategory(templateName: string): string {
+    const nameLower = templateName.toLowerCase();
+
+    for (const [keyword, category] of Object.entries(TEMPLATE_CATEGORY_KEYWORDS)) {
+        if (nameLower.includes(keyword)) {
+            return category;
+        }
+    }
+
+    return 'Custom';
+}
+
+/**
+ * Convert kebab-case name to Title Case
+ * Exported for testing
+ */
+export function convertToTitleCase(name: string): string {
+    return name
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+}
+
+/**
  * Migrate a single legacy template to JSON format
  */
 async function migrateTemplate(legacyTemplate: { name: string; path: string; format: string }): Promise<void> {
@@ -643,22 +670,12 @@ async function migrateTemplate(legacyTemplate: { name: string; path: string; for
     const variables = extractVariablesFromContent(content);
 
     // Determine category from name (heuristic)
-    let category = 'Custom';
-    const nameLower = legacyTemplate.name.toLowerCase();
-    if (nameLower.includes('meeting')) {
-        category = 'Meetings';
-    } else if (nameLower.includes('project')) {
-        category = 'Projects';
-    } else if (nameLower.includes('video') || nameLower.includes('tutorial')) {
-        category = 'Content Creation';
-    } else if (nameLower.includes('research')) {
-        category = 'Research';
-    }
+    const category = determineTemplateCategory(legacyTemplate.name);
 
     // Create Template object
     const template: Template = {
         id: legacyTemplate.name,
-        name: legacyTemplate.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), // Convert kebab-case to Title Case
+        name: convertToTitleCase(legacyTemplate.name),
         description: `Migrated from legacy ${legacyTemplate.format} template`,
         category,
         tags: [],
@@ -701,11 +718,8 @@ export function extractVariablesFromContent(content: string): Template['variable
     for (const match of matches) {
         const varName = match[1].toLowerCase();
 
-        // Skip built-in placeholders
-        if ([
-            'filename', 'date', 'time', 'year', 'month', 'day',
-            'weekday', 'month_name', 'user', 'workspace'
-        ].includes(varName)) {
+        // Skip built-in placeholders (using constant from single source of truth)
+        if (BUILT_IN_PLACEHOLDER_NAMES.includes(varName as any)) {
             continue;
         }
 

@@ -1,7 +1,12 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import * as vscode from 'vscode';
-import { extractVariablesFromContent, findLegacyTemplates } from '../../commands/templateCommands';
+import {
+    extractVariablesFromContent,
+    findLegacyTemplates,
+    determineTemplateCategory,
+    convertToTitleCase
+} from '../../commands/templateCommands';
 import * as path from 'path';
 
 describe('Template Migration', () => {
@@ -208,6 +213,71 @@ Content by {author}`;
         });
     });
 
+    describe('determineTemplateCategory', () => {
+        it('should categorize meeting templates', () => {
+            expect(determineTemplateCategory('meeting-notes')).to.equal('Meetings');
+            expect(determineTemplateCategory('team-meeting')).to.equal('Meetings');
+            expect(determineTemplateCategory('MEETING_TEMPLATE')).to.equal('Meetings');
+        });
+
+        it('should categorize project templates', () => {
+            expect(determineTemplateCategory('project-plan')).to.equal('Projects');
+            expect(determineTemplateCategory('new-project')).to.equal('Projects');
+            expect(determineTemplateCategory('PROJECT_OVERVIEW')).to.equal('Projects');
+        });
+
+        it('should categorize content creation templates', () => {
+            expect(determineTemplateCategory('video-script')).to.equal('Content Creation');
+            expect(determineTemplateCategory('tutorial-outline')).to.equal('Content Creation');
+            expect(determineTemplateCategory('VIDEO_TUTORIAL')).to.equal('Content Creation');
+        });
+
+        it('should categorize research templates', () => {
+            expect(determineTemplateCategory('research-paper')).to.equal('Research');
+            expect(determineTemplateCategory('literature-research')).to.equal('Research');
+            expect(determineTemplateCategory('RESEARCH_NOTES')).to.equal('Research');
+        });
+
+        it('should default to Custom category for unknown templates', () => {
+            expect(determineTemplateCategory('custom-template')).to.equal('Custom');
+            expect(determineTemplateCategory('my-special-template')).to.equal('Custom');
+            expect(determineTemplateCategory('unknown')).to.equal('Custom');
+        });
+
+        it('should prioritize first matching keyword', () => {
+            // If template name contains multiple keywords, first match wins
+            expect(determineTemplateCategory('project-meeting')).to.equal('Meetings');
+            expect(determineTemplateCategory('research-project')).to.equal('Projects');
+        });
+    });
+
+    describe('convertToTitleCase', () => {
+        it('should convert kebab-case to Title Case', () => {
+            expect(convertToTitleCase('project-template')).to.equal('Project Template');
+            expect(convertToTitleCase('meeting-notes')).to.equal('Meeting Notes');
+            expect(convertToTitleCase('video-script')).to.equal('Video Script');
+            expect(convertToTitleCase('custom-workflow-template')).to.equal('Custom Workflow Template');
+        });
+
+        it('should handle single words', () => {
+            expect(convertToTitleCase('template')).to.equal('Template');
+            expect(convertToTitleCase('meeting')).to.equal('Meeting');
+        });
+
+        it('should handle already capitalized text', () => {
+            expect(convertToTitleCase('Project-Template')).to.equal('Project Template');
+            expect(convertToTitleCase('MEETING-NOTES')).to.equal('MEETING NOTES');
+        });
+
+        it('should handle multiple consecutive dashes', () => {
+            expect(convertToTitleCase('project--template')).to.equal('Project  Template');
+        });
+
+        it('should handle underscores mixed with dashes', () => {
+            expect(convertToTitleCase('project_template-notes')).to.equal('Project_template Notes');
+        });
+    });
+
     describe('Template Migration Integration', () => {
         it('should have proper template structure after migration', () => {
             // Test that the Template interface is correctly structured
@@ -248,53 +318,25 @@ End: {end_date}`;
             // This verifies that the migration process identifies the right variables
         });
 
-        it('should categorize templates based on name heuristics', () => {
-            // Test the category assignment logic
-            const testCases = [
-                { name: 'meeting-notes', expectedCategory: 'Meetings' },
-                { name: 'project-plan', expectedCategory: 'Projects' },
-                { name: 'video-script', expectedCategory: 'Content Creation' },
-                { name: 'tutorial-outline', expectedCategory: 'Content Creation' },
-                { name: 'research-paper', expectedCategory: 'Research' },
-                { name: 'custom-template', expectedCategory: 'Custom' }
-            ];
+        it('should correctly process complete migration workflow', () => {
+            // Test full workflow with all utilities
+            const templateName = 'project-meeting-notes';
+            const content = `# {project_name} Meeting
 
-            // Since we can't access the migrateTemplate function directly,
-            // we verify the logic here
-            testCases.forEach(({ name, expectedCategory }) => {
-                let category = 'Custom';
-                const nameLower = name.toLowerCase();
+Date: {date}
+Attendees: {attendees}`;
 
-                if (nameLower.includes('meeting')) {
-                    category = 'Meetings';
-                } else if (nameLower.includes('project')) {
-                    category = 'Projects';
-                } else if (nameLower.includes('video') || nameLower.includes('tutorial')) {
-                    category = 'Content Creation';
-                } else if (nameLower.includes('research')) {
-                    category = 'Research';
-                }
+            // Extract variables
+            const variables = extractVariablesFromContent(content);
+            expect(variables).to.have.lengthOf(2); // project_name and attendees (date is built-in)
 
-                expect(category).to.equal(expectedCategory);
-            });
-        });
+            // Determine category
+            const category = determineTemplateCategory(templateName);
+            expect(category).to.equal('Meetings'); // First matching keyword
 
-        it('should convert kebab-case names to Title Case', () => {
-            // Test the name conversion logic used in migration
-            const testCases = [
-                { input: 'project-template', expected: 'Project Template' },
-                { input: 'meeting-notes', expected: 'Meeting Notes' },
-                { input: 'video-script', expected: 'Video Script' },
-                { input: 'custom-workflow-template', expected: 'Custom Workflow Template' }
-            ];
-
-            testCases.forEach(({ input, expected }) => {
-                const converted = input
-                    .replace(/-/g, ' ')
-                    .replace(/\b\w/g, l => l.toUpperCase());
-
-                expect(converted).to.equal(expected);
-            });
+            // Convert name
+            const displayName = convertToTitleCase(templateName);
+            expect(displayName).to.equal('Project Meeting Notes');
         });
     });
 
