@@ -259,5 +259,4 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                 return item;
             });
     }
-
 }
