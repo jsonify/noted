@@ -626,6 +626,7 @@ export async function findLegacyTemplates(): Promise<Array<{ name: string; path:
         }
     } catch (error) {
         console.error('Error finding legacy templates:', error);
+        throw error;
     }
 
     return legacyTemplates;
