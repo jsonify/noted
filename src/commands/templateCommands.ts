@@ -5,6 +5,7 @@ import { Template } from '../templates/TemplateTypes';
 import { getTemplatesPath, getFileFormat } from '../services/configService';
 import { writeFile, readFile, pathExists, createDirectory } from '../services/fileSystemService';
 import { getCustomTemplates } from '../services/templateService';
+import { BUILT_IN_PLACEHOLDER_NAMES, TEMPLATE_CATEGORY_KEYWORDS } from '../constants';
 
 /**
  * Command: Create a new template using AI generation
@@ -499,4 +500,245 @@ export async function handleSelectAIModel(): Promise<void> {
             vscode.window.showErrorMessage('Failed to select AI model: Unknown error');
         }
     }
+}
+
+/**
+ * Command: Migrate legacy templates to JSON format
+ */
+export async function handleMigrateTemplates(): Promise<void> {
+    try {
+        const legacyTemplates = await findLegacyTemplates();
+
+        if (legacyTemplates.length === 0) {
+            vscode.window.showInformationMessage('No legacy templates to migrate. All templates are up to date!');
+            return;
+        }
+
+        // Show confirmation dialog
+        const templateList = legacyTemplates.slice(0, 10).map(t => `  • ${t.name}`).join('\n');
+        const moreText = legacyTemplates.length > 10 ? `\n  ... and ${legacyTemplates.length - 10} more` : '';
+
+        const answer = await vscode.window.showInformationMessage(
+            `Found ${legacyTemplates.length} legacy template(s) to migrate:\n\n${templateList}${moreText}\n\nMigrate to new JSON format?`,
+            { modal: true, detail: 'Legacy templates will be converted to JSON with enhanced metadata. Original files will be kept as backups.' },
+            'Migrate',
+            'Cancel'
+        );
+
+        if (answer !== 'Migrate') {
+            return;
+        }
+
+        // Migrate templates with progress
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Migrating templates...',
+            cancellable: false
+        }, async (progress) => {
+            const total = legacyTemplates.length;
+            let migrated = 0;
+            const errors: string[] = [];
+
+            for (const legacyTemplate of legacyTemplates) {
+                try {
+                    progress.report({
+                        increment: (1 / total) * 100,
+                        message: `Migrating ${legacyTemplate.name}... (${migrated + 1}/${total})`
+                    });
+
+                    await migrateTemplate(legacyTemplate);
+                    migrated++;
+                } catch (error) {
+                    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+                    errors.push(`${legacyTemplate.name}: ${errorMsg}`);
+                }
+            }
+
+            // Show results
+            if (errors.length === 0) {
+                vscode.window.showInformationMessage(
+                    `✅ Successfully migrated ${migrated} template(s) to JSON format!`,
+                    'Open Templates Folder'
+                ).then(action => {
+                    if (action === 'Open Templates Folder') {
+                        vscode.commands.executeCommand('noted.openTemplatesFolder');
+                    }
+                });
+            } else {
+                vscode.window.showWarningMessage(
+                    `Migrated ${migrated}/${total} templates. ${errors.length} failed:\n\n${errors.join('\n')}`,
+                    'Show Details'
+                ).then(action => {
+                    if (action === 'Show Details') {
+                        vscode.window.showErrorMessage(errors.join('\n\n'));
+                    }
+                });
+            }
+        });
+    } catch (error) {
+        if (error instanceof Error) {
+            vscode.window.showErrorMessage(`Failed to migrate templates: ${error.message}`);
+        } else {
+            vscode.window.showErrorMessage('Failed to migrate templates: Unknown error');
+        }
+    }
+}
+
+/**
+ * Find all legacy templates (.txt/.md) that need migration
+ * Exported for testing
+ */
+export async function findLegacyTemplates(): Promise<Array<{ name: string; path: string; format: string }>> {
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath || !(await pathExists(templatesPath))) {
+        return [];
+    }
+
+    const legacyTemplates: Array<{ name: string; path: string; format: string }> = [];
+
+    try {
+        const files = await vscode.workspace.fs.readDirectory(vscode.Uri.file(templatesPath));
+
+        for (const [fileName, fileType] of files) {
+            // Skip if not a file
+            if (fileType !== vscode.FileType.File) {
+                continue;
+            }
+
+            // Check if it's a legacy template (.txt or .md)
+            const ext = path.extname(fileName);
+            if (ext !== '.txt' && ext !== '.md') {
+                continue;
+            }
+
+            const baseName = path.basename(fileName, ext);
+
+            // Check if JSON version already exists
+            const jsonPath = path.join(templatesPath, `${baseName}.json`);
+            if (await pathExists(jsonPath)) {
+                continue; // Already migrated
+            }
+
+            legacyTemplates.push({
+                name: baseName,
+                path: path.join(templatesPath, fileName),
+                format: ext.slice(1) // Remove the leading dot
+            });
+        }
+    } catch (error) {
+        console.error('Error finding legacy templates:', error);
+        throw error;
+    }
+
+    return legacyTemplates;
+}
+
+/**
+ * Determine template category based on name keywords
+ * Exported for testing
+ */
+export function determineTemplateCategory(templateName: string): string {
+    const nameLower = templateName.toLowerCase();
+
+    for (const [keyword, category] of Object.entries(TEMPLATE_CATEGORY_KEYWORDS)) {
+        if (nameLower.includes(keyword)) {
+            return category;
+        }
+    }
+
+    return 'Custom';
+}
+
+/**
+ * Convert kebab-case name to Title Case
+ * Exported for testing
+ */
+export function convertToTitleCase(name: string): string {
+    return name
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+}
+
+/**
+ * Migrate a single legacy template to JSON format
+ */
+async function migrateTemplate(legacyTemplate: { name: string; path: string; format: string }): Promise<void> {
+    // Read the legacy template content
+    const content = await readFile(legacyTemplate.path);
+
+    // Extract variables from content
+    const variables = extractVariablesFromContent(content);
+
+    // Determine category from name (heuristic)
+    const category = determineTemplateCategory(legacyTemplate.name);
+
+    // Create Template object
+    const template: Template = {
+        id: legacyTemplate.name,
+        name: convertToTitleCase(legacyTemplate.name),
+        description: `Migrated from legacy ${legacyTemplate.format} template`,
+        category,
+        tags: [],
+        version: '1.0.0',
+        variables,
+        content,
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+        usage_count: 0
+    };
+
+    // Save as JSON
+    await saveTemplateAsJSON(template);
+
+    // Rename legacy file to .bak (backup) instead of deleting
+    const backupPath = `${legacyTemplate.path}.bak`;
+    try {
+        await vscode.workspace.fs.rename(
+            vscode.Uri.file(legacyTemplate.path),
+            vscode.Uri.file(backupPath),
+            { overwrite: true }
+        );
+    } catch (error) {
+        // If backup fails, just log it but don't fail the migration
+        console.warn(`Could not backup legacy template ${legacyTemplate.name}:`, error);
+    }
+}
+
+/**
+ * Extract variable definitions from template content
+ * Exported for testing
+ */
+export function extractVariablesFromContent(content: string): Template['variables'] {
+    const variables: Template['variables'] = [];
+    const variablePattern = /\{([a-z_][a-z0-9_]*)\}/gi;
+    const matches = content.matchAll(variablePattern);
+
+    const seen = new Set<string>();
+
+    for (const match of matches) {
+        const varName = match[1].toLowerCase();
+
+        // Skip built-in placeholders (using constant from single source of truth)
+        if (BUILT_IN_PLACEHOLDER_NAMES.includes(varName as any)) {
+            continue;
+        }
+
+        // Skip duplicates
+        if (seen.has(varName)) {
+            continue;
+        }
+
+        seen.add(varName);
+
+        // Create variable definition with sensible defaults
+        variables.push({
+            name: varName,
+            type: 'string',
+            required: true,
+            prompt: `Enter value for ${varName}`,
+            description: `Custom variable: ${varName}`
+        });
+    }
+
+    return variables;
 }

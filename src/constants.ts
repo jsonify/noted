@@ -106,6 +106,35 @@ export const TEMPLATE_PLACEHOLDERS = {
 };
 
 /**
+ * Built-in placeholder names (for variable extraction)
+ * Single source of truth for all built-in template placeholders
+ */
+export const BUILT_IN_PLACEHOLDER_NAMES = [
+    'filename',
+    'date',
+    'time',
+    'year',
+    'month',
+    'day',
+    'weekday',
+    'month_name',
+    'user',
+    'workspace'
+] as const;
+
+/**
+ * Template category mapping for auto-categorization during migration
+ * Maps keywords in template names to category names
+ */
+export const TEMPLATE_CATEGORY_KEYWORDS: Record<string, string> = {
+    'meeting': 'Meetings',
+    'project': 'Projects',
+    'video': 'Content Creation',
+    'tutorial': 'Content Creation',
+    'research': 'Research'
+};
+
+/**
  * Month names for calendar and folder generation
  */
 export const MONTH_NAMES = [
