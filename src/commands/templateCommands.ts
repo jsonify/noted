@@ -228,8 +228,16 @@ async function showTemplatePreview(template: Template): Promise<boolean> {
         }
     }
 
-    // Close the preview document without save prompt - use revertAndCloseActiveEditor to avoid save dialog
-    await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+    // Close the preview document without save prompt
+    // Ensure we're closing the correct document even if user switched editors
+    if (!doc.isClosed) {
+        await vscode.window.showTextDocument(doc, {
+            preview: true,
+            viewColumn: editor.viewColumn,
+            preserveFocus: false
+        });
+        await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+    }
 
     return result === 'Accept & Save';
 }
@@ -273,8 +281,16 @@ async function showTemplateEnhancementPreview(
         }
     }
 
-    // Close the preview document without save prompt - use revertAndCloseActiveEditor to avoid save dialog
-    await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+    // Close the preview document without save prompt
+    // Ensure we're closing the correct document even if user switched editors
+    if (!doc.isClosed) {
+        await vscode.window.showTextDocument(doc, {
+            preview: true,
+            viewColumn: editor.viewColumn,
+            preserveFocus: false
+        });
+        await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+    }
 
     return result === 'Accept & Save';
 }

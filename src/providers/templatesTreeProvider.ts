@@ -17,6 +17,14 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
     private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
+    // Template type to friendly name mapping (static to avoid re-creation)
+    private static readonly TEMPLATE_NAME_MAP: Record<string, string> = {
+        'problem-solution': 'Problem/Solution',
+        'meeting': 'Meeting',
+        'research': 'Research',
+        'quick': 'Quick Note'
+    };
+
     // Optional services
     private pinnedNotesService?: PinnedNotesService;
     private bulkOperationsService?: BulkOperationsService;
@@ -281,13 +289,6 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
      * Convert template type to friendly display name
      */
     private getTemplateFriendlyName(templateType: string): string {
-        const nameMap: Record<string, string> = {
-            'problem-solution': 'Problem/Solution',
-            'meeting': 'Meeting',
-            'research': 'Research',
-            'quick': 'Quick Note'
-        };
-
-        return nameMap[templateType] || templateType;
+        return TemplatesTreeProvider.TEMPLATE_NAME_MAP[templateType] || templateType;
     }
 }
