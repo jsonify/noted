@@ -85,6 +85,14 @@ Identify orphaned notes (no incoming or outgoing links) and placeholder links (r
 
 Generate intelligent summaries of your notes using GitHub Copilot. Summarize single notes instantly or batch process multiple notes by time period (week, month, custom range). Summaries extract key insights, action items, and keywords with smart caching for instant access. Use custom prompt templates for different contexts (meeting notes, technical reviews, brainstorm sessions) and track summary versions over time. Auto-tag notes based on AI-extracted keywords.
 
+### Create multi-note workflows with bundles
+
+![Screenshot showing bundle creation interface with variable prompts, followed by multiple related notes created with automatic wiki-links between them](./assets/bundles.gif)
+
+Need to create multiple related notes at once? Bundles let you scaffold entire workflows in seconds. Use built-in bundles for common patterns (video tutorials, project planning, research papers) or create your own. Fill in a few variables like project name and date, and watch as Noted creates multiple notes with automatic wiki-links connecting them. Perfect for recurring workflows that would otherwise require manual setup every time.
+
+**📖 [Read the Bundles Guide](./docs/bundles.md)** for examples and step-by-step instructions.
+
 ---
 
 ## Quick Commands
@@ -299,6 +307,7 @@ pnpm dlx @vscode/vsce package
 - Advanced Search
 - Calendar View
 - AI Summarization (GitHub Copilot)
+- **[Multi-Note Workflow Bundles](./docs/bundles.md)** ⭐ NEW
 - Bulk Operations & Undo/Redo
 - Templates Guide
 - Pinned Notes & Archive
