@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { TreeItem, CategoryItem, TemplateActionItem, ActionButtonItem, SectionItem, NoteItem } from './treeItems';
-import { getAllCategories, getCategoryConfig } from '../services/categoryService';
+import { TreeItem, TemplateActionItem, ActionButtonItem, SectionItem, NoteItem } from './treeItems';
 import { getCustomTemplates } from '../services/templateService';
 import { getNotesPath } from '../services/configService';
 import { readDirectoryWithTypes, getFileStats } from '../services/fileSystemService';
@@ -11,7 +10,7 @@ import { BulkOperationsService } from '../services/bulkOperationsService';
 
 /**
  * Tree data provider for templates view
- * Shows category-based template organization with action buttons and recent notes
+ * Shows 3 organized folders: Standard (built-in), Custom (user/AI created), and Manage (settings)
  */
 export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
@@ -47,7 +46,7 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
 
     async getChildren(element?: TreeItem): Promise<TreeItem[]> {
         if (!element) {
-            // Root level - show primary action, categories, and recent notes at bottom
+            // Root level - show primary action, 3 template folders, and recent notes
             const items: TreeItem[] = [];
 
             // Primary action button at top
@@ -60,29 +59,19 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                 )
             );
 
-            // Get all categories (excluding Daily since it's in Journal panel)
-            const categories = getAllCategories();
-            for (const [categoryName, config] of Object.entries(categories)) {
-                if (categoryName === 'Daily') {
-                    continue; // Skip Daily - it's in Journal panel
-                }
+            // Standard Templates folder
+            items.push(
+                new SectionItem('Standard Templates', 'standard')
+            );
 
-                items.push(
-                    new CategoryItem(
-                        categoryName,
-                        config.icon,
-                        config.description || ''
-                    )
-                );
-            }
+            // Custom Templates folder
+            items.push(
+                new SectionItem('Custom Templates', 'custom')
+            );
 
             // Management section
             items.push(
-                new CategoryItem(
-                    'Manage',
-                    '⚙️',
-                    'Manage templates and settings'
-                )
+                new SectionItem('Manage', 'manage')
             );
 
             // Recent notes section at bottom
@@ -92,55 +81,57 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
         } else if (element instanceof SectionItem) {
             if (element.sectionType === 'recent') {
                 return this.getRecentNotes();
-            }
-        } else if (element instanceof CategoryItem) {
-            // Show template actions for this category
-            if (element.categoryName === 'Manage') {
+            } else if (element.sectionType === 'standard') {
+                return this.getStandardTemplates();
+            } else if (element.sectionType === 'custom') {
+                return this.getCustomTemplateItems();
+            } else if (element.sectionType === 'manage') {
                 return this.getManagementActions();
             }
-
-            const config = getCategoryConfig(element.categoryName);
-            if (!config) {
-                return [];
-            }
-
-            const items: TreeItem[] = [];
-
-            // Add built-in templates for this category
-            for (const templateType of config.templates) {
-                const label = this.getTemplateFriendlyName(templateType);
-                items.push(
-                    new TemplateActionItem(
-                        `+ ${label}`,
-                        templateType,
-                        'noted.createCategoryNote',
-                        `Create a new ${label.toLowerCase()} in ${config.folder}`
-                    )
-                );
-            }
-
-            // Check for custom templates
-            const customTemplates = await getCustomTemplates();
-            if (customTemplates.length > 0) {
-                // Add custom templates that might belong to this category
-                // For now, we'll show all custom templates under each category
-                // You could enhance this with metadata in custom templates
-                for (const customTemplate of customTemplates) {
-                    items.push(
-                        new TemplateActionItem(
-                            `+ ${customTemplate}`,
-                            customTemplate,
-                            'noted.createCategoryNote',
-                            `Create a new note from ${customTemplate} template`
-                        )
-                    );
-                }
-            }
-
-            return items;
         }
 
         return [];
+    }
+
+    /**
+     * Get built-in standard templates
+     */
+    private async getStandardTemplates(): Promise<TreeItem[]> {
+        const standardTemplates = [
+            { type: 'problem-solution', label: 'Problem/Solution' },
+            { type: 'meeting', label: 'Meeting' },
+            { type: 'research', label: 'Research' },
+            { type: 'quick', label: 'Quick Note' }
+        ];
+
+        return standardTemplates.map(template =>
+            new TemplateActionItem(
+                template.label,
+                template.type,
+                'noted.createCategoryNote',
+                `Create a new ${template.label.toLowerCase()}`
+            )
+        );
+    }
+
+    /**
+     * Get custom user/AI-created templates
+     */
+    private async getCustomTemplateItems(): Promise<TreeItem[]> {
+        const customTemplates = await getCustomTemplates();
+
+        if (customTemplates.length === 0) {
+            return [];
+        }
+
+        return customTemplates.map(templateName =>
+            new TemplateActionItem(
+                templateName,
+                templateName,
+                'noted.createCategoryNote',
+                `Create a new note from ${templateName} template`
+            )
+        );
     }
 
     /**
@@ -277,17 +268,4 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
             });
     }
 
-    /**
-     * Convert template type to friendly display name
-     */
-    private getTemplateFriendlyName(templateType: string): string {
-        const nameMap: Record<string, string> = {
-            'problem-solution': 'Problem/Solution',
-            'meeting': 'Meeting',
-            'research': 'Research',
-            'quick': 'Quick Note'
-        };
-
-        return nameMap[templateType] || templateType;
-    }
 }

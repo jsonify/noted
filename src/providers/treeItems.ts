@@ -23,6 +23,12 @@ export class SectionItem extends TreeItem {
             this.iconPath = new vscode.ThemeIcon('pin');
         } else if (sectionType === 'archive') {
             this.iconPath = new vscode.ThemeIcon('archive');
+        } else if (sectionType === 'standard') {
+            this.iconPath = new vscode.ThemeIcon('book');
+        } else if (sectionType === 'custom') {
+            this.iconPath = new vscode.ThemeIcon('file-code');
+        } else if (sectionType === 'manage') {
+            this.iconPath = new vscode.ThemeIcon('settings-gear');
         } else {
             this.iconPath = new vscode.ThemeIcon('folder');
         }
