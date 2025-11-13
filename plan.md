@@ -157,7 +157,7 @@ Enhanced template system with AI-powered generation and multi-note workflow bund
   - Automatic wiki-links between related notes
   - Post-creation actions: auto-open notes, custom messages
   - BundleService for centralized bundle management
-  - Automatic variable extraction from templates (fixed in v1.42.1)
+  - Automatic variable extraction from templates (from `.json` templates)
 
 - [x] **Example Bundles** (v1.42.0)
   - `video-tutorial.bundle.json` - Script + guide + resources
