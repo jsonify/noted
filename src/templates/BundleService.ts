@@ -13,6 +13,9 @@ export class BundleService {
 
     constructor() {
         const templatesPath = getTemplatesPath();
+        if (!templatesPath) {
+            throw new Error('Templates path not configured. Please set up your notes folder first.');
+        }
         this.bundlesPath = path.join(templatesPath, 'bundles');
     }
 
@@ -268,6 +271,9 @@ export class BundleService {
      */
     private async createNote(folder: string, noteName: string, content: string): Promise<string> {
         const notesPath = getNotesPath();
+        if (!notesPath) {
+            throw new Error('Notes path not configured. Please set up your notes folder first.');
+        }
         const fileFormat = getFileFormat();
 
         // Build full folder path
@@ -327,11 +333,28 @@ export class BundleService {
     }
 
     /**
+     * Delete a bundle file
+     */
+    async deleteBundle(bundleId: string): Promise<void> {
+        const bundlePath = path.join(this.bundlesPath, `${bundleId}.bundle.json`);
+
+        if (!await pathExists(bundlePath)) {
+            throw new Error(`Bundle not found: ${bundleId}`);
+        }
+
+        const fs = await import('fs');
+        await fs.promises.unlink(bundlePath);
+    }
+
+    /**
      * Extract variables from template files
      */
     private async extractVariablesFromTemplates(templateIds: string[]): Promise<TemplateVariable[]> {
         const variablesMap = new Map<string, TemplateVariable>();
         const templatesPath = getTemplatesPath();
+        if (!templatesPath) {
+            throw new Error('Templates path not configured. Please set up your notes folder first.');
+        }
 
         for (const templateId of templateIds) {
             const templatePath = path.join(templatesPath, `${templateId}.json`);
@@ -364,23 +387,37 @@ export class BundleService {
      * Create a bundle from selected templates
      */
     async createBundleFromTemplates(templateIds: string[]): Promise<TemplateBundle | null> {
-        // Get bundle metadata
-        const bundleName = await vscode.window.showInputBox({
-            prompt: 'Bundle name',
-            placeHolder: 'my-workflow',
+        // Get bundle display name
+        const bundleDisplayName = await vscode.window.showInputBox({
+            prompt: 'Enter a display name for the new bundle',
+            placeHolder: 'My Awesome Workflow',
             validateInput: (value) => {
                 if (!value) {
                     return 'Bundle name is required';
-                }
-                if (!/^[a-z0-9-_]+$/.test(value)) {
-                    return 'Bundle name can only contain lowercase letters, numbers, hyphens, and underscores';
                 }
                 return null;
             }
         });
 
-        if (!bundleName) {
+        if (!bundleDisplayName) {
             return null;
+        }
+
+        // Auto-generate ID from display name
+        const bundleId = bundleDisplayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+
+        // Check if bundle already exists
+        const bundlePath = path.join(this.bundlesPath, `${bundleId}.bundle.json`);
+        if (await pathExists(bundlePath)) {
+            const overwrite = await vscode.window.showWarningMessage(
+                `A bundle with ID "${bundleId}" already exists. Overwrite?`,
+                { modal: true },
+                'Overwrite',
+                'Cancel'
+            );
+            if (overwrite !== 'Overwrite') {
+                return null;
+            }
         }
 
         const bundleDescription = await vscode.window.showInputBox({
@@ -397,8 +434,8 @@ export class BundleService {
 
         // Create bundle structure
         const bundle: TemplateBundle = {
-            id: bundleName.toLowerCase().replace(/\s+/g, '-'),
-            name: bundleName,
+            id: bundleId,
+            name: bundleDisplayName,
             description: bundleDescription,
             version: '1.0.0',
             variables: variables,
@@ -410,7 +447,7 @@ export class BundleService {
             })),
             post_create: {
                 open_notes: [templateIds[0]], // Open first note by default
-                message: `Created notes from "${bundleName}" bundle`
+                message: `Created notes from "${bundleDisplayName}" bundle`
             }
         };
 
@@ -422,7 +459,7 @@ export class BundleService {
             : ' No variables found in templates.';
 
         vscode.window.showInformationMessage(
-            `Bundle "${bundleName}" created successfully!${variableInfo} Edit the bundle file to customize relationships.`
+            `Bundle "${bundleDisplayName}" created successfully!${variableInfo} Edit the bundle file to customize relationships.`
         );
 
         return bundle;

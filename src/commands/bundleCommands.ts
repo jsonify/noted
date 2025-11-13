@@ -250,12 +250,7 @@ export async function handleDeleteBundle(): Promise<void> {
         }
 
         // Delete bundle file
-        const fs = require('fs').promises;
-        const templatesPath = require('../services/configService').getTemplatesPath();
-        const bundlesPath = path.join(templatesPath, 'bundles');
-        const bundlePath = path.join(bundlesPath, `${selected.bundle.id}.bundle.json`);
-
-        await fs.unlink(bundlePath);
+        await bundleService.deleteBundle(selected.bundle.id);
 
         vscode.window.showInformationMessage(`Bundle "${selected.bundle.name}" deleted successfully`);
 
