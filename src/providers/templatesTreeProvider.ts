@@ -20,6 +20,14 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
     private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
+    // Standard built-in templates (constant data)
+    private static readonly STANDARD_TEMPLATES = [
+        { type: 'problem-solution', label: 'Problem/Solution' },
+        { type: 'meeting', label: 'Meeting' },
+        { type: 'research', label: 'Research' },
+        { type: 'quick', label: 'Quick Note' }
+    ];
+
     // Optional services
     private pinnedNotesService?: PinnedNotesService;
     private bulkOperationsService?: BulkOperationsService;
@@ -111,14 +119,7 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
      * Get built-in standard templates
      */
     private async getStandardTemplates(): Promise<TreeItem[]> {
-        const standardTemplates = [
-            { type: 'problem-solution', label: 'Problem/Solution' },
-            { type: 'meeting', label: 'Meeting' },
-            { type: 'research', label: 'Research' },
-            { type: 'quick', label: 'Quick Note' }
-        ];
-
-        return standardTemplates.map(template =>
+        return TemplatesTreeProvider.STANDARD_TEMPLATES.map(template =>
             new TemplateActionItem(
                 template.label,
                 template.type,
