@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { TreeItem, CategoryItem, TemplateActionItem, ActionButtonItem, SectionItem, NoteItem } from './treeItems';
-import { getAllCategories, getCategoryConfig } from '../services/categoryService';
+import { TreeItem, TemplateActionItem, ActionButtonItem, SectionItem, NoteItem } from './treeItems';
 import { getCustomTemplates } from '../services/templateService';
 import { getNotesPath } from '../services/configService';
 import { readDirectoryWithTypes, getFileStats } from '../services/fileSystemService';
@@ -11,19 +10,23 @@ import { BulkOperationsService } from '../services/bulkOperationsService';
 
 /**
  * Tree data provider for templates view
- * Shows category-based template organization with action buttons and recent notes
+ * Features:
+ * - Template Browser: Primary interface for browsing, searching, and managing templates
+ * - Standard Templates: Built-in templates (Problem/Solution, Meeting, Research, Quick Note)
+ * - Custom Templates: User/AI-created templates
+ * - Manage: AI features and utilities (CRUD operations moved to Template Browser)
  */
 export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
-    // Template type to friendly name mapping (static to avoid re-creation)
-    private static readonly TEMPLATE_NAME_MAP: Record<string, string> = {
-        'problem-solution': 'Problem/Solution',
-        'meeting': 'Meeting',
-        'research': 'Research',
-        'quick': 'Quick Note'
-    };
+    // Standard built-in templates (constant data)
+    private static readonly STANDARD_TEMPLATES = [
+        { type: 'problem-solution', label: 'Problem/Solution' },
+        { type: 'meeting', label: 'Meeting' },
+        { type: 'research', label: 'Research' },
+        { type: 'quick', label: 'Quick Note' }
+    ];
 
     // Optional services
     private pinnedNotesService?: PinnedNotesService;
@@ -55,42 +58,42 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
 
     async getChildren(element?: TreeItem): Promise<TreeItem[]> {
         if (!element) {
-            // Root level - show primary action, categories, and recent notes at bottom
+            // Root level - show primary actions, 3 template folders, and recent notes
             const items: TreeItem[] = [];
 
-            // Primary action button at top
+            // Template Browser - primary interface for browsing and managing templates
+            items.push(
+                new ActionButtonItem(
+                    '📖 Template Browser',
+                    'noted.showTemplateBrowser',
+                    'library',
+                    'Browse, search, and manage all templates with advanced features'
+                )
+            );
+
+            // Quick create action
             items.push(
                 new ActionButtonItem(
                     '+ New Note...',
                     'noted.openWithTemplate',
                     'add',
-                    'Create a new note from template picker'
+                    'Quick create a new note from template picker'
                 )
             );
 
-            // Get all categories (excluding Daily since it's in Journal panel)
-            const categories = getAllCategories();
-            for (const [categoryName, config] of Object.entries(categories)) {
-                if (categoryName === 'Daily') {
-                    continue; // Skip Daily - it's in Journal panel
-                }
+            // Standard Templates folder
+            items.push(
+                new SectionItem('Standard Templates', 'standard')
+            );
 
-                items.push(
-                    new CategoryItem(
-                        categoryName,
-                        config.icon,
-                        config.description || ''
-                    )
-                );
-            }
+            // Custom Templates folder
+            items.push(
+                new SectionItem('Custom Templates', 'custom')
+            );
 
             // Management section
             items.push(
-                new CategoryItem(
-                    'Manage',
-                    '⚙️',
-                    'Manage templates and settings'
-                )
+                new SectionItem('Manage', 'manage')
             );
 
             // Recent notes section at bottom
@@ -100,59 +103,55 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
         } else if (element instanceof SectionItem) {
             if (element.sectionType === 'recent') {
                 return this.getRecentNotes();
-            }
-        } else if (element instanceof CategoryItem) {
-            // Show template actions for this category
-            if (element.categoryName === 'Manage') {
+            } else if (element.sectionType === 'standard') {
+                return this.getStandardTemplates();
+            } else if (element.sectionType === 'custom') {
+                return this.getCustomTemplateItems();
+            } else if (element.sectionType === 'manage') {
                 return this.getManagementActions();
             }
-
-            const config = getCategoryConfig(element.categoryName);
-            if (!config) {
-                return [];
-            }
-
-            const items: TreeItem[] = [];
-
-            // Add built-in templates for this category
-            for (const templateType of config.templates) {
-                const label = this.getTemplateFriendlyName(templateType);
-                items.push(
-                    new TemplateActionItem(
-                        `+ ${label}`,
-                        templateType,
-                        'noted.createCategoryNote',
-                        `Create a new ${label.toLowerCase()} in ${config.folder}`
-                    )
-                );
-            }
-
-            // Check for custom templates
-            const customTemplates = await getCustomTemplates();
-            if (customTemplates.length > 0) {
-                // Add custom templates that might belong to this category
-                // For now, we'll show all custom templates under each category
-                // You could enhance this with metadata in custom templates
-                for (const customTemplate of customTemplates) {
-                    items.push(
-                        new TemplateActionItem(
-                            `+ ${customTemplate}`,
-                            customTemplate,
-                            'noted.createCategoryNote',
-                            `Create a new note from ${customTemplate} template`
-                        )
-                    );
-                }
-            }
-
-            return items;
         }
 
         return [];
     }
 
     /**
+     * Get built-in standard templates
+     */
+    private async getStandardTemplates(): Promise<TreeItem[]> {
+        return TemplatesTreeProvider.STANDARD_TEMPLATES.map(template =>
+            new TemplateActionItem(
+                template.label,
+                template.type,
+                'noted.createCategoryNote',
+                `Create a new ${template.label.toLowerCase()}`
+            )
+        );
+    }
+
+    /**
+     * Get custom user/AI-created templates
+     */
+    private async getCustomTemplateItems(): Promise<TreeItem[]> {
+        const customTemplates = await getCustomTemplates();
+
+        if (customTemplates.length === 0) {
+            return [];
+        }
+
+        return customTemplates.map(templateName =>
+            new TemplateActionItem(
+                templateName,
+                templateName,
+                'noted.createCategoryNote',
+                `Create a new note from ${templateName} template`
+            )
+        );
+    }
+
+    /**
      * Get management action items
+     * Note: CRUD operations (Create/Edit/Delete/Duplicate) are available in Template Browser
      */
     private async getManagementActions(): Promise<TreeItem[]> {
         return [
@@ -169,46 +168,22 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                 'Improve an existing template with AI suggestions'
             ),
             new ActionButtonItem(
-                '⚙️  Select AI Model',
+                '⚙️ Select AI Model',
                 'noted.selectAIModel',
                 'settings-gear',
                 'Choose which AI model to use for template generation'
             ),
             new ActionButtonItem(
-                'Create Template',
-                'noted.createCustomTemplate',
-                'add',
-                'Create a new custom template'
-            ),
-            new ActionButtonItem(
-                'Edit Template',
-                'noted.editCustomTemplate',
-                'edit',
-                'Edit an existing template'
-            ),
-            new ActionButtonItem(
-                'Delete Template',
-                'noted.deleteCustomTemplate',
-                'trash',
-                'Delete a custom template'
-            ),
-            new ActionButtonItem(
-                'Duplicate Template',
-                'noted.duplicateCustomTemplate',
-                'copy',
-                'Duplicate an existing template'
-            ),
-            new ActionButtonItem(
                 'Template Variables',
                 'noted.previewTemplateVariables',
-                'question',
-                'View available template variables'
+                'symbol-variable',
+                'View all available template variables and their usage'
             ),
             new ActionButtonItem(
                 'Open Templates Folder',
                 'noted.openTemplatesFolder',
                 'folder-opened',
-                'Open the templates folder in system explorer'
+                'Open the templates folder in system file explorer'
             )
         ];
     }
@@ -283,12 +258,5 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
 
                 return item;
             });
-    }
-
-    /**
-     * Convert template type to friendly display name
-     */
-    private getTemplateFriendlyName(templateType: string): string {
-        return TemplatesTreeProvider.TEMPLATE_NAME_MAP[templateType] || templateType;
     }
 }
