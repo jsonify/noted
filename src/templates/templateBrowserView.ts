@@ -4,6 +4,10 @@ import { getTemplatesPath, getFileFormat } from '../services/configService';
 import { pathExists, readFile, readDirectory, writeFile } from '../services/fileSystemService';
 import { Template } from './TemplateTypes';
 import { BUILT_IN_TEMPLATES } from '../constants';
+import { TemplatesTreeProvider } from '../providers/templatesTreeProvider';
+
+// Module-level reference to templates tree provider for refreshing
+let templatesProvider: TemplatesTreeProvider | undefined;
 
 /**
  * Template display info for the browser
@@ -26,7 +30,10 @@ interface TemplateDisplayInfo {
 /**
  * Show the template browser webview
  */
-export async function showTemplateBrowser(context: vscode.ExtensionContext): Promise<void> {
+export async function showTemplateBrowser(context: vscode.ExtensionContext, provider?: TemplatesTreeProvider): Promise<void> {
+    // Store reference to templates provider for refreshing after operations
+    templatesProvider = provider;
+
     const templatesPath = getTemplatesPath();
 
     const panel = vscode.window.createWebviewPanel(
@@ -69,11 +76,13 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext): Pro
                 case 'deleteTemplate':
                     await handleDeleteTemplate(message.templateId);
                     await refreshWebviewTemplates();
+                    templatesProvider?.refresh(); // Refresh sidebar tree view
                     break;
 
                 case 'duplicateTemplate':
                     await handleDuplicateTemplate(message.templateId);
                     await refreshWebviewTemplates();
+                    templatesProvider?.refresh(); // Refresh sidebar tree view
                     break;
 
                 case 'exportTemplate':

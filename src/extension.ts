@@ -1808,7 +1808,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Phase 4: Template Browser UI
     let showTemplateBrowserCmd = vscode.commands.registerCommand('noted.showTemplateBrowser', async () => {
-        await showTemplateBrowser(context);
+        await showTemplateBrowser(context, templatesProvider);
     });
 
     // Command to setup custom folder
