@@ -273,7 +273,7 @@ export async function handleDeleteBundle(): Promise<void> {
  * Open a bundle file in the editor
  */
 async function openBundleFile(bundleId: string): Promise<void> {
-    const templatesPath = require('../services/configService').getTemplatesPath();
+    const templatesPath = getTemplatesPath();
     const bundlesPath = path.join(templatesPath, 'bundles');
     const bundlePath = path.join(bundlesPath, `${bundleId}.bundle.json`);
 
