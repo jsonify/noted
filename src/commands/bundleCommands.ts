@@ -3,6 +3,7 @@ import * as path from 'path';
 import { bundleService } from '../templates/BundleService';
 import { TemplateBundle } from '../templates/TemplateTypes';
 import { getCustomTemplates } from '../services/templateService';
+import { getTemplatesPath } from '../services/configService';
 
 /**
  * Command: Create notes from a bundle
@@ -269,6 +270,10 @@ export async function handleDeleteBundle(): Promise<void> {
  */
 async function openBundleFile(bundleId: string): Promise<void> {
     const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        vscode.window.showErrorMessage('Templates path not configured. Please set up your notes folder first.');
+        return;
+    }
     const bundlesPath = path.join(templatesPath, 'bundles');
     const bundlePath = path.join(bundlesPath, `${bundleId}.bundle.json`);
 
