@@ -149,6 +149,24 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
     private async getManagementActions(): Promise<TreeItem[]> {
         return [
             new ActionButtonItem(
+                '✨ Create with AI',
+                'noted.createTemplateWithAI',
+                'sparkle',
+                'Generate a template using AI from your description'
+            ),
+            new ActionButtonItem(
+                '✨ Enhance with AI',
+                'noted.enhanceTemplate',
+                'sparkle',
+                'Improve an existing template with AI suggestions'
+            ),
+            new ActionButtonItem(
+                '⚙️  Select AI Model',
+                'noted.selectAIModel',
+                'settings-gear',
+                'Choose which AI model to use for template generation'
+            ),
+            new ActionButtonItem(
                 'Create Template',
                 'noted.createCustomTemplate',
                 'add',

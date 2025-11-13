@@ -76,6 +76,11 @@ import {
     handleSuggestTags
 } from './commands/autoTagCommands';
 import {
+    handleCreateTemplateWithAI,
+    handleEnhanceTemplate,
+    handleSelectAIModel
+} from './commands/templateCommands';
+import {
     handleCreatePromptTemplate,
     handleEditPromptTemplate,
     handleDeletePromptTemplate,
@@ -1762,6 +1767,17 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // Phase 1: AI-Powered Template Creation Commands
+    let createTemplateWithAI = vscode.commands.registerCommand('noted.createTemplateWithAI', async () => {
+        await handleCreateTemplateWithAI();
+        templatesProvider.refresh(); // Refresh to show new template
+    });
+    let enhanceTemplate = vscode.commands.registerCommand('noted.enhanceTemplate', async () => {
+        await handleEnhanceTemplate();
+        templatesProvider.refresh(); // Refresh to show updated template
+    });
+    let selectAIModel = vscode.commands.registerCommand('noted.selectAIModel', handleSelectAIModel);
+
     // Command to setup custom folder
     let setupCustomFolder = vscode.commands.registerCommand('noted.setupCustomFolder', async () => {
         try {
@@ -2044,6 +2060,7 @@ export function activate(context: vscode.ExtensionContext) {
         setupDefaultFolder, setupCustomFolder, showNotesConfig,
         createCustomTemplate, editCustomTemplateCmd, deleteCustomTemplateCmd,
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
+        createTemplateWithAI, enhanceTemplate, selectAIModel,
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph, showActivity,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive, bulkMerge,

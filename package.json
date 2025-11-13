@@ -234,6 +234,21 @@
         "icon": "$(folder-opened)"
       },
       {
+        "command": "noted.createTemplateWithAI",
+        "title": "Noted: Create Template with AI",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "noted.enhanceTemplate",
+        "title": "Noted: Enhance Template with AI",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "noted.selectAIModel",
+        "title": "Noted: Select AI Model",
+        "icon": "$(settings-gear)"
+      },
+      {
         "command": "noted.showConfig",
         "title": "Noted: Show Configuration (Debug)"
       },
@@ -1223,6 +1238,36 @@
           "type": "boolean",
           "default": false,
           "description": "Enable fuzzy matching to find results with typos"
+        },
+        "noted.templates.useAI": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use AI to enhance template creation and suggestions"
+        },
+        "noted.templates.defaultCategory": {
+          "type": "string",
+          "default": "Custom",
+          "description": "Default category for new custom templates"
+        },
+        "noted.templates.enableBundles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable multi-note workflow bundles (Phase 2 feature)"
+        },
+        "noted.templates.showBrowser": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show template browser instead of quick pick (Phase 4 feature)"
+        },
+        "noted.templates.preferredModel": {
+          "type": "string",
+          "default": "",
+          "description": "Preferred AI model ID for template generation (empty = automatic selection). Use 'Noted: Select AI Model' command to choose from available models."
+        },
+        "noted.templates.defaultAuthor": {
+          "type": "string",
+          "default": "",
+          "description": "Default author name for generated templates (leave empty to use system username)"
         }
       }
     }

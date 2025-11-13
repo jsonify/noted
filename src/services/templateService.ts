@@ -4,6 +4,7 @@ import { BUILT_IN_TEMPLATES, TEMPLATE_PLACEHOLDERS, DEFAULTS, DAY_NAMES, MONTH_N
 import { getTemplatesPath, getFileFormat } from './configService';
 import { pathExists, readFile, readDirectory } from './fileSystemService';
 import { formatDateForNote, formatTimeForNote } from '../utils/dateHelpers';
+import { Template } from '../templates/TemplateTypes';
 import * as os from 'os';
 
 /**
@@ -73,6 +74,22 @@ export async function generateTemplate(templateType: string | undefined, date: D
     if (templatesPath && templateType) {
         try {
             if (await pathExists(templatesPath)) {
+                // Try JSON template first (new AI-generated format)
+                const jsonPath = path.join(templatesPath, `${templateType}.json`);
+                try {
+                    const jsonContent = await readFile(jsonPath);
+                    const template: Template = JSON.parse(jsonContent);
+
+                    // Replace placeholders in template content
+                    const processedContent = replacePlaceholders(template.content, date, filename);
+
+                    // JSON templates include their own frontmatter
+                    return processedContent;
+                } catch {
+                    // JSON template doesn't exist, try legacy format
+                }
+
+                // Try legacy .txt/.md template
                 const fileFormat = getFileFormat();
                 const customTemplatePath = path.join(templatesPath, `${templateType}.${fileFormat}`);
 
@@ -121,9 +138,12 @@ export async function getCustomTemplates(): Promise<string[]> {
     try {
         if (await pathExists(templatesPath)) {
             const files = await readDirectory(templatesPath);
-            return files
-                .filter(f => f.endsWith('.txt') || f.endsWith('.md'))
+            const templates = files
+                .filter(f => f.endsWith('.txt') || f.endsWith('.md') || f.endsWith('.json'))
                 .map(f => path.basename(f, path.extname(f)));
+
+            // Remove duplicates (in case both .json and .md/.txt exist with same name)
+            return [...new Set(templates)];
         }
     } catch {
         return [];
