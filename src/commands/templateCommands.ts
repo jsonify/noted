@@ -205,7 +205,7 @@ async function showTemplatePreview(template: Template): Promise<boolean> {
     });
 
     const editor = await vscode.window.showTextDocument(doc, {
-        preview: false, // Don't use preview mode to avoid save prompts
+        preview: true, // Use preview mode to avoid save prompts
         viewColumn: vscode.ViewColumn.Beside
     });
 
@@ -228,17 +228,8 @@ async function showTemplatePreview(template: Template): Promise<boolean> {
         }
     }
 
-    // Close the preview document without save prompt
-    const uri = editor.document.uri;
-    await vscode.window.showTextDocument(editor.document, { preview: true }); // Switch to preview mode
-    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-
-    // Delete from workspace if it's an untitled document
-    try {
-        await vscode.workspace.fs.delete(uri, { useTrash: false });
-    } catch {
-        // Ignore errors - untitled documents don't need deletion
-    }
+    // Close the preview document without save prompt - use revertAndCloseActiveEditor to avoid save dialog
+    await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
 
     return result === 'Accept & Save';
 }
@@ -259,7 +250,7 @@ async function showTemplateEnhancementPreview(
     });
 
     const editor = await vscode.window.showTextDocument(doc, {
-        preview: false, // Don't use preview mode to avoid save prompts
+        preview: true, // Use preview mode to avoid save prompts
         viewColumn: vscode.ViewColumn.Beside
     });
 
@@ -282,17 +273,8 @@ async function showTemplateEnhancementPreview(
         }
     }
 
-    // Close the preview document without save prompt
-    const uri = editor.document.uri;
-    await vscode.window.showTextDocument(editor.document, { preview: true }); // Switch to preview mode
-    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-
-    // Delete from workspace if it's an untitled document
-    try {
-        await vscode.workspace.fs.delete(uri, { useTrash: false });
-    } catch {
-        // Ignore errors - untitled documents don't need deletion
-    }
+    // Close the preview document without save prompt - use revertAndCloseActiveEditor to avoid save dialog
+    await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
 
     return result === 'Accept & Save';
 }
