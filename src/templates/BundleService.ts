@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { TemplateBundle, BundleNote, TemplateVariable } from './TemplateTypes';
+import { TemplateBundle, BundleNote, TemplateVariable, Template } from './TemplateTypes';
 import { getNotesPath, getTemplatesPath, getFileFormat } from '../services/configService';
 import { pathExists, readFile, writeFile, createDirectory } from '../services/fileSystemService';
 import { generateTemplate } from '../services/templateService';
@@ -327,6 +327,40 @@ export class BundleService {
     }
 
     /**
+     * Extract variables from template files
+     */
+    private async extractVariablesFromTemplates(templateIds: string[]): Promise<TemplateVariable[]> {
+        const variablesMap = new Map<string, TemplateVariable>();
+        const templatesPath = getTemplatesPath();
+
+        for (const templateId of templateIds) {
+            const templatePath = path.join(templatesPath, `${templateId}.json`);
+
+            try {
+                if (!await pathExists(templatePath)) {
+                    continue;
+                }
+
+                const content = await readFile(templatePath);
+                const template: Template = JSON.parse(content);
+
+                // Merge variables, avoiding duplicates by name
+                if (template.variables && Array.isArray(template.variables)) {
+                    for (const variable of template.variables) {
+                        if (!variablesMap.has(variable.name)) {
+                            variablesMap.set(variable.name, variable);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(`Failed to extract variables from template ${templateId}:`, error);
+            }
+        }
+
+        return Array.from(variablesMap.values());
+    }
+
+    /**
      * Create a bundle from selected templates
      */
     async createBundleFromTemplates(templateIds: string[]): Promise<TemplateBundle | null> {
@@ -358,13 +392,16 @@ export class BundleService {
             return null;
         }
 
+        // Extract variables from templates
+        const variables = await this.extractVariablesFromTemplates(templateIds);
+
         // Create bundle structure
         const bundle: TemplateBundle = {
             id: bundleName.toLowerCase().replace(/\s+/g, '-'),
             name: bundleName,
             description: bundleDescription,
             version: '1.0.0',
-            variables: [],
+            variables: variables,
             notes: templateIds.map(templateId => ({
                 name: templateId,
                 template: templateId,
@@ -380,8 +417,12 @@ export class BundleService {
         // Save bundle
         await this.saveBundle(bundle);
 
+        const variableInfo = variables.length > 0
+            ? ` Found ${variables.length} variable(s).`
+            : ' No variables found in templates.';
+
         vscode.window.showInformationMessage(
-            `Bundle "${bundleName}" created successfully! Edit the bundle file to customize variables and relationships.`
+            `Bundle "${bundleName}" created successfully!${variableInfo} Edit the bundle file to customize relationships.`
         );
 
         return bundle;

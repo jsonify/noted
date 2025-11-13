@@ -497,24 +497,17 @@ If you don't use bundles:
 
 ### Not Getting Prompted for Variables
 
-**Problem**: When I run "Create Notes from Bundle", it just opens the JSON file instead of prompting me for variables
+**Problem**: When I run "Create Notes from Bundle", no variable prompts appear
 
-**Solution**: Your bundle's `"variables"` array is empty or missing!
+**Solution**: Your bundle's `"variables"` array is empty!
 
 **What happened:**
-- You used `Create Bundle from Templates` to convert an AI template
-- The command has a bug - it doesn't copy variables from the template
-- Result: Empty `"variables": []` means nothing to prompt for
+- Your bundle has an empty `"variables": []` array
+- Without variables defined, there's nothing to prompt for
 
 **How to fix:**
 1. Run: `Noted: Edit Bundle` → select your bundle
-2. Find your original template file (e.g., `application-tutorial-walkthrough.json`)
-3. Copy the entire `"variables"` array from the template
-4. Paste it into your bundle, replacing the empty `"variables": []`
-5. Save and close
-6. Try again: `Create Notes from Bundle` - now you'll get prompted! ✨
-
-**Example:** If your template has:
+2. Add variables to the `"variables"` array:
 ```json
 "variables": [
   {
@@ -525,8 +518,10 @@ If you don't use bundles:
   }
 ]
 ```
+3. Save and close
+4. Try again: `Create Notes from Bundle` - now you'll get prompted! ✨
 
-Copy that entire section into your bundle.
+**Note**: If you created your bundle from AI-generated templates using `Create Bundle from Templates`, the variables should be automatically extracted. If they're missing, the templates themselves may not have had variables defined.
 
 ### Variables Not Replacing
 
