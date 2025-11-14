@@ -520,6 +520,123 @@ Default: Automatic (Claude > GPT > Gemini)
 
 **Result**: Context gives you 3x more actionable, technical detail!
 
+### Integration Guide
+
+**How generated stories work with existing tag/link systems**
+
+User stories integrate seamlessly with Noted's existing features:
+
+**Tags System**:
+- Generated stories automatically include `[user-story]` tag in frontmatter
+- Stories are tagged with `status: draft` by default
+- Use tag autocomplete to add custom tags: `#feature`, `#infrastructure`, `#bug-fix`
+- Find all stories: Use Tags view → filter by `user-story`
+- Rename/merge tags: Right-click any tag → Rename Tag (affects all stories)
+
+**Wiki Links**:
+- Add `[[dependencies]]` to link prerequisite stories or notes
+- Reference design docs: `[[architecture-diagram]]`, `[[api-spec]]`
+- Link to related stories: `[[user-story-authentication]]`
+- Backlinks panel automatically shows which stories reference this one
+- Graph view visualizes story dependencies
+
+**Smart Collections**:
+- Filter stories by status: Create collection with `status: draft`
+- Group by priority: Use `priority: high` in frontmatter
+- Track sprint stories: Add `sprint: 2025-11` tag
+
+**Example Integration**:
+```markdown
+---
+tags: [user-story, infrastructure, gcp]
+created: 2025-11-13T22:30:26.883Z
+status: in-progress
+priority: high
+sprint: 2025-12
+---
+
+# User Story: Establish GCP Project
+
+## Dependencies
+- [[network-design-doc]] - IP addressing scheme
+- [[security-requirements]] - Firewall rules
+- [[jfrog-integration-guide]] - VPC peering setup
+
+## Related Stories
+- [[user-story-gke-cluster]] - Depends on this networking
+- [[user-story-monitoring]] - Uses same GCP project
+
+Tags: #gcp #networking #infrastructure
+```
+
+**Workflow Tips**:
+- Create story → Add wiki links → View graph → See dependencies
+- Tag stories by epic: `#epic-authentication`, `#epic-infrastructure`
+- Use Connections panel to track which stories reference this one
+- Archive completed stories to keep workspace clean
+
+### FAQ
+
+**Q: When should I provide context?**
+
+A: Provide context when:
+- ✅ **Complex infrastructure**: Cloud setup, networking, security configs
+- ✅ **Integrations**: Connecting to external APIs or services
+- ✅ **Specific tech stack**: Using particular frameworks, languages, or tools
+- ✅ **Architecture constraints**: Security, compliance, scalability requirements
+- ✅ **Multiple systems**: Stories spanning databases, backends, frontends
+
+Skip context when:
+- ❌ Simple features: "Add a logout button" (description alone is enough)
+- ❌ Obvious tech: "Fix typo in docs" (no technical depth needed)
+- ❌ UI-only changes: "Change button color to blue"
+
+**Rule of thumb**: If you'd need to explain your architecture to a new team member, provide that as context!
+
+---
+
+**Q: Can I edit the generated story?**
+
+A: **Yes, absolutely!** Generated stories are standard notes—edit freely:
+
+**How to edit**:
+1. Click the generated story in Notes tree view
+2. Edit directly in VS Code editor
+3. Changes auto-save like any note
+
+**What to edit**:
+- ✏️ **Tasks**: Add/remove/reorder checklist items
+- ✏️ **Acceptance Criteria**: Make criteria more/less specific
+- ✏️ **Description**: Refine the "As a... I want... So that..." statement
+- ✏️ **Estimate**: Adjust time based on team velocity
+- ✏️ **Dependencies**: Add forgotten prerequisites
+- ✏️ **Tags**: Add custom tags like `#sprint-12`, `#team-backend`
+- ✏️ **Links**: Add wiki links to related notes: `[[design-doc]]`
+
+**Pro tips**:
+- Use AI output as a **starting point**, not final draft
+- Break large stories into smaller ones (copy/paste tasks)
+- Add team-specific details AI couldn't know
+- Update tasks as you complete them: `- [x] Completed task`
+- Add notes/findings under tasks during implementation
+
+**Example edit**:
+```markdown
+### Tasks (AI Generated)
+- [ ] Configure VPC networks for GCP region deployment
+- [ ] Set up VPC firewall rules for inter-service communication
+
+### Tasks (After Editing)
+- [x] Configure VPC networks for GCP region deployment
+  - Note: Used CIDR 10.0.0.0/16 for dev, 10.1.0.0/16 for prod
+- [ ] Set up VPC firewall rules for inter-service communication
+  - Added: Allow SSH from bastion host (10.0.1.0/24)
+  - Added: Allow HTTPS from ALB subnet
+  - See: [[firewall-rules-doc]] for full config
+```
+
+**Remember**: AI gives you ~80% of the story—you add the final 20% that makes it perfect for your team!
+
 ## Related Features
 
 - [Daily Notes](/noted/posts/daily-notes/) - Quick daily note access
