@@ -120,7 +120,7 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
      * Get built-in standard templates
      */
     private async getStandardTemplates(): Promise<TreeItem[]> {
-        const items = TemplatesTreeProvider.STANDARD_TEMPLATES.map(template =>
+        const items: TreeItem[] = TemplatesTreeProvider.STANDARD_TEMPLATES.map(template =>
             new TemplateActionItem(
                 template.label,
                 template.type,
