@@ -781,8 +781,7 @@ export async function handleCreateUserStoryWithAI(): Promise<void> {
         if (hasContext === 'Yes') {
             const contextInput = await vscode.window.showInputBox({
                 prompt: 'Paste additional context (architecture details, dependencies, integration points, etc.)',
-                placeHolder: 'e.g., "Integration with JFrog Cloud, requires VPN to on-prem AD, uses Cloud NAT, DataProc, GKE..."',
-                validateInput: null
+                placeHolder: 'e.g., "Integration with JFrog Cloud, requires VPN to on-prem AD, uses Cloud NAT, DataProc, GKE..."'
             });
 
             if (contextInput === undefined) {
