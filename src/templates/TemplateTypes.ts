@@ -30,6 +30,11 @@ export interface AIGenerationConfig {
 }
 
 /**
+ * Template difficulty levels
+ */
+export type TemplateDifficulty = 'beginner' | 'intermediate' | 'advanced';
+
+/**
  * Complete template definition
  */
 export interface Template {
@@ -40,6 +45,7 @@ export interface Template {
     tags: string[];
     version: string;
     author?: string;
+    difficulty?: TemplateDifficulty;
 
     variables: TemplateVariable[];
 

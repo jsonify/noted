@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { getTemplatesPath, getFileFormat } from '../services/configService';
 import { pathExists, readFile, readDirectory, writeFile } from '../services/fileSystemService';
-import { Template } from './TemplateTypes';
+import { Template, TemplateDifficulty } from './TemplateTypes';
 import { BUILT_IN_TEMPLATES } from '../constants';
 import { TemplatesTreeProvider } from '../providers/templatesTreeProvider';
 
@@ -25,6 +25,7 @@ interface TemplateDisplayInfo {
     modified?: string;
     isBuiltIn: boolean;
     fileType: 'json' | 'txt' | 'md' | 'builtin';
+    difficulty?: TemplateDifficulty;
 }
 
 /**
@@ -179,7 +180,8 @@ async function loadAllTemplates(): Promise<TemplateDisplayInfo[]> {
                             created: template.created,
                             modified: template.modified,
                             isBuiltIn: false,
-                            fileType: 'json'
+                            fileType: 'json',
+                            difficulty: template.difficulty
                         });
                     } catch (error) {
                         vscode.window.showWarningMessage(`Failed to parse template file: ${file}`);
@@ -483,6 +485,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             padding: 20px;
             cursor: pointer;
             transition: all 0.2s;
+            position: relative;
         }
 
         .template-card:hover {
@@ -497,20 +500,88 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             margin-bottom: 12px;
         }
 
+        .template-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .template-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
         .template-title {
             font-size: 16px;
             font-weight: 600;
-            margin-bottom: 4px;
+        }
+
+        .template-badges {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
         }
 
         .template-category {
-            font-size: 12px;
-            color: var(--vscode-descriptionForeground);
+            font-size: 11px;
             display: inline-block;
-            padding: 2px 8px;
+            padding: 3px 8px;
             background: var(--vscode-badge-background);
             color: var(--vscode-badge-foreground);
             border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            font-size: 10px;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-new {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status-popular {
+            background: #FF9800;
+            color: white;
+        }
+
+        .difficulty-badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .difficulty-beginner {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .difficulty-intermediate {
+            background: #FF9800;
+            color: white;
+        }
+
+        .difficulty-advanced {
+            background: #F44336;
+            color: white;
+        }
+
+        .filetype-badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            font-family: monospace;
         }
 
         .template-description {
@@ -667,6 +738,48 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 .replace(/'/g, "&#039;");
         }
 
+        // Get icon for template based on category and file type
+        function getTemplateIcon(template) {
+            const iconMap = {
+                'Built-in': '⚡',
+                'Custom': '✏️',
+                'Documentation': '📄',
+                'Project': '📁',
+                'Meeting': '🤝',
+                'Research': '🔬',
+                'Planning': '📋',
+                'Development': '💻',
+                'Design': '🎨',
+                'General': '📝'
+            };
+            return iconMap[template.category] || '📝';
+        }
+
+        // Determine if template is "new" (created within last 7 days)
+        function isNew(template) {
+            if (!template.created) return false;
+            const created = new Date(template.created);
+            const now = new Date();
+            const daysDiff = (now - created) / (1000 * 60 * 60 * 24);
+            return daysDiff <= 7;
+        }
+
+        // Determine if template is "popular" (usage_count > 10)
+        function isPopular(template) {
+            return template.usage_count && template.usage_count >= 10;
+        }
+
+        // Get file type display text
+        function getFileTypeBadge(fileType) {
+            const badges = {
+                'builtin': 'BUILT-IN',
+                'json': '.json',
+                'txt': '.txt',
+                'md': '.md'
+            };
+            return badges[fileType] || fileType;
+        }
+
         // Initialize
         renderFilters();
         renderStats();
@@ -746,12 +859,25 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 return;
             }
 
-            container.innerHTML = filteredTemplates.map(t => \`
+            container.innerHTML = filteredTemplates.map(t => {
+                const showNew = isNew(t);
+                const showPopular = isPopular(t);
+
+                return \`
                 <div class="template-card">
                     <div class="template-header">
-                        <div>
-                            <div class="template-title">\${escapeHtml(t.name)}</div>
-                            <span class="template-category">\${escapeHtml(t.category)}</span>
+                        <div style="flex: 1;">
+                            <div class="template-title-row">
+                                <span class="template-icon">\${getTemplateIcon(t)}</span>
+                                <div class="template-title">\${escapeHtml(t.name)}</div>
+                            </div>
+                            <div class="template-badges">
+                                <span class="template-category">\${escapeHtml(t.category)}</span>
+                                <span class="filetype-badge">\${getFileTypeBadge(t.fileType)}</span>
+                                \${t.difficulty ? \`<span class="difficulty-badge difficulty-\${t.difficulty}">\${escapeHtml(t.difficulty.toUpperCase())}</span>\` : ''}
+                                \${showNew ? '<span class="status-badge status-new">NEW</span>' : ''}
+                                \${showPopular ? '<span class="status-badge status-popular">POPULAR</span>' : ''}
+                            </div>
                         </div>
                     </div>
                     <div class="template-description">\${escapeHtml(t.description)}</div>
@@ -760,7 +886,8 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     </div>
                     <div class="template-meta">
                         <span>v\${escapeHtml(t.version)}</span>
-                        \${t.usage_count ? \`<span>Used \${escapeHtml(t.usage_count)} times</span>\` : ''}
+                        <span>\${t.usage_count !== undefined ? \`📊 \${escapeHtml(t.usage_count)} uses\` : '📊 0 uses'}</span>
+                        \${t.author ? \`<span>👤 \${escapeHtml(t.author)}</span>\` : ''}
                     </div>
                     <div class="template-actions">
                         <button class="action-btn primary" onclick="createFromTemplate('\${escapeHtml(t.id)}')">Create</button>
@@ -772,7 +899,8 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                         \` : ''}
                     </div>
                 </div>
-            \`).join('');
+                \`;
+            }).join('');
         }
 
         function setView(view) {
