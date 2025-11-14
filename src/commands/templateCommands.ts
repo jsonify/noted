@@ -8,6 +8,7 @@ import { writeFile, readFile, pathExists, createDirectory } from '../services/fi
 import { getCustomTemplates } from '../services/templateService';
 import { BUILT_IN_PLACEHOLDER_NAMES, TEMPLATE_CATEGORY_KEYWORDS } from '../constants';
 import { selectAIModel } from '../services/aiModelService';
+import { UserStoryPromptService } from '../services/userStoryPromptService';
 
 /**
  * Command: Create a new template using AI generation
@@ -765,6 +766,32 @@ export async function handleCreateUserStoryWithAI(): Promise<void> {
             return;
         }
 
+        // Ask if user has additional context
+        const hasContext = await vscode.window.showQuickPick(
+            ['Yes', 'No'],
+            {
+                placeHolder: 'Do you have additional context (architecture docs, dependencies, etc.)?'
+            }
+        );
+
+        if (hasContext === undefined) {
+            return;
+        }
+
+        let additionalContext = '';
+        if (hasContext === 'Yes') {
+            const contextInput = await vscode.window.showInputBox({
+                prompt: 'Paste additional context (architecture details, dependencies, integration points, etc.)',
+                placeHolder: 'e.g., "Integration with JFrog Cloud, requires VPN to on-prem AD, uses Cloud NAT, DataProc, GKE..."'
+            });
+
+            if (contextInput === undefined) {
+                return;
+            }
+
+            additionalContext = contextInput;
+        }
+
         // Show progress indicator with cancellation support
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
@@ -779,7 +806,7 @@ export async function handleCreateUserStoryWithAI(): Promise<void> {
             progress.report({ increment: 0, message: 'Analyzing description...' });
 
             // Build a specialized prompt for user story generation
-            const userStoryPrompt = buildUserStoryPrompt(description);
+            const userStoryPrompt = buildUserStoryPrompt(description, additionalContext);
 
             // Select the appropriate language model
             const model = await selectAIModel();
@@ -832,46 +859,15 @@ export async function handleCreateUserStoryWithAI(): Promise<void> {
 
 /**
  * Build a specialized prompt for user story generation
+ *
+ * This function delegates to UserStoryPromptService for better maintainability.
+ * The prompt template is defined in src/services/userStoryPromptService.ts
  */
-function buildUserStoryPrompt(description: string): string {
-    return `You are a user story generation assistant for agile software development.
-
-User wants to create a user story for: "${description}"
-
-Generate a complete user story with:
-1. A concise story title
-2. User story description in the format "As a [user type], I want [goal], So that [benefit]"
-3. A list of 3-5 specific, actionable tasks needed to complete this story
-4. A list of 3-5 acceptance criteria that define when the story is complete
-5. A realistic time estimate (in hours or days)
-
-Output format (JSON):
-{
-  "title": "Brief title for the user story",
-  "user_type": "type of user (e.g., customer, admin, developer)",
-  "goal": "what the user wants to achieve",
-  "benefit": "why this is valuable",
-  "tasks": [
-    "Task 1 - specific implementation step",
-    "Task 2 - specific implementation step",
-    "Task 3 - specific implementation step"
-  ],
-  "acceptance_criteria": [
-    "Criterion 1 - specific, testable outcome",
-    "Criterion 2 - specific, testable outcome",
-    "Criterion 3 - specific, testable outcome"
-  ],
-  "time_estimate": "X hours" or "X days"
-}
-
-RULES:
-- Make the user_type, goal, and benefit specific to the context
-- Tasks should be actionable development steps
-- Acceptance criteria should be specific and testable
-- Time estimates should be realistic for the complexity described
-- All fields are required
-
-Return ONLY valid JSON, no other text.`;
+function buildUserStoryPrompt(description: string, additionalContext?: string): string {
+    return UserStoryPromptService.buildPrompt({
+        description,
+        additionalContext
+    });
 }
 
 /**
@@ -879,11 +875,13 @@ Return ONLY valid JSON, no other text.`;
  */
 interface UserStory {
     title: string;
+    scope: string;
     user_type: string;
     goal: string;
     benefit: string;
     tasks: string[];
     acceptance_criteria: string[];
+    dependencies: string[];
     time_estimate: string;
 }
 
@@ -905,11 +903,13 @@ function parseUserStoryResponse(response: string, fallbackDescription: string): 
 
         return {
             title: parsed.title,
+            scope: parsed.scope || 'General feature implementation',
             user_type: parsed.user_type,
             goal: parsed.goal,
             benefit: parsed.benefit,
             tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
             acceptance_criteria: Array.isArray(parsed.acceptance_criteria) ? parsed.acceptance_criteria : [],
+            dependencies: Array.isArray(parsed.dependencies) ? parsed.dependencies : [],
             time_estimate: parsed.time_estimate || 'TBD'
         };
     } catch (error) {
@@ -919,11 +919,13 @@ function parseUserStoryResponse(response: string, fallbackDescription: string): 
         // Fallback to basic structure
         return {
             title: fallbackDescription,
+            scope: 'General feature implementation',
             user_type: 'user',
             goal: fallbackDescription,
             benefit: 'improve the system',
             tasks: ['Implement the feature', 'Write tests', 'Deploy to production'],
             acceptance_criteria: ['Feature works as expected', 'Tests pass', 'No regressions'],
+            dependencies: [],
             time_estimate: 'TBD'
         };
     }
@@ -969,6 +971,11 @@ async function createUserStoryNote(userStory: UserStory): Promise<void> {
     // Format acceptance criteria as checklist
     const acceptanceCriteriaList = userStory.acceptance_criteria.map(criterion => `- [ ] ${criterion}`).join('\n');
 
+    // Format dependencies as list
+    const dependenciesList = userStory.dependencies.length > 0
+        ? userStory.dependencies.map(dep => `- ${dep}`).join('\n')
+        : '- None';
+
     const content = `---
 tags: [user-story]
 created: ${date.toISOString()}
@@ -978,6 +985,9 @@ status: draft
 # User Story: ${userStory.title}
 
 **Created:** ${dateStr} | **Author:** ${user}
+
+## Scope
+${userStory.scope}
 
 ## Story Title
 ${userStory.title}
@@ -992,6 +1002,9 @@ ${tasksList}
 
 ## Acceptance Criteria
 ${acceptanceCriteriaList}
+
+## Dependencies
+${dependenciesList}
 
 ## Estimate
 **Time to Complete:** ${userStory.time_estimate}

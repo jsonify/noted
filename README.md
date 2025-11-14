@@ -1,6 +1,6 @@
 # Noted - Your Personal Knowledge Base in VS Code
 
-> **💖 Love Noted? Help us grow!** This extension is built and maintained by the community. If you find Noted useful, please [**rate and review it on the VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=jsonify.noted&ssr=false#review-details) — your feedback helps others discover Noted and motivates us to keep improving. Every star counts! ⭐
+> **💖 Love Noted? Help us grow!** This extension is built and maintained by the community. If you find Noted useful, please [**rate and review it on the VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=jsonify.noted&ssr=false#review-details) — your feedback helps others discover Noted and motivates us to keep improving. Every star counts!
 
 ---
 [Repository](https://github.com/jsonify/noted)  |  [Issues](https://github.com/jsonify/noted/issues)  |  [Documentation](https://jsonify.github.io/noted/)
