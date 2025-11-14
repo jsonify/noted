@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 import * as os from 'os';
 import { Template, TemplateVariable, AIGenerationConfig } from './TemplateTypes';
+import { selectAIModel } from '../services/aiModelService';
 
 /**
  * Cache entry for template generation results
@@ -49,7 +50,7 @@ export class TemplateGenerator {
             }
 
             // Select the appropriate language model
-            const model = await this.selectModel();
+            const model = await selectAIModel();
 
             // Build the prompt
             const prompt = this.buildTemplateGenerationPrompt(description);
@@ -106,7 +107,7 @@ export class TemplateGenerator {
             }
 
             // Select the appropriate language model
-            const model = await this.selectModel();
+            const model = await selectAIModel();
 
             // Build the enhancement prompt
             const prompt = this.buildTemplateEnhancementPrompt(existingTemplate);
@@ -368,57 +369,6 @@ Return ONLY valid JSON, no other text.`;
             .createHash('sha256')
             .update(content)
             .digest('hex');
-    }
-
-    /**
-     * Select the appropriate AI model based on user preference and availability
-     * @returns Selected language model
-     * @throws Error if no models are available
-     */
-    private async selectModel(): Promise<vscode.LanguageModelChat> {
-        const config = vscode.workspace.getConfiguration('noted');
-        const preferredModelId = config.get<string>('templates.preferredModel');
-
-        // Get all available models
-        const allModels = await vscode.lm.selectChatModels({});
-
-        if (allModels.length === 0) {
-            throw new Error('No AI models available. Please install GitHub Copilot, Claude, or another LLM extension.');
-        }
-
-        // Try to use preferred model if set
-        if (preferredModelId) {
-            const preferred = allModels.find(m => m.id === preferredModelId);
-            if (preferred) {
-                return preferred;
-            }
-            // If preferred model not found, fall through to automatic selection
-        }
-
-        // Automatic selection with smart fallback
-        // Priority: Claude (best for structured output) > GPT > Gemini > any available
-        const claude = allModels.find(m => m.vendor === 'copilot' && m.family.includes('claude'));
-        if (claude) {
-            return claude;
-        }
-
-        const anthropic = allModels.find(m => m.vendor === 'anthropic');
-        if (anthropic) {
-            return anthropic;
-        }
-
-        const gpt = allModels.find(m => m.vendor === 'copilot' && m.family.includes('gpt'));
-        if (gpt) {
-            return gpt;
-        }
-
-        const gemini = allModels.find(m => m.vendor === 'copilot' && m.family.includes('gemini'));
-        if (gemini) {
-            return gemini;
-        }
-
-        // Return first available model
-        return allModels[0];
     }
 
     /**

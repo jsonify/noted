@@ -25,6 +25,7 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
         { type: 'problem-solution', label: 'Problem/Solution' },
         { type: 'meeting', label: 'Meeting' },
         { type: 'research', label: 'Research' },
+        { type: 'user-story', label: 'User Story' },
         { type: 'quick', label: 'Quick Note' }
     ];
 
@@ -119,7 +120,7 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
      * Get built-in standard templates
      */
     private async getStandardTemplates(): Promise<TreeItem[]> {
-        return TemplatesTreeProvider.STANDARD_TEMPLATES.map(template =>
+        const items: TreeItem[] = TemplatesTreeProvider.STANDARD_TEMPLATES.map(template =>
             new TemplateActionItem(
                 template.label,
                 template.type,
@@ -127,6 +128,21 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                 `Create a new ${template.label.toLowerCase()}`
             )
         );
+
+        // Add AI-enhanced User Story option at index after User Story
+        const userStoryIndex = items.findIndex(item => item.label === 'User Story');
+        if (userStoryIndex !== -1) {
+            items.splice(userStoryIndex + 1, 0,
+                new ActionButtonItem(
+                    '✨ User Story with AI',
+                    'noted.createUserStoryWithAI',
+                    'sparkle',
+                    'AI-powered user story from brief description'
+                )
+            );
+        }
+
+        return items;
     }
 
     /**
