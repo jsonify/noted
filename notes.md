@@ -784,6 +784,30 @@ pnpm run test
 
 ## Recent Updates
 
+### Enhanced User Story Generation (v1.41.3 - 2025-11-13)
+- **Optional Context Collection**: Prompt to add architecture details, dependencies, tech stack
+  - Two-step input: Brief description + optional detailed context
+  - Context significantly improves technical specificity
+  - Examples provided for infrastructure, feature, and integration stories
+- **Improved AI Prompts**: Enhanced to generate comprehensive, technical user stories
+  - Requests 5-15 tasks based on complexity (vs previous 3-5)
+  - Emphasizes specific service names, integration points, technical details
+  - Instructions differentiate simple features (5-7 tasks) from complex infrastructure (8-12+ tasks)
+  - Guides AI to include configuration details and actionable steps
+- **Extended Data Model**: New fields in user story structure
+  - **Scope**: What part of the system/architecture this story addresses
+  - **Dependencies**: List of prerequisites, access requirements, blocking items
+  - Both fields fully integrated into generation and note templates
+- **Enhanced Note Template**: Richer output format
+  - Scope section clearly defines boundaries
+  - Dependencies section lists blocking requirements
+  - Supports empty dependencies with "- None" fallback
+- **Better Results**: Matches quality of web-based Claude interactions
+  - Technical depth comparable to manual story writing
+  - Specific service names and tools referenced in tasks
+  - Architecture-aware acceptance criteria
+  - Realistic dependencies based on context
+
 ### AI Summarization Phase 4 (v1.39.0 - 2025-11-07)
 - **Custom Prompt Templates**: Create and use custom prompts for AI summarization
   - Built-in templates: Default, Technical Deep Dive, Meeting Summary, Code Review, Brainstorm

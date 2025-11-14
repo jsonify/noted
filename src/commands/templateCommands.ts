@@ -765,6 +765,33 @@ export async function handleCreateUserStoryWithAI(): Promise<void> {
             return;
         }
 
+        // Ask if user has additional context
+        const hasContext = await vscode.window.showQuickPick(
+            ['Yes', 'No'],
+            {
+                placeHolder: 'Do you have additional context (architecture docs, dependencies, etc.)?'
+            }
+        );
+
+        if (hasContext === undefined) {
+            return;
+        }
+
+        let additionalContext = '';
+        if (hasContext === 'Yes') {
+            const contextInput = await vscode.window.showInputBox({
+                prompt: 'Paste additional context (architecture details, dependencies, integration points, etc.)',
+                placeHolder: 'e.g., "Integration with JFrog Cloud, requires VPN to on-prem AD, uses Cloud NAT, DataProc, GKE..."',
+                validateInput: null
+            });
+
+            if (contextInput === undefined) {
+                return;
+            }
+
+            additionalContext = contextInput;
+        }
+
         // Show progress indicator with cancellation support
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
@@ -779,7 +806,7 @@ export async function handleCreateUserStoryWithAI(): Promise<void> {
             progress.report({ increment: 0, message: 'Analyzing description...' });
 
             // Build a specialized prompt for user story generation
-            const userStoryPrompt = buildUserStoryPrompt(description);
+            const userStoryPrompt = buildUserStoryPrompt(description, additionalContext);
 
             // Select the appropriate language model
             const model = await selectAIModel();
@@ -833,42 +860,66 @@ export async function handleCreateUserStoryWithAI(): Promise<void> {
 /**
  * Build a specialized prompt for user story generation
  */
-function buildUserStoryPrompt(description: string): string {
-    return `You are a user story generation assistant for agile software development.
+function buildUserStoryPrompt(description: string, additionalContext?: string): string {
+    const contextSection = additionalContext
+        ? `\n\nADDITIONAL CONTEXT:\n${additionalContext}\n`
+        : '';
 
-User wants to create a user story for: "${description}"
+    return `You are an expert user story generation assistant for agile software development with deep technical knowledge.
 
-Generate a complete user story with:
-1. A concise story title
-2. User story description in the format "As a [user type], I want [goal], So that [benefit]"
-3. A list of 3-5 specific, actionable tasks needed to complete this story
-4. A list of 3-5 acceptance criteria that define when the story is complete
-5. A realistic time estimate (in hours or days)
+User wants to create a user story for: "${description}"${contextSection}
+
+Generate a COMPREHENSIVE, TECHNICAL user story with:
+1. A concise, specific story title
+2. Scope statement (what part of the system/architecture this addresses)
+3. User story description in format "As a [specific role], I want [specific goal], So that [measurable benefit]"
+4. A comprehensive list of 5-15 SPECIFIC, TECHNICAL tasks needed to complete this story
+   - Include configuration details, service names, integration points
+   - Reference specific technologies/tools from the context
+   - Break down complex steps into actionable items
+5. A list of 3-7 SPECIFIC, TESTABLE acceptance criteria
+   - Should reference architecture requirements or specifications
+   - Must be measurable/verifiable
+6. A list of dependencies (other stories, systems, access requirements, etc.)
+7. A realistic time estimate (in hours or days)
 
 Output format (JSON):
 {
-  "title": "Brief title for the user story",
-  "user_type": "type of user (e.g., customer, admin, developer)",
-  "goal": "what the user wants to achieve",
-  "benefit": "why this is valuable",
+  "title": "Brief, specific title",
+  "scope": "What part of the system/architecture this addresses",
+  "user_type": "Specific role (e.g., Platform Engineer, DevOps Engineer, not just 'user')",
+  "goal": "Specific, measurable goal with technical details",
+  "benefit": "Clear, measurable benefit",
   "tasks": [
-    "Task 1 - specific implementation step",
-    "Task 2 - specific implementation step",
-    "Task 3 - specific implementation step"
+    "Task 1 - SPECIFIC technical step with service/tool names",
+    "Task 2 - SPECIFIC configuration or setup step",
+    "Task 3 - SPECIFIC integration or connectivity step",
+    "... 5-15 tasks total based on complexity"
   ],
   "acceptance_criteria": [
-    "Criterion 1 - specific, testable outcome",
-    "Criterion 2 - specific, testable outcome",
-    "Criterion 3 - specific, testable outcome"
+    "Criterion 1 - SPECIFIC, testable outcome referencing architecture",
+    "Criterion 2 - SPECIFIC connectivity or functionality verification",
+    "Criterion 3 - SPECIFIC compliance or documentation requirement",
+    "... 3-7 criteria total"
+  ],
+  "dependencies": [
+    "Dependency 1 - Required access, subscriptions, or prerequisites",
+    "Dependency 2 - Other systems or services that must exist first",
+    "... list all blocking dependencies"
   ],
   "time_estimate": "X hours" or "X days"
 }
 
 RULES:
-- Make the user_type, goal, and benefit specific to the context
-- Tasks should be actionable development steps
-- Acceptance criteria should be specific and testable
-- Time estimates should be realistic for the complexity described
+- Use SPECIFIC technical terms from the context/description
+- For infrastructure tasks, include service names (VPC, Cloud NAT, Cloud Router, etc.)
+- For integration tasks, specify both sides of the integration
+- Tasks should be detailed enough for an engineer to execute without guesswork
+- Acceptance criteria must be verifiable through testing or inspection
+- Dependencies should list specific systems, access requirements, or prerequisite work
+- If description mentions specific technologies, incorporate them into tasks
+- Time estimates should reflect the number and complexity of tasks
+- Prefer 8-12 tasks for complex infrastructure stories, 5-7 for simpler features
 - All fields are required
 
 Return ONLY valid JSON, no other text.`;
@@ -879,11 +930,13 @@ Return ONLY valid JSON, no other text.`;
  */
 interface UserStory {
     title: string;
+    scope: string;
     user_type: string;
     goal: string;
     benefit: string;
     tasks: string[];
     acceptance_criteria: string[];
+    dependencies: string[];
     time_estimate: string;
 }
 
@@ -905,11 +958,13 @@ function parseUserStoryResponse(response: string, fallbackDescription: string): 
 
         return {
             title: parsed.title,
+            scope: parsed.scope || 'General feature implementation',
             user_type: parsed.user_type,
             goal: parsed.goal,
             benefit: parsed.benefit,
             tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
             acceptance_criteria: Array.isArray(parsed.acceptance_criteria) ? parsed.acceptance_criteria : [],
+            dependencies: Array.isArray(parsed.dependencies) ? parsed.dependencies : [],
             time_estimate: parsed.time_estimate || 'TBD'
         };
     } catch (error) {
@@ -919,11 +974,13 @@ function parseUserStoryResponse(response: string, fallbackDescription: string): 
         // Fallback to basic structure
         return {
             title: fallbackDescription,
+            scope: 'General feature implementation',
             user_type: 'user',
             goal: fallbackDescription,
             benefit: 'improve the system',
             tasks: ['Implement the feature', 'Write tests', 'Deploy to production'],
             acceptance_criteria: ['Feature works as expected', 'Tests pass', 'No regressions'],
+            dependencies: [],
             time_estimate: 'TBD'
         };
     }
@@ -969,6 +1026,11 @@ async function createUserStoryNote(userStory: UserStory): Promise<void> {
     // Format acceptance criteria as checklist
     const acceptanceCriteriaList = userStory.acceptance_criteria.map(criterion => `- [ ] ${criterion}`).join('\n');
 
+    // Format dependencies as list
+    const dependenciesList = userStory.dependencies.length > 0
+        ? userStory.dependencies.map(dep => `- ${dep}`).join('\n')
+        : '- None';
+
     const content = `---
 tags: [user-story]
 created: ${date.toISOString()}
@@ -978,6 +1040,9 @@ status: draft
 # User Story: ${userStory.title}
 
 **Created:** ${dateStr} | **Author:** ${user}
+
+## Scope
+${userStory.scope}
 
 ## Story Title
 ${userStory.title}
@@ -992,6 +1057,9 @@ ${tasksList}
 
 ## Acceptance Criteria
 ${acceptanceCriteriaList}
+
+## Dependencies
+${dependenciesList}
 
 ## Estimate
 **Time to Complete:** ${userStory.time_estimate}
