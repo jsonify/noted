@@ -9,10 +9,10 @@
     "outDir": "out",
     "lib": ["ES2020"],
     "sourceMap": true,
+    "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
     "types": ["node", "mocha", "chai"]
   },
-  "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", ".vscode-test", "scripts"]
 }

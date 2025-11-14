@@ -1,6 +1,6 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import { UserStoryPromptService } from '../../src/services/userStoryPromptService';
+import { UserStoryPromptService } from '../../services/userStoryPromptService';
 
 describe('UserStoryPromptService', () => {
     describe('getDefaultPrompt', () => {
