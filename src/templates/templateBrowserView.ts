@@ -544,13 +544,13 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         }
 
         .status-new {
-            background: #4CAF50;
-            color: white;
+            background: var(--vscode-gitDecoration-addedResourceForeground);
+            color: var(--vscode-editor-background);
         }
 
         .status-popular {
-            background: #FF9800;
-            color: white;
+            background: var(--vscode-list-warningForeground);
+            color: var(--vscode-editor-background);
         }
 
         .difficulty-badge {
@@ -561,18 +561,18 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         }
 
         .difficulty-beginner {
-            background: #4CAF50;
-            color: white;
+            background: var(--vscode-gitDecoration-addedResourceForeground);
+            color: var(--vscode-editor-background);
         }
 
         .difficulty-intermediate {
-            background: #FF9800;
-            color: white;
+            background: var(--vscode-list-warningForeground);
+            color: var(--vscode-editor-background);
         }
 
         .difficulty-advanced {
-            background: #F44336;
-            color: white;
+            background: var(--vscode-errorForeground);
+            color: var(--vscode-editor-background);
         }
 
         .filetype-badge {
@@ -727,6 +727,27 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         let activeCategory = 'all';
         let searchQuery = '';
 
+        // Constants for template icons and badges
+        const TEMPLATE_ICON_MAP = {
+            'Built-in': '⚡',
+            'Custom': '✏️',
+            'Documentation': '📄',
+            'Project': '📁',
+            'Meeting': '🤝',
+            'Research': '🔬',
+            'Planning': '📋',
+            'Development': '💻',
+            'Design': '🎨',
+            'General': '📝'
+        };
+
+        const FILE_TYPE_BADGES = {
+            'builtin': 'BUILT-IN',
+            'json': '.json',
+            'txt': '.txt',
+            'md': '.md'
+        };
+
         // HTML escaping function to prevent XSS
         function escapeHtml(unsafe) {
             const text = typeof unsafe === 'string' ? unsafe : String(unsafe);
@@ -740,19 +761,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
         // Get icon for template based on category and file type
         function getTemplateIcon(template) {
-            const iconMap = {
-                'Built-in': '⚡',
-                'Custom': '✏️',
-                'Documentation': '📄',
-                'Project': '📁',
-                'Meeting': '🤝',
-                'Research': '🔬',
-                'Planning': '📋',
-                'Development': '💻',
-                'Design': '🎨',
-                'General': '📝'
-            };
-            return iconMap[template.category] || '📝';
+            return TEMPLATE_ICON_MAP[template.category] || '📝';
         }
 
         // Determine if template is "new" (created within last 7 days)
@@ -770,13 +779,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
         // Get file type display text
         function getFileTypeBadge(fileType) {
-            const badges = {
-                'builtin': 'BUILT-IN',
-                'json': '.json',
-                'txt': '.txt',
-                'md': '.md'
-            };
-            return badges[fileType] || fileType;
+            return FILE_TYPE_BADGES[fileType] || fileType;
         }
 
         // Initialize
