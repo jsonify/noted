@@ -532,6 +532,77 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             background: var(--vscode-button-secondaryHoverBackground);
         }
 
+        .enhanced-filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border-radius: 6px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            color: var(--vscode-foreground);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .filter-select {
+            padding: 6px 10px;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            min-width: 140px;
+        }
+
+        .filter-select:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: -1px;
+        }
+
+        .filter-badge-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+            padding: 8px 12px;
+            background: var(--vscode-button-background);
+            border-radius: 4px;
+        }
+
+        .filter-badge {
+            font-size: 12px;
+            color: var(--vscode-button-foreground);
+            font-weight: 600;
+        }
+
+        .btn-clear-filters {
+            padding: 4px 12px;
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: background 0.2s;
+        }
+
+        .btn-clear-filters:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
         .filters {
             display: flex;
             gap: 10px;
@@ -1187,6 +1258,58 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         </div>
     </div>
 
+    <!-- Enhanced Filters Row -->
+    <div class="enhanced-filters">
+        <div class="filter-group">
+            <label for="fileTypeFilter" class="filter-label">File Type:</label>
+            <select id="fileTypeFilter" class="filter-select">
+                <option value="all">All Types</option>
+                <option value="builtin">Built-in</option>
+                <option value="json">JSON</option>
+                <option value="md">Markdown</option>
+                <option value="txt">Text</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="difficultyFilter" class="filter-label">Difficulty:</label>
+            <select id="difficultyFilter" class="filter-select">
+                <option value="all">All Levels</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="showOnlyFilter" class="filter-label">Show Only:</label>
+            <select id="showOnlyFilter" class="filter-select">
+                <option value="all">All Templates</option>
+                <option value="favorites">Favorites</option>
+                <option value="recent">Recently Used (7 days)</option>
+                <option value="unused">Unused</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="sortBy" class="filter-label">Sort By:</label>
+            <select id="sortBy" class="filter-select">
+                <option value="name-asc">Name (A-Z)</option>
+                <option value="name-desc">Name (Z-A)</option>
+                <option value="modified">Recently Modified</option>
+                <option value="usage">Most Used</option>
+                <option value="category">Category</option>
+            </select>
+        </div>
+
+        <div class="filter-badge-container" id="filterBadgeContainer" style="display: none;">
+            <span class="filter-badge" id="filterBadge">
+                <span id="filterCount">0</span> active filters
+            </span>
+            <button class="btn-clear-filters" id="clearFiltersBtn">Clear All</button>
+        </div>
+    </div>
+
     <div class="filters" id="filters"></div>
 
     <div class="stats" id="stats"></div>
@@ -1225,6 +1348,17 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         let currentView = 'grid';
         let activeCategory = 'all';
         let searchQuery = '';
+
+        // Enhanced filter state
+        let filterState = {
+            fileType: 'all',
+            difficulty: 'all',
+            showOnly: 'all',
+            sortBy: 'name-asc'
+        };
+
+        // Favorites tracking (stored in vscode state)
+        let favorites = new Set();
 
         // Constants for template icons and badges
         const TEMPLATE_ICON_MAP = {
@@ -1310,6 +1444,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         }
 
         // Initialize
+        initializeFilterState();
         renderFilters();
         renderStats();
         renderTemplates();
@@ -1376,12 +1511,190 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         // Search input listener
         document.getElementById('searchInput').addEventListener('input', filterTemplates);
 
+        // Enhanced filter listeners
+        document.getElementById('fileTypeFilter').addEventListener('change', handleFilterChange);
+        document.getElementById('difficultyFilter').addEventListener('change', handleFilterChange);
+        document.getElementById('showOnlyFilter').addEventListener('change', handleFilterChange);
+        document.getElementById('sortBy').addEventListener('change', handleFilterChange);
+        document.getElementById('clearFiltersBtn').addEventListener('click', clearAllFilters);
+
         // Modal overlay click handler (close on overlay click, not modal content)
         document.getElementById('previewModal').addEventListener('click', (event) => {
             if (event.target.id === 'previewModal') {
                 closePreviewModal();
             }
         });
+
+        // === Enhanced Filter & Sort Functions ===
+
+        function initializeFilterState() {
+            // Try to restore state from vscode
+            const state = vscode.getState();
+            if (state && state.filterState) {
+                filterState = state.filterState;
+                favorites = new Set(state.favorites || []);
+
+                // Restore UI state
+                document.getElementById('fileTypeFilter').value = filterState.fileType;
+                document.getElementById('difficultyFilter').value = filterState.difficulty;
+                document.getElementById('showOnlyFilter').value = filterState.showOnly;
+                document.getElementById('sortBy').value = filterState.sortBy;
+            }
+            updateFilterBadge();
+        }
+
+        function handleFilterChange(event) {
+            const filterId = event.target.id;
+            const value = event.target.value;
+
+            // Update filter state
+            switch (filterId) {
+                case 'fileTypeFilter':
+                    filterState.fileType = value;
+                    break;
+                case 'difficultyFilter':
+                    filterState.difficulty = value;
+                    break;
+                case 'showOnlyFilter':
+                    filterState.showOnly = value;
+                    break;
+                case 'sortBy':
+                    filterState.sortBy = value;
+                    break;
+            }
+
+            // Save state
+            saveFilterState();
+
+            // Update UI
+            updateFilterBadge();
+            renderTemplates();
+        }
+
+        function clearAllFilters() {
+            // Reset all filters to default
+            filterState = {
+                fileType: 'all',
+                difficulty: 'all',
+                showOnly: 'all',
+                sortBy: 'name-asc'
+            };
+
+            // Reset UI
+            document.getElementById('fileTypeFilter').value = 'all';
+            document.getElementById('difficultyFilter').value = 'all';
+            document.getElementById('showOnlyFilter').value = 'all';
+            document.getElementById('sortBy').value = 'name-asc';
+
+            // Save and update
+            saveFilterState();
+            updateFilterBadge();
+            renderTemplates();
+        }
+
+        function updateFilterBadge() {
+            let activeCount = 0;
+
+            // Count non-default filters (excluding sortBy)
+            if (filterState.fileType !== 'all') activeCount++;
+            if (filterState.difficulty !== 'all') activeCount++;
+            if (filterState.showOnly !== 'all') activeCount++;
+
+            const badgeContainer = document.getElementById('filterBadgeContainer');
+            const filterCount = document.getElementById('filterCount');
+
+            if (activeCount > 0) {
+                badgeContainer.style.display = 'flex';
+                filterCount.textContent = activeCount;
+            } else {
+                badgeContainer.style.display = 'none';
+            }
+        }
+
+        function saveFilterState() {
+            vscode.setState({
+                filterState: filterState,
+                favorites: Array.from(favorites)
+            });
+        }
+
+        function applyFilters(templatesArray) {
+            const now = new Date();
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            return templatesArray.filter(t => {
+                // Category filter (existing)
+                const matchesCategory = activeCategory === 'all' || t.category === activeCategory;
+
+                // Search filter (existing)
+                const matchesSearch = !searchQuery ||
+                    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                // File type filter
+                const matchesFileType = filterState.fileType === 'all' || t.fileType === filterState.fileType;
+
+                // Difficulty filter
+                const matchesDifficulty = filterState.difficulty === 'all' ||
+                    (t.difficulty && t.difficulty === filterState.difficulty) ||
+                    (filterState.difficulty === 'beginner' && !t.difficulty); // Treat no difficulty as beginner
+
+                // Show only filter
+                let matchesShowOnly = true;
+                if (filterState.showOnly === 'favorites') {
+                    matchesShowOnly = favorites.has(t.id);
+                } else if (filterState.showOnly === 'recent') {
+                    // Recently used: modified within last 7 days OR usage_count exists and has been used
+                    if (t.modified) {
+                        const modifiedDate = new Date(t.modified);
+                        matchesShowOnly = modifiedDate >= sevenDaysAgo;
+                    } else {
+                        matchesShowOnly = false;
+                    }
+                } else if (filterState.showOnly === 'unused') {
+                    matchesShowOnly = !t.usage_count || t.usage_count === 0;
+                }
+
+                return matchesCategory && matchesSearch && matchesFileType && matchesDifficulty && matchesShowOnly;
+            });
+        }
+
+        function sortTemplates(templatesArray) {
+            const sorted = [...templatesArray];
+
+            switch (filterState.sortBy) {
+                case 'name-asc':
+                    sorted.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case 'name-desc':
+                    sorted.sort((a, b) => b.name.localeCompare(a.name));
+                    break;
+                case 'modified':
+                    sorted.sort((a, b) => {
+                        const dateA = a.modified ? new Date(a.modified) : new Date(0);
+                        const dateB = b.modified ? new Date(b.modified) : new Date(0);
+                        return dateB - dateA; // Newest first
+                    });
+                    break;
+                case 'usage':
+                    sorted.sort((a, b) => {
+                        const usageA = a.usage_count || 0;
+                        const usageB = b.usage_count || 0;
+                        return usageB - usageA; // Most used first
+                    });
+                    break;
+                case 'category':
+                    sorted.sort((a, b) => {
+                        const catCompare = a.category.localeCompare(b.category);
+                        if (catCompare !== 0) return catCompare;
+                        return a.name.localeCompare(b.name); // Then by name
+                    });
+                    break;
+            }
+
+            return sorted;
+        }
 
         function renderFilters() {
             const categories = ['all', ...new Set(templates.map(t => t.category))];
@@ -1422,19 +1735,16 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         }
 
         function renderTemplates() {
-            const filteredTemplates = templates.filter(t => {
-                const matchesCategory = activeCategory === 'all' || t.category === activeCategory;
-                const matchesSearch = !searchQuery ||
-                    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-                return matchesCategory && matchesSearch;
-            });
+            // Apply all filters
+            const filteredTemplates = applyFilters(templates);
+
+            // Apply sorting
+            const sortedTemplates = sortTemplates(filteredTemplates);
 
             const container = document.getElementById('templatesContainer');
             container.className = currentView === 'grid' ? 'templates-grid' : 'templates-list';
 
-            if (filteredTemplates.length === 0) {
+            if (sortedTemplates.length === 0) {
                 container.innerHTML = \`
                     <div class="empty-state">
                         <div class="empty-state-icon">📭</div>
@@ -1445,8 +1755,9 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 return;
             }
 
-            container.innerHTML = filteredTemplates.map(t => {
-                const showNew = isNew(t);
+            container.innerHTML = sortedTemplates.map(t => {
+                const now = new Date();
+                const showNew = isNew(t, now);
                 const showPopular = isPopular(t);
                 const difficultyStars = getDifficultyStars(t.difficulty);
                 const usageTrend = getUsageTrend(t);
