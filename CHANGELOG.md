@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.42.0](https://github.com/jsonify/noted/compare/v1.41.8...v1.42.0) (2025-11-15)
+
+
+### Features
+
+* Template Browser Phase 3 - Usage Guidance & Context ([#96](https://github.com/jsonify/noted/issues/96)) ([#104](https://github.com/jsonify/noted/issues/104)) ([7c43690](https://github.com/jsonify/noted/commit/7c436908ed4f83d167c0fe4a590b7ae02ef02417))
+
 ### [1.41.8](https://github.com/jsonify/noted/compare/v1.41.7...v1.41.8) (2025-11-15)
 
 ### [1.41.7](https://github.com/jsonify/noted/compare/v1.41.6...v1.41.7) (2025-11-15)
