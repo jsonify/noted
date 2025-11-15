@@ -6,6 +6,7 @@ import { Template, TemplateDifficulty, TemplateVariable } from './TemplateTypes'
 import { BUILT_IN_TEMPLATES, BUILT_IN_TEMPLATE_INFO, BUILT_IN_TEMPLATE_VARIABLES } from '../constants';
 import { TemplatesTreeProvider } from '../providers/templatesTreeProvider';
 import { getTemplateContent, getTemplateLines, highlightVariables, generateSamplePreview } from '../services/templateService';
+import { templateGenerator } from './TemplateGenerator';
 
 // Module-level reference to templates tree provider for refreshing
 let templatesProvider: TemplatesTreeProvider | undefined;
@@ -118,6 +119,22 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext, prov
                     await handleSaveTemplateVariables(panel, message.templateId, message.variables);
                     await refreshWebviewTemplates();
                     templatesProvider?.refresh();
+                    break;
+
+                case 'validateVariable':
+                    await handleValidateVariable(panel, message.templateId, message.variable, message.existingVariables, message.originalName);
+                    break;
+
+                case 'getVariableUsageInfo':
+                    await handleGetVariableUsageInfo(panel, message.templateId, message.variableName);
+                    break;
+
+                case 'exportVariables':
+                    await handleExportVariables(panel, message.templateId);
+                    break;
+
+                case 'importVariables':
+                    await handleImportVariables(panel, message.templateId, message.variablesJson);
                     break;
             }
         },
@@ -577,6 +594,255 @@ async function handleSaveTemplateVariables(
             error: 'Failed to save template variables'
         });
     }
+}
+
+/**
+ * Handle real-time variable validation (Phase 3)
+ */
+async function handleValidateVariable(
+    panel: vscode.WebviewPanel,
+    templateId: string,
+    variable: TemplateVariable,
+    existingVariables: TemplateVariable[],
+    originalName?: string
+): Promise<void> {
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        panel.webview.postMessage({
+            command: 'validateVariableResponse',
+            isValid: false,
+            errors: ['Templates folder not configured'],
+            warnings: []
+        });
+        return;
+    }
+
+    const templateFile = await findTemplateFile(templatesPath, templateId);
+    if (!templateFile || templateFile.type !== 'json') {
+        panel.webview.postMessage({
+            command: 'validateVariableResponse',
+            isValid: false,
+            errors: ['Template not found or not a JSON template'],
+            warnings: []
+        });
+        return;
+    }
+
+    try {
+        const content = await readFile(templateFile.path);
+        const template: Template = JSON.parse(content);
+
+        // Perform advanced validation
+        const validation = templateGenerator.validateVariableAdvanced(
+            variable,
+            template.content,
+            existingVariables,
+            originalName
+        );
+
+        panel.webview.postMessage({
+            command: 'validateVariableResponse',
+            isValid: validation.isValid,
+            errors: validation.errors,
+            warnings: validation.warnings
+        });
+    } catch (error) {
+        panel.webview.postMessage({
+            command: 'validateVariableResponse',
+            isValid: false,
+            errors: ['Failed to validate variable'],
+            warnings: []
+        });
+    }
+}
+
+/**
+ * Handle variable usage info request (Phase 3)
+ */
+async function handleGetVariableUsageInfo(
+    panel: vscode.WebviewPanel,
+    templateId: string,
+    variableName: string
+): Promise<void> {
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        panel.webview.postMessage({
+            command: 'variableUsageInfoResponse',
+            variableName,
+            count: 0,
+            positions: []
+        });
+        return;
+    }
+
+    const templateFile = await findTemplateFile(templatesPath, templateId);
+    if (!templateFile || templateFile.type !== 'json') {
+        panel.webview.postMessage({
+            command: 'variableUsageInfoResponse',
+            variableName,
+            count: 0,
+            positions: []
+        });
+        return;
+    }
+
+    try {
+        const content = await readFile(templateFile.path);
+        const template: Template = JSON.parse(content);
+
+        // Get usage count and positions
+        const count = templateGenerator.getVariableUsageCount(variableName, template.content);
+        const positions = templateGenerator.getVariableUsagePositions(variableName, template.content);
+
+        panel.webview.postMessage({
+            command: 'variableUsageInfoResponse',
+            variableName,
+            count,
+            positions
+        });
+    } catch (error) {
+        panel.webview.postMessage({
+            command: 'variableUsageInfoResponse',
+            variableName,
+            count: 0,
+            positions: []
+        });
+    }
+}
+
+/**
+ * Handle export variables request (Phase 3)
+ */
+async function handleExportVariables(
+    panel: vscode.WebviewPanel,
+    templateId: string
+): Promise<void> {
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        vscode.window.showErrorMessage('Templates folder not configured');
+        return;
+    }
+
+    const templateFile = await findTemplateFile(templatesPath, templateId);
+    if (!templateFile || templateFile.type !== 'json') {
+        vscode.window.showErrorMessage('Template not found or not a JSON template');
+        return;
+    }
+
+    try {
+        const content = await readFile(templateFile.path);
+        const template: Template = JSON.parse(content);
+
+        // Prepare export data
+        const exportData = {
+            templateName: template.name,
+            templateId: template.id,
+            exportedAt: new Date().toISOString(),
+            variables: template.variables || []
+        };
+
+        // Prompt for save location
+        const uri = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.file(path.join(templatesPath, `${templateId}-variables.json`)),
+            filters: {
+                'JSON': ['json']
+            }
+        });
+
+        if (uri) {
+            await writeFile(uri.fsPath, JSON.stringify(exportData, null, 2));
+            vscode.window.showInformationMessage(`Variables exported to ${path.basename(uri.fsPath)}`);
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to export variables: ${errorMessage}`);
+        console.error('Failed to export variables:', error);
+    }
+}
+
+/**
+ * Handle import variables request (Phase 3)
+ */
+async function handleImportVariables(
+    panel: vscode.WebviewPanel,
+    templateId: string,
+    variablesJson: string
+): Promise<void> {
+    // Parse JSON
+    let importData;
+    try {
+        importData = JSON.parse(variablesJson);
+    } catch (error) {
+        panel.webview.postMessage({
+            command: 'importVariablesResponse',
+            success: false,
+            error: 'Invalid JSON format. Failed to parse variables file.'
+        });
+        return;
+    }
+
+    // Validate import data structure
+    if (!importData.variables || !Array.isArray(importData.variables)) {
+        panel.webview.postMessage({
+            command: 'importVariablesResponse',
+            success: false,
+            error: 'Invalid variables file format. Missing or invalid "variables" array.'
+        });
+        return;
+    }
+
+    // Check templates path
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        panel.webview.postMessage({
+            command: 'importVariablesResponse',
+            success: false,
+            error: 'Templates folder not configured'
+        });
+        return;
+    }
+
+    // Validate template exists
+    const templateFile = await findTemplateFile(templatesPath, templateId);
+    if (!templateFile || templateFile.type !== 'json') {
+        panel.webview.postMessage({
+            command: 'importVariablesResponse',
+            success: false,
+            error: 'Template not found or not a JSON template'
+        });
+        return;
+    }
+
+    // Validate all imported variables
+    const validVariables: TemplateVariable[] = [];
+    const errors: string[] = [];
+
+    for (const variable of importData.variables) {
+        const validation = templateGenerator.validateVariable(variable, validVariables);
+        if (validation.isValid) {
+            validVariables.push(variable);
+        } else {
+            errors.push(`Variable '${variable.name}': ${validation.error}`);
+        }
+    }
+
+    if (errors.length > 0) {
+        panel.webview.postMessage({
+            command: 'importVariablesResponse',
+            success: false,
+            error: `Import validation failed:\n${errors.join('\n')}`
+        });
+        return;
+    }
+
+    // Send valid variables back to webview for user review
+    panel.webview.postMessage({
+        command: 'importVariablesResponse',
+        success: true,
+        variables: validVariables
+    });
+
+    vscode.window.showInformationMessage(`Imported ${validVariables.length} variable(s). Review and save to apply.`);
 }
 
 /**
