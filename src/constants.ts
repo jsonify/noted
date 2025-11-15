@@ -84,11 +84,81 @@ So that [benefit].
  * Built-in template metadata for display in picker
  */
 export const BUILT_IN_TEMPLATE_INFO = [
-    { label: 'Problem/Solution', value: 'problem-solution', description: 'Document bugs and troubleshooting' },
-    { label: 'Meeting', value: 'meeting', description: 'Organize meeting notes and action items' },
-    { label: 'Research', value: 'research', description: 'Structure your research and findings' },
-    { label: 'User Story', value: 'user-story', description: 'Agile user stories with tasks, criteria, and estimates' },
-    { label: 'Quick', value: 'quick', description: 'Simple dated note' }
+    {
+        label: 'Problem/Solution',
+        value: 'problem-solution',
+        description: 'Document bugs and troubleshooting',
+        when_to_use: 'When debugging issues, documenting solutions to problems, or troubleshooting technical challenges that you want to reference later.',
+        use_cases: [
+            'Debugging a production bug and documenting the fix',
+            'Troubleshooting a development environment issue',
+            'Recording solutions to recurring technical problems',
+            'Documenting workarounds for known issues'
+        ],
+        prerequisites: ['Basic understanding of the problem domain', 'Ability to describe technical issues clearly'],
+        related_templates: ['research', 'user-story'],
+        estimated_time: '5-10 minutes'
+    },
+    {
+        label: 'Meeting',
+        value: 'meeting',
+        description: 'Organize meeting notes and action items',
+        when_to_use: 'Perfect for team meetings, client calls, one-on-ones, or any discussion where you need to track attendees, agenda items, and action items.',
+        use_cases: [
+            'Daily standup or sprint planning meetings',
+            'Client requirement gathering sessions',
+            'Team retrospectives and brainstorming',
+            'One-on-one meetings with managers or teammates'
+        ],
+        prerequisites: ['Meeting agenda or topics to discuss'],
+        related_templates: ['user-story', 'research'],
+        estimated_time: '2-3 minutes setup, ongoing during meeting'
+    },
+    {
+        label: 'Research',
+        value: 'research',
+        description: 'Structure your research and findings',
+        when_to_use: 'Ideal for investigating new technologies, gathering information on topics, or conducting structured research with clear questions and findings.',
+        use_cases: [
+            'Evaluating new libraries or frameworks for a project',
+            'Researching solutions to architectural decisions',
+            'Learning about new programming concepts or patterns',
+            'Gathering competitive analysis or market research'
+        ],
+        prerequisites: ['Clear research topic or question', 'Basic research methodology understanding'],
+        related_templates: ['problem-solution'],
+        estimated_time: '5-15 minutes setup, extended for research'
+    },
+    {
+        label: 'User Story',
+        value: 'user-story',
+        description: 'Agile user stories with tasks, criteria, and estimates',
+        when_to_use: 'Use when planning features in agile/scrum workflows, breaking down requirements into user-focused stories with clear acceptance criteria.',
+        use_cases: [
+            'Sprint planning and backlog grooming',
+            'Feature requirement documentation',
+            'Breaking down epics into implementable stories',
+            'Tracking development tasks with clear success criteria'
+        ],
+        prerequisites: ['Understanding of agile user story format', 'Knowledge of the feature or requirement'],
+        related_templates: ['meeting', 'problem-solution'],
+        estimated_time: '10-15 minutes'
+    },
+    {
+        label: 'Quick',
+        value: 'quick',
+        description: 'Simple dated note',
+        when_to_use: 'For rapid note-taking when you need minimal structure, such as jotting down ideas, temporary notes, or quick reminders.',
+        use_cases: [
+            'Capturing quick thoughts or ideas',
+            'Temporary notes during phone calls',
+            'Daily journal or stream-of-consciousness writing',
+            'Scratch pad for calculations or brainstorming'
+        ],
+        prerequisites: [],
+        related_templates: ['meeting', 'research'],
+        estimated_time: 'Under 1 minute'
+    }
 ];
 
 /**

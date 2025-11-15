@@ -57,6 +57,13 @@ export interface Template {
     created?: string;
     modified?: string;
     usage_count?: number;
+
+    // Usage guidance (Phase 3)
+    when_to_use?: string;           // Brief 1-2 sentence description of ideal usage scenarios
+    use_cases?: string[];           // Array of 2-4 specific scenarios
+    prerequisites?: string[];       // Knowledge or setup requirements
+    related_templates?: string[];   // Template IDs for discovery and cross-linking
+    estimated_time?: string;        // Time to complete (e.g., "2-3 minutes")
 }
 
 /**
