@@ -2102,6 +2102,18 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             }
         }
 
+        /* Additional utility classes - Issue #111 Code Review */
+        .usage-positions-more-info {
+            margin-top: 8px;
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .import-failed-message,
+        .save-failed-message {
+            color: var(--vscode-inputValidation-errorForeground);
+        }
+
         .form-select {
             padding: 8px 12px;
             background: var(--vscode-input-background);
@@ -3336,10 +3348,13 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         let keyboardHintVisible = false;
 
         document.addEventListener('keydown', (event) => {
+            // Cache DOM references for performance - Issue #111 Code Review
+            const variableEditor = document.getElementById('variableEditorModal');
+            const isVariableEditorOpen = variableEditor && variableEditor.classList.contains('visible');
+
             // Ctrl+S / Cmd+S to save in variable editor (Issue #111)
             if ((event.ctrlKey || event.metaKey) && event.key === 's') {
-                const variableEditor = document.getElementById('variableEditorModal');
-                if (variableEditor && variableEditor.classList.contains('visible')) {
+                if (isVariableEditorOpen) {
                     event.preventDefault();
                     const variableForm = document.getElementById('variableForm');
                     if (variableForm && variableForm.style.display !== 'none') {
@@ -3354,8 +3369,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             // ESC to close modal or variable editor or clear search (Issue #111)
             if (event.key === 'Escape') {
                 // Close variable editor if open
-                const variableEditor = document.getElementById('variableEditorModal');
-                if (variableEditor && variableEditor.classList.contains('visible')) {
+                if (isVariableEditorOpen) {
                     const variableForm = document.getElementById('variableForm');
                     if (variableForm && variableForm.style.display !== 'none') {
                         // Cancel variable edit form
@@ -3385,8 +3399,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
             // Delete key for variable deletion in variable editor (Issue #111)
             if (event.key === 'Delete') {
-                const variableEditor = document.getElementById('variableEditorModal');
-                if (variableEditor && variableEditor.classList.contains('visible')) {
+                if (isVariableEditorOpen) {
                     const deleteBtn = document.getElementById('deleteVarBtn');
                     if (deleteBtn && deleteBtn.style.display !== 'none' && !isInputFocused()) {
                         event.preventDefault();
@@ -3715,6 +3728,9 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         let editingVariableIndex = -1;
         let BUILT_IN_VARS = []; // Will be populated from backend
 
+        // Validation promise management (Issue #111 Code Review - replaced window.pendingVariable)
+        let currentValidationResolver = null;
+
         // Focus trap management for modal accessibility (Issue #111)
         let focusTrapActive = false;
         let lastFocusedElement = null;
@@ -3963,7 +3979,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 ).join('');
 
                 if (data.positions.length > maxShow) {
-                    positionsDiv.innerHTML += \`<div style="margin-top: 8px; font-size: 11px; opacity: 0.7;">...and \${data.positions.length - maxShow} more</div>\`;
+                    positionsDiv.innerHTML += \`<div class="usage-positions-more-info">...and \${data.positions.length - maxShow} more</div>\`;
                 }
             }
 
@@ -4089,26 +4105,46 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             const otherVariables = customVariables.filter((v, idx) => idx !== editingVariableIndex);
             const originalName = editingVariableIndex >= 0 ? customVariables[editingVariableIndex].name : undefined;
 
-            await performAdvancedValidation(variable, otherVariables, originalName);
+            const validationResult = await performAdvancedValidation(variable, otherVariables, originalName);
+
+            // If validation passed, save the variable
+            if (validationResult.isValid) {
+                // Add or update variable
+                if (editingVariableIndex === -1) {
+                    customVariables.push(variable);
+                } else {
+                    customVariables[editingVariableIndex] = variable;
+                }
+
+                // Hide form and refresh
+                document.getElementById('variableForm').style.display = 'none';
+                editingVariableIndex = -1;
+                renderVariablesList();
+                updateTemplatePreview();
+                updateVariableCount();
+
+                announceToScreenReader('Variable saved successfully');
+            }
         }
 
-        // Perform advanced validation and display results (Issue #111)
-        async function performAdvancedValidation(variable, otherVariables, originalName) {
-            // Request advanced validation from backend
-            vscode.postMessage({
-                command: 'validateVariable',
-                templateId: currentEditingTemplate,
-                variable: variable,
-                existingVariables: otherVariables,
-                originalName: originalName
+        // Perform advanced validation and return Promise (Issue #111 Code Review)
+        function performAdvancedValidation(variable, otherVariables, originalName) {
+            return new Promise((resolve, reject) => {
+                // Store resolver for the response handler
+                currentValidationResolver = { resolve, reject, variable, originalName };
+
+                // Request advanced validation from backend
+                vscode.postMessage({
+                    command: 'validateVariable',
+                    templateId: currentEditingTemplate,
+                    variable: variable,
+                    existingVariables: otherVariables,
+                    originalName: originalName
+                });
             });
-
-            // The response will be handled by the message listener
-            // Store the pending variable to save it once validation passes
-            window.pendingVariable = { variable, originalName };
         }
 
-        // Handle validation response from backend (Issue #111)
+        // Handle validation response from backend (Issue #111 Code Review - Promise-based)
         function handleValidationResponse(data) {
             const validationPanel = document.getElementById('validationPanel');
             const errorsDiv = document.getElementById('validationErrors');
@@ -4128,8 +4164,11 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 // Announce errors to screen reader
                 announceToScreenReader(\`\${data.errors.length} validation error\${data.errors.length > 1 ? 's' : ''}: \${data.errors.join(', ')}\`);
 
-                // Don't save if there are errors
-                window.pendingVariable = null;
+                // Resolve promise with validation result (validation failed)
+                if (currentValidationResolver) {
+                    currentValidationResolver.resolve(data);
+                    currentValidationResolver = null;
+                }
                 return;
             }
 
@@ -4146,28 +4185,10 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 validationPanel.style.display = 'none';
             }
 
-            // Validation passed - save the variable
-            if (window.pendingVariable && data.isValid) {
-                const { variable, originalName } = window.pendingVariable;
-
-                // Add or update variable
-                if (editingVariableIndex === -1) {
-                    customVariables.push(variable);
-                } else {
-                    customVariables[editingVariableIndex] = variable;
-                }
-
-                // Hide form and refresh
-                document.getElementById('variableForm').style.display = 'none';
-                editingVariableIndex = -1;
-                renderVariablesList();
-                updateTemplatePreview();
-                updateVariableCount();
-
-                // Clear pending variable
-                window.pendingVariable = null;
-
-                announceToScreenReader('Variable saved successfully');
+            // Validation passed - resolve promise with success
+            if (currentValidationResolver && data.isValid) {
+                currentValidationResolver.resolve(data);
+                currentValidationResolver = null;
             }
         }
 
@@ -4416,7 +4437,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 // Show error in footer
                 const footer = document.querySelector('.variable-editor-footer .footer-info');
                 if (footer) {
-                    footer.innerHTML = \`<span style="color: var(--vscode-inputValidation-errorForeground);">❌ Import failed: \${escapeHtml(message.error)}</span>\`;
+                    footer.innerHTML = \`<span class="import-failed-message">❌ Import failed: \${escapeHtml(message.error)}</span>\`;
                     setTimeout(() => {
                         footer.textContent = \`\${customVariables.length} custom variable\${customVariables.length !== 1 ? 's' : ''}\`;
                     }, 5000);
@@ -4490,7 +4511,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                         // Show inline error instead of alert
                         const footer = document.querySelector('.variable-editor-footer .footer-info');
                         if (footer) {
-                            footer.innerHTML = \`<span style="color: var(--vscode-inputValidation-errorForeground);">❌ Failed to save: \${escapeHtml(message.error)}</span>\`;
+                            footer.innerHTML = \`<span class="save-failed-message">❌ Failed to save: \${escapeHtml(message.error)}</span>\`;
                             setTimeout(() => {
                                 footer.textContent = \`\${customVariables.length} custom variable\${customVariables.length !== 1 ? 's' : ''}\`;
                             }, 5000);
