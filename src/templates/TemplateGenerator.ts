@@ -581,14 +581,14 @@ Return ONLY valid JSON, no other text.`;
         const definedNames = new Set(definedVariables.map(v => v.name));
 
         // Find variables that are used but not defined (and not built-in)
-        const undefined: string[] = [];
+        const undefinedVariables: string[] = [];
         for (const varName of usedVariables) {
             if (!definedNames.has(varName) && !builtInVars.has(varName)) {
-                undefined.push(varName);
+                undefinedVariables.push(varName);
             }
         }
 
-        return undefined;
+        return undefinedVariables;
     }
 
     /**
