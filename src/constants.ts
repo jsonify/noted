@@ -81,6 +81,23 @@ So that [benefit].
 };
 
 /**
+ * Built-in template variables that are reserved and cannot be used as custom variable names
+ * These variables are automatically replaced when templates are generated
+ */
+export const BUILT_IN_TEMPLATE_VARIABLES = [
+    'filename',
+    'date',
+    'time',
+    'year',
+    'month',
+    'day',
+    'weekday',
+    'month_name',
+    'user',
+    'workspace'
+] as const;
+
+/**
  * Built-in template metadata for display in picker
  */
 export const BUILT_IN_TEMPLATE_INFO = [
