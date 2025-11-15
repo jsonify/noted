@@ -1573,12 +1573,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
         function clearAllFilters() {
             // Reset all filters to default
-            filterState = {
-                fileType: 'all',
-                difficulty: 'all',
-                showOnly: 'all',
-                sortBy: 'name-asc'
-            };
+            filterState = { ...defaultFilterState };
 
             // Reset UI
             document.getElementById('fileTypeFilter').value = 'all';
