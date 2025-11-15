@@ -1939,6 +1939,167 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         .form-error {
             font-size: 12px;
             color: var(--vscode-inputValidation-errorForeground);
+            display: block;
+            margin-top: 4px;
+            min-height: 18px;
+        }
+
+        .form-hint {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            display: block;
+            margin-top: 4px;
+            opacity: 0.8;
+        }
+
+        /* Screen reader only class for accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Advanced Validation Panel - Issue #111 */
+        .validation-panel {
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 4px;
+            background-color: var(--vscode-inputValidation-infoBackground);
+            border: 1px solid var(--vscode-inputValidation-infoBorder);
+        }
+
+        .validation-errors {
+            margin-bottom: 8px;
+        }
+
+        .validation-error-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px;
+            margin-bottom: 4px;
+            background-color: var(--vscode-inputValidation-errorBackground);
+            border-left: 3px solid var(--vscode-inputValidation-errorBorder);
+            color: var(--vscode-inputValidation-errorForeground);
+            font-size: 13px;
+            border-radius: 2px;
+        }
+
+        .validation-error-item::before {
+            content: '✕';
+            color: var(--vscode-inputValidation-errorForeground);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .validation-warnings {
+            margin-top: 8px;
+        }
+
+        .validation-warning-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px;
+            margin-bottom: 4px;
+            background-color: var(--vscode-inputValidation-warningBackground);
+            border-left: 3px solid var(--vscode-inputValidation-warningBorder);
+            color: var(--vscode-inputValidation-warningForeground);
+            font-size: 13px;
+            border-radius: 2px;
+        }
+
+        .validation-warning-item::before {
+            content: '⚠';
+            color: var(--vscode-inputValidation-warningForeground);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* Usage Info Panel - Issue #111 */
+        .usage-info-panel {
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 4px;
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            border: 1px solid var(--vscode-panel-border);
+        }
+
+        .usage-count {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--vscode-foreground);
+        }
+
+        .usage-count-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .usage-positions {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .usage-position-item {
+            padding: 4px 8px;
+            margin: 4px 0;
+            background-color: var(--vscode-editor-background);
+            border-radius: 2px;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 11px;
+        }
+
+        .usage-position-item .line-number {
+            color: var(--vscode-editorLineNumber-foreground);
+            margin-right: 8px;
+        }
+
+        .usage-position-item .context-text {
+            color: var(--vscode-editor-foreground);
+        }
+
+        .usage-position-item .highlight {
+            background-color: var(--vscode-editor-findMatchHighlightBackground);
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+
+        /* Focus visible styles for keyboard navigation - WCAG 2.1 AA */
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        button:focus-visible {
+            outline: 2px solid var(--vscode-focusBorder);
+            outline-offset: 2px;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .validation-error-item,
+            .validation-warning-item {
+                border-width: 2px;
+            }
+
+            input:focus-visible,
+            select:focus-visible,
+            textarea:focus-visible,
+            button:focus-visible {
+                outline-width: 3px;
+            }
         }
 
         .form-select {
@@ -2193,16 +2354,45 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     </div>
                     <button class="btn" data-command="addNewVariable">+ Add Variable</button>
 
-                    <div class="variable-form" id="variableForm" style="display: none;">
-                        <div class="form-group">
-                            <label class="form-label">Variable Name*</label>
-                            <input type="text" class="form-input" id="varName" placeholder="e.g., project_name">
-                            <span class="form-error" id="varNameError"></span>
+                    <div class="variable-form" id="variableForm" style="display: none;" role="form" aria-labelledby="variableFormTitle">
+                        <h3 id="variableFormTitle" class="sr-only">Variable Configuration Form</h3>
+
+                        <!-- Advanced Validation Feedback Panel -->
+                        <div class="validation-panel" id="validationPanel" style="display: none;" role="alert" aria-live="polite">
+                            <div class="validation-errors" id="validationErrors"></div>
+                            <div class="validation-warnings" id="validationWarnings"></div>
+                        </div>
+
+                        <!-- Usage Info Panel -->
+                        <div class="usage-info-panel" id="usageInfoPanel" style="display: none;" role="status" aria-live="polite">
+                            <div class="usage-count" id="usageCount"></div>
+                            <div class="usage-positions" id="usagePositions"></div>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Type*</label>
-                            <select class="form-select" id="varType">
+                            <label class="form-label" for="varName" id="varNameLabel">Variable Name*</label>
+                            <input
+                                type="text"
+                                class="form-input"
+                                id="varName"
+                                placeholder="e.g., project_name"
+                                aria-labelledby="varNameLabel"
+                                aria-required="true"
+                                aria-describedby="varNameError varNameHint"
+                                aria-invalid="false"
+                            >
+                            <span class="form-hint" id="varNameHint">Must start with a letter, use lowercase, numbers, and underscores only</span>
+                            <span class="form-error" id="varNameError" role="alert"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="varType" id="varTypeLabel">Type*</label>
+                            <select
+                                class="form-select"
+                                id="varType"
+                                aria-labelledby="varTypeLabel"
+                                aria-required="true"
+                            >
                                 <option value="string">String</option>
                                 <option value="number">Number</option>
                                 <option value="enum">Enum (dropdown)</option>
@@ -2212,34 +2402,57 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                         </div>
 
                         <div class="form-group" id="enumValuesGroup" style="display: none;">
-                            <label class="form-label">Enum Values*</label>
-                            <div class="enum-values-container" id="enumValues">
+                            <label class="form-label" for="enumValues" id="enumValuesLabel">Enum Values*</label>
+                            <div
+                                class="enum-values-container"
+                                id="enumValues"
+                                role="list"
+                                aria-labelledby="enumValuesLabel"
+                            >
                                 <!-- Enum values will be populated here -->
                             </div>
-                            <button class="btn-add-enum" data-command="addEnumValue">+ Add Option</button>
+                            <button class="btn-add-enum" data-command="addEnumValue" aria-label="Add new enum option">+ Add Option</button>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-textarea" id="varDescription" placeholder="Describe what this variable is for..."></textarea>
+                            <label class="form-label" for="varDescription" id="varDescLabel">Description</label>
+                            <textarea
+                                class="form-textarea"
+                                id="varDescription"
+                                placeholder="Describe what this variable is for..."
+                                aria-labelledby="varDescLabel"
+                                rows="3"
+                            ></textarea>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Default Value</label>
-                            <input type="text" class="form-input" id="varDefault" placeholder="Optional default value">
+                            <label class="form-label" for="varDefault" id="varDefaultLabel">Default Value</label>
+                            <input
+                                type="text"
+                                class="form-input"
+                                id="varDefault"
+                                placeholder="Optional default value"
+                                aria-labelledby="varDefaultLabel"
+                                aria-describedby="varDefaultError"
+                            >
+                            <span class="form-error" id="varDefaultError" role="alert"></span>
                         </div>
 
                         <div class="form-group">
                             <div class="form-checkbox">
-                                <input type="checkbox" id="varRequired">
-                                <label class="form-label" for="varRequired">Required</label>
+                                <input
+                                    type="checkbox"
+                                    id="varRequired"
+                                    aria-labelledby="varRequiredLabel"
+                                >
+                                <label class="form-label" for="varRequired" id="varRequiredLabel">Required</label>
                             </div>
                         </div>
 
                         <div class="form-actions">
-                            <button class="btn btn-secondary" data-command="cancelVariableEdit">Cancel</button>
-                            <button class="btn" data-command="deleteVariable" id="deleteVarBtn" style="display: none;">Delete</button>
-                            <button class="btn primary" data-command="saveVariable">Save</button>
+                            <button class="btn btn-secondary" data-command="cancelVariableEdit" aria-label="Cancel and close variable editor">Cancel</button>
+                            <button class="btn" data-command="deleteVariable" id="deleteVarBtn" style="display: none;" aria-label="Delete this variable">Delete</button>
+                            <button class="btn primary" data-command="saveVariable" aria-label="Save variable changes">Save</button>
                         </div>
                     </div>
 
@@ -2258,10 +2471,14 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 </div>
             </div>
             <div class="variable-editor-footer">
-                <span class="footer-info" id="variableCount">0 custom variables</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span class="footer-info" id="variableCount">0 custom variables</span>
+                    <button class="modal-btn modal-btn-secondary" data-command="exportVariables" aria-label="Export variables to JSON file" title="Export variables">Export</button>
+                    <button class="modal-btn modal-btn-secondary" data-command="importVariables" aria-label="Import variables from JSON file" title="Import variables">Import</button>
+                </div>
                 <div class="footer-actions">
-                    <button class="modal-btn modal-btn-secondary" data-command="closeVariableEditor">Cancel</button>
-                    <button class="modal-btn" data-command="saveAllVariables">Save Changes</button>
+                    <button class="modal-btn modal-btn-secondary" data-command="closeVariableEditor" aria-label="Cancel and close without saving">Cancel</button>
+                    <button class="modal-btn" data-command="saveAllVariables" aria-label="Save all variable changes">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -2272,15 +2489,18 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         <!-- Menu items populated dynamically -->
     </div>
 
-    <!-- Phase 5: Keyboard Shortcut Hint -->
+    <!-- Phase 5: Keyboard Shortcut Hint - Enhanced for Issue #111 -->
     <div class="keyboard-shortcut-hint" id="keyboardHint">
         <strong>Keyboard Shortcuts:</strong><br>
         <span class="shortcut-key">/</span> Focus search<br>
-        <span class="shortcut-key">ESC</span> Clear search / Close<br>
+        <span class="shortcut-key">ESC</span> Clear search / Close modal<br>
         <span class="shortcut-key">↑↓</span> Navigate cards<br>
         <span class="shortcut-key">Enter</span> Create note<br>
         <span class="shortcut-key">Space</span> Toggle preview<br>
         <span class="shortcut-key">F</span> Toggle favorite<br>
+        <span class="shortcut-key">Ctrl+S</span> Save (in editor)<br>
+        <span class="shortcut-key">Delete</span> Delete variable<br>
+        <span class="shortcut-key">Tab</span> Navigate within modal<br>
         <span class="shortcut-key">?</span> Show/hide shortcuts
     </div>
 
@@ -2477,6 +2697,12 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     break;
                 case 'saveAllVariables':
                     saveAllVariables();
+                    break;
+                case 'exportVariables':
+                    exportVariablesConfig();
+                    break;
+                case 'importVariables':
+                    importVariablesConfig();
                     break;
             }
         });
@@ -3110,19 +3336,63 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         let keyboardHintVisible = false;
 
         document.addEventListener('keydown', (event) => {
-            // ESC to close modal or clear search
+            // Ctrl+S / Cmd+S to save in variable editor (Issue #111)
+            if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+                const variableEditor = document.getElementById('variableEditorModal');
+                if (variableEditor && variableEditor.classList.contains('visible')) {
+                    event.preventDefault();
+                    const variableForm = document.getElementById('variableForm');
+                    if (variableForm && variableForm.style.display !== 'none') {
+                        saveVariable();
+                    } else {
+                        saveAllVariables();
+                    }
+                    return;
+                }
+            }
+
+            // ESC to close modal or variable editor or clear search (Issue #111)
             if (event.key === 'Escape') {
+                // Close variable editor if open
+                const variableEditor = document.getElementById('variableEditorModal');
+                if (variableEditor && variableEditor.classList.contains('visible')) {
+                    const variableForm = document.getElementById('variableForm');
+                    if (variableForm && variableForm.style.display !== 'none') {
+                        // Cancel variable edit form
+                        cancelVariableEdit();
+                    } else {
+                        // Close entire variable editor
+                        closeVariableEditor();
+                    }
+                    return;
+                }
+
+                // Close preview modal
                 const modal = document.getElementById('previewModal');
                 if (modal.classList.contains('visible')) {
                     closePreviewModal();
                     return;
                 }
 
+                // Clear search
                 const searchInput = document.getElementById('searchInput');
                 if (searchInput.value) {
                     searchInput.value = '';
                     filterTemplates();
                     return;
+                }
+            }
+
+            // Delete key for variable deletion in variable editor (Issue #111)
+            if (event.key === 'Delete') {
+                const variableEditor = document.getElementById('variableEditorModal');
+                if (variableEditor && variableEditor.classList.contains('visible')) {
+                    const deleteBtn = document.getElementById('deleteVarBtn');
+                    if (deleteBtn && deleteBtn.style.display !== 'none' && !isInputFocused()) {
+                        event.preventDefault();
+                        deleteCurrentVariable();
+                        return;
+                    }
                 }
             }
 
@@ -3445,7 +3715,11 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         let editingVariableIndex = -1;
         let BUILT_IN_VARS = []; // Will be populated from backend
 
-        // Open variable editor modal
+        // Focus trap management for modal accessibility (Issue #111)
+        let focusTrapActive = false;
+        let lastFocusedElement = null;
+
+        // Open variable editor modal - Enhanced with focus trap (Issue #111)
         function openVariableEditor(templateId) {
             const template = templates.find(t => t.id === templateId);
             if (!template) return;
@@ -3454,6 +3728,9 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 // Show error for non-JSON templates
                 return;
             }
+
+            // Store last focused element to restore later
+            lastFocusedElement = document.activeElement;
 
             // Request template data from extension
             vscode.postMessage({
@@ -3464,15 +3741,106 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             // Show modal (will be populated when data arrives)
             const modal = document.getElementById('variableEditorModal');
             modal.classList.add('visible');
+
+            // Setup focus trap
+            setupFocusTrap(modal);
+
+            // Focus first focusable element
+            setTimeout(() => {
+                const firstFocusable = getFirstFocusableElement(modal);
+                if (firstFocusable) {
+                    firstFocusable.focus();
+                }
+            }, 100);
         }
 
-        // Close variable editor modal
+        // Close variable editor modal - Enhanced to restore focus (Issue #111)
         function closeVariableEditor() {
             const modal = document.getElementById('variableEditorModal');
             modal.classList.remove('visible');
             currentTemplateData = null;
             customVariables = [];
             editingVariableIndex = -1;
+
+            // Remove focus trap
+            removeFocusTrap();
+
+            // Restore focus to previously focused element
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+                lastFocusedElement = null;
+            }
+        }
+
+        // Setup focus trap within modal (Issue #111 - Accessibility)
+        function setupFocusTrap(container) {
+            focusTrapActive = true;
+
+            // Add Tab key listener for focus trapping
+            document.addEventListener('keydown', handleFocusTrap);
+
+            // Add aria-modal attribute
+            container.setAttribute('role', 'dialog');
+            container.setAttribute('aria-modal', 'true');
+        }
+
+        // Remove focus trap (Issue #111 - Accessibility)
+        function removeFocusTrap() {
+            focusTrapActive = false;
+            document.removeEventListener('keydown', handleFocusTrap);
+        }
+
+        // Handle focus trap Tab navigation (Issue #111 - Accessibility)
+        function handleFocusTrap(event) {
+            if (!focusTrapActive || event.key !== 'Tab') return;
+
+            const modal = document.getElementById('variableEditorModal');
+            if (!modal || !modal.classList.contains('visible')) return;
+
+            const focusableElements = getFocusableElements(modal);
+            if (focusableElements.length === 0) return;
+
+            const firstFocusable = focusableElements[0];
+            const lastFocusable = focusableElements[focusableElements.length - 1];
+
+            if (event.shiftKey) {
+                // Shift+Tab - move backwards
+                if (document.activeElement === firstFocusable) {
+                    event.preventDefault();
+                    lastFocusable.focus();
+                }
+            } else {
+                // Tab - move forwards
+                if (document.activeElement === lastFocusable) {
+                    event.preventDefault();
+                    firstFocusable.focus();
+                }
+            }
+        }
+
+        // Get all focusable elements within a container (Issue #111)
+        function getFocusableElements(container) {
+            const focusableSelectors = [
+                'button:not([disabled])',
+                'input:not([disabled])',
+                'select:not([disabled])',
+                'textarea:not([disabled])',
+                'a[href]',
+                '[tabindex]:not([tabindex="-1"])'
+            ];
+
+            return Array.from(
+                container.querySelectorAll(focusableSelectors.join(', '))
+            ).filter(el => {
+                // Filter out hidden elements
+                return el.offsetParent !== null || el.offsetHeight > 0 || el.offsetWidth > 0;
+            });
+        }
+
+        // Get first focusable element (Issue #111)
+        function getFirstFocusableElement(container) {
+            const elements = getFocusableElements(container);
+            return elements.length > 0 ? elements[0] : null;
         }
 
         // Populate variable editor with template data
@@ -3524,7 +3892,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             });
         }
 
-        // Select a variable for editing
+        // Select a variable for editing - Enhanced with usage info (Issue #111)
         function selectVariableForEdit(index) {
             editingVariableIndex = index;
             const variable = customVariables[index];
@@ -3548,11 +3916,63 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 document.getElementById('enumValuesGroup').style.display = 'none';
             }
 
-            // Clear errors
-            document.getElementById('varNameError').textContent = '';
-            document.getElementById('varName').classList.remove('error');
+            // Clear errors and validation
+            clearValidationErrors();
+
+            // Request variable usage info from backend
+            requestVariableUsageInfo(variable.name);
 
             renderVariablesList();
+        }
+
+        // Request variable usage information (Issue #111)
+        function requestVariableUsageInfo(variableName) {
+            vscode.postMessage({
+                command: 'getVariableUsageInfo',
+                templateId: currentEditingTemplate,
+                variableName: variableName
+            });
+        }
+
+        // Handle variable usage response (Issue #111)
+        function handleVariableUsageResponse(data) {
+            const usagePanel = document.getElementById('usageInfoPanel');
+            const countDiv = document.getElementById('usageCount');
+            const positionsDiv = document.getElementById('usagePositions');
+
+            if (!data.count || data.count === 0) {
+                usagePanel.style.display = 'none';
+                return;
+            }
+
+            // Display usage count
+            countDiv.innerHTML = \`Variable used <span class="usage-count-badge">\${data.count} time\${data.count !== 1 ? 's' : ''}</span> in template\`;
+
+            // Display usage positions (show first 5)
+            if (data.positions && data.positions.length > 0) {
+                const maxShow = 5;
+                const positions = data.positions.slice(0, maxShow);
+                positionsDiv.innerHTML = positions.map(pos =>
+                    \`<div class="usage-position-item">
+                        <span class="line-number">Line \${pos.line}:</span>
+                        <span class="context-text">\${escapeHtml(pos.context).replace(
+                            new RegExp(\`\\\\{\${escapeRegex(pos.variableName)}\\\\}\`, 'g'),
+                            '<span class="highlight">{\$&}</span>'
+                        )}</span>
+                    </div>\`
+                ).join('');
+
+                if (data.positions.length > maxShow) {
+                    positionsDiv.innerHTML += \`<div style="margin-top: 8px; font-size: 11px; opacity: 0.7;">...and \${data.positions.length - maxShow} more</div>\`;
+                }
+            }
+
+            usagePanel.style.display = 'block';
+        }
+
+        // Escape regex special characters
+        function escapeRegex(str) {
+            return str.replace(/[.*+?^$\{\\}()|\\[\\]\\\\]/g, '\\\\$&');
         }
 
         // Add new variable
@@ -3618,19 +4038,24 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             return { isValid: true };
         }
 
-        // Save variable
-        function saveVariable() {
+        // Save variable - Enhanced with advanced validation (Issue #111)
+        async function saveVariable() {
             const name = document.getElementById('varName').value.trim();
             const type = document.getElementById('varType').value;
             const description = document.getElementById('varDescription').value.trim();
             const defaultValue = document.getElementById('varDefault').value.trim();
             const required = document.getElementById('varRequired').checked;
 
+            // Clear previous errors
+            clearValidationErrors();
+
             // Validate name
             const validation = validateVariableName(name);
             if (!validation.isValid) {
                 document.getElementById('varNameError').textContent = validation.error;
                 document.getElementById('varName').classList.add('error');
+                document.getElementById('varName').setAttribute('aria-invalid', 'true');
+                announceToScreenReader(validation.error);
                 return;
             }
 
@@ -3652,25 +4077,124 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
                 if (values.length === 0) {
                     document.getElementById('varNameError').textContent = 'Enum must have at least one value';
+                    document.getElementById('varName').setAttribute('aria-invalid', 'true');
+                    announceToScreenReader('Enum must have at least one value');
                     return;
                 }
 
                 variable.values = values;
             }
 
-            // Add or update variable
-            if (editingVariableIndex === -1) {
-                customVariables.push(variable);
-            } else {
-                customVariables[editingVariableIndex] = variable;
+            // Perform advanced validation via backend
+            const otherVariables = customVariables.filter((v, idx) => idx !== editingVariableIndex);
+            const originalName = editingVariableIndex >= 0 ? customVariables[editingVariableIndex].name : undefined;
+
+            await performAdvancedValidation(variable, otherVariables, originalName);
+        }
+
+        // Perform advanced validation and display results (Issue #111)
+        async function performAdvancedValidation(variable, otherVariables, originalName) {
+            // Request advanced validation from backend
+            vscode.postMessage({
+                command: 'validateVariable',
+                templateId: currentEditingTemplate,
+                variable: variable,
+                existingVariables: otherVariables,
+                originalName: originalName
+            });
+
+            // The response will be handled by the message listener
+            // Store the pending variable to save it once validation passes
+            window.pendingVariable = { variable, originalName };
+        }
+
+        // Handle validation response from backend (Issue #111)
+        function handleValidationResponse(data) {
+            const validationPanel = document.getElementById('validationPanel');
+            const errorsDiv = document.getElementById('validationErrors');
+            const warningsDiv = document.getElementById('validationWarnings');
+
+            // Clear previous validation
+            errorsDiv.innerHTML = '';
+            warningsDiv.innerHTML = '';
+
+            // Display errors
+            if (data.errors && data.errors.length > 0) {
+                errorsDiv.innerHTML = data.errors.map(error =>
+                    \`<div class="validation-error-item">\${escapeHtml(error)}</div>\`
+                ).join('');
+                validationPanel.style.display = 'block';
+
+                // Announce errors to screen reader
+                announceToScreenReader(\`\${data.errors.length} validation error\${data.errors.length > 1 ? 's' : ''}: \${data.errors.join(', ')}\`);
+
+                // Don't save if there are errors
+                window.pendingVariable = null;
+                return;
             }
 
-            // Hide form and refresh
-            document.getElementById('variableForm').style.display = 'none';
-            editingVariableIndex = -1;
-            renderVariablesList();
-            updateTemplatePreview();
-            updateVariableCount();
+            // Display warnings (non-blocking)
+            if (data.warnings && data.warnings.length > 0) {
+                warningsDiv.innerHTML = data.warnings.map(warning =>
+                    \`<div class="validation-warning-item">\${escapeHtml(warning)}</div>\`
+                ).join('');
+                validationPanel.style.display = 'block';
+
+                // Announce warnings to screen reader
+                announceToScreenReader(\`\${data.warnings.length} validation warning\${data.warnings.length > 1 ? 's' : ''}\`);
+            } else {
+                validationPanel.style.display = 'none';
+            }
+
+            // Validation passed - save the variable
+            if (window.pendingVariable && data.isValid) {
+                const { variable, originalName } = window.pendingVariable;
+
+                // Add or update variable
+                if (editingVariableIndex === -1) {
+                    customVariables.push(variable);
+                } else {
+                    customVariables[editingVariableIndex] = variable;
+                }
+
+                // Hide form and refresh
+                document.getElementById('variableForm').style.display = 'none';
+                editingVariableIndex = -1;
+                renderVariablesList();
+                updateTemplatePreview();
+                updateVariableCount();
+
+                // Clear pending variable
+                window.pendingVariable = null;
+
+                announceToScreenReader('Variable saved successfully');
+            }
+        }
+
+        // Clear validation errors
+        function clearValidationErrors() {
+            document.getElementById('varNameError').textContent = '';
+            document.getElementById('varDefaultError').textContent = '';
+            document.getElementById('varName').classList.remove('error');
+            document.getElementById('varName').setAttribute('aria-invalid', 'false');
+            document.getElementById('validationPanel').style.display = 'none';
+            document.getElementById('validationErrors').innerHTML = '';
+            document.getElementById('validationWarnings').innerHTML = '';
+        }
+
+        // Announce message to screen reader (Issue #111 - Accessibility)
+        function announceToScreenReader(message) {
+            const liveRegion = document.createElement('div');
+            liveRegion.setAttribute('role', 'status');
+            liveRegion.setAttribute('aria-live', 'polite');
+            liveRegion.className = 'sr-only';
+            liveRegion.textContent = message;
+            document.body.appendChild(liveRegion);
+
+            // Remove after announcement
+            setTimeout(() => {
+                document.body.removeChild(liveRegion);
+            }, 1000);
         }
 
         // Delete current variable
@@ -3827,6 +4351,79 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             });
         }
 
+        // Export variables configuration (Issue #111 - UX Enhancement)
+        function exportVariablesConfig() {
+            if (!currentTemplateData) return;
+
+            vscode.postMessage({
+                command: 'exportVariables',
+                templateId: currentTemplateData.id
+            });
+        }
+
+        // Import variables configuration (Issue #111 - UX Enhancement)
+        function importVariablesConfig() {
+            if (!currentTemplateData) return;
+
+            // Create a file input element dynamically
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.style.display = 'none';
+
+            input.addEventListener('change', async (event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+
+                try {
+                    const text = await file.text();
+                    vscode.postMessage({
+                        command: 'importVariables',
+                        templateId: currentTemplateData.id,
+                        variablesJson: text
+                    });
+                } catch (error) {
+                    announceToScreenReader('Failed to read file: ' + error.message);
+                } finally {
+                    document.body.removeChild(input);
+                }
+            });
+
+            document.body.appendChild(input);
+            input.click();
+        }
+
+        // Handle export variables response (Issue #111)
+        function handleExportVariablesResponse(message) {
+            if (message.success) {
+                announceToScreenReader('Variables exported successfully');
+            } else {
+                announceToScreenReader('Failed to export variables: ' + message.error);
+            }
+        }
+
+        // Handle import variables response (Issue #111)
+        function handleImportVariablesResponse(message) {
+            if (message.success) {
+                // Replace current variables with imported ones
+                customVariables = message.variables || [];
+                renderVariablesList();
+                updateTemplatePreview();
+                updateVariableCount();
+                announceToScreenReader(\`Successfully imported \${customVariables.length} variable\${customVariables.length !== 1 ? 's' : ''}\`);
+            } else {
+                announceToScreenReader('Failed to import variables: ' + message.error);
+                // Show error in footer
+                const footer = document.querySelector('.variable-editor-footer .footer-info');
+                if (footer) {
+                    footer.innerHTML = \`<span style="color: var(--vscode-inputValidation-errorForeground);">❌ Import failed: \${escapeHtml(message.error)}</span>\`;
+                    setTimeout(() => {
+                        footer.textContent = \`\${customVariables.length} custom variable\${customVariables.length !== 1 ? 's' : ''}\`;
+                    }, 5000);
+                }
+            }
+        }
+
         // Update message handler to process preview responses
         window.addEventListener('message', event => {
             const message = event.data;
@@ -3899,6 +4496,22 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                             }, 5000);
                         }
                     }
+                    break;
+
+                case 'validateVariableResponse':
+                    handleValidationResponse(message);
+                    break;
+
+                case 'variableUsageInfoResponse':
+                    handleVariableUsageResponse(message);
+                    break;
+
+                case 'exportVariablesResponse':
+                    handleExportVariablesResponse(message);
+                    break;
+
+                case 'importVariablesResponse':
+                    handleImportVariablesResponse(message);
                     break;
             }
         });
