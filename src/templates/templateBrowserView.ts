@@ -756,10 +756,9 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         }
 
         // Determine if template is "new" (created within last 7 days)
-        function isNew(template) {
+        function isNew(template, now) {
             if (!template.created) return false;
             const created = new Date(template.created);
-            const now = new Date();
             const daysDiff = (now - created) / (1000 * 60 * 60 * 24);
             return daysDiff <= 7;
         }
