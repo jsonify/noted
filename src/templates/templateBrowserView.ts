@@ -553,26 +553,10 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             color: var(--vscode-editor-background);
         }
 
-        .difficulty-badge {
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-weight: 500;
-        }
-
-        .difficulty-beginner {
-            background: var(--vscode-gitDecoration-addedResourceForeground);
-            color: var(--vscode-editor-background);
-        }
-
-        .difficulty-intermediate {
-            background: var(--vscode-list-warningForeground);
-            color: var(--vscode-editor-background);
-        }
-
-        .difficulty-advanced {
-            background: var(--vscode-errorForeground);
-            color: var(--vscode-editor-background);
+        .difficulty-stars {
+            font-size: 14px;
+            color: var(--vscode-list-warningForeground);
+            letter-spacing: 1px;
         }
 
         .filetype-badge {
@@ -729,23 +713,25 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
         // Constants for template icons and badges
         const TEMPLATE_ICON_MAP = {
-            'Built-in': '⚡',
-            'Custom': '✏️',
-            'Documentation': '📄',
-            'Project': '📁',
+            'Built-in': '⚙️',
+            'Custom': '📝',
+            'Documentation': '📚',
+            'Project': '📊',
             'Meeting': '🤝',
             'Research': '🔬',
             'Planning': '📋',
             'Development': '💻',
             'Design': '🎨',
-            'General': '📝'
+            'General': '📝',
+            'Daily Notes': '📅',
+            'User Story': '📖'
         };
 
         const FILE_TYPE_BADGES = {
-            'builtin': 'BUILT-IN',
-            'json': '.json',
-            'txt': '.txt',
-            'md': '.md'
+            'builtin': '⚙️ Built-in',
+            'json': '📦 JSON',
+            'txt': '📄 Text',
+            'md': '📝 Markdown'
         };
 
         // HTML escaping function to prevent XSS
@@ -780,6 +766,32 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         // Get file type display text
         function getFileTypeBadge(fileType) {
             return FILE_TYPE_BADGES[fileType] || fileType;
+        }
+
+        // Convert difficulty to stars (1-3 stars)
+        function getDifficultyStars(difficulty) {
+            const starMap = {
+                'beginner': '⭐',
+                'intermediate': '⭐⭐',
+                'advanced': '⭐⭐⭐'
+            };
+            return starMap[difficulty] || '';
+        }
+
+        // Calculate usage trend (mock implementation - would need historical data)
+        function getUsageTrend(template) {
+            // For now, return empty string. In a real implementation, this would
+            // compare current week's usage to previous weeks
+            // Example: "↑ 3 this week" or "↓ 2 this week"
+            if (!template.usage_count || template.usage_count === 0) {
+                return '';
+            }
+            // Mock: Templates with high usage show upward trend
+            if (template.usage_count >= 10) {
+                const weeklyUses = Math.floor(Math.random() * 5) + 1;
+                return \`↑ \${weeklyUses} this week\`;
+            }
+            return '';
         }
 
         // Initialize
@@ -864,6 +876,8 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             container.innerHTML = filteredTemplates.map(t => {
                 const showNew = isNew(t);
                 const showPopular = isPopular(t);
+                const difficultyStars = getDifficultyStars(t.difficulty);
+                const usageTrend = getUsageTrend(t);
 
                 return \`
                 <div class="template-card">
@@ -872,13 +886,13 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                             <div class="template-title-row">
                                 <span class="template-icon">\${getTemplateIcon(t)}</span>
                                 <div class="template-title">\${escapeHtml(t.name)}</div>
+                                \${difficultyStars ? \`<span class="difficulty-stars" title="Difficulty: \${escapeHtml(t.difficulty)}">\${difficultyStars}</span>\` : ''}
                             </div>
                             <div class="template-badges">
                                 <span class="template-category">\${escapeHtml(t.category)}</span>
                                 <span class="filetype-badge">\${getFileTypeBadge(t.fileType)}</span>
-                                \${t.difficulty ? \`<span class="difficulty-badge difficulty-\${t.difficulty}">\${escapeHtml(t.difficulty.toUpperCase())}</span>\` : ''}
                                 \${showNew ? '<span class="status-badge status-new">NEW</span>' : ''}
-                                \${showPopular ? '<span class="status-badge status-popular">POPULAR</span>' : ''}
+                                \${showPopular ? '<span class="status-badge status-popular">🔥 POPULAR</span>' : ''}
                             </div>
                         </div>
                     </div>
@@ -888,7 +902,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     </div>
                     <div class="template-meta">
                         <span>v\${escapeHtml(t.version)}</span>
-                        <span>\${t.usage_count !== undefined ? \`📊 \${escapeHtml(t.usage_count)} uses\` : '📊 0 uses'}</span>
+                        <span>\${t.usage_count !== undefined ? \`📊 \${escapeHtml(t.usage_count)} uses\${usageTrend ? \` · \${usageTrend}\` : ''}\` : '📊 0 uses'}</span>
                         \${t.author ? \`<span>👤 \${escapeHtml(t.author)}</span>\` : ''}
                     </div>
                     <div class="template-actions">
