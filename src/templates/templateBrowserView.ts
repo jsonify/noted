@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { getTemplatesPath, getFileFormat } from '../services/configService';
 import { pathExists, readFile, readDirectory, writeFile } from '../services/fileSystemService';
-import { Template, TemplateDifficulty } from './TemplateTypes';
-import { BUILT_IN_TEMPLATES, BUILT_IN_TEMPLATE_INFO } from '../constants';
+import { Template, TemplateDifficulty, TemplateVariable } from './TemplateTypes';
+import { BUILT_IN_TEMPLATES, BUILT_IN_TEMPLATE_INFO, BUILT_IN_TEMPLATE_VARIABLES } from '../constants';
 import { TemplatesTreeProvider } from '../providers/templatesTreeProvider';
 import { getTemplateContent, getTemplateLines, highlightVariables, generateSamplePreview } from '../services/templateService';
 
@@ -509,7 +509,8 @@ async function handleGetTemplateData(panel: vscode.WebviewPanel, templateId: str
                 description: template.description,
                 variables: template.variables || [],
                 content: template.content
-            }
+            },
+            builtInVariables: [...BUILT_IN_TEMPLATE_VARIABLES]
         });
     } catch (error) {
         panel.webview.postMessage({
@@ -3176,7 +3177,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         let currentTemplateData = null;
         let customVariables = [];
         let editingVariableIndex = -1;
-        const BUILT_IN_VARS = ['filename', 'date', 'time', 'year', 'month', 'day', 'weekday', 'month_name', 'user', 'workspace'];
+        let BUILT_IN_VARS = []; // Will be populated from backend
 
         // Open variable editor modal
         function openVariableEditor(templateId) {
@@ -3209,14 +3210,16 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         }
 
         // Populate variable editor with template data
-        function populateVariableEditor(templateData) {
+        function populateVariableEditor(templateData, builtInVariables) {
             currentTemplateData = templateData;
             customVariables = templateData.variables || [];
+            BUILT_IN_VARS = builtInVariables || [];
 
             document.getElementById('variableEditorTitle').textContent = \`Edit Variables: \${templateData.name}\`;
             renderVariablesList();
             updateTemplatePreview();
             updateVariableCount();
+            updateBuiltInVariablesDisplay();
         }
 
         // Render variables list
@@ -3235,7 +3238,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             }
 
             listContainer.innerHTML = customVariables.map((v, index) => \`
-                <div class="variable-item \${editingVariableIndex === index ? 'selected' : ''}" onclick="selectVariableForEdit(\${index})">
+                <div class="variable-item \${editingVariableIndex === index ? 'selected' : ''}" data-index="\${index}">
                     <div class="variable-item-header">
                         <span class="variable-name">{\${escapeHtml(v.name)}}</span>
                         <span class="variable-type-badge">\${escapeHtml(v.type)}</span>
@@ -3243,10 +3246,20 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     \${v.description ? \`<div class="variable-description">\${escapeHtml(v.description)}</div>\` : ''}
                 </div>
             \`).join('');
+
+            // Add event listeners using event delegation
+            listContainer.querySelectorAll('.variable-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const index = parseInt(item.getAttribute('data-index') || '-1', 10);
+                    if (index >= 0) {
+                        selectVariableForEdit(index);
+                    }
+                });
+            });
         }
 
         // Select a variable for editing
-        window.selectVariableForEdit = function(index) {
+        function selectVariableForEdit(index) {
             editingVariableIndex = index;
             const variable = customVariables[index];
 
@@ -3274,7 +3287,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             document.getElementById('varName').classList.remove('error');
 
             renderVariablesList();
-        };
+        }
 
         // Add new variable
         function addNewVariable() {
@@ -3398,25 +3411,59 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         function deleteCurrentVariable() {
             if (editingVariableIndex === -1) return;
 
-            if (confirm(\`Delete variable '\${customVariables[editingVariableIndex].name}'?\`)) {
+            const varName = customVariables[editingVariableIndex].name;
+
+            // Show inline confirmation instead of native confirm dialog
+            const form = document.getElementById('variableForm');
+            const originalHTML = form.innerHTML;
+
+            form.innerHTML = \`
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 16px; margin-bottom: 20px;">
+                        Delete variable '<strong>\${escapeHtml(varName)}</strong>'?
+                    </div>
+                    <div style="display: flex; gap: 8px; justify-content: center;">
+                        <button class="btn btn-secondary" id="cancelDelete">Cancel</button>
+                        <button class="btn danger" id="confirmDelete">Delete</button>
+                    </div>
+                </div>
+            \`;
+
+            document.getElementById('cancelDelete').addEventListener('click', () => {
+                form.innerHTML = originalHTML;
+                selectVariableForEdit(editingVariableIndex);
+            });
+
+            document.getElementById('confirmDelete').addEventListener('click', () => {
                 customVariables.splice(editingVariableIndex, 1);
-                document.getElementById('variableForm').style.display = 'none';
+                form.style.display = 'none';
+                form.innerHTML = originalHTML;
                 editingVariableIndex = -1;
                 renderVariablesList();
                 updateTemplatePreview();
                 updateVariableCount();
-            }
+            });
         }
 
         // Render enum values
         function renderEnumValues(values) {
             const container = document.getElementById('enumValues');
             container.innerHTML = values.map((val, idx) => \`
-                <div class="enum-value-row">
+                <div class="enum-value-row" data-enum-index="\${idx}">
                     <input type="text" class="form-input enum-value-input" value="\${escapeHtml(val)}" placeholder="Option \${idx + 1}">
-                    <button class="btn-remove-enum" onclick="removeEnumValue(\${idx})">×</button>
+                    <button class="btn-remove-enum">×</button>
                 </div>
             \`).join('');
+
+            // Add event listeners for remove buttons
+            container.querySelectorAll('.btn-remove-enum').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const row = e.target.closest('.enum-value-row');
+                    if (row && container.children.length > 1) {
+                        row.remove();
+                    }
+                });
+            });
 
             if (values.length === 0) {
                 addEnumValue();
@@ -3432,20 +3479,21 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             row.className = 'enum-value-row';
             row.innerHTML = \`
                 <input type="text" class="form-input enum-value-input" placeholder="Option \${currentCount + 1}">
-                <button class="btn-remove-enum" onclick="removeEnumValue(\${currentCount})">×</button>
+                <button class="btn-remove-enum">×</button>
             \`;
+
+            // Add event listener for remove button
+            const removeBtn = row.querySelector('.btn-remove-enum');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
+                    if (container.children.length > 1) {
+                        row.remove();
+                    }
+                });
+            }
+
             container.appendChild(row);
         }
-
-        // Remove enum value
-        window.removeEnumValue = function(index) {
-            const container = document.getElementById('enumValues');
-            const rows = container.children;
-
-            if (rows.length > 1) {
-                rows[index].remove();
-            }
-        };
 
         // Listen for type changes to show/hide enum values
         document.addEventListener('DOMContentLoaded', () => {
@@ -3489,6 +3537,17 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         function updateVariableCount() {
             const count = customVariables.length;
             document.getElementById('variableCount').textContent = \`\${count} custom variable\${count !== 1 ? 's' : ''}\`;
+        }
+
+        // Update built-in variables display
+        function updateBuiltInVariablesDisplay() {
+            const infoDiv = document.querySelector('.built-in-variables-info');
+            if (infoDiv && BUILT_IN_VARS.length > 0) {
+                infoDiv.innerHTML = \`
+                    <strong>Built-in Variables:</strong><br>
+                    \${BUILT_IN_VARS.map(v => \`<span class="built-in-var">{\${escapeHtml(v)}}</span>\`).join(', ')}
+                \`;
+            }
         }
 
         // Save all variables to template
@@ -3557,7 +3616,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                         return;
                     }
 
-                    populateVariableEditor(message.template);
+                    populateVariableEditor(message.template, message.builtInVariables || []);
                     break;
 
                 case 'saveVariablesResponse':
@@ -3565,7 +3624,14 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                         closeVariableEditor();
                     } else {
                         console.error('Save variables error:', message.error);
-                        alert('Failed to save variables: ' + message.error);
+                        // Show inline error instead of alert
+                        const footer = document.querySelector('.variable-editor-footer .footer-info');
+                        if (footer) {
+                            footer.innerHTML = \`<span style="color: var(--vscode-inputValidation-errorForeground);">❌ Failed to save: \${escapeHtml(message.error)}</span>\`;
+                            setTimeout(() => {
+                                footer.textContent = \`\${customVariables.length} custom variable\${customVariables.length !== 1 ? 's' : ''}\`;
+                            }, 5000);
+                        }
                     }
                     break;
             }

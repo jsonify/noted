@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 import * as os from 'os';
 import { Template, TemplateVariable, AIGenerationConfig } from './TemplateTypes';
 import { selectAIModel } from '../services/aiModelService';
+import { BUILT_IN_TEMPLATE_VARIABLES } from '../constants';
 
 /**
  * Cache entry for template generation results
@@ -482,19 +483,8 @@ Return ONLY valid JSON, no other text.`;
      * Get list of built-in template variables that cannot be used as custom variable names
      * @returns Array of built-in variable names
      */
-    getBuiltInVariables(): string[] {
-        return [
-            'filename',
-            'date',
-            'time',
-            'year',
-            'month',
-            'day',
-            'weekday',
-            'month_name',
-            'user',
-            'workspace'
-        ];
+    getBuiltInVariables(): readonly string[] {
+        return BUILT_IN_TEMPLATE_VARIABLES;
     }
 
     /**
@@ -533,11 +523,13 @@ Return ONLY valid JSON, no other text.`;
      * Validate a complete variable definition
      * @param variable - Variable to validate
      * @param existingVariables - Array of existing variables to check for duplicates
+     * @param originalName - Optional original name if updating an existing variable (to exclude it from duplicate check)
      * @returns Object with isValid boolean and optional error message
      */
     validateVariable(
         variable: TemplateVariable,
-        existingVariables: TemplateVariable[] = []
+        existingVariables: TemplateVariable[] = [],
+        originalName?: string
     ): { isValid: boolean; error?: string } {
         // Validate name
         const nameValidation = this.validateVariableName(variable.name);
@@ -546,7 +538,9 @@ Return ONLY valid JSON, no other text.`;
         }
 
         // Check for duplicates (excluding self if updating)
-        const duplicate = existingVariables.find(v => v.name === variable.name);
+        const duplicate = existingVariables.find(v =>
+            v.name === variable.name && v.name !== originalName
+        );
         if (duplicate) {
             return {
                 isValid: false,
