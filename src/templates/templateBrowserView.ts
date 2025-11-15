@@ -2490,7 +2490,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 <div class="context-menu-item" data-command="exportTemplate" data-template-id="\${escapeHtml(templateId)}">
                     <span>💾</span> Export
                 </div>
-                <div class="context-menu-item" onclick="copyTemplateId('\${escapeHtml(templateId)}')">
+                <div class="context-menu-item" data-command="copyTemplateId" data-template-id="${escapeHtml(templateId)}">
                     <span>📎</span> Copy Template ID
                 </div>
             \`;
