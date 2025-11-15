@@ -258,6 +258,9 @@ async function loadAllTemplates(): Promise<TemplateDisplayInfo[]> {
 async function handleCreateFromTemplate(templateId: string): Promise<void> {
     // Execute the openWithTemplate command with the template ID
     await vscode.commands.executeCommand('noted.openWithTemplate', templateId);
+
+    // Update usage tracking
+    await updateTemplateUsage(templateId);
 }
 
 /**
@@ -447,6 +450,37 @@ async function handleGetFullPreview(panel: vscode.WebviewPanel, templateId: stri
         content: highlightedContent,
         samplePreview
     });
+}
+
+/**
+ * Update template usage tracking
+ */
+async function updateTemplateUsage(templateId: string): Promise<void> {
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        return;
+    }
+
+    // Find and update the template file (only for JSON templates)
+    const jsonPath = path.join(templatesPath, `${templateId}.json`);
+
+    try {
+        if (await pathExists(jsonPath)) {
+            const content = await readFile(jsonPath);
+            const template: Template = JSON.parse(content);
+
+            // Update usage metadata
+            template.usage_count = (template.usage_count || 0) + 1;
+            template.last_used = new Date().toISOString();
+
+            // Write back to file
+            await writeFile(jsonPath, JSON.stringify(template, null, 2));
+
+            console.log(`[Template Browser] Updated usage for template: ${templateId} (count: ${template.usage_count})`);
+        }
+    } catch (error) {
+        console.error(`[Template Browser] Failed to update usage for template ${templateId}:`, error);
+    }
 }
 
 /**
@@ -1239,6 +1273,107 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         .modal-btn-secondary:hover {
             background: var(--vscode-button-secondaryHoverBackground);
         }
+
+        /* Phase 5: Favorites System */
+        .favorite-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+
+        .favorite-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .favorite-btn.favorited {
+            color: var(--vscode-list-warningForeground);
+        }
+
+        /* Phase 5: Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--vscode-menu-background);
+            border: 1px solid var(--vscode-menu-border);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 3000;
+            min-width: 180px;
+            padding: 4px 0;
+            display: none;
+        }
+
+        .context-menu.visible {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--vscode-menu-foreground);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.1s;
+        }
+
+        .context-menu-item:hover {
+            background: var(--vscode-menu-selectionBackground);
+            color: var(--vscode-menu-selectionForeground);
+        }
+
+        .context-menu-item.danger {
+            color: var(--vscode-inputValidation-errorForeground);
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: var(--vscode-menu-separatorBackground);
+            margin: 4px 0;
+        }
+
+        /* Phase 5: Keyboard Navigation */
+        .template-card.keyboard-focused {
+            border-color: var(--vscode-focusBorder);
+            box-shadow: 0 0 0 2px var(--vscode-focusBorder);
+        }
+
+        .keyboard-shortcut-hint {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            padding: 12px 16px;
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            max-width: 300px;
+            display: none;
+            z-index: 1500;
+        }
+
+        .keyboard-shortcut-hint.visible {
+            display: block;
+        }
+
+        .shortcut-key {
+            display: inline-block;
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 11px;
+            margin: 0 2px;
+        }
     </style>
 </head>
 <body>
@@ -1342,6 +1477,23 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 <button class="modal-btn" data-command="closePreviewModal">Close</button>
             </div>
         </div>
+    </div>
+
+    <!-- Phase 5: Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <!-- Menu items populated dynamically -->
+    </div>
+
+    <!-- Phase 5: Keyboard Shortcut Hint -->
+    <div class="keyboard-shortcut-hint" id="keyboardHint">
+        <strong>Keyboard Shortcuts:</strong><br>
+        <span class="shortcut-key">/</span> Focus search<br>
+        <span class="shortcut-key">ESC</span> Clear search / Close<br>
+        <span class="shortcut-key">↑↓</span> Navigate cards<br>
+        <span class="shortcut-key">Enter</span> Create note<br>
+        <span class="shortcut-key">Space</span> Toggle preview<br>
+        <span class="shortcut-key">F</span> Toggle favorite<br>
+        <span class="shortcut-key">?</span> Show/hide shortcuts
     </div>
 
     <script>
@@ -1506,6 +1658,10 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     break;
                 case 'copyModalContent':
                     copyModalContent(event);
+                    break;
+                case 'toggleFavorite':
+                    toggleFavorite(templateId);
+                    event.stopPropagation(); // Prevent card click
                     break;
             }
         });
@@ -1742,13 +1898,8 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             container.className = currentView === 'grid' ? 'templates-grid' : 'templates-list';
 
             if (sortedTemplates.length === 0) {
-                container.innerHTML = \`
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
-                        <div class="empty-state-title">No templates found</div>
-                        <div>Try adjusting your search or filters</div>
-                    </div>
-                \`;
+                // Phase 5: Context-aware empty states
+                container.innerHTML = getEmptyStateHtml();
                 return;
             }
 
@@ -1762,7 +1913,17 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 const usageTrend = getUsageTrend(t);
 
                 return \`
-                <div class="template-card" data-template-id="\${escapeHtml(t.id)}">
+                <div class="template-card" data-template-id="\${escapeHtml(t.id)}" tabindex="0">
+                    <!-- Phase 5: Favorite Button -->
+                    <button
+                        class="favorite-btn \${favorites.has(t.id) ? 'favorited' : ''}"
+                        data-command="toggleFavorite"
+                        data-template-id="\${escapeHtml(t.id)}"
+                        title="\${favorites.has(t.id) ? 'Remove from favorites' : 'Add to favorites'}"
+                        aria-label="\${favorites.has(t.id) ? 'Remove from favorites' : 'Add to favorites'}"
+                    >
+                        \${favorites.has(t.id) ? '⭐' : '☆'}
+                    </button>
                     <div class="template-header">
                         <div style="flex: 1;">
                             <div class="template-title-row">
@@ -2123,15 +2284,330 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             });
         }
 
-        // Keyboard accessibility - ESC to close modal
+        // Phase 5: Enhanced Keyboard Navigation
+        let currentFocusedIndex = -1;
+        let keyboardHintVisible = false;
+
         document.addEventListener('keydown', (event) => {
+            // ESC to close modal or clear search
             if (event.key === 'Escape') {
                 const modal = document.getElementById('previewModal');
                 if (modal.classList.contains('visible')) {
                     closePreviewModal();
+                    return;
+                }
+
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput.value) {
+                    searchInput.value = '';
+                    filterTemplates();
+                    return;
+                }
+            }
+
+            // / to focus search
+            if (event.key === '/' && !isInputFocused()) {
+                event.preventDefault();
+                document.getElementById('searchInput').focus();
+                return;
+            }
+
+            // ? to toggle keyboard shortcuts hint
+            if (event.key === '?' && !isInputFocused()) {
+                event.preventDefault();
+                toggleKeyboardHint();
+                return;
+            }
+
+            // Arrow keys for card navigation
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                if (!isInputFocused()) {
+                    event.preventDefault();
+                    navigateCards(event.key === 'ArrowDown' ? 1 : -1);
+                    return;
+                }
+            }
+
+            // Enter to create note from focused card
+            if (event.key === 'Enter' && !isInputFocused()) {
+                const cards = Array.from(document.querySelectorAll('.template-card'));
+                if (currentFocusedIndex >= 0 && currentFocusedIndex < cards.length) {
+                    const card = cards[currentFocusedIndex];
+                    const templateId = card.getAttribute('data-template-id');
+                    if (templateId) {
+                        createFromTemplate(templateId);
+                    }
+                    return;
+                }
+            }
+
+            // Space to toggle preview
+            if (event.key === ' ' && !isInputFocused()) {
+                event.preventDefault();
+                const cards = Array.from(document.querySelectorAll('.template-card'));
+                if (currentFocusedIndex >= 0 && currentFocusedIndex < cards.length) {
+                    const card = cards[currentFocusedIndex];
+                    const templateId = card.getAttribute('data-template-id');
+                    const toggleBtn = card.querySelector('[data-command="togglePreview"]');
+                    if (toggleBtn && templateId) {
+                        togglePreview(toggleBtn, templateId);
+                    }
+                    return;
+                }
+            }
+
+            // F to toggle favorite
+            if (event.key === 'f' && !isInputFocused()) {
+                event.preventDefault();
+                const cards = Array.from(document.querySelectorAll('.template-card'));
+                if (currentFocusedIndex >= 0 && currentFocusedIndex < cards.length) {
+                    const card = cards[currentFocusedIndex];
+                    const templateId = card.getAttribute('data-template-id');
+                    if (templateId) {
+                        toggleFavorite(templateId);
+                    }
+                    return;
                 }
             }
         });
+
+        // Phase 5: Context Menu Support
+        document.addEventListener('contextmenu', (event) => {
+            const card = event.target.closest('.template-card');
+            if (card) {
+                event.preventDefault();
+                const templateId = card.getAttribute('data-template-id');
+                if (templateId) {
+                    showContextMenu(event.clientX, event.clientY, templateId);
+                }
+            }
+        });
+
+        // Close context menu on click outside
+        document.addEventListener('click', (event) => {
+            const contextMenu = document.getElementById('contextMenu');
+            if (!event.target.closest('#contextMenu') && !event.target.closest('.template-card')) {
+                contextMenu.classList.remove('visible');
+            }
+        });
+
+        // === Phase 5: Helper Functions ===
+
+        // Check if an input element is focused
+        function isInputFocused() {
+            const activeElement = document.activeElement;
+            return activeElement && (
+                activeElement.tagName === 'INPUT' ||
+                activeElement.tagName === 'TEXTAREA' ||
+                activeElement.tagName === 'SELECT'
+            );
+        }
+
+        // Navigate between template cards with arrow keys
+        function navigateCards(direction) {
+            const cards = Array.from(document.querySelectorAll('.template-card'));
+            if (cards.length === 0) return;
+
+            // Remove previous focus
+            if (currentFocusedIndex >= 0 && currentFocusedIndex < cards.length) {
+                cards[currentFocusedIndex].classList.remove('keyboard-focused');
+            }
+
+            // Update index
+            currentFocusedIndex += direction;
+
+            // Wrap around
+            if (currentFocusedIndex < 0) {
+                currentFocusedIndex = cards.length - 1;
+            } else if (currentFocusedIndex >= cards.length) {
+                currentFocusedIndex = 0;
+            }
+
+            // Apply focus
+            const focusedCard = cards[currentFocusedIndex];
+            focusedCard.classList.add('keyboard-focused');
+            focusedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Toggle keyboard shortcuts hint visibility
+        function toggleKeyboardHint() {
+            keyboardHintVisible = !keyboardHintVisible;
+            const hint = document.getElementById('keyboardHint');
+            hint.classList.toggle('visible', keyboardHintVisible);
+        }
+
+        // Toggle favorite status for a template
+        function toggleFavorite(templateId) {
+            if (favorites.has(templateId)) {
+                favorites.delete(templateId);
+            } else {
+                favorites.add(templateId);
+            }
+
+            // Save to state
+            saveFilterState();
+
+            // Update UI
+            renderTemplates();
+        }
+
+        // Show context menu at specified position
+        function showContextMenu(x, y, templateId) {
+            const template = templates.find(t => t.id === templateId);
+            if (!template) return;
+
+            const contextMenu = document.getElementById('contextMenu');
+            const isFavorited = favorites.has(templateId);
+            const isBuiltIn = template.isBuiltIn;
+
+            // Build menu items
+            let menuHtml = \`
+                <div class="context-menu-item" data-command="createFromTemplate" data-template-id="\${escapeHtml(templateId)}">
+                    <span>✨</span> Create Note
+                </div>
+                <div class="context-menu-item" data-command="showFullPreview" data-template-id="\${escapeHtml(templateId)}">
+                    <span>👁️</span> Preview
+                </div>
+                <div class="context-menu-item" data-command="toggleFavorite" data-template-id="\${escapeHtml(templateId)}">
+                    <span>\${isFavorited ? '⭐' : '☆'}</span> \${isFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
+                </div>
+                <div class="context-menu-separator"></div>
+            \`;
+
+            if (!isBuiltIn) {
+                menuHtml += \`
+                    <div class="context-menu-item" data-command="editTemplate" data-template-id="\${escapeHtml(templateId)}">
+                        <span>✏️</span> Edit
+                    </div>
+                    <div class="context-menu-item" data-command="duplicateTemplate" data-template-id="\${escapeHtml(templateId)}">
+                        <span>📋</span> Duplicate
+                    </div>
+                    <div class="context-menu-separator"></div>
+                \`;
+            }
+
+            menuHtml += \`
+                <div class="context-menu-item" data-command="exportTemplate" data-template-id="\${escapeHtml(templateId)}">
+                    <span>💾</span> Export
+                </div>
+                <div class="context-menu-item" onclick="copyTemplateId('\${escapeHtml(templateId)}')">
+                    <span>📎</span> Copy Template ID
+                </div>
+            \`;
+
+            if (!isBuiltIn) {
+                menuHtml += \`
+                    <div class="context-menu-separator"></div>
+                    <div class="context-menu-item danger" data-command="deleteTemplate" data-template-id="\${escapeHtml(templateId)}">
+                        <span>🗑️</span> Delete
+                    </div>
+                \`;
+            }
+
+            contextMenu.innerHTML = menuHtml;
+
+            // Position the menu
+            contextMenu.style.left = x + 'px';
+            contextMenu.style.top = y + 'px';
+            contextMenu.classList.add('visible');
+
+            // Adjust if menu goes off-screen
+            setTimeout(() => {
+                const rect = contextMenu.getBoundingClientRect();
+                if (rect.right > window.innerWidth) {
+                    contextMenu.style.left = (x - rect.width) + 'px';
+                }
+                if (rect.bottom > window.innerHeight) {
+                    contextMenu.style.top = (y - rect.height) + 'px';
+                }
+            }, 0);
+        }
+
+        // Copy template ID to clipboard
+        function copyTemplateId(templateId) {
+            navigator.clipboard.writeText(templateId).then(() => {
+                // Visual feedback could be added here
+                const contextMenu = document.getElementById('contextMenu');
+                contextMenu.classList.remove('visible');
+            }).catch(err => {
+                console.error('Failed to copy template ID:', err);
+            });
+        }
+
+        // Get context-aware empty state HTML
+        function getEmptyStateHtml() {
+            const hasSearch = searchQuery.trim().length > 0;
+            const hasFilters = filterState.fileType !== 'all' ||
+                              filterState.difficulty !== 'all' ||
+                              filterState.showOnly !== 'all';
+            const showingFavorites = filterState.showOnly === 'favorites';
+            const totalTemplates = templates.length;
+
+            // No templates at all
+            if (totalTemplates === 0) {
+                return \`
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div class="empty-state-title">No Templates Yet</div>
+                        <div style="margin-bottom: 16px;">Get started by creating your first custom template</div>
+                        <button class="btn" onclick="vscode.postMessage({command: 'refresh'})">
+                            Refresh Templates
+                        </button>
+                    </div>
+                \`;
+            }
+
+            // No favorites selected
+            if (showingFavorites && favorites.size === 0) {
+                return \`
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⭐</div>
+                        <div class="empty-state-title">No Favorites Yet</div>
+                        <div style="margin-bottom: 16px;">Star your frequently used templates for quick access</div>
+                        <button class="btn" onclick="document.getElementById('showOnlyFilter').value = 'all'; handleFilterChange({target: document.getElementById('showOnlyFilter')})">
+                            Show All Templates
+                        </button>
+                    </div>
+                \`;
+            }
+
+            // No search results
+            if (hasSearch && !hasFilters) {
+                return \`
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <div class="empty-state-title">No Matches Found</div>
+                        <div style="margin-bottom: 16px;">No templates match "\${escapeHtml(searchQuery)}"</div>
+                        <button class="btn" onclick="document.getElementById('searchInput').value = ''; filterTemplates()">
+                            Clear Search
+                        </button>
+                    </div>
+                \`;
+            }
+
+            // No results with filters
+            if (hasFilters || hasSearch) {
+                return \`
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <div class="empty-state-title">No Results</div>
+                        <div style="margin-bottom: 16px;">No templates match your current filters</div>
+                        <button class="btn" onclick="clearAllFilters(); document.getElementById('searchInput').value = ''; filterTemplates()">
+                            Clear All Filters
+                        </button>
+                    </div>
+                \`;
+            }
+
+            // Fallback
+            return \`
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-title">No Templates Found</div>
+                    <div>Try adjusting your search or filters</div>
+                </div>
+            \`;
+        }
 
         // Update message handler to process preview responses
         window.addEventListener('message', event => {
