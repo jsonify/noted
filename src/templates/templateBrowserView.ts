@@ -1506,7 +1506,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             document.getElementById('sampleContent').classList.toggle('active', tab === 'sample');
         }
 
-        function copyModalContent() {
+        function copyModalContent(event) {
             const content = currentModalTab === 'raw'
                 ? document.getElementById('rawCodeContent').innerText
                 : document.getElementById('sampleCodeContent').innerText;
