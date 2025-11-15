@@ -109,6 +109,16 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext, prov
                 case 'getFullPreview':
                     await handleGetFullPreview(panel, message.templateId);
                     break;
+
+                case 'getTemplateData':
+                    await handleGetTemplateData(panel, message.templateId);
+                    break;
+
+                case 'saveTemplateVariables':
+                    await handleSaveTemplateVariables(panel, message.templateId, message.variables);
+                    await refreshWebviewTemplates();
+                    templatesProvider?.refresh();
+                    break;
             }
         },
         undefined,
@@ -450,6 +460,122 @@ async function handleGetFullPreview(panel: vscode.WebviewPanel, templateId: stri
         content: highlightedContent,
         samplePreview
     });
+}
+
+/**
+ * Handle getting template data for variable editor
+ */
+async function handleGetTemplateData(panel: vscode.WebviewPanel, templateId: string): Promise<void> {
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        panel.webview.postMessage({
+            command: 'templateDataResponse',
+            templateId,
+            error: 'Templates folder not configured'
+        });
+        return;
+    }
+
+    const templateFile = await findTemplateFile(templatesPath, templateId);
+    if (!templateFile) {
+        panel.webview.postMessage({
+            command: 'templateDataResponse',
+            templateId,
+            error: 'Template not found'
+        });
+        return;
+    }
+
+    // Only JSON templates support variables
+    if (templateFile.type !== 'json') {
+        panel.webview.postMessage({
+            command: 'templateDataResponse',
+            templateId,
+            error: 'Only JSON templates support custom variables'
+        });
+        return;
+    }
+
+    try {
+        const content = await readFile(templateFile.path);
+        const template: Template = JSON.parse(content);
+
+        panel.webview.postMessage({
+            command: 'templateDataResponse',
+            templateId,
+            template: {
+                id: template.id,
+                name: template.name,
+                description: template.description,
+                variables: template.variables || [],
+                content: template.content
+            }
+        });
+    } catch (error) {
+        panel.webview.postMessage({
+            command: 'templateDataResponse',
+            templateId,
+            error: 'Failed to load template data'
+        });
+    }
+}
+
+/**
+ * Handle saving template variables
+ */
+async function handleSaveTemplateVariables(
+    panel: vscode.WebviewPanel,
+    templateId: string,
+    variables: any[]
+): Promise<void> {
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        panel.webview.postMessage({
+            command: 'saveVariablesResponse',
+            templateId,
+            success: false,
+            error: 'Templates folder not configured'
+        });
+        return;
+    }
+
+    const templateFile = await findTemplateFile(templatesPath, templateId);
+    if (!templateFile || templateFile.type !== 'json') {
+        panel.webview.postMessage({
+            command: 'saveVariablesResponse',
+            templateId,
+            success: false,
+            error: 'Template not found or not a JSON template'
+        });
+        return;
+    }
+
+    try {
+        const content = await readFile(templateFile.path);
+        const template: Template = JSON.parse(content);
+
+        // Update variables
+        template.variables = variables;
+        template.modified = new Date().toISOString();
+
+        // Write back to file
+        await writeFile(templateFile.path, JSON.stringify(template, null, 2));
+
+        panel.webview.postMessage({
+            command: 'saveVariablesResponse',
+            templateId,
+            success: true
+        });
+
+        vscode.window.showInformationMessage(`Template variables updated for "${template.name}"`);
+    } catch (error) {
+        panel.webview.postMessage({
+            command: 'saveVariablesResponse',
+            templateId,
+            success: false,
+            error: 'Failed to save template variables'
+        });
+    }
 }
 
 /**
@@ -1374,6 +1500,311 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             font-size: 11px;
             margin: 0 2px;
         }
+
+        /* Variable Editor Modal Styles */
+        .variable-editor-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2500;
+        }
+
+        .variable-editor-modal.visible {
+            display: flex;
+        }
+
+        .variable-editor-container {
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            max-width: 900px;
+            max-height: 90vh;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .variable-editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+        }
+
+        .variable-editor-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .variable-editor-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .variable-list-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .variable-preview-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .panel-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--vscode-foreground);
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+        }
+
+        .variables-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .variable-item {
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .variable-item:hover {
+            border-color: var(--vscode-focusBorder);
+            background: var(--vscode-list-hoverBackground);
+        }
+
+        .variable-item.selected {
+            border-color: var(--vscode-focusBorder);
+            background: var(--vscode-list-activeSelectionBackground);
+        }
+
+        .variable-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .variable-name {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--vscode-textLink-activeForeground);
+        }
+
+        .variable-type-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            background: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+
+        .variable-description {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .variable-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px;
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--vscode-foreground);
+        }
+
+        .form-input {
+            padding: 8px 12px;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: -1px;
+        }
+
+        .form-input.error {
+            border-color: var(--vscode-inputValidation-errorBorder);
+        }
+
+        .form-error {
+            font-size: 12px;
+            color: var(--vscode-inputValidation-errorForeground);
+        }
+
+        .form-select {
+            padding: 8px 12px;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .form-textarea {
+            padding: 8px 12px;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .enum-values-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .enum-value-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .enum-value-input {
+            flex: 1;
+        }
+
+        .btn-remove-enum {
+            padding: 6px 12px;
+            background: var(--vscode-inputValidation-errorBackground);
+            color: var(--vscode-inputValidation-errorForeground);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-add-enum {
+            padding: 6px 12px;
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .template-preview-box {
+            padding: 12px;
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .variable-highlight {
+            color: var(--vscode-textLink-activeForeground);
+            font-weight: 600;
+            background: var(--vscode-textBlockQuote-background);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .built-in-variables-info {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            padding: 12px;
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            line-height: 1.5;
+        }
+
+        .built-in-var {
+            font-family: monospace;
+            color: var(--vscode-textLink-foreground);
+        }
+
+        .empty-variables-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .variable-editor-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--vscode-panel-border);
+        }
+
+        .footer-info {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .footer-actions {
+            display: flex;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
@@ -1475,6 +1906,96 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             <div class="modal-footer">
                 <button class="modal-btn modal-btn-secondary" data-command="copyModalContent">Copy to Clipboard</button>
                 <button class="modal-btn" data-command="closePreviewModal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Variable Editor Modal -->
+    <div class="variable-editor-modal" id="variableEditorModal">
+        <div class="variable-editor-container">
+            <div class="variable-editor-header">
+                <div class="variable-editor-title" id="variableEditorTitle">Edit Template Variables</div>
+                <button class="modal-close" data-command="closeVariableEditor" aria-label="Close">&times;</button>
+            </div>
+            <div class="variable-editor-body">
+                <!-- Left Panel: Variable List and Form -->
+                <div class="variable-list-panel">
+                    <div class="panel-header">Custom Variables</div>
+                    <div class="variables-list" id="variablesList">
+                        <!-- Variables will be populated here -->
+                    </div>
+                    <button class="btn" data-command="addNewVariable">+ Add Variable</button>
+
+                    <div class="variable-form" id="variableForm" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">Variable Name*</label>
+                            <input type="text" class="form-input" id="varName" placeholder="e.g., project_name">
+                            <span class="form-error" id="varNameError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Type*</label>
+                            <select class="form-select" id="varType">
+                                <option value="string">String</option>
+                                <option value="number">Number</option>
+                                <option value="enum">Enum (dropdown)</option>
+                                <option value="date">Date</option>
+                                <option value="boolean">Boolean</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="enumValuesGroup" style="display: none;">
+                            <label class="form-label">Enum Values*</label>
+                            <div class="enum-values-container" id="enumValues">
+                                <!-- Enum values will be populated here -->
+                            </div>
+                            <button class="btn-add-enum" data-command="addEnumValue">+ Add Option</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-textarea" id="varDescription" placeholder="Describe what this variable is for..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Default Value</label>
+                            <input type="text" class="form-input" id="varDefault" placeholder="Optional default value">
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-checkbox">
+                                <input type="checkbox" id="varRequired">
+                                <label class="form-label" for="varRequired">Required</label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-secondary" data-command="cancelVariableEdit">Cancel</button>
+                            <button class="btn" data-command="deleteVariable" id="deleteVarBtn" style="display: none;">Delete</button>
+                            <button class="btn primary" data-command="saveVariable">Save</button>
+                        </div>
+                    </div>
+
+                    <div class="built-in-variables-info">
+                        <strong>Built-in Variables:</strong><br>
+                        <span class="built-in-var">{filename}</span>, <span class="built-in-var">{date}</span>, <span class="built-in-var">{time}</span>, <span class="built-in-var">{year}</span>, <span class="built-in-var">{month}</span>, <span class="built-in-var">{day}</span>, <span class="built-in-var">{weekday}</span>, <span class="built-in-var">{month_name}</span>, <span class="built-in-var">{user}</span>, <span class="built-in-var">{workspace}</span>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Live Preview -->
+                <div class="variable-preview-panel">
+                    <div class="panel-header">Template Preview</div>
+                    <div class="template-preview-box" id="templatePreview">
+                        <!-- Preview will be populated here -->
+                    </div>
+                </div>
+            </div>
+            <div class="variable-editor-footer">
+                <span class="footer-info" id="variableCount">0 custom variables</span>
+                <div class="footer-actions">
+                    <button class="modal-btn modal-btn-secondary" data-command="closeVariableEditor">Cancel</button>
+                    <button class="modal-btn" data-command="saveAllVariables">Save Changes</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1665,6 +2186,30 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     break;
                 case 'copyTemplateId':
                     copyTemplateId(templateId);
+                    break;
+                case 'editVariables':
+                    openVariableEditor(templateId);
+                    break;
+                case 'closeVariableEditor':
+                    closeVariableEditor();
+                    break;
+                case 'addNewVariable':
+                    addNewVariable();
+                    break;
+                case 'addEnumValue':
+                    addEnumValue();
+                    break;
+                case 'saveVariable':
+                    saveVariable();
+                    break;
+                case 'cancelVariableEdit':
+                    cancelVariableEdit();
+                    break;
+                case 'deleteVariable':
+                    deleteCurrentVariable();
+                    break;
+                case 'saveAllVariables':
+                    saveAllVariables();
                     break;
             }
         });
@@ -2029,6 +2574,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     <div class="template-actions">
                         <button class="action-btn primary" data-command="createFromTemplate" data-template-id="\${escapeHtml(t.id)}">Create</button>
                         \${!t.isBuiltIn ? \`
+                            <button class="action-btn" data-command="editVariables" data-template-id="\${escapeHtml(t.id)}" \${t.fileType !== 'json' ? 'disabled title="Only JSON templates support variables"' : ''}>✏️ Edit Variables</button>
                             <button class="action-btn" data-command="editTemplate" data-template-id="\${escapeHtml(t.id)}">Edit</button>
                             <button class="action-btn" data-command="duplicateTemplate" data-template-id="\${escapeHtml(t.id)}">Duplicate</button>
                             <button class="action-btn" data-command="exportTemplate" data-template-id="\${escapeHtml(t.id)}">Export</button>
@@ -2624,6 +3170,338 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             \`;
         }
 
+        // === Variable Editor Functions ===
+
+        // Variable editor state
+        let currentTemplateData = null;
+        let customVariables = [];
+        let editingVariableIndex = -1;
+        const BUILT_IN_VARS = ['filename', 'date', 'time', 'year', 'month', 'day', 'weekday', 'month_name', 'user', 'workspace'];
+
+        // Open variable editor modal
+        function openVariableEditor(templateId) {
+            const template = templates.find(t => t.id === templateId);
+            if (!template) return;
+
+            if (template.fileType !== 'json') {
+                // Show error for non-JSON templates
+                return;
+            }
+
+            // Request template data from extension
+            vscode.postMessage({
+                command: 'getTemplateData',
+                templateId: templateId
+            });
+
+            // Show modal (will be populated when data arrives)
+            const modal = document.getElementById('variableEditorModal');
+            modal.classList.add('visible');
+        }
+
+        // Close variable editor modal
+        function closeVariableEditor() {
+            const modal = document.getElementById('variableEditorModal');
+            modal.classList.remove('visible');
+            currentTemplateData = null;
+            customVariables = [];
+            editingVariableIndex = -1;
+        }
+
+        // Populate variable editor with template data
+        function populateVariableEditor(templateData) {
+            currentTemplateData = templateData;
+            customVariables = templateData.variables || [];
+
+            document.getElementById('variableEditorTitle').textContent = \`Edit Variables: \${templateData.name}\`;
+            renderVariablesList();
+            updateTemplatePreview();
+            updateVariableCount();
+        }
+
+        // Render variables list
+        function renderVariablesList() {
+            const listContainer = document.getElementById('variablesList');
+
+            if (customVariables.length === 0) {
+                listContainer.innerHTML = \`
+                    <div class="empty-variables-state">
+                        <div style="font-size: 32px; margin-bottom: 12px;">📝</div>
+                        <div>No custom variables yet</div>
+                        <div style="font-size: 12px; margin-top: 6px;">Click "Add Variable" to create one</div>
+                    </div>
+                \`;
+                return;
+            }
+
+            listContainer.innerHTML = customVariables.map((v, index) => \`
+                <div class="variable-item \${editingVariableIndex === index ? 'selected' : ''}" onclick="selectVariableForEdit(\${index})">
+                    <div class="variable-item-header">
+                        <span class="variable-name">{\${escapeHtml(v.name)}}</span>
+                        <span class="variable-type-badge">\${escapeHtml(v.type)}</span>
+                    </div>
+                    \${v.description ? \`<div class="variable-description">\${escapeHtml(v.description)}</div>\` : ''}
+                </div>
+            \`).join('');
+        }
+
+        // Select a variable for editing
+        window.selectVariableForEdit = function(index) {
+            editingVariableIndex = index;
+            const variable = customVariables[index];
+
+            // Show form
+            document.getElementById('variableForm').style.display = 'block';
+            document.getElementById('deleteVarBtn').style.display = 'block';
+
+            // Populate form
+            document.getElementById('varName').value = variable.name;
+            document.getElementById('varType').value = variable.type;
+            document.getElementById('varDescription').value = variable.description || '';
+            document.getElementById('varDefault').value = variable.default || '';
+            document.getElementById('varRequired').checked = variable.required || false;
+
+            // Handle enum values
+            if (variable.type === 'enum') {
+                document.getElementById('enumValuesGroup').style.display = 'block';
+                renderEnumValues(variable.values || []);
+            } else {
+                document.getElementById('enumValuesGroup').style.display = 'none';
+            }
+
+            // Clear errors
+            document.getElementById('varNameError').textContent = '';
+            document.getElementById('varName').classList.remove('error');
+
+            renderVariablesList();
+        };
+
+        // Add new variable
+        function addNewVariable() {
+            editingVariableIndex = -1;
+
+            // Show form
+            document.getElementById('variableForm').style.display = 'block';
+            document.getElementById('deleteVarBtn').style.display = 'none';
+
+            // Clear form
+            document.getElementById('varName').value = '';
+            document.getElementById('varType').value = 'string';
+            document.getElementById('varDescription').value = '';
+            document.getElementById('varDefault').value = '';
+            document.getElementById('varRequired').checked = false;
+            document.getElementById('enumValuesGroup').style.display = 'none';
+
+            // Clear errors
+            document.getElementById('varNameError').textContent = '';
+            document.getElementById('varName').classList.remove('error');
+
+            renderVariablesList();
+        }
+
+        // Cancel variable edit
+        function cancelVariableEdit() {
+            document.getElementById('variableForm').style.display = 'none';
+            editingVariableIndex = -1;
+            renderVariablesList();
+        }
+
+        // Validate variable name
+        function validateVariableName(name) {
+            if (!name || name.trim().length === 0) {
+                return { isValid: false, error: 'Variable name cannot be empty' };
+            }
+
+            const validFormat = /^[a-z][a-z0-9_]*$/;
+            if (!validFormat.test(name)) {
+                return {
+                    isValid: false,
+                    error: 'Must start with a letter and contain only lowercase letters, numbers, and underscores'
+                };
+            }
+
+            if (BUILT_IN_VARS.includes(name)) {
+                return {
+                    isValid: false,
+                    error: \`'\${name}' is a built-in variable\`
+                };
+            }
+
+            // Check for duplicates (excluding currently editing variable)
+            const duplicate = customVariables.findIndex((v, idx) => v.name === name && idx !== editingVariableIndex);
+            if (duplicate !== -1) {
+                return {
+                    isValid: false,
+                    error: \`Variable '\${name}' already exists\`
+                };
+            }
+
+            return { isValid: true };
+        }
+
+        // Save variable
+        function saveVariable() {
+            const name = document.getElementById('varName').value.trim();
+            const type = document.getElementById('varType').value;
+            const description = document.getElementById('varDescription').value.trim();
+            const defaultValue = document.getElementById('varDefault').value.trim();
+            const required = document.getElementById('varRequired').checked;
+
+            // Validate name
+            const validation = validateVariableName(name);
+            if (!validation.isValid) {
+                document.getElementById('varNameError').textContent = validation.error;
+                document.getElementById('varName').classList.add('error');
+                return;
+            }
+
+            // Build variable object
+            const variable = {
+                name,
+                type,
+                required,
+                description: description || undefined,
+                default: defaultValue || undefined
+            };
+
+            // Handle enum values
+            if (type === 'enum') {
+                const enumInputs = document.querySelectorAll('.enum-value-input');
+                const values = Array.from(enumInputs)
+                    .map(input => input.value.trim())
+                    .filter(val => val.length > 0);
+
+                if (values.length === 0) {
+                    document.getElementById('varNameError').textContent = 'Enum must have at least one value';
+                    return;
+                }
+
+                variable.values = values;
+            }
+
+            // Add or update variable
+            if (editingVariableIndex === -1) {
+                customVariables.push(variable);
+            } else {
+                customVariables[editingVariableIndex] = variable;
+            }
+
+            // Hide form and refresh
+            document.getElementById('variableForm').style.display = 'none';
+            editingVariableIndex = -1;
+            renderVariablesList();
+            updateTemplatePreview();
+            updateVariableCount();
+        }
+
+        // Delete current variable
+        function deleteCurrentVariable() {
+            if (editingVariableIndex === -1) return;
+
+            if (confirm(\`Delete variable '\${customVariables[editingVariableIndex].name}'?\`)) {
+                customVariables.splice(editingVariableIndex, 1);
+                document.getElementById('variableForm').style.display = 'none';
+                editingVariableIndex = -1;
+                renderVariablesList();
+                updateTemplatePreview();
+                updateVariableCount();
+            }
+        }
+
+        // Render enum values
+        function renderEnumValues(values) {
+            const container = document.getElementById('enumValues');
+            container.innerHTML = values.map((val, idx) => \`
+                <div class="enum-value-row">
+                    <input type="text" class="form-input enum-value-input" value="\${escapeHtml(val)}" placeholder="Option \${idx + 1}">
+                    <button class="btn-remove-enum" onclick="removeEnumValue(\${idx})">×</button>
+                </div>
+            \`).join('');
+
+            if (values.length === 0) {
+                addEnumValue();
+            }
+        }
+
+        // Add enum value
+        function addEnumValue() {
+            const container = document.getElementById('enumValues');
+            const currentCount = container.children.length;
+
+            const row = document.createElement('div');
+            row.className = 'enum-value-row';
+            row.innerHTML = \`
+                <input type="text" class="form-input enum-value-input" placeholder="Option \${currentCount + 1}">
+                <button class="btn-remove-enum" onclick="removeEnumValue(\${currentCount})">×</button>
+            \`;
+            container.appendChild(row);
+        }
+
+        // Remove enum value
+        window.removeEnumValue = function(index) {
+            const container = document.getElementById('enumValues');
+            const rows = container.children;
+
+            if (rows.length > 1) {
+                rows[index].remove();
+            }
+        };
+
+        // Listen for type changes to show/hide enum values
+        document.addEventListener('DOMContentLoaded', () => {
+            const typeSelect = document.getElementById('varType');
+            if (typeSelect) {
+                typeSelect.addEventListener('change', (e) => {
+                    const enumGroup = document.getElementById('enumValuesGroup');
+                    if (e.target.value === 'enum') {
+                        enumGroup.style.display = 'block';
+                        renderEnumValues(['']);
+                    } else {
+                        enumGroup.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        // Update template preview with variables highlighted
+        function updateTemplatePreview() {
+            if (!currentTemplateData) return;
+
+            const preview = document.getElementById('templatePreview');
+            let content = currentTemplateData.content;
+
+            // Highlight all variables (built-in and custom)
+            const allVars = [
+                ...BUILT_IN_VARS,
+                ...customVariables.map(v => v.name)
+            ];
+
+            // Replace variables with highlighted versions
+            allVars.forEach(varName => {
+                const regex = new RegExp(\`\\\\{\${varName}\\\\}\`, 'g');
+                content = content.replace(regex, \`<span class="variable-highlight">{\${escapeHtml(varName)}}</span>\`);
+            });
+
+            preview.innerHTML = content;
+        }
+
+        // Update variable count
+        function updateVariableCount() {
+            const count = customVariables.length;
+            document.getElementById('variableCount').textContent = \`\${count} custom variable\${count !== 1 ? 's' : ''}\`;
+        }
+
+        // Save all variables to template
+        function saveAllVariables() {
+            if (!currentTemplateData) return;
+
+            vscode.postMessage({
+                command: 'saveTemplateVariables',
+                templateId: currentTemplateData.id,
+                variables: customVariables
+            });
+        }
+
         // Update message handler to process preview responses
         window.addEventListener('message', event => {
             const message = event.data;
@@ -2670,6 +3548,25 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
                     // Update modal content
                     updateModalContent(message.content, message.samplePreview);
+                    break;
+
+                case 'templateDataResponse':
+                    if (message.error) {
+                        console.error('Template data error:', message.error);
+                        closeVariableEditor();
+                        return;
+                    }
+
+                    populateVariableEditor(message.template);
+                    break;
+
+                case 'saveVariablesResponse':
+                    if (message.success) {
+                        closeVariableEditor();
+                    } else {
+                        console.error('Save variables error:', message.error);
+                        alert('Failed to save variables: ' + message.error);
+                    }
                     break;
             }
         });

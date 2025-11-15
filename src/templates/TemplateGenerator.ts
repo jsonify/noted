@@ -477,6 +477,127 @@ Return ONLY valid JSON, no other text.`;
         const hash = this.hashContent(description);
         this.cache.delete(hash);
     }
+
+    /**
+     * Get list of built-in template variables that cannot be used as custom variable names
+     * @returns Array of built-in variable names
+     */
+    getBuiltInVariables(): string[] {
+        return [
+            'filename',
+            'date',
+            'time',
+            'year',
+            'month',
+            'day',
+            'weekday',
+            'month_name',
+            'user',
+            'workspace'
+        ];
+    }
+
+    /**
+     * Validate a variable name
+     * @param name - Variable name to validate
+     * @returns Object with isValid boolean and optional error message
+     */
+    validateVariableName(name: string): { isValid: boolean; error?: string } {
+        // Check if empty
+        if (!name || name.trim().length === 0) {
+            return { isValid: false, error: 'Variable name cannot be empty' };
+        }
+
+        // Check format: lowercase letters, numbers, and underscores only
+        const validFormat = /^[a-z][a-z0-9_]*$/;
+        if (!validFormat.test(name)) {
+            return {
+                isValid: false,
+                error: 'Variable name must start with a letter and contain only lowercase letters, numbers, and underscores'
+            };
+        }
+
+        // Check against built-in variables
+        const builtIns = this.getBuiltInVariables();
+        if (builtIns.includes(name)) {
+            return {
+                isValid: false,
+                error: `'${name}' is a built-in variable and cannot be used as a custom variable name`
+            };
+        }
+
+        return { isValid: true };
+    }
+
+    /**
+     * Validate a complete variable definition
+     * @param variable - Variable to validate
+     * @param existingVariables - Array of existing variables to check for duplicates
+     * @returns Object with isValid boolean and optional error message
+     */
+    validateVariable(
+        variable: TemplateVariable,
+        existingVariables: TemplateVariable[] = []
+    ): { isValid: boolean; error?: string } {
+        // Validate name
+        const nameValidation = this.validateVariableName(variable.name);
+        if (!nameValidation.isValid) {
+            return nameValidation;
+        }
+
+        // Check for duplicates (excluding self if updating)
+        const duplicate = existingVariables.find(v => v.name === variable.name);
+        if (duplicate) {
+            return {
+                isValid: false,
+                error: `Variable '${variable.name}' already exists`
+            };
+        }
+
+        // Validate enum values
+        if (variable.type === 'enum') {
+            if (!variable.values || variable.values.length === 0) {
+                return {
+                    isValid: false,
+                    error: 'Enum variables must have at least one possible value'
+                };
+            }
+        }
+
+        // Validate default value type
+        if (variable.default !== undefined && variable.default !== null && variable.default !== '') {
+            const defaultValue = variable.default;
+
+            switch (variable.type) {
+                case 'number':
+                    if (isNaN(Number(defaultValue))) {
+                        return {
+                            isValid: false,
+                            error: 'Default value must be a valid number'
+                        };
+                    }
+                    break;
+                case 'boolean':
+                    if (typeof defaultValue !== 'boolean' && defaultValue !== 'true' && defaultValue !== 'false') {
+                        return {
+                            isValid: false,
+                            error: 'Default value must be true or false'
+                        };
+                    }
+                    break;
+                case 'enum':
+                    if (variable.values && !variable.values.includes(String(defaultValue))) {
+                        return {
+                            isValid: false,
+                            error: 'Default value must be one of the enum values'
+                        };
+                    }
+                    break;
+            }
+        }
+
+        return { isValid: true };
+    }
 }
 
 // Export singleton instance
