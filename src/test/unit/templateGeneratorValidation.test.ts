@@ -34,7 +34,7 @@ describe('TemplateGenerator - Phase 3 Validation (Issue #110)', () => {
                 default: 'Project: {project_name}'
             };
 
-            const result = templateGenerator.detectCircularReference(variable, '');
+            const result = templateGenerator.detectCircularReference(variable);
             expect(result).to.be.true;
         });
 
@@ -45,7 +45,7 @@ describe('TemplateGenerator - Phase 3 Validation (Issue #110)', () => {
                 default: 'My Project'
             };
 
-            const result = templateGenerator.detectCircularReference(variable, '');
+            const result = templateGenerator.detectCircularReference(variable);
             expect(result).to.be.false;
         });
 
@@ -56,7 +56,7 @@ describe('TemplateGenerator - Phase 3 Validation (Issue #110)', () => {
                 default: 10
             };
 
-            const result = templateGenerator.detectCircularReference(variable, '');
+            const result = templateGenerator.detectCircularReference(variable);
             expect(result).to.be.false;
         });
     });

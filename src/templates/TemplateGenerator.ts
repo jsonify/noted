@@ -514,10 +514,9 @@ Return ONLY valid JSON, no other text.`;
     /**
      * Detect if a variable has a circular reference (references itself in default value)
      * @param variable - Variable to check
-     * @param templateContent - Template content to analyze
      * @returns True if circular reference detected
      */
-    detectCircularReference(variable: TemplateVariable, templateContent: string): boolean {
+    detectCircularReference(variable: TemplateVariable): boolean {
         if (!variable.default || typeof variable.default !== 'string') {
             return false;
         }
@@ -621,7 +620,7 @@ Return ONLY valid JSON, no other text.`;
         }
 
         // Check for circular references
-        if (this.detectCircularReference(variable, templateContent)) {
+        if (this.detectCircularReference(variable)) {
             errors.push(`Variable '${variable.name}' has a circular reference in its default value`);
         }
 

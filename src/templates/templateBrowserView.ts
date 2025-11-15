@@ -754,7 +754,9 @@ async function handleExportVariables(
             vscode.window.showInformationMessage(`Variables exported to ${path.basename(uri.fsPath)}`);
         }
     } catch (error) {
-        vscode.window.showErrorMessage('Failed to export variables');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to export variables: ${errorMessage}`);
+        console.error('Failed to export variables:', error);
     }
 }
 
@@ -766,80 +768,81 @@ async function handleImportVariables(
     templateId: string,
     variablesJson: string
 ): Promise<void> {
+    // Parse JSON
+    let importData;
     try {
-        const importData = JSON.parse(variablesJson);
-
-        // Validate import data structure
-        if (!importData.variables || !Array.isArray(importData.variables)) {
-            panel.webview.postMessage({
-                command: 'importVariablesResponse',
-                success: false,
-                error: 'Invalid variables file format'
-            });
-            return;
-        }
-
-        // Validate each variable
-        const templatesPath = getTemplatesPath();
-        if (!templatesPath) {
-            panel.webview.postMessage({
-                command: 'importVariablesResponse',
-                success: false,
-                error: 'Templates folder not configured'
-            });
-            return;
-        }
-
-        const templateFile = await findTemplateFile(templatesPath, templateId);
-        if (!templateFile || templateFile.type !== 'json') {
-            panel.webview.postMessage({
-                command: 'importVariablesResponse',
-                success: false,
-                error: 'Template not found or not a JSON template'
-            });
-            return;
-        }
-
-        const content = await readFile(templateFile.path);
-        const template: Template = JSON.parse(content);
-
-        // Validate all imported variables
-        const validVariables: TemplateVariable[] = [];
-        const errors: string[] = [];
-
-        for (const variable of importData.variables) {
-            const validation = templateGenerator.validateVariable(variable, validVariables);
-            if (validation.isValid) {
-                validVariables.push(variable);
-            } else {
-                errors.push(`Variable '${variable.name}': ${validation.error}`);
-            }
-        }
-
-        if (errors.length > 0) {
-            panel.webview.postMessage({
-                command: 'importVariablesResponse',
-                success: false,
-                error: `Import validation failed:\n${errors.join('\n')}`
-            });
-            return;
-        }
-
-        // Send valid variables back to webview for user review
-        panel.webview.postMessage({
-            command: 'importVariablesResponse',
-            success: true,
-            variables: validVariables
-        });
-
-        vscode.window.showInformationMessage(`Imported ${validVariables.length} variable(s). Review and save to apply.`);
+        importData = JSON.parse(variablesJson);
     } catch (error) {
         panel.webview.postMessage({
             command: 'importVariablesResponse',
             success: false,
-            error: 'Failed to parse variables JSON'
+            error: 'Invalid JSON format. Failed to parse variables file.'
         });
+        return;
     }
+
+    // Validate import data structure
+    if (!importData.variables || !Array.isArray(importData.variables)) {
+        panel.webview.postMessage({
+            command: 'importVariablesResponse',
+            success: false,
+            error: 'Invalid variables file format. Missing or invalid "variables" array.'
+        });
+        return;
+    }
+
+    // Check templates path
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        panel.webview.postMessage({
+            command: 'importVariablesResponse',
+            success: false,
+            error: 'Templates folder not configured'
+        });
+        return;
+    }
+
+    // Validate template exists
+    const templateFile = await findTemplateFile(templatesPath, templateId);
+    if (!templateFile || templateFile.type !== 'json') {
+        panel.webview.postMessage({
+            command: 'importVariablesResponse',
+            success: false,
+            error: 'Template not found or not a JSON template'
+        });
+        return;
+    }
+
+    // Validate all imported variables
+    const validVariables: TemplateVariable[] = [];
+    const errors: string[] = [];
+
+    for (const variable of importData.variables) {
+        const validation = templateGenerator.validateVariable(variable, validVariables);
+        if (validation.isValid) {
+            validVariables.push(variable);
+        } else {
+            errors.push(`Variable '${variable.name}': ${validation.error}`);
+        }
+    }
+
+    if (errors.length > 0) {
+        panel.webview.postMessage({
+            command: 'importVariablesResponse',
+            success: false,
+            error: `Import validation failed:\n${errors.join('\n')}`
+        });
+        return;
+    }
+
+    // Send valid variables back to webview for user review
+    panel.webview.postMessage({
+        command: 'importVariablesResponse',
+        success: true,
+        variables: validVariables
+    });
+
+    vscode.window.showInformationMessage(`Imported ${validVariables.length} variable(s). Review and save to apply.`);
 }
 
 /**
