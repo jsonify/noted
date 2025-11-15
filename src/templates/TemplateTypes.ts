@@ -57,6 +57,7 @@ export interface Template {
     created?: string;
     modified?: string;
     usage_count?: number;
+    last_used?: string;
 
     // Usage guidance (Phase 3)
     when_to_use?: string;           // Brief 1-2 sentence description of ideal usage scenarios

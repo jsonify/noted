@@ -24,6 +24,7 @@ interface TemplateDisplayInfo {
     usage_count?: number;
     created?: string;
     modified?: string;
+    last_used?: string;
     isBuiltIn: boolean;
     fileType: 'json' | 'txt' | 'md' | 'builtin';
     difficulty?: TemplateDifficulty;
@@ -207,6 +208,7 @@ async function loadAllTemplates(): Promise<TemplateDisplayInfo[]> {
                             usage_count: template.usage_count,
                             created: template.created,
                             modified: template.modified,
+                            last_used: template.last_used,
                             isBuiltIn: false,
                             fileType: 'json',
                             difficulty: template.difficulty,
@@ -1640,10 +1642,10 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 if (filterState.showOnly === 'favorites') {
                     matchesShowOnly = favorites.has(t.id);
                 } else if (filterState.showOnly === 'recent') {
-                    // Recently used: modified within last 7 days OR usage_count exists and has been used
-                    if (t.modified) {
-                        const modifiedDate = new Date(t.modified);
-                        matchesShowOnly = modifiedDate >= sevenDaysAgo;
+                    // Recently used: last_used within last 7 days
+                    if (t.last_used) {
+                        const lastUsedDate = new Date(t.last_used);
+                        matchesShowOnly = lastUsedDate >= sevenDaysAgo;
                     } else {
                         matchesShowOnly = false;
                     }
@@ -1750,8 +1752,10 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 return;
             }
 
+            // Create date once for performance
+            const now = new Date();
+
             container.innerHTML = sortedTemplates.map(t => {
-                const now = new Date();
                 const showNew = isNew(t, now);
                 const showPopular = isPopular(t);
                 const difficultyStars = getDifficultyStars(t.difficulty);
