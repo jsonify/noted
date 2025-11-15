@@ -526,7 +526,7 @@ async function handleGetTemplateData(panel: vscode.WebviewPanel, templateId: str
 async function handleSaveTemplateVariables(
     panel: vscode.WebviewPanel,
     templateId: string,
-    variables: any[]
+    variables: TemplateVariable[]
 ): Promise<void> {
     const templatesPath = getTemplatesPath();
     if (!templatesPath) {
