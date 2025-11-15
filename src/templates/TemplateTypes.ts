@@ -8,6 +8,17 @@
 export type TemplateVariableType = 'string' | 'number' | 'enum' | 'date' | 'boolean';
 
 /**
+ * Template variable validation rules (Phase 3)
+ */
+export interface TemplateVariableValidation {
+    pattern?: string;   // Regex pattern for validation
+    min?: number;       // Minimum value for numbers
+    max?: number;       // Maximum value for numbers
+    minLength?: number; // Minimum length for strings
+    maxLength?: number; // Maximum length for strings
+}
+
+/**
  * Template variable definition
  */
 export interface TemplateVariable {
@@ -18,6 +29,7 @@ export interface TemplateVariable {
     prompt?: string;
     values?: string[];  // For enum type
     description?: string;
+    validation?: TemplateVariableValidation;  // Phase 3: Advanced validation rules
 }
 
 /**

@@ -488,6 +488,216 @@ Return ONLY valid JSON, no other text.`;
     }
 
     /**
+     * Get list of reserved keywords that cannot be used as variable names
+     * Includes JavaScript reserved words and common template syntax
+     * @returns Array of reserved keyword strings
+     */
+    getReservedKeywords(): string[] {
+        return [
+            // JavaScript reserved words
+            'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
+            'default', 'delete', 'do', 'else', 'export', 'extends', 'finally',
+            'for', 'function', 'if', 'import', 'in', 'instanceof', 'new',
+            'return', 'super', 'switch', 'this', 'throw', 'try', 'typeof',
+            'var', 'void', 'while', 'with', 'yield',
+            // Additional common reserved words
+            'let', 'static', 'enum', 'await', 'implements', 'interface',
+            'package', 'private', 'protected', 'public', 'abstract', 'as',
+            'async', 'from', 'get', 'set', 'of', 'null', 'true', 'false',
+            'undefined', 'NaN', 'Infinity',
+            // Built-in template variables (lowercase)
+            'filename', 'date', 'time', 'year', 'month', 'day',
+            'weekday', 'month_name', 'user', 'workspace'
+        ];
+    }
+
+    /**
+     * Detect if a variable has a circular reference (references itself in default value)
+     * @param variable - Variable to check
+     * @param templateContent - Template content to analyze
+     * @returns True if circular reference detected
+     */
+    detectCircularReference(variable: TemplateVariable, templateContent: string): boolean {
+        if (!variable.default || typeof variable.default !== 'string') {
+            return false;
+        }
+
+        // Check if default value contains the variable itself
+        const variablePattern = new RegExp(`\\{${variable.name}\\}`, 'g');
+        return variablePattern.test(variable.default);
+    }
+
+    /**
+     * Count how many times a variable is used in template content
+     * @param variableName - Variable name to count
+     * @param templateContent - Template content to analyze
+     * @returns Number of occurrences
+     */
+    getVariableUsageCount(variableName: string, templateContent: string): number {
+        const pattern = new RegExp(`\\{${variableName}\\}`, 'g');
+        const matches = templateContent.match(pattern);
+        return matches ? matches.length : 0;
+    }
+
+    /**
+     * Find variables that are defined but not used in template content
+     * @param variables - Array of defined variables
+     * @param templateContent - Template content to analyze
+     * @returns Array of unused variable names
+     */
+    findUnusedVariables(variables: TemplateVariable[], templateContent: string): string[] {
+        const unused: string[] = [];
+
+        for (const variable of variables) {
+            const count = this.getVariableUsageCount(variable.name, templateContent);
+            if (count === 0) {
+                unused.push(variable.name);
+            }
+        }
+
+        return unused;
+    }
+
+    /**
+     * Find variables that are used in template but not defined
+     * @param templateContent - Template content to analyze
+     * @param definedVariables - Array of defined variables
+     * @returns Array of undefined variable names
+     */
+    findUndefinedVariables(templateContent: string, definedVariables: TemplateVariable[]): string[] {
+        // Extract all {variable} patterns from content
+        const variablePattern = /\{([a-z][a-z0-9_]*)\}/g;
+        const usedVariables = new Set<string>();
+        let match;
+
+        while ((match = variablePattern.exec(templateContent)) !== null) {
+            usedVariables.add(match[1]);
+        }
+
+        // Get built-in variables
+        const builtInVars = new Set(this.getBuiltInVariables());
+
+        // Get defined custom variable names
+        const definedNames = new Set(definedVariables.map(v => v.name));
+
+        // Find variables that are used but not defined (and not built-in)
+        const undefined: string[] = [];
+        for (const varName of usedVariables) {
+            if (!definedNames.has(varName) && !builtInVars.has(varName)) {
+                undefined.push(varName);
+            }
+        }
+
+        return undefined;
+    }
+
+    /**
+     * Perform advanced validation on a variable with detailed errors and warnings
+     * @param variable - Variable to validate
+     * @param templateContent - Template content for usage analysis
+     * @param existingVariables - Other defined variables
+     * @param originalName - Original name if updating existing variable
+     * @returns Validation result with errors and warnings
+     */
+    validateVariableAdvanced(
+        variable: TemplateVariable,
+        templateContent: string,
+        existingVariables: TemplateVariable[] = [],
+        originalName?: string
+    ): { isValid: boolean; errors: string[]; warnings: string[] } {
+        const errors: string[] = [];
+        const warnings: string[] = [];
+
+        // Basic validation
+        const basicValidation = this.validateVariable(variable, existingVariables, originalName);
+        if (!basicValidation.isValid && basicValidation.error) {
+            errors.push(basicValidation.error);
+        }
+
+        // Check reserved keywords
+        const reservedKeywords = this.getReservedKeywords();
+        if (reservedKeywords.includes(variable.name.toLowerCase())) {
+            errors.push(`'${variable.name}' is a reserved keyword and cannot be used as a variable name`);
+        }
+
+        // Check for circular references
+        if (this.detectCircularReference(variable, templateContent)) {
+            errors.push(`Variable '${variable.name}' has a circular reference in its default value`);
+        }
+
+        // Check if variable is used in template
+        const usageCount = this.getVariableUsageCount(variable.name, templateContent);
+        if (usageCount === 0) {
+            warnings.push(`Variable '${variable.name}' is defined but not used in the template`);
+        }
+
+        // Type-specific validation
+        if (variable.type === 'enum') {
+            if (!variable.values || variable.values.length === 0) {
+                errors.push('Enum type requires at least one value in the values array');
+            }
+        }
+
+        if (variable.type === 'number') {
+            // Check validation rules if present
+            if (variable.validation) {
+                const { min, max } = variable.validation;
+                if (min !== undefined && max !== undefined && min > max) {
+                    errors.push('Minimum value cannot be greater than maximum value');
+                }
+            }
+        }
+
+        if (variable.type === 'date') {
+            // Check if validation pattern is a valid regex
+            if (variable.validation?.pattern) {
+                try {
+                    new RegExp(variable.validation.pattern);
+                } catch (e) {
+                    errors.push('Date format pattern is not a valid regular expression');
+                }
+            }
+        }
+
+        return {
+            isValid: errors.length === 0,
+            errors,
+            warnings
+        };
+    }
+
+    /**
+     * Get all variable usage positions in template content
+     * @param variableName - Variable name to find
+     * @param templateContent - Template content to search
+     * @returns Array of {line, column, context} objects
+     */
+    getVariableUsagePositions(variableName: string, templateContent: string): Array<{
+        line: number;
+        column: number;
+        context: string;
+    }> {
+        const positions: Array<{ line: number; column: number; context: string }> = [];
+        const lines = templateContent.split('\n');
+        const pattern = new RegExp(`\\{${variableName}\\}`, 'g');
+
+        lines.forEach((lineText, lineIndex) => {
+            let match;
+            while ((match = pattern.exec(lineText)) !== null) {
+                positions.push({
+                    line: lineIndex + 1,
+                    column: match.index + 1,
+                    context: lineText.trim()
+                });
+            }
+            // Reset lastIndex for next line
+            pattern.lastIndex = 0;
+        });
+
+        return positions;
+    }
+
+    /**
      * Validate a variable name
      * @param name - Variable name to validate
      * @returns Object with isValid boolean and optional error message
