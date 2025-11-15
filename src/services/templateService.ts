@@ -194,7 +194,7 @@ export function getTemplateVariables(): Array<{ name: string; description: strin
 /**
  * Get full template content (raw, without placeholder substitution)
  */
-export async function getTemplateContent(templateId: string, templatesPath?: string): Promise<string | null> {
+export async function getTemplateContent(templateId: string, templatesPath?: string | null): Promise<string | null> {
     // Check for built-in templates
     const builtInTemplate = BUILT_IN_TEMPLATES[templateId as keyof typeof BUILT_IN_TEMPLATES];
     if (builtInTemplate) {
@@ -220,7 +220,6 @@ export async function getTemplateContent(templateId: string, templatesPath?: str
         }
 
         // Try legacy .txt/.md template
-        const fileFormat = getFileFormat();
         const txtPath = path.join(templatesPath, `${templateId}.txt`);
         const mdPath = path.join(templatesPath, `${templateId}.md`);
 
@@ -260,11 +259,8 @@ export function highlightVariables(content: string): string {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
-    // Highlight all template variables
-    const variables = [
-        '{filename}', '{date}', '{time}', '{year}', '{month}', '{day}',
-        '{weekday}', '{month_name}', '{user}', '{workspace}'
-    ];
+    // Highlight all template variables - use single source of truth from getTemplateVariables()
+    const variables = getTemplateVariables().map(v => v.name);
 
     for (const variable of variables) {
         const regex = new RegExp(variable.replace(/[{}]/g, '\\$&'), 'g');

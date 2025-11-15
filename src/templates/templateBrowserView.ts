@@ -1297,8 +1297,17 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 \`;
             }).join('');
 
-            // Load tooltip previews for all visible templates
-            filteredTemplates.forEach(t => loadTooltipPreview(t.id));
+            // Add mouseenter event listeners for on-demand tooltip loading
+            setTimeout(() => {
+                document.querySelectorAll('.template-card').forEach(card => {
+                    card.addEventListener('mouseenter', () => {
+                        const templateId = card.getAttribute('data-template-id');
+                        if (templateId) {
+                            loadTooltipPreview(templateId);
+                        }
+                    }, { once: true }); // Use { once: true } to only fire the event once per card
+                });
+            }, 0);
         }
 
         function setView(view) {
