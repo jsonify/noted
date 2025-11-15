@@ -1171,7 +1171,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             }
             // Mock: Templates with high usage show upward trend
             if (template.usage_count >= 10) {
-                const weeklyUses = Math.floor(Math.random() * 5) + 1;
+                const weeklyUses = (template.id.length % 5) + 1;
                 return \`↑ \${weeklyUses} this week\`;
             }
             return '';
