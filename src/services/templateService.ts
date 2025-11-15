@@ -190,3 +190,94 @@ export function getTemplateVariables(): Array<{ name: string; description: strin
         { name: '{workspace}', description: 'Workspace name' }
     ];
 }
+
+/**
+ * Get full template content (raw, without placeholder substitution)
+ */
+export async function getTemplateContent(templateId: string, templatesPath?: string): Promise<string | null> {
+    // Check for built-in templates
+    const builtInTemplate = BUILT_IN_TEMPLATES[templateId as keyof typeof BUILT_IN_TEMPLATES];
+    if (builtInTemplate) {
+        const yamlFrontmatter = generateFrontmatter(new Date());
+        return yamlFrontmatter + builtInTemplate();
+    }
+
+    // Check for custom templates
+    if (!templatesPath) {
+        templatesPath = getTemplatesPath();
+    }
+    if (!templatesPath) {
+        return null;
+    }
+
+    try {
+        // Try JSON template first
+        const jsonPath = path.join(templatesPath, `${templateId}.json`);
+        if (await pathExists(jsonPath)) {
+            const content = await readFile(jsonPath);
+            const template: Template = JSON.parse(content);
+            return template.content;
+        }
+
+        // Try legacy .txt/.md template
+        const fileFormat = getFileFormat();
+        const txtPath = path.join(templatesPath, `${templateId}.txt`);
+        const mdPath = path.join(templatesPath, `${templateId}.md`);
+
+        if (await pathExists(txtPath)) {
+            return await readFile(txtPath);
+        }
+        if (await pathExists(mdPath)) {
+            return await readFile(mdPath);
+        }
+    } catch (error) {
+        console.error(`Error reading template ${templateId}:`, error);
+    }
+
+    return null;
+}
+
+/**
+ * Get limited lines from template content for preview
+ */
+export function getTemplateLines(content: string, maxLines: number): { lines: string; hasMore: boolean } {
+    const lines = content.split('\n');
+    const limitedLines = lines.slice(0, maxLines);
+    const hasMore = lines.length > maxLines;
+    return {
+        lines: limitedLines.join('\n'),
+        hasMore
+    };
+}
+
+/**
+ * Highlight template variables in content with HTML spans
+ */
+export function highlightVariables(content: string): string {
+    // Escape HTML special characters first
+    let escaped = content
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // Highlight all template variables
+    const variables = [
+        '{filename}', '{date}', '{time}', '{year}', '{month}', '{day}',
+        '{weekday}', '{month_name}', '{user}', '{workspace}'
+    ];
+
+    for (const variable of variables) {
+        const regex = new RegExp(variable.replace(/[{}]/g, '\\$&'), 'g');
+        escaped = escaped.replace(regex, `<span class="template-variable">${variable}</span>`);
+    }
+
+    return escaped;
+}
+
+/**
+ * Generate sample preview with placeholders replaced
+ */
+export function generateSamplePreview(content: string): string {
+    const previewDate = new Date();
+    return replacePlaceholders(content, previewDate, 'example-note');
+}

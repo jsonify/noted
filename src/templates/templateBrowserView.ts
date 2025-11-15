@@ -5,6 +5,7 @@ import { pathExists, readFile, readDirectory, writeFile } from '../services/file
 import { Template, TemplateDifficulty } from './TemplateTypes';
 import { BUILT_IN_TEMPLATES } from '../constants';
 import { TemplatesTreeProvider } from '../providers/templatesTreeProvider';
+import { getTemplateContent, getTemplateLines, highlightVariables, generateSamplePreview } from '../services/templateService';
 
 // Module-level reference to templates tree provider for refreshing
 let templatesProvider: TemplatesTreeProvider | undefined;
@@ -92,6 +93,14 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext, prov
 
                 case 'refresh':
                     await refreshWebviewTemplates();
+                    break;
+
+                case 'getPreview':
+                    await handleGetPreview(panel, message.templateId, message.maxLines);
+                    break;
+
+                case 'getFullPreview':
+                    await handleGetFullPreview(panel, message.templateId);
                     break;
             }
         },
@@ -355,6 +364,62 @@ async function handleExportTemplate(templateId: string): Promise<void> {
         await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
         vscode.window.showInformationMessage(`Template exported to ${uri.fsPath}`);
     }
+}
+
+/**
+ * Handle getting a preview of a template (limited lines)
+ */
+async function handleGetPreview(panel: vscode.WebviewPanel, templateId: string, maxLines: number): Promise<void> {
+    const templatesPath = getTemplatesPath();
+    const content = await getTemplateContent(templateId, templatesPath);
+
+    if (!content) {
+        panel.webview.postMessage({
+            command: 'previewResponse',
+            templateId,
+            maxLines,
+            error: 'Template not found'
+        });
+        return;
+    }
+
+    const { lines, hasMore } = getTemplateLines(content, maxLines);
+    const highlightedContent = highlightVariables(lines);
+
+    panel.webview.postMessage({
+        command: 'previewResponse',
+        templateId,
+        maxLines,
+        content: highlightedContent,
+        hasMore
+    });
+}
+
+/**
+ * Handle getting a full preview of a template
+ */
+async function handleGetFullPreview(panel: vscode.WebviewPanel, templateId: string): Promise<void> {
+    const templatesPath = getTemplatesPath();
+    const content = await getTemplateContent(templateId, templatesPath);
+
+    if (!content) {
+        panel.webview.postMessage({
+            command: 'fullPreviewResponse',
+            templateId,
+            error: 'Template not found'
+        });
+        return;
+    }
+
+    const highlightedContent = highlightVariables(content);
+    const samplePreview = generateSamplePreview(content);
+
+    panel.webview.postMessage({
+        command: 'fullPreviewResponse',
+        templateId,
+        content: highlightedContent,
+        samplePreview
+    });
 }
 
 /**
@@ -692,6 +757,298 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             font-size: 12px;
             color: var(--vscode-descriptionForeground);
         }
+
+        /* Preview System Styles */
+
+        /* Level 1: Hover Tooltip */
+        .template-card {
+            position: relative;
+        }
+
+        .template-tooltip {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--vscode-editorHoverWidget-background);
+            border: 1px solid var(--vscode-editorHoverWidget-border);
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: none;
+            max-width: 600px;
+        }
+
+        .template-card:hover .template-tooltip {
+            display: block;
+        }
+
+        .tooltip-content {
+            font-family: var(--vscode-editor-font-family);
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--vscode-editorHoverWidget-foreground);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .tooltip-footer {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--vscode-panel-border);
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            font-style: italic;
+        }
+
+        /* Level 2: Inline Expandable Preview */
+        .preview-section {
+            margin-top: 12px;
+            border-top: 1px solid var(--vscode-panel-border);
+            padding-top: 12px;
+        }
+
+        .preview-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: transparent;
+            color: var(--vscode-textLink-foreground);
+            border: 1px solid var(--vscode-textLink-foreground);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .preview-toggle:hover {
+            background: var(--vscode-textLink-activeForeground);
+            color: var(--vscode-editor-background);
+        }
+
+        .preview-toggle-icon {
+            transition: transform 0.2s;
+        }
+
+        .preview-toggle.expanded .preview-toggle-icon {
+            transform: rotate(90deg);
+        }
+
+        .preview-content {
+            display: none;
+            margin-top: 12px;
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            padding: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .preview-content.visible {
+            display: block;
+        }
+
+        .preview-code {
+            font-family: var(--vscode-editor-font-family);
+            font-size: 12px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: var(--vscode-editor-foreground);
+        }
+
+        .template-variable {
+            color: var(--vscode-textLink-activeForeground);
+            font-weight: 600;
+            background: var(--vscode-textBlockQuote-background);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .preview-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .preview-btn {
+            flex: 1;
+            padding: 6px 12px;
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: background 0.2s;
+        }
+
+        .preview-btn:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .preview-loading {
+            text-align: center;
+            color: var(--vscode-descriptionForeground);
+            padding: 20px;
+            font-size: 12px;
+        }
+
+        .preview-more {
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            font-style: italic;
+        }
+
+        /* Level 3: Full Preview Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.visible {
+            display: flex;
+        }
+
+        .modal-container {
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            max-width: 800px;
+            max-height: 90vh;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--vscode-foreground);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--vscode-toolbar-hoverBackground);
+        }
+
+        .modal-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-editor-inactiveSelectionBackground);
+        }
+
+        .modal-tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--vscode-foreground);
+            transition: background 0.2s;
+        }
+
+        .modal-tab:hover {
+            background: var(--vscode-toolbar-hoverBackground);
+        }
+
+        .modal-tab.active {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-tab-content {
+            display: none;
+        }
+
+        .modal-tab-content.active {
+            display: block;
+        }
+
+        .modal-code {
+            font-family: var(--vscode-editor-font-family);
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: var(--vscode-editor-foreground);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--vscode-panel-border);
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .modal-btn:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+
+        .modal-btn-secondary {
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+        }
+
+        .modal-btn-secondary:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
     </style>
 </head>
 <body>
@@ -719,6 +1076,32 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
     <div class="stats" id="stats"></div>
 
     <div class="templates-grid" id="templatesContainer"></div>
+
+    <!-- Full Preview Modal -->
+    <div class="modal-overlay" id="previewModal" onclick="closeModalOnOverlay(event)">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Template Preview</div>
+                <button class="modal-close" onclick="closePreviewModal()" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-tabs">
+                <button class="modal-tab active" onclick="switchModalTab('raw')" id="rawTab">Raw Template</button>
+                <button class="modal-tab" onclick="switchModalTab('sample')" id="sampleTab">Sample Preview</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tab-content active" id="rawContent">
+                    <div class="modal-code" id="rawCodeContent"></div>
+                </div>
+                <div class="modal-tab-content" id="sampleContent">
+                    <div class="modal-code" id="sampleCodeContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="copyModalContent()">Copy to Clipboard</button>
+                <button class="modal-btn" onclick="closePreviewModal()">Close</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const vscode = acquireVsCodeApi();
@@ -787,19 +1170,6 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         renderStats();
         renderTemplates();
 
-        // Handle messages from extension
-        window.addEventListener('message', event => {
-            const message = event.data;
-            switch (message.command) {
-                case 'updateTemplates':
-                    templates = message.templates;
-                    renderFilters();
-                    renderStats();
-                    renderTemplates();
-                    break;
-            }
-        });
-
         function renderFilters() {
             const categories = ['all', ...new Set(templates.map(t => t.category))];
             const filtersContainer = document.getElementById('filters');
@@ -866,7 +1236,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 const showPopular = isPopular(t);
 
                 return \`
-                <div class="template-card">
+                <div class="template-card" data-template-id="\${escapeHtml(t.id)}">
                     <div class="template-header">
                         <div style="flex: 1;">
                             <div class="template-title-row">
@@ -891,6 +1261,29 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                         <span>\${t.usage_count !== undefined ? \`📊 \${escapeHtml(t.usage_count)} uses\` : '📊 0 uses'}</span>
                         \${t.author ? \`<span>👤 \${escapeHtml(t.author)}</span>\` : ''}
                     </div>
+
+                    <!-- Level 1: Hover Tooltip -->
+                    <div class="template-tooltip" data-tooltip-id="\${escapeHtml(t.id)}">
+                        <div class="tooltip-content" id="tooltip-\${escapeHtml(t.id)}">Loading preview...</div>
+                        <div class="tooltip-footer">Hover to see first 4 lines • Click Preview for more</div>
+                    </div>
+
+                    <!-- Level 2: Inline Preview Section -->
+                    <div class="preview-section">
+                        <button
+                            class="preview-toggle"
+                            onclick="togglePreview('\${escapeHtml(t.id)}')"
+                            aria-expanded="false"
+                            id="preview-toggle-\${escapeHtml(t.id)}"
+                        >
+                            <span class="preview-toggle-icon">▶</span>
+                            <span>Preview Template</span>
+                        </button>
+                        <div class="preview-content" id="preview-content-\${escapeHtml(t.id)}">
+                            <div class="preview-loading">Loading preview...</div>
+                        </div>
+                    </div>
+
                     <div class="template-actions">
                         <button class="action-btn primary" onclick="createFromTemplate('\${escapeHtml(t.id)}')">Create</button>
                         \${!t.isBuiltIn ? \`
@@ -903,6 +1296,9 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 </div>
                 \`;
             }).join('');
+
+            // Load tooltip previews for all visible templates
+            filteredTemplates.forEach(t => loadTooltipPreview(t.id));
         }
 
         function setView(view) {
@@ -965,6 +1361,229 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 command: 'refresh'
             });
         }
+
+        // === Preview System Functions ===
+
+        // Preview cache to avoid redundant requests
+        const previewCache = new Map();
+
+        // Level 1: Load tooltip preview (first 4 lines)
+        function loadTooltipPreview(templateId) {
+            // Check cache first
+            if (previewCache.has(\`tooltip-\${templateId}\`)) {
+                const cached = previewCache.get(\`tooltip-\${templateId}\`);
+                updateTooltipContent(templateId, cached.content);
+                return;
+            }
+
+            // Request preview from extension
+            vscode.postMessage({
+                command: 'getPreview',
+                templateId: templateId,
+                maxLines: 4
+            });
+        }
+
+        function updateTooltipContent(templateId, content) {
+            const tooltip = document.getElementById(\`tooltip-\${templateId}\`);
+            if (tooltip) {
+                tooltip.innerHTML = content;
+            }
+        }
+
+        // Level 2: Toggle inline expandable preview
+        function togglePreview(templateId) {
+            const toggleBtn = document.getElementById(\`preview-toggle-\${templateId}\`);
+            const content = document.getElementById(\`preview-content-\${templateId}\`);
+
+            const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+
+            if (isExpanded) {
+                // Collapse
+                toggleBtn.setAttribute('aria-expanded', 'false');
+                toggleBtn.classList.remove('expanded');
+                content.classList.remove('visible');
+            } else {
+                // Expand
+                toggleBtn.setAttribute('aria-expanded', 'true');
+                toggleBtn.classList.add('expanded');
+                content.classList.add('visible');
+
+                // Load preview if not already loaded
+                if (!previewCache.has(\`preview-\${templateId}\`)) {
+                    vscode.postMessage({
+                        command: 'getPreview',
+                        templateId: templateId,
+                        maxLines: 15
+                    });
+                }
+            }
+        }
+
+        function updateInlinePreview(templateId, content, hasMore) {
+            const previewContent = document.getElementById(\`preview-content-\${templateId}\`);
+            if (previewContent) {
+                previewContent.innerHTML = \`
+                    <div class="preview-code">\${content}</div>
+                    \${hasMore ? '<div class="preview-more">... (showing first 15 lines)</div>' : ''}
+                    <div class="preview-actions">
+                        <button class="preview-btn" onclick="showFullPreview('\${escapeHtml(templateId)}')">
+                            Show Full Template
+                        </button>
+                    </div>
+                \`;
+            }
+        }
+
+        // Level 3: Full preview modal
+        let currentModalTemplateId = null;
+        let currentModalTab = 'raw';
+
+        function showFullPreview(templateId) {
+            currentModalTemplateId = templateId;
+            currentModalTab = 'raw';
+
+            // Find template name
+            const template = templates.find(t => t.id === templateId);
+            const modalTitle = document.getElementById('modalTitle');
+            if (modalTitle && template) {
+                modalTitle.textContent = \`\${template.name} - Preview\`;
+            }
+
+            // Show modal
+            const modal = document.getElementById('previewModal');
+            modal.classList.add('visible');
+
+            // Reset tabs
+            document.getElementById('rawTab').classList.add('active');
+            document.getElementById('sampleTab').classList.remove('active');
+            document.getElementById('rawContent').classList.add('active');
+            document.getElementById('sampleContent').classList.remove('active');
+
+            // Load full preview if not cached
+            if (!previewCache.has(\`full-\${templateId}\`)) {
+                document.getElementById('rawCodeContent').innerHTML = '<div class="preview-loading">Loading...</div>';
+                document.getElementById('sampleCodeContent').innerHTML = '<div class="preview-loading">Loading...</div>';
+
+                vscode.postMessage({
+                    command: 'getFullPreview',
+                    templateId: templateId
+                });
+            } else {
+                // Use cached data
+                const cached = previewCache.get(\`full-\${templateId}\`);
+                updateModalContent(cached.content, cached.samplePreview);
+            }
+        }
+
+        function updateModalContent(rawContent, samplePreview) {
+            document.getElementById('rawCodeContent').innerHTML = rawContent;
+            document.getElementById('sampleCodeContent').innerHTML = samplePreview;
+        }
+
+        function closePreviewModal() {
+            const modal = document.getElementById('previewModal');
+            modal.classList.remove('visible');
+            currentModalTemplateId = null;
+        }
+
+        function closeModalOnOverlay(event) {
+            // Only close if clicking the overlay, not the modal container
+            if (event.target.id === 'previewModal') {
+                closePreviewModal();
+            }
+        }
+
+        function switchModalTab(tab) {
+            currentModalTab = tab;
+
+            // Update tab buttons
+            document.getElementById('rawTab').classList.toggle('active', tab === 'raw');
+            document.getElementById('sampleTab').classList.toggle('active', tab === 'sample');
+
+            // Update tab content
+            document.getElementById('rawContent').classList.toggle('active', tab === 'raw');
+            document.getElementById('sampleContent').classList.toggle('active', tab === 'sample');
+        }
+
+        function copyModalContent() {
+            const content = currentModalTab === 'raw'
+                ? document.getElementById('rawCodeContent').innerText
+                : document.getElementById('sampleCodeContent').innerText;
+
+            // Use the clipboard API
+            navigator.clipboard.writeText(content).then(() => {
+                // Visual feedback - temporarily change button text
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        // Keyboard accessibility - ESC to close modal
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('previewModal');
+                if (modal.classList.contains('visible')) {
+                    closePreviewModal();
+                }
+            }
+        });
+
+        // Update message handler to process preview responses
+        window.addEventListener('message', event => {
+            const message = event.data;
+            switch (message.command) {
+                case 'updateTemplates':
+                    templates = message.templates;
+                    renderFilters();
+                    renderStats();
+                    renderTemplates();
+                    break;
+
+                case 'previewResponse':
+                    if (message.error) {
+                        console.error('Preview error:', message.error);
+                        return;
+                    }
+
+                    // Cache the preview
+                    const cacheKey = message.maxLines === 4 ? 'tooltip' : 'preview';
+                    previewCache.set(\`\${cacheKey}-\${message.templateId}\`, {
+                        content: message.content,
+                        hasMore: message.hasMore
+                    });
+
+                    // Update UI
+                    if (message.maxLines === 4) {
+                        updateTooltipContent(message.templateId, message.content);
+                    } else {
+                        updateInlinePreview(message.templateId, message.content, message.hasMore);
+                    }
+                    break;
+
+                case 'fullPreviewResponse':
+                    if (message.error) {
+                        console.error('Full preview error:', message.error);
+                        return;
+                    }
+
+                    // Cache the full preview
+                    previewCache.set(\`full-\${message.templateId}\`, {
+                        content: message.content,
+                        samplePreview: message.samplePreview
+                    });
+
+                    // Update modal content
+                    updateModalContent(message.content, message.samplePreview);
+                    break;
+            }
+        });
     </script>
 </body>
 </html>`;
