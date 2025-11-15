@@ -2564,7 +2564,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                         <div class="empty-state-icon">⭐</div>
                         <div class="empty-state-title">No Favorites Yet</div>
                         <div style="margin-bottom: 16px;">Star your frequently used templates for quick access</div>
-                        <button class="btn" onclick="document.getElementById('showOnlyFilter').value = 'all'; handleFilterChange({target: document.getElementById('showOnlyFilter')})">
+                        <button class="btn" data-command="showAllFromEmptyState">
                             Show All Templates
                         </button>
                     </div>
