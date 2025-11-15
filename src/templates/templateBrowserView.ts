@@ -3,7 +3,7 @@ import * as path from 'path';
 import { getTemplatesPath, getFileFormat } from '../services/configService';
 import { pathExists, readFile, readDirectory, writeFile } from '../services/fileSystemService';
 import { Template, TemplateDifficulty } from './TemplateTypes';
-import { BUILT_IN_TEMPLATES } from '../constants';
+import { BUILT_IN_TEMPLATES, BUILT_IN_TEMPLATE_INFO } from '../constants';
 import { TemplatesTreeProvider } from '../providers/templatesTreeProvider';
 import { getTemplateContent, getTemplateLines, highlightVariables, generateSamplePreview } from '../services/templateService';
 
@@ -27,6 +27,12 @@ interface TemplateDisplayInfo {
     isBuiltIn: boolean;
     fileType: 'json' | 'txt' | 'md' | 'builtin';
     difficulty?: TemplateDifficulty;
+    // Usage guidance (Phase 3)
+    when_to_use?: string;
+    use_cases?: string[];
+    prerequisites?: string[];
+    related_templates?: string[];
+    estimated_time?: string;
 }
 
 /**
@@ -137,18 +143,27 @@ async function findTemplateFile(templatesPath: string, templateId: string): Prom
 async function loadAllTemplates(): Promise<TemplateDisplayInfo[]> {
     const templates: TemplateDisplayInfo[] = [];
 
-    // Add built-in templates
+    // Add built-in templates with guidance metadata
     const builtInNames = Object.keys(BUILT_IN_TEMPLATES);
     for (const name of builtInNames) {
+        // Find matching template info with guidance fields
+        const templateInfo = BUILT_IN_TEMPLATE_INFO.find(t => t.value === name);
+
         templates.push({
             id: name,
-            name: name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, ' '),
-            description: `Built-in ${name} template`,
+            name: templateInfo?.label || (name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, ' ')),
+            description: templateInfo?.description || `Built-in ${name} template`,
             category: 'Built-in',
             tags: ['built-in'],
             version: '1.0.0',
             isBuiltIn: true,
-            fileType: 'builtin'
+            fileType: 'builtin',
+            // Include Phase 3 guidance fields
+            when_to_use: templateInfo?.when_to_use,
+            use_cases: templateInfo?.use_cases,
+            prerequisites: templateInfo?.prerequisites,
+            related_templates: templateInfo?.related_templates,
+            estimated_time: templateInfo?.estimated_time
         });
     }
 
@@ -190,7 +205,13 @@ async function loadAllTemplates(): Promise<TemplateDisplayInfo[]> {
                             modified: template.modified,
                             isBuiltIn: false,
                             fileType: 'json',
-                            difficulty: template.difficulty
+                            difficulty: template.difficulty,
+                            // Include Phase 3 guidance fields from template JSON
+                            when_to_use: template.when_to_use,
+                            use_cases: template.use_cases,
+                            prerequisites: template.prerequisites,
+                            related_templates: template.related_templates,
+                            estimated_time: template.estimated_time
                         });
                     } catch (error) {
                         vscode.window.showWarningMessage(`Failed to parse template file: ${file}`);
@@ -787,6 +808,115 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             font-style: italic;
         }
 
+        /* Phase 3: Usage Guidance Styles */
+        .guidance-section {
+            margin-top: 12px;
+            border-top: 1px solid var(--vscode-panel-border);
+            padding-top: 12px;
+        }
+
+        .guidance-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: transparent;
+            color: var(--vscode-textLink-foreground);
+            border: 1px solid var(--vscode-textLink-foreground);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .guidance-toggle:hover {
+            background: var(--vscode-textLink-activeForeground);
+            color: var(--vscode-editor-background);
+        }
+
+        .guidance-toggle-icon {
+            transition: transform 0.2s;
+        }
+
+        .guidance-toggle.expanded .guidance-toggle-icon {
+            transform: rotate(90deg);
+        }
+
+        .guidance-time {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-left: auto;
+        }
+
+        .guidance-content {
+            display: none;
+            margin-top: 12px;
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            padding: 12px;
+        }
+
+        .guidance-content.visible {
+            display: block;
+        }
+
+        .guidance-item {
+            margin-bottom: 12px;
+        }
+
+        .guidance-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .guidance-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--vscode-foreground);
+            margin-bottom: 6px;
+        }
+
+        .guidance-text {
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .guidance-list {
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--vscode-descriptionForeground);
+            margin-left: 20px;
+            margin-top: 6px;
+        }
+
+        .guidance-list li {
+            margin-bottom: 4px;
+        }
+
+        .related-templates {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .related-template-tag {
+            font-size: 11px;
+            padding: 4px 8px;
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .related-template-tag:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
         /* Level 2: Inline Expandable Preview */
         .preview-section {
             margin-top: 12px;
@@ -1276,6 +1406,54 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                         \${t.author ? \`<span>👤 \${escapeHtml(t.author)}</span>\` : ''}
                     </div>
 
+                    <!-- Phase 3: Usage Guidance Section -->
+                    \${(t.when_to_use || t.use_cases || t.prerequisites || t.related_templates || t.estimated_time) ? \`
+                    <div class="guidance-section">
+                        <button
+                            class="guidance-toggle"
+                            onclick="toggleGuidance('\${escapeHtml(t.id)}')"
+                            aria-expanded="false"
+                            id="guidance-toggle-\${escapeHtml(t.id)}"
+                        >
+                            <span class="guidance-toggle-icon">▶</span>
+                            <span>📖 Usage Guidance</span>
+                            \${t.estimated_time ? \`<span class="guidance-time">⏱️ \${escapeHtml(t.estimated_time)}</span>\` : ''}
+                        </button>
+                        <div class="guidance-content" id="guidance-content-\${escapeHtml(t.id)}">
+                            \${t.when_to_use ? \`
+                                <div class="guidance-item">
+                                    <div class="guidance-label">📌 When to Use</div>
+                                    <div class="guidance-text">\${escapeHtml(t.when_to_use)}</div>
+                                </div>
+                            \` : ''}
+                            \${t.use_cases && t.use_cases.length > 0 ? \`
+                                <div class="guidance-item">
+                                    <div class="guidance-label">💡 Example Use Cases</div>
+                                    <ul class="guidance-list">
+                                        \${t.use_cases.map(uc => \`<li>\${escapeHtml(uc)}</li>\`).join('')}
+                                    </ul>
+                                </div>
+                            \` : ''}
+                            \${t.prerequisites && t.prerequisites.length > 0 ? \`
+                                <div class="guidance-item">
+                                    <div class="guidance-label">✅ Prerequisites</div>
+                                    <ul class="guidance-list">
+                                        \${t.prerequisites.map(pr => \`<li>\${escapeHtml(pr)}</li>\`).join('')}
+                                    </ul>
+                                </div>
+                            \` : ''}
+                            \${t.related_templates && t.related_templates.length > 0 ? \`
+                                <div class="guidance-item">
+                                    <div class="guidance-label">🔗 Related Templates</div>
+                                    <div class="related-templates">
+                                        \${t.related_templates.map(rt => \`<span class="related-template-tag">\${escapeHtml(rt)}</span>\`).join('')}
+                                    </div>
+                                </div>
+                            \` : ''}
+                        </div>
+                    </div>
+                    \` : ''}
+
                     <!-- Level 1: Hover Tooltip -->
                     <div class="template-tooltip" data-tooltip-id="\${escapeHtml(t.id)}">
                         <div class="tooltip-content" id="tooltip-\${escapeHtml(t.id)}">Loading preview...</div>
@@ -1383,6 +1561,28 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             vscode.postMessage({
                 command: 'refresh'
             });
+        }
+
+        // === Guidance System Functions ===
+
+        // Toggle guidance section visibility
+        function toggleGuidance(templateId) {
+            const toggleBtn = document.getElementById(\`guidance-toggle-\${templateId}\`);
+            const content = document.getElementById(\`guidance-content-\${templateId}\`);
+
+            const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+
+            if (isExpanded) {
+                // Collapse
+                toggleBtn.setAttribute('aria-expanded', 'false');
+                toggleBtn.classList.remove('expanded');
+                content.classList.remove('visible');
+            } else {
+                // Expand
+                toggleBtn.setAttribute('aria-expanded', 'true');
+                toggleBtn.classList.add('expanded');
+                content.classList.add('visible');
+            }
         }
 
         // === Preview System Functions ===
