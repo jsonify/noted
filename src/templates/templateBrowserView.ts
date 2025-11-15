@@ -149,6 +149,10 @@ async function loadAllTemplates(): Promise<TemplateDisplayInfo[]> {
         // Find matching template info with guidance fields
         const templateInfo = BUILT_IN_TEMPLATE_INFO.find(t => t.value === name);
 
+        if (!templateInfo) {
+            console.warn(`[Template Browser] No metadata found in BUILT_IN_TEMPLATE_INFO for built-in template: ${name}`);
+        }
+
         templates.push({
             id: name,
             name: templateInfo?.label || (name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, ' ')),
@@ -826,9 +830,8 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
-            transition: all 0.2s;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
             width: 100%;
-            justify-content: space-between;
         }
 
         .guidance-toggle:hover {
@@ -1168,7 +1171,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 <body>
     <div class="header">
         <h1>📝 Template Browser</h1>
-        <button class="btn" onclick="refresh()">🔄 Refresh</button>
+        <button class="btn" data-command="refresh">🔄 Refresh</button>
     </div>
 
     <div class="controls">
@@ -1176,12 +1179,11 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             type="text"
             class="search-box"
             placeholder="Search templates by name, description, or tags..."
-            oninput="filterTemplates()"
             id="searchInput"
         />
         <div class="view-toggle">
-            <button class="btn btn-secondary" onclick="setView('grid')" id="gridBtn">Grid</button>
-            <button class="btn btn-secondary" onclick="setView('list')" id="listBtn">List</button>
+            <button class="btn btn-secondary" data-command="setView" data-view="grid" id="gridBtn">Grid</button>
+            <button class="btn btn-secondary" data-command="setView" data-view="list" id="listBtn">List</button>
         </div>
     </div>
 
@@ -1192,15 +1194,15 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
     <div class="templates-grid" id="templatesContainer"></div>
 
     <!-- Full Preview Modal -->
-    <div class="modal-overlay" id="previewModal" onclick="closeModalOnOverlay(event)">
+    <div class="modal-overlay" id="previewModal">
         <div class="modal-container">
             <div class="modal-header">
                 <div class="modal-title" id="modalTitle">Template Preview</div>
-                <button class="modal-close" onclick="closePreviewModal()" aria-label="Close">&times;</button>
+                <button class="modal-close" data-command="closePreviewModal" aria-label="Close">&times;</button>
             </div>
             <div class="modal-tabs">
-                <button class="modal-tab active" onclick="switchModalTab('raw')" id="rawTab">Raw Template</button>
-                <button class="modal-tab" onclick="switchModalTab('sample')" id="sampleTab">Sample Preview</button>
+                <button class="modal-tab active" data-command="switchModalTab" data-tab="raw" id="rawTab">Raw Template</button>
+                <button class="modal-tab" data-command="switchModalTab" data-tab="sample" id="sampleTab">Sample Preview</button>
             </div>
             <div class="modal-body">
                 <div class="modal-tab-content active" id="rawContent">
@@ -1211,8 +1213,8 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="modal-btn modal-btn-secondary" onclick="copyModalContent()">Copy to Clipboard</button>
-                <button class="modal-btn" onclick="closePreviewModal()">Close</button>
+                <button class="modal-btn modal-btn-secondary" data-command="copyModalContent">Copy to Clipboard</button>
+                <button class="modal-btn" data-command="closePreviewModal">Close</button>
             </div>
         </div>
     </div>
@@ -1312,13 +1314,83 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         renderStats();
         renderTemplates();
 
+        // === Event Delegation System ===
+
+        // Master click handler for all buttons with data-command
+        document.body.addEventListener('click', (event) => {
+            const target = event.target.closest('[data-command]');
+            if (!target) return;
+
+            const command = target.getAttribute('data-command');
+            const templateId = target.getAttribute('data-template-id');
+            const category = target.getAttribute('data-category');
+            const view = target.getAttribute('data-view');
+            const tab = target.getAttribute('data-tab');
+
+            switch (command) {
+                case 'refresh':
+                    refresh();
+                    break;
+                case 'setView':
+                    setView(view);
+                    break;
+                case 'setCategory':
+                    setCategory(category);
+                    break;
+                case 'toggleGuidance':
+                    toggleGuidance(target);
+                    break;
+                case 'togglePreview':
+                    togglePreview(target, templateId);
+                    break;
+                case 'showFullPreview':
+                    showFullPreview(templateId);
+                    break;
+                case 'createFromTemplate':
+                    createFromTemplate(templateId);
+                    break;
+                case 'editTemplate':
+                    editTemplate(templateId);
+                    break;
+                case 'duplicateTemplate':
+                    duplicateTemplate(templateId);
+                    break;
+                case 'exportTemplate':
+                    exportTemplate(templateId);
+                    break;
+                case 'deleteTemplate':
+                    deleteTemplate(templateId);
+                    break;
+                case 'closePreviewModal':
+                    closePreviewModal();
+                    break;
+                case 'switchModalTab':
+                    switchModalTab(tab);
+                    break;
+                case 'copyModalContent':
+                    copyModalContent(event);
+                    break;
+            }
+        });
+
+        // Search input listener
+        document.getElementById('searchInput').addEventListener('input', filterTemplates);
+
+        // Modal overlay click handler (close on overlay click, not modal content)
+        document.getElementById('previewModal').addEventListener('click', (event) => {
+            if (event.target.id === 'previewModal') {
+                closePreviewModal();
+            }
+        });
+
         function renderFilters() {
             const categories = ['all', ...new Set(templates.map(t => t.category))];
             const filtersContainer = document.getElementById('filters');
             filtersContainer.innerHTML = categories.map(cat =>
                 \`<button
                     class="filter-btn \${cat === activeCategory ? 'active' : ''}"
-                    onclick="setCategory('\${escapeHtml(cat)}')"
+                    data-command="setCategory"
+                    data-category="\${escapeHtml(cat)}"
                 >
                     \${escapeHtml(cat.charAt(0).toUpperCase() + cat.slice(1))} (\${cat === 'all' ? templates.length : templates.filter(t => t.category === cat).length})
                 </button>\`
@@ -1411,15 +1483,14 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     <div class="guidance-section">
                         <button
                             class="guidance-toggle"
-                            onclick="toggleGuidance('\${escapeHtml(t.id)}')"
+                            data-command="toggleGuidance"
                             aria-expanded="false"
-                            id="guidance-toggle-\${escapeHtml(t.id)}"
                         >
                             <span class="guidance-toggle-icon">▶</span>
                             <span>📖 Usage Guidance</span>
                             \${t.estimated_time ? \`<span class="guidance-time">⏱️ \${escapeHtml(t.estimated_time)}</span>\` : ''}
                         </button>
-                        <div class="guidance-content" id="guidance-content-\${escapeHtml(t.id)}">
+                        <div class="guidance-content">
                             \${t.when_to_use ? \`
                                 <div class="guidance-item">
                                     <div class="guidance-label">📌 When to Use</div>
@@ -1464,25 +1535,25 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     <div class="preview-section">
                         <button
                             class="preview-toggle"
-                            onclick="togglePreview('\${escapeHtml(t.id)}')"
+                            data-command="togglePreview"
+                            data-template-id="\${escapeHtml(t.id)}"
                             aria-expanded="false"
-                            id="preview-toggle-\${escapeHtml(t.id)}"
                         >
                             <span class="preview-toggle-icon">▶</span>
                             <span>Preview Template</span>
                         </button>
-                        <div class="preview-content" id="preview-content-\${escapeHtml(t.id)}">
+                        <div class="preview-content">
                             <div class="preview-loading">Loading preview...</div>
                         </div>
                     </div>
 
                     <div class="template-actions">
-                        <button class="action-btn primary" onclick="createFromTemplate('\${escapeHtml(t.id)}')">Create</button>
+                        <button class="action-btn primary" data-command="createFromTemplate" data-template-id="\${escapeHtml(t.id)}">Create</button>
                         \${!t.isBuiltIn ? \`
-                            <button class="action-btn" onclick="editTemplate('\${escapeHtml(t.id)}')">Edit</button>
-                            <button class="action-btn" onclick="duplicateTemplate('\${escapeHtml(t.id)}')">Duplicate</button>
-                            <button class="action-btn" onclick="exportTemplate('\${escapeHtml(t.id)}')">Export</button>
-                            <button class="action-btn danger" onclick="deleteTemplate('\${escapeHtml(t.id)}')">Delete</button>
+                            <button class="action-btn" data-command="editTemplate" data-template-id="\${escapeHtml(t.id)}">Edit</button>
+                            <button class="action-btn" data-command="duplicateTemplate" data-template-id="\${escapeHtml(t.id)}">Duplicate</button>
+                            <button class="action-btn" data-command="exportTemplate" data-template-id="\${escapeHtml(t.id)}">Export</button>
+                            <button class="action-btn danger" data-command="deleteTemplate" data-template-id="\${escapeHtml(t.id)}">Delete</button>
                         \` : ''}
                     </div>
                 </div>
@@ -1566,23 +1637,17 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         // === Guidance System Functions ===
 
         // Toggle guidance section visibility
-        function toggleGuidance(templateId) {
-            const toggleBtn = document.getElementById(\`guidance-toggle-\${templateId}\`);
-            const content = document.getElementById(\`guidance-content-\${templateId}\`);
+        function toggleGuidance(toggleBtn) {
+            if (!toggleBtn) return;
 
-            const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+            const content = toggleBtn.nextElementSibling;
+            if (!content) return;
 
-            if (isExpanded) {
-                // Collapse
-                toggleBtn.setAttribute('aria-expanded', 'false');
-                toggleBtn.classList.remove('expanded');
-                content.classList.remove('visible');
-            } else {
-                // Expand
-                toggleBtn.setAttribute('aria-expanded', 'true');
-                toggleBtn.classList.add('expanded');
-                content.classList.add('visible');
-            }
+            const isExpanded = toggleBtn.getAttribute('aria-expanded') !== 'true';
+
+            toggleBtn.setAttribute('aria-expanded', String(isExpanded));
+            toggleBtn.classList.toggle('expanded', isExpanded);
+            content.classList.toggle('visible', isExpanded);
         }
 
         // === Preview System Functions ===
@@ -1615,42 +1680,42 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         }
 
         // Level 2: Toggle inline expandable preview
-        function togglePreview(templateId) {
-            const toggleBtn = document.getElementById(\`preview-toggle-\${templateId}\`);
-            const content = document.getElementById(\`preview-content-\${templateId}\`);
+        function togglePreview(toggleBtn, templateId) {
+            if (!toggleBtn) return;
 
-            const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+            const content = toggleBtn.nextElementSibling;
+            if (!content) return;
 
-            if (isExpanded) {
-                // Collapse
-                toggleBtn.setAttribute('aria-expanded', 'false');
-                toggleBtn.classList.remove('expanded');
-                content.classList.remove('visible');
-            } else {
-                // Expand
-                toggleBtn.setAttribute('aria-expanded', 'true');
-                toggleBtn.classList.add('expanded');
-                content.classList.add('visible');
+            const isExpanded = toggleBtn.getAttribute('aria-expanded') !== 'true';
 
-                // Load preview if not already loaded
-                if (!previewCache.has(\`preview-\${templateId}\`)) {
-                    vscode.postMessage({
-                        command: 'getPreview',
-                        templateId: templateId,
-                        maxLines: 15
-                    });
-                }
+            toggleBtn.setAttribute('aria-expanded', String(isExpanded));
+            toggleBtn.classList.toggle('expanded', isExpanded);
+            content.classList.toggle('visible', isExpanded);
+
+            // Load preview if expanding and not already loaded
+            if (isExpanded && !previewCache.has(\`preview-\${templateId}\`)) {
+                vscode.postMessage({
+                    command: 'getPreview',
+                    templateId: templateId,
+                    maxLines: 15
+                });
             }
         }
 
         function updateInlinePreview(templateId, content, hasMore) {
-            const previewContent = document.getElementById(\`preview-content-\${templateId}\`);
+            // Find preview content by traversing from the toggle button
+            const toggleBtn = document.querySelector(\`[data-command="togglePreview"][data-template-id="\${escapeHtml(templateId)}"]\`);
+            if (!toggleBtn) return;
+
+            const previewSection = toggleBtn.closest('.preview-section');
+            const previewContent = previewSection ? previewSection.querySelector('.preview-content') : null;
+
             if (previewContent) {
                 previewContent.innerHTML = \`
                     <div class="preview-code">\${content}</div>
                     \${hasMore ? '<div class="preview-more">... (showing first 15 lines)</div>' : ''}
                     <div class="preview-actions">
-                        <button class="preview-btn" onclick="showFullPreview('\${escapeHtml(templateId)}')">
+                        <button class="preview-btn" data-command="showFullPreview" data-template-id="\${escapeHtml(templateId)}">
                             Show Full Template
                         </button>
                     </div>
