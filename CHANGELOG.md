@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.43.1](https://github.com/jsonify/noted/compare/v1.43.0...v1.43.1) (2025-11-15)
+
+
+### Documentation
+
+* Add GitHub issue [#107](https://github.com/jsonify/noted/issues/107) breakdown into sub-issues ([#108](https://github.com/jsonify/noted/issues/108)) ([267e626](https://github.com/jsonify/noted/commit/267e626dd0b7121f0800ec4134692fdfe2f284a5))
+
 ## [1.43.0](https://github.com/jsonify/noted/compare/v1.42.1...v1.43.0) (2025-11-15)
 
 
