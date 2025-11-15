@@ -765,7 +765,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
         // Determine if template is "popular" (usage_count > 10)
         function isPopular(template) {
-            return template.usage_count && template.usage_count >= 10;
+            return template.usage_count >= 10;
         }
 
         // Get file type display text
