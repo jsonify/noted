@@ -1250,7 +1250,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 const usageTrend = getUsageTrend(t);
 
                 return \`
-                <div class="template-card" data-template-id="\${escapeHtml(t.id)}">`
+                <div class="template-card" data-template-id="\${escapeHtml(t.id)}">
                     <div class="template-header">
                         <div style="flex: 1;">
                             <div class="template-title-row">
