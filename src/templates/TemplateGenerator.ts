@@ -565,7 +565,7 @@ Return ONLY valid JSON, no other text.`;
         }
 
         // Validate default value type
-        if (variable.default !== undefined && variable.default !== null && variable.default !== '') {
+        if (variable.default !== undefined && variable.default !== null) {
             const defaultValue = variable.default;
 
             switch (variable.type) {
