@@ -1663,6 +1663,9 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     toggleFavorite(templateId);
                     event.stopPropagation(); // Prevent card click
                     break;
+                case 'copyTemplateId':
+                    copyTemplateId(templateId);
+                    break;
             }
         });
 
@@ -1731,7 +1734,12 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
         function clearAllFilters() {
             // Reset all filters to default
-            filterState = { ...defaultFilterState };
+            filterState = {
+                fileType: 'all',
+                difficulty: 'all',
+                showOnly: 'all',
+                sortBy: 'name-asc'
+            };
 
             // Reset UI
             document.getElementById('fileTypeFilter').value = 'all';
@@ -2330,9 +2338,8 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
             // Enter to create note from focused card
             if (event.key === 'Enter' && !isInputFocused()) {
-                const cards = Array.from(document.querySelectorAll('.template-card'));
-                if (currentFocusedIndex >= 0 && currentFocusedIndex < cards.length) {
-                    const card = cards[currentFocusedIndex];
+                const card = getFocusedCard();
+                if (card) {
                     const templateId = card.getAttribute('data-template-id');
                     if (templateId) {
                         createFromTemplate(templateId);
@@ -2344,9 +2351,8 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             // Space to toggle preview
             if (event.key === ' ' && !isInputFocused()) {
                 event.preventDefault();
-                const cards = Array.from(document.querySelectorAll('.template-card'));
-                if (currentFocusedIndex >= 0 && currentFocusedIndex < cards.length) {
-                    const card = cards[currentFocusedIndex];
+                const card = getFocusedCard();
+                if (card) {
                     const templateId = card.getAttribute('data-template-id');
                     const toggleBtn = card.querySelector('[data-command="togglePreview"]');
                     if (toggleBtn && templateId) {
@@ -2359,9 +2365,8 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             // F to toggle favorite
             if (event.key === 'f' && !isInputFocused()) {
                 event.preventDefault();
-                const cards = Array.from(document.querySelectorAll('.template-card'));
-                if (currentFocusedIndex >= 0 && currentFocusedIndex < cards.length) {
-                    const card = cards[currentFocusedIndex];
+                const card = getFocusedCard();
+                if (card) {
                     const templateId = card.getAttribute('data-template-id');
                     if (templateId) {
                         toggleFavorite(templateId);
@@ -2401,6 +2406,15 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 activeElement.tagName === 'TEXTAREA' ||
                 activeElement.tagName === 'SELECT'
             );
+        }
+
+        // Get the currently focused card
+        function getFocusedCard() {
+            const cards = Array.from(document.querySelectorAll('.template-card'));
+            if (currentFocusedIndex >= 0 && currentFocusedIndex < cards.length) {
+                return cards[currentFocusedIndex];
+            }
+            return null;
         }
 
         // Navigate between template cards with arrow keys
@@ -2459,16 +2473,17 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             const contextMenu = document.getElementById('contextMenu');
             const isFavorited = favorites.has(templateId);
             const isBuiltIn = template.isBuiltIn;
+            const escapedId = escapeHtml(templateId);
 
             // Build menu items
             let menuHtml = \`
-                <div class="context-menu-item" data-command="createFromTemplate" data-template-id="\${escapeHtml(templateId)}">
+                <div class="context-menu-item" data-command="createFromTemplate" data-template-id="\${escapedId}">
                     <span>✨</span> Create Note
                 </div>
-                <div class="context-menu-item" data-command="showFullPreview" data-template-id="\${escapeHtml(templateId)}">
+                <div class="context-menu-item" data-command="showFullPreview" data-template-id="\${escapedId}">
                     <span>👁️</span> Preview
                 </div>
-                <div class="context-menu-item" data-command="toggleFavorite" data-template-id="\${escapeHtml(templateId)}">
+                <div class="context-menu-item" data-command="toggleFavorite" data-template-id="\${escapedId}">
                     <span>\${isFavorited ? '⭐' : '☆'}</span> \${isFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
                 </div>
                 <div class="context-menu-separator"></div>
@@ -2476,10 +2491,10 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
             if (!isBuiltIn) {
                 menuHtml += \`
-                    <div class="context-menu-item" data-command="editTemplate" data-template-id="\${escapeHtml(templateId)}">
+                    <div class="context-menu-item" data-command="editTemplate" data-template-id="\${escapedId}">
                         <span>✏️</span> Edit
                     </div>
-                    <div class="context-menu-item" data-command="duplicateTemplate" data-template-id="\${escapeHtml(templateId)}">
+                    <div class="context-menu-item" data-command="duplicateTemplate" data-template-id="\${escapedId}">
                         <span>📋</span> Duplicate
                     </div>
                     <div class="context-menu-separator"></div>
@@ -2487,10 +2502,10 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             }
 
             menuHtml += \`
-                <div class="context-menu-item" data-command="exportTemplate" data-template-id="\${escapeHtml(templateId)}">
+                <div class="context-menu-item" data-command="exportTemplate" data-template-id="\${escapedId}">
                     <span>💾</span> Export
                 </div>
-                <div class="context-menu-item" data-command="copyTemplateId" data-template-id="${escapeHtml(templateId)}">
+                <div class="context-menu-item" data-command="copyTemplateId" data-template-id="\${escapedId}">
                     <span>📎</span> Copy Template ID
                 </div>
             \`;
@@ -2498,7 +2513,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             if (!isBuiltIn) {
                 menuHtml += \`
                     <div class="context-menu-separator"></div>
-                    <div class="context-menu-item danger" data-command="deleteTemplate" data-template-id="\${escapeHtml(templateId)}">
+                    <div class="context-menu-item danger" data-command="deleteTemplate" data-template-id="\${escapedId}">
                         <span>🗑️</span> Delete
                     </div>
                 \`;
