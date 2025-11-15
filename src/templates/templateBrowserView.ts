@@ -2471,7 +2471,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 </div>
             </div>
             <div class="variable-editor-footer">
-                <div style="display: flex; gap: 8px; align-items: center;">
+                <div class="footer-controls">
                     <span class="footer-info" id="variableCount">0 custom variables</span>
                     <button class="modal-btn modal-btn-secondary" data-command="exportVariables" aria-label="Export variables to JSON file" title="Export variables">Export</button>
                     <button class="modal-btn modal-btn-secondary" data-command="importVariables" aria-label="Import variables from JSON file" title="Import variables">Import</button>
