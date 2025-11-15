@@ -1097,7 +1097,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         // Constants for template icons and badges
         const TEMPLATE_ICON_MAP = {
             'Built-in': '⚙️',
-            'Custom': '📝',
+            'Custom': '✏️',
             'Documentation': '📚',
             'Project': '📊',
             'Meeting': '🤝',
