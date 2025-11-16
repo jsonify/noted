@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
+import { promises as fsp } from 'fs';
 import { TemplatesTreeProvider } from '../../providers/templatesTreeProvider';
 import { loadAllTemplates } from './templateOperations';
 import * as messageHandlers from './messageHandlers';
@@ -32,7 +32,7 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext, prov
     const templates = await loadAllTemplates();
 
     // Set the initial HTML
-    panel.webview.html = getTemplateBrowserHtml(panel.webview, context.extensionPath, templates);
+    panel.webview.html = await getTemplateBrowserHtml(panel.webview, context.extensionPath, templates);
 
     // Helper function to refresh webview templates
     const refreshWebviewTemplates = async () => {
@@ -118,7 +118,7 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext, prov
 /**
  * Generate the HTML content for the template browser webview
  */
-function getTemplateBrowserHtml(webview: vscode.Webview, extensionPath: string, templates: any[]): string {
+async function getTemplateBrowserHtml(webview: vscode.Webview, extensionPath: string, templates: any[]): Promise<string> {
     // Get paths to resources
     const browserPath = path.join(extensionPath, 'src', 'templates', 'browser');
     const htmlPath = path.join(browserPath, 'templateBrowser.html');
@@ -126,11 +126,11 @@ function getTemplateBrowserHtml(webview: vscode.Webview, extensionPath: string, 
     const jsPath = path.join(browserPath, 'templateBrowser.js');
 
     // Read the HTML template
-    let html = fs.readFileSync(htmlPath, 'utf8');
+    let html = await fsp.readFile(htmlPath, 'utf8');
 
     // Read CSS and JS content for inline inclusion (since webview URIs can be tricky)
-    const cssContent = fs.readFileSync(cssPath, 'utf8');
-    const jsContent = fs.readFileSync(jsPath, 'utf8');
+    const cssContent = await fsp.readFile(cssPath, 'utf8');
+    const jsContent = await fsp.readFile(jsPath, 'utf8');
 
     // Replace placeholders
     html = html.replace('{{TEMPLATES_JSON}}', JSON.stringify(templates));

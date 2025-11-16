@@ -75,6 +75,11 @@ export async function loadAllTemplates(): Promise<TemplateDisplayInfo[]> {
         if (await pathExists(templatesPath)) {
             const files = await readDirectory(templatesPath);
 
+            // Create a set of JSON template basenames for efficient lookup
+            const jsonFileBasenames = new Set(
+                files.filter(f => f.endsWith('.json') && !f.endsWith('.bundle.json')).map(f => path.basename(f, '.json'))
+            );
+
             for (const file of files) {
                 const ext = path.extname(file);
                 const baseName = path.basename(file, ext);
@@ -117,10 +122,8 @@ export async function loadAllTemplates(): Promise<TemplateDisplayInfo[]> {
                         console.error(`Failed to parse JSON template ${file}:`, error);
                     }
                 } else if (ext === '.txt' || ext === '.md') {
-                    // Load legacy template
-                    // Check if a JSON version exists (skip if it does)
-                    const jsonPath = path.join(templatesPath, `${baseName}.json`);
-                    if (await pathExists(jsonPath)) {
+                    // Load legacy template, but only if a JSON version doesn't exist
+                    if (jsonFileBasenames.has(baseName)) {
                         continue; // JSON version takes precedence
                     }
 
