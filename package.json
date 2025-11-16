@@ -95,6 +95,55 @@
         "supported": true
       }
     },
+    "walkthroughs": [
+      {
+        "id": "noted.templateVariablesWalkthrough",
+        "title": "Master Template Variables",
+        "description": "Learn how to create powerful, reusable templates with custom variables, advanced validation, and AI-powered features.",
+        "steps": [
+          {
+            "id": "noted.templateVariablesWalkthrough.openBrowser",
+            "title": "Open Template Browser",
+            "description": "Start by opening the visual Template Browser to see all available templates.\n[Open Template Browser](command:noted.showTemplateBrowser)",
+            "media": {
+              "markdown": "docs/walkthrough/template-variables-step1.md"
+            }
+          },
+          {
+            "id": "noted.templateVariablesWalkthrough.addVariable",
+            "title": "Add Variable with Validation",
+            "description": "Learn how to add custom variables with type-specific validation rules to ensure data quality.\n[View Documentation](https://jsonify.github.io/noted/posts/template-variables-guide/)",
+            "media": {
+              "markdown": "docs/walkthrough/template-variables-step2.md"
+            }
+          },
+          {
+            "id": "noted.templateVariablesWalkthrough.realTimeFeedback",
+            "title": "View Real-Time Feedback",
+            "description": "See how the validation system provides instant feedback with errors and warnings as you create variables.",
+            "media": {
+              "markdown": "docs/walkthrough/template-variables-step3.md"
+            }
+          },
+          {
+            "id": "noted.templateVariablesWalkthrough.usageAnalysis",
+            "title": "Analyze Variable Usage",
+            "description": "Use the usage analysis features to find undefined or unused variables and see where each variable appears in your template.",
+            "media": {
+              "markdown": "docs/walkthrough/template-variables-step4.md"
+            }
+          },
+          {
+            "id": "noted.templateVariablesWalkthrough.exportImport",
+            "title": "Export & Share Variables",
+            "description": "Learn how to export variable definitions to JSON and share them with your team or across workspaces.\n[Create Your First Template](command:noted.showTemplateBrowser)",
+            "media": {
+              "markdown": "docs/walkthrough/template-variables-step5.md"
+            }
+          }
+        ]
+      }
+    ],
     "viewsWelcome": [
       {
         "view": "notedView",
