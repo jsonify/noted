@@ -42,7 +42,7 @@ Let's create your first template with custom variables in under 5 minutes.
   "tags": ["bug", "development"],
   "version": "1.0.0",
   "variables": [],
-  "content": "# Bug: {title}\n\n**Severity**: {severity}\n**Reporter**: {user}\n**Date**: {date}\n\n## Description\n{description}\n\n## Steps to Reproduce\n1. {step1}\n2. {step2}\n3. {step3}\n\n## Expected Behavior\n{expected}\n\n## Actual Behavior\n{actual}\n"
+"content": "# Bug: {title}\n\n**Severity**: {severity}\n**Reporter**: {user}\n**Date**: {date}\n\n## Description\n{description}\n\n## Steps to Reproduce\n1. {step_1}\n2. {step_2}\n3. {step_3}\n\n## Expected Behavior\n{expected_behavior}\n\n## Actual Behavior\n{actual_behavior}\n"
 }
 ```
 
