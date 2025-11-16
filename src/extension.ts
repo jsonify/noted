@@ -5,7 +5,7 @@ import { promises as fsp } from 'fs';
 import { showCalendarView } from './calendar/calendarView';
 import { showGraphView } from './graph/graphView';
 import { showActivityView } from './activity/activityView';
-import { showTemplateBrowser } from './templates/templateBrowserView';
+import { showTemplateBrowser } from './templates/browser/TemplateBrowserView';
 import { MarkdownToolbarService } from './services/markdownToolbarService';
 import { TagService } from './services/tagService';
 import { TagRenameProvider } from './services/tagRenameProvider';
