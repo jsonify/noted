@@ -103,6 +103,12 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext, prov
                     await refreshWebviewTemplates();
                     break;
 
+                case 'createNewTemplate':
+                    await handleCreateNewTemplate();
+                    await refreshWebviewTemplates();
+                    templatesProvider?.refresh(); // Refresh sidebar tree view
+                    break;
+
                 case 'getPreview':
                     await handleGetPreview(panel, message.templateId, message.maxLines);
                     break;
@@ -288,6 +294,14 @@ async function handleCreateFromTemplate(templateId: string): Promise<void> {
 
     // Update usage tracking
     await updateTemplateUsage(templateId);
+}
+
+/**
+ * Handle creating a new custom template
+ */
+async function handleCreateNewTemplate(): Promise<void> {
+    // Execute the createCustomTemplate command
+    await vscode.commands.executeCommand('noted.createCustomTemplate');
 }
 
 /**
@@ -2250,7 +2264,10 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 <body>
     <div class="header">
         <h1>📝 Template Browser</h1>
-        <button class="btn" data-command="refresh">🔄 Refresh</button>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn primary" data-command="createNewTemplate">➕ Create New Template</button>
+            <button class="btn" data-command="refresh">🔄 Refresh</button>
+        </div>
     </div>
 
     <div class="controls">
@@ -2639,6 +2656,9 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             switch (command) {
                 case 'refresh':
                     refresh();
+                    break;
+                case 'createNewTemplate':
+                    createNewTemplate();
                     break;
                 case 'setView':
                     setView(view);
@@ -3161,6 +3181,12 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         function refresh() {
             vscode.postMessage({
                 command: 'refresh'
+            });
+        }
+
+        function createNewTemplate() {
+            vscode.postMessage({
+                command: 'createNewTemplate'
             });
         }
 
