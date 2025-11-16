@@ -68,14 +68,7 @@ The extension now uses a fully modular architecture with clear separation of con
   - `TemplateTypes.ts`: TypeScript interfaces for templates and bundles (updated v1.43.3 with validation metadata)
   - `TemplateGenerator.ts`: AI-powered template generation and advanced validation (Phase 1, 3)
   - `BundleService.ts`: Multi-note workflow bundle creation and management (Phase 2)
-  - **`browser/`**: Modular Template Browser UI (Phase 4, refactored for maintainability)
-    - `TemplateBrowserView.ts`: Main webview orchestrator (~200 lines)
-    - `messageHandlers.ts`: Message handler functions (~500 lines)
-    - `templateOperations.ts`: Template CRUD operations (~200 lines)
-    - `templateBrowser.html`: HTML template structure
-    - `templateBrowser.css`: Styles (1,356 lines)
-    - `templateBrowser.js`: Client-side logic (2,019 lines)
-    - `types.ts`: Shared TypeScript interfaces
+  - `templateBrowserView.ts`: Visual template browser webview UI (Phase 4) with variable editor message handlers (Phase 3)
 - **`src/providers/`**: VS Code tree view providers
   - `treeItems.ts`: Tree item classes (includes ConnectionSectionItem and ConnectionItem)
   - `templatesTreeProvider.ts`: Templates view
@@ -355,7 +348,7 @@ Templates support 10 powerful placeholders via `replacePlaceholders()` function 
 - `video-tutorial.bundle.json` - Script + guide + resources for tutorial videos
 - `project-planning.bundle.json` - Overview + tasks + meetings + resources for projects
 
-**Template Browser UI** (Phase 4 - v1.44.0, refactored for maintainability):
+**Template Browser UI** (Phase 4 - v1.44.0):
 - Visual webview interface for browsing and managing templates
 - Command: `noted.showTemplateBrowser` - Opens template browser panel
 - Grid/list view toggle for different display modes
@@ -366,17 +359,11 @@ Templates support 10 powerful placeholders via `replacePlaceholders()` function 
 - Quick actions per template: Create, Edit, Duplicate, Export, Delete
 - Built-in templates are read-only (only "Create" action available)
 - Works with JSON templates, legacy .txt/.md templates, and built-in templates
-- **Modular Architecture** (refactored from 4,542-line monolith):
-  - Implementation in `src/templates/browser/` directory
-  - Separated concerns: TypeScript, HTML, CSS, JavaScript in dedicated files
-  - Main orchestrator: `TemplateBrowserView.ts` (~200 lines)
-  - Message handlers: `messageHandlers.ts` (~500 lines)
-  - Template operations: `templateOperations.ts` (~200 lines)
-  - Client-side code: `templateBrowser.html`, `.css` (1,356 lines), `.js` (2,019 lines)
-  - Benefits: Better IDE support, easier testing, improved maintainability
+- Implementation in `src/templates/templateBrowserView.ts`
+- Similar architecture to existing webviews (graph, calendar, activity)
 
 **Template Variable Editor Enhancements** (Phase 3 - v1.43.3 - Issue #110):
-- Advanced validation message handlers in `src/templates/browser/messageHandlers.ts`:
+- Advanced validation message handlers in `templateBrowserView.ts`:
   - `validateVariable` - Real-time variable validation with errors and warnings
   - `getVariableUsageInfo` - Returns usage count and positions for highlighting
   - `exportVariables` - Exports template variables to JSON file for sharing
