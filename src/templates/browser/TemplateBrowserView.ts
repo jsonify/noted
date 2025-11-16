@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import { promises as fsp } from 'fs';
 import { TemplatesTreeProvider } from '../../providers/templatesTreeProvider';
 import { loadAllTemplates } from './templateOperations';
 import * as messageHandlers from './messageHandlers';
+// Import static assets as strings (bundled at compile time by esbuild)
+import htmlTemplate from './templateBrowser.html';
+import cssContent from './templateBrowser.css';
+import jsContent from './templateBrowser.client.js';
 
 // Module-level reference to templates tree provider for refreshing
 let templatesProvider: TemplatesTreeProvider | undefined;
@@ -32,7 +34,7 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext, prov
     const templates = await loadAllTemplates();
 
     // Set the initial HTML
-    panel.webview.html = await getTemplateBrowserHtml(panel.webview, context.extensionPath, templates);
+    panel.webview.html = getTemplateBrowserHtml(templates);
 
     // Helper function to refresh webview templates
     const refreshWebviewTemplates = async () => {
@@ -117,25 +119,16 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext, prov
 
 /**
  * Generate the HTML content for the template browser webview
+ * Assets are imported at compile time and bundled into the extension
  */
-async function getTemplateBrowserHtml(webview: vscode.Webview, extensionPath: string, templates: any[]): Promise<string> {
-    // Get paths to resources
-    const browserPath = path.join(extensionPath, 'src', 'templates', 'browser');
-    const htmlPath = path.join(browserPath, 'templateBrowser.html');
-    const cssPath = path.join(browserPath, 'templateBrowser.css');
-    const jsPath = path.join(browserPath, 'templateBrowser.js');
-
-    // Read the HTML template
-    let html = await fsp.readFile(htmlPath, 'utf8');
-
-    // Read CSS and JS content for inline inclusion (since webview URIs can be tricky)
-    const cssContent = await fsp.readFile(cssPath, 'utf8');
-    const jsContent = await fsp.readFile(jsPath, 'utf8');
+function getTemplateBrowserHtml(templates: any[]): string {
+    // Use imported strings (bundled at compile time by esbuild)
+    let html = htmlTemplate;
 
     // Replace placeholders
     html = html.replace('{{TEMPLATES_JSON}}', JSON.stringify(templates));
     html = html.replace('<link rel="stylesheet" href="{{CSS_URI}}">', `<style>${cssContent}</style>`);
-    html = html.replace('<script src="{{JS_URI}}"></script>', `<script>${jsContent}</script>`);
+    html = html.replace('<script src="{{CLIENT_JS_URI}}"></script>', `<script>${jsContent}</script>`);
 
     return html;
 }

@@ -57,6 +57,12 @@ async function main() {
     ],
     // Bundle all dependencies except those in VS Code's runtime
     packages: 'bundle',
+    // Load HTML/CSS/client JS files from browser directory as text to bundle them
+    loader: {
+      '.html': 'text',
+      '.css': 'text',
+      '.client.js': 'text',
+    },
   });
 
   if (watch) {

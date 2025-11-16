@@ -1,5 +1,5 @@
         const vscode = acquireVsCodeApi();
-        let templates = ${JSON.stringify(templates)};
+        let templates = window.TEMPLATES_DATA || [];
         let currentView = 'grid';
         let activeCategory = 'all';
         let searchQuery = '';
