@@ -23,10 +23,7 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext, prov
         vscode.ViewColumn.One,
         {
             enableScripts: true,
-            retainContextWhenHidden: true,
-            localResourceRoots: [
-                vscode.Uri.file(path.join(context.extensionPath, 'src', 'templates', 'browser'))
-            ]
+            retainContextWhenHidden: true
         }
     );
 
