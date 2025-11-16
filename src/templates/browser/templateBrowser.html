@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Browser</title>
+    <link rel="stylesheet" href="{{CSS_URI}}">
+</head>
+<body>
+    <div class="header">
+        <h1>📝 Template Browser</h1>
+        <button class="btn" data-command="refresh">🔄 Refresh</button>
+    </div>
+
+    <div class="controls">
+        <input
+            type="text"
+            class="search-box"
+            placeholder="Search templates by name, description, or tags..."
+            id="searchInput"
+        />
+        <div class="view-toggle">
+            <button class="btn btn-secondary" data-command="setView" data-view="grid" id="gridBtn">Grid</button>
+            <button class="btn btn-secondary" data-command="setView" data-view="list" id="listBtn">List</button>
+        </div>
+    </div>
+
+    <!-- Enhanced Filters -->
+    <div class="enhanced-filters">
+        <div class="filter-group">
+            <label class="filter-label" for="categoryFilter">Category:</label>
+            <select class="filter-select" id="categoryFilter" data-command="setCategory">
+                <option value="all">All Categories</option>
+            </select>
+        </div>
+
+        <div class="filter-badge-container">
+            <span class="filter-badge" id="filterBadge">0 templates</span>
+            <button class="btn-clear-filters" id="clearFiltersBtn">Clear Filters</button>
+        </div>
+    </div>
+
+    <!-- Stats Dashboard -->
+    <div class="stats" id="stats"></div>
+
+    <!-- Template Grid/List Container -->
+    <div id="templateContainer" class="templates-grid"></div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-state-icon">📭</div>
+        <div class="empty-state-title">No templates found</div>
+        <p>Try adjusting your search or filters</p>
+    </div>
+
+    <!-- Full Preview Modal -->
+    <div class="modal-overlay" id="fullPreviewModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Template Preview</h2>
+                <button class="modal-close" data-command="closeModal">&times;</button>
+            </div>
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-tab="raw-preview">Raw Template</button>
+                <button class="modal-tab" data-tab="sample-preview">Sample Output</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tab-content active" id="raw-preview">
+                    <div class="modal-code" id="modalRawContent"></div>
+                </div>
+                <div class="modal-tab-content" id="sample-preview">
+                    <div class="modal-code" id="modalSampleContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" data-command="closeModal">Close</button>
+                <button class="modal-btn" data-command="createFromModal" id="modalCreateBtn">Create Note</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Variable Editor Modal -->
+    <div class="variable-editor-modal" id="variableEditorModal">
+        <div class="variable-editor-container">
+            <div class="variable-editor-header">
+                <h2 class="variable-editor-title" id="variableEditorTitle">Template Variables</h2>
+                <button class="modal-close" onclick="closeVariableEditor()">&times;</button>
+            </div>
+            <div class="variable-editor-body">
+                <!-- Left Panel: Variables List -->
+                <div class="variable-list-panel">
+                    <div class="panel-header">Variables</div>
+                    <div class="variables-list" id="variablesList">
+                        <!-- Variables will be rendered here -->
+                    </div>
+                    <div class="form-actions" style="margin-top: 12px;">
+                        <button class="btn" onclick="addNewVariable()">+ Add Variable</button>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Variable Editor Form -->
+                <div class="variable-preview-panel">
+                    <div class="panel-header">Editor</div>
+                    <div id="variableEditorForm">
+                        <!-- Form will be rendered here when a variable is selected -->
+                        <div class="empty-variables-state">
+                            <p>Select a variable from the list or add a new one</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="variable-editor-footer">
+                <div class="footer-info">
+                    <span id="variableCountInfo">0 variables</span>
+                </div>
+                <div class="footer-actions">
+                    <button class="btn btn-secondary" onclick="exportVariables()">Export</button>
+                    <button class="btn btn-secondary" onclick="importVariables()">Import</button>
+                    <button class="btn btn-secondary" onclick="closeVariableEditor()">Cancel</button>
+                    <button class="btn" onclick="saveAllVariables()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Initial templates data -->
+    <script>
+        window.TEMPLATES_DATA = {{TEMPLATES_JSON}};
+    </script>
+
+    <script src="{{JS_URI}}"></script>
+</body>
+</html>
