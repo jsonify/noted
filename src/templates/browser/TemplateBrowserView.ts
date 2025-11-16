@@ -122,10 +122,10 @@ function getTemplateBrowserHtml(templates: any[]): string {
     // Use imported strings (bundled at compile time by esbuild)
     let html = htmlTemplate;
 
-    // Replace placeholders
+    // Replace placeholders - use string concatenation to avoid template literal conflicts
     html = html.replace('{{TEMPLATES_JSON}}', JSON.stringify(templates));
-    html = html.replace('<link rel="stylesheet" href="{{CSS_URI}}">', `<style>${cssContent}</style>`);
-    html = html.replace('<script src="{{CLIENT_JS_URI}}"></script>', `<script>${jsContent}</script>`);
+    html = html.replace('<link rel="stylesheet" href="{{CSS_URI}}">', '<style>' + cssContent + '</style>');
+    html = html.replace('<script src="{{CLIENT_JS_URI}}"></script>', '<script>' + jsContent + '</script>');
 
     return html;
 }
