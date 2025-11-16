@@ -330,8 +330,17 @@ async function handleEditTemplate(templateId: string): Promise<void> {
 
     const templateFile = await findTemplateFile(templatesPath, templateId);
     if (templateFile) {
+        // Open the template file for editing
         const document = await vscode.workspace.openTextDocument(templateFile.path);
         await vscode.window.showTextDocument(document);
+
+        // For JSON templates, show a helpful info message
+        if (templateFile.type === 'json') {
+            vscode.window.showInformationMessage(
+                'Edit the "content" field to customize your template. Use {variable_name} for custom variables, or {date}, {time}, {user}, etc. for built-in variables.',
+                'Got it'
+            );
+        }
     } else {
         vscode.window.showErrorMessage(`Template not found: ${templateId}`);
     }
@@ -3233,7 +3242,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                         <button class="action-btn primary" data-command="createFromTemplate" data-template-id="\${escapeHtml(t.id)}">Create</button>
                         \${!t.isBuiltIn ? \`
                             <button class="action-btn" data-command="editVariables" data-template-id="\${escapeHtml(t.id)}" \${t.fileType !== 'json' ? 'disabled title="Only JSON templates support variables"' : ''}>✏️ Edit Variables</button>
-                            <button class="action-btn" data-command="editTemplate" data-template-id="\${escapeHtml(t.id)}">Edit</button>
+                            <button class="action-btn" data-command="editTemplate" data-template-id="\${escapeHtml(t.id)}">\${t.fileType === 'json' ? '📝 Edit Content' : 'Edit'}</button>
                             <button class="action-btn" data-command="duplicateTemplate" data-template-id="\${escapeHtml(t.id)}">Duplicate</button>
                             <button class="action-btn" data-command="exportTemplate" data-template-id="\${escapeHtml(t.id)}">Export</button>
                             <button class="action-btn danger" data-command="deleteTemplate" data-template-id="\${escapeHtml(t.id)}">Delete</button>
@@ -4110,7 +4119,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         function requestVariableUsageInfo(variableName) {
             vscode.postMessage({
                 command: 'getVariableUsageInfo',
-                templateId: currentEditingTemplate,
+                templateId: currentTemplateData.id,
                 variableName: variableName
             });
         }
@@ -4301,7 +4310,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 // Request advanced validation from backend
                 vscode.postMessage({
                     command: 'validateVariable',
-                    templateId: currentEditingTemplate,
+                    templateId: currentTemplateData.id,
                     variable: variable,
                     existingVariables: otherVariables,
                     originalName: originalName

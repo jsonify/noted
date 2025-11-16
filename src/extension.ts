@@ -2614,6 +2614,23 @@ async function createNoteFromTemplate(templateType: string) {
     }
 
     try {
+        // Check if template has custom variables
+        const { loadTemplateMetadata, generateTemplate: generateTemplateContent } = await import('./services/templateService');
+        const templateMetadata = await loadTemplateMetadata(templateType);
+        let variableValues: Record<string, any> | undefined;
+
+        // Collect variable values if template has variables
+        if (templateMetadata?.variables && templateMetadata.variables.length > 0) {
+            const { BundleService } = await import('./templates/BundleService');
+            const bundleService = new BundleService();
+            try {
+                variableValues = await bundleService.collectVariables(templateMetadata.variables);
+            } catch (error) {
+                // User cancelled or error collecting variables
+                return;
+            }
+        }
+
         // Ask for note name
         const noteName = await vscode.window.showInputBox({
             prompt: 'Enter note name',
@@ -2653,7 +2670,7 @@ async function createNoteFromTemplate(templateType: string) {
             return;
         } catch {
             // File doesn't exist, create it
-            const content = await generateTemplate(templateType, now, fileName);
+            const content = await generateTemplateContent(templateType, now, fileName, variableValues);
             await fsp.writeFile(filePath, content);
 
             const document = await vscode.workspace.openTextDocument(filePath);
