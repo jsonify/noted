@@ -1754,6 +1754,11 @@ export function activate(context: vscode.ExtensionContext) {
         templatesProvider.refresh();
     });
 
+    // Command to create JSON template with variables
+    let createTemplateWithVariablesCmd = vscode.commands.registerCommand('noted.createTemplateWithVariables', async () => {
+        await createTemplateWithVariables();
+    });
+
     // Command to edit custom template
     let editCustomTemplateCmd = vscode.commands.registerCommand('noted.editCustomTemplate', async () => {
         await editCustomTemplate();
@@ -2113,7 +2118,7 @@ export function activate(context: vscode.ExtensionContext) {
         searchTagCmd, renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,
         showStats, exportNotes, duplicateNote, moveNotesFolder,
         setupDefaultFolder, setupCustomFolder, showNotesConfig,
-        createCustomTemplate, editCustomTemplateCmd, deleteCustomTemplateCmd,
+        createCustomTemplate, createTemplateWithVariablesCmd, editCustomTemplateCmd, deleteCustomTemplateCmd,
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
         createTemplateWithAI, enhanceTemplate, selectAIModel,
         createBundle, createBundleFromTemplates, editBundle, deleteBundle,
@@ -2365,6 +2370,102 @@ Available placeholders:
             const document = await vscode.workspace.openTextDocument(templateFile);
             await vscode.window.showTextDocument(document);
             vscode.window.showInformationMessage(`Template created: ${templateName}`);
+        }
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to create template: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+async function createTemplateWithVariables() {
+    const templateName = await vscode.window.showInputBox({
+        prompt: 'Enter template name',
+        placeHolder: 'my-advanced-template',
+        validateInput: (value) => {
+            if (!value) {
+                return 'Template name is required';
+            }
+            if (!/^[a-z0-9-_]+$/i.test(value)) {
+                return 'Template name can only contain letters, numbers, hyphens, and underscores';
+            }
+            return null;
+        }
+    });
+
+    if (!templateName) {
+        return;
+    }
+
+    const description = await vscode.window.showInputBox({
+        prompt: 'Enter template description',
+        placeHolder: 'A brief description of what this template is for'
+    });
+
+    if (!description) {
+        return;
+    }
+
+    const category = await vscode.window.showInputBox({
+        prompt: 'Enter template category',
+        placeHolder: 'General',
+        value: 'General'
+    });
+
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        vscode.window.showErrorMessage('Please configure notes folder first');
+        return;
+    }
+
+    try {
+        // Create templates folder if it doesn't exist
+        try {
+            await fsp.access(templatesPath);
+        } catch {
+            await fsp.mkdir(templatesPath, { recursive: true });
+        }
+
+        const templateFile = path.join(templatesPath, `${templateName}.json`);
+
+        // Check if template already exists
+        try {
+            await fsp.access(templateFile);
+            vscode.window.showErrorMessage('Template already exists');
+            return;
+        } catch {
+            // Template doesn't exist, create it
+            const template = {
+                id: templateName,
+                name: templateName.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                description: description || '',
+                category: category || 'General',
+                tags: [],
+                version: '1.0.0',
+                author: '',
+                difficulty: 'beginner',
+                variables: [],
+                content: `# {filename}\n\nCreated: {date} at {time}\nAuthor: {user}\n\n---\n\n[Your template content here]\n\nAdd custom variables using the Variable Editor to make this template interactive!`,
+                created: new Date().toISOString(),
+                modified: new Date().toISOString(),
+                usage_count: 0
+            };
+
+            await fsp.writeFile(templateFile, JSON.stringify(template, null, 2));
+
+            vscode.window.showInformationMessage(`Template created: ${templateName}. Opening variable editor...`);
+
+            // Refresh the templates provider
+            templatesProvider.refresh();
+
+            // Open the template browser and trigger variable editor
+            // We'll use a command to show the template browser, then send a message to open the variable editor
+            await vscode.commands.executeCommand('noted.showTemplateBrowser');
+
+            // Small delay to ensure webview is ready
+            setTimeout(async () => {
+                // The template browser should now be open, and we can send a message to it
+                // This will be handled by the webview's message handler
+                vscode.window.showInformationMessage(`Click "Edit Variables" on the "${templateName}" template to add custom variables.`);
+            }, 500);
         }
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to create template: ${error instanceof Error ? error.message : String(error)}`);

@@ -258,6 +258,11 @@
         "icon": "$(add)"
       },
       {
+        "command": "noted.createTemplateWithVariables",
+        "title": "Noted: Create Template with Variables",
+        "icon": "$(variable)"
+      },
+      {
         "command": "noted.editCustomTemplate",
         "title": "Noted: Edit Custom Template",
         "icon": "$(edit)"

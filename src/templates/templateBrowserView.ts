@@ -109,6 +109,12 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext, prov
                     templatesProvider?.refresh(); // Refresh sidebar tree view
                     break;
 
+                case 'createTemplateWithVariables':
+                    await handleCreateTemplateWithVariables();
+                    await refreshWebviewTemplates();
+                    templatesProvider?.refresh(); // Refresh sidebar tree view
+                    break;
+
                 case 'getPreview':
                     await handleGetPreview(panel, message.templateId, message.maxLines);
                     break;
@@ -302,6 +308,14 @@ async function handleCreateFromTemplate(templateId: string): Promise<void> {
 async function handleCreateNewTemplate(): Promise<void> {
     // Execute the createCustomTemplate command
     await vscode.commands.executeCommand('noted.createCustomTemplate');
+}
+
+/**
+ * Handle creating a new template with variables
+ */
+async function handleCreateTemplateWithVariables(): Promise<void> {
+    // Execute the createTemplateWithVariables command
+    await vscode.commands.executeCommand('noted.createTemplateWithVariables');
 }
 
 /**
@@ -2265,7 +2279,8 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
     <div class="header">
         <h1>📝 Template Browser</h1>
         <div style="display: flex; gap: 10px;">
-            <button class="btn primary" data-command="createNewTemplate">➕ Create New Template</button>
+            <button class="btn primary" data-command="createNewTemplate">➕ Create Template</button>
+            <button class="btn primary" data-command="createTemplateWithVariables" title="Create a JSON template with the advanced variable system">⚙️ Create with Variables</button>
             <button class="btn" data-command="refresh">🔄 Refresh</button>
         </div>
     </div>
@@ -2659,6 +2674,9 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     break;
                 case 'createNewTemplate':
                     createNewTemplate();
+                    break;
+                case 'createTemplateWithVariables':
+                    createTemplateWithVariables();
                     break;
                 case 'setView':
                     setView(view);
@@ -3187,6 +3205,12 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         function createNewTemplate() {
             vscode.postMessage({
                 command: 'createNewTemplate'
+            });
+        }
+
+        function createTemplateWithVariables() {
+            vscode.postMessage({
+                command: 'createTemplateWithVariables'
             });
         }
 
