@@ -266,7 +266,7 @@ Use regex patterns to enforce specific formats:
 **Common patterns**:
 - Email: `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 - Phone (US): `^\d{3}-\d{3}-\d{4}$`
-- URL: `^https?://[^\s/$.?#].[^\s]*$`
+- URL: `^https?://[^\s/$?#]+\.[^\s]*$`
 - Git branch: `^[a-z0-9/_-]+$`
 - Semantic version: `^\d+\.\d+\.\d+$`
 
