@@ -95,7 +95,7 @@ Create structured notes quickly with built-in and custom templates featuring dyn
 
 ## Template Variables
 
-Templates support 10 dynamic placeholders:
+Templates support 10 built-in dynamic placeholders:
 
 | Variable | Example Output | Description |
 |----------|---------------|-------------|
@@ -109,6 +109,25 @@ Templates support 10 dynamic placeholders:
 | `{month_name}` | `October` | Full month name |
 | `{user}` | `john` | System username |
 | `{workspace}` | `my-project` | VS Code workspace name |
+
+### Advanced: Custom Variables
+
+Want more control? Create **custom template variables** with validation rules, type checking, and AI-powered features!
+
+**What you can do**:
+- Define variables with types (string, number, enum, date, boolean)
+- Add validation rules (regex patterns, min/max, length constraints)
+- Get real-time feedback with errors and warnings
+- Analyze variable usage and detect issues
+- Export/import variables for team sharing
+
+**Learn more**: Check out the [Advanced Template Variables Guide](/noted/posts/template-variables-guide/) for comprehensive tutorials and examples.
+
+**Quick start**:
+1. Open Template Browser: `Cmd+Shift+P` → "Noted: Show Template Browser"
+2. Create new template or edit existing one
+3. Click "Add Variable" to define custom variables
+4. Use `{variablename}` in your template content
 
 ## Custom Templates
 
@@ -639,6 +658,7 @@ A: **Yes, absolutely!** Generated stories are standard notes—edit freely:
 
 ## Related Features
 
+- [Advanced Template Variables Guide](/noted/posts/template-variables-guide/) - Master custom variables with validation
 - [Daily Notes](/noted/posts/daily-notes/) - Quick daily note access
 - [Tags](/noted/posts/tags/) - Organize with tags
 - [Wiki Links](/noted/posts/wiki-links/) - Connect notes
@@ -647,3 +667,5 @@ A: **Yes, absolutely!** Generated stories are standard notes—edit freely:
 ---
 
 Start using templates to standardize your note-taking workflow! 📋
+
+**Want to level up?** Check out the [Advanced Template Variables Guide](/noted/posts/template-variables-guide/) to create powerful, validated templates with custom variables!
