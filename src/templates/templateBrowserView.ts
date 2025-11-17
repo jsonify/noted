@@ -2384,7 +2384,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 <body>
     <div class="header">
         <h1>📝 Template Browser</h1>
-        <div style="display: flex; gap: 10px;">
+        <div class="header-actions">
             <button class="btn primary" data-command="createNewTemplate">➕ Create Template</button>
             <button class="btn primary" data-command="createTemplateWithVariables" title="Create a JSON template with the advanced variable system">⚙️ Create with Variables</button>
             <button class="btn" data-command="refresh">🔄 Refresh</button>
