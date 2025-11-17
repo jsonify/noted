@@ -2400,7 +2400,7 @@ async function createTemplateWithVariables() {
         placeHolder: 'A brief description of what this template is for'
     });
 
-    if (!description) {
+    if (description === undefined) {
         return;
     }
 
