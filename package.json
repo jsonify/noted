@@ -1212,6 +1212,11 @@
           "default": true,
           "description": "Enable AI-powered summarization features"
         },
+        "noted.ai.preferredModel": {
+          "type": "string",
+          "default": "",
+          "description": "Preferred AI model ID for all AI features (tagging, summarization, search, templates). Empty = automatic selection. Use 'Noted: Select AI Model' command to choose from available models."
+        },
         "noted.ai.summaryLength": {
           "type": "string",
           "enum": [

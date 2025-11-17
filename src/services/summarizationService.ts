@@ -3,6 +3,7 @@ import { readFile } from './fileSystemService';
 import * as crypto from 'crypto';
 import { PromptTemplate } from './promptTemplateService';
 import { SummaryHistoryService } from './summaryHistoryService';
+import { selectAIModel } from './aiModelService';
 
 /**
  * Options for note summarization
@@ -62,12 +63,12 @@ export class SummarizationService {
     }
 
     /**
-     * Check if Language Model API is available (Copilot)
+     * Check if Language Model API is available
      */
     private async isLanguageModelAvailable(): Promise<boolean> {
         try {
-            const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
-            return models && models.length > 0;
+            await selectAIModel();
+            return true;
         } catch (error) {
             return false;
         }
@@ -333,12 +334,7 @@ Summary requirements:
 
         // Call Language Model API
         try {
-            const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
-            if (!models || models.length === 0) {
-                throw new Error('No Copilot models available');
-            }
-
-            const model = models[0];
+            const model = await selectAIModel();
             const messages = [vscode.LanguageModelChatMessage.User(prompt)];
 
             const response = await model.sendRequest(messages, {}, new vscode.CancellationTokenSource().token);
@@ -454,12 +450,7 @@ ${note.content}
 
         // Call Language Model API
         try {
-            const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
-            if (!models || models.length === 0) {
-                throw new Error('No Copilot models available');
-            }
-
-            const model = models[0];
+            const model = await selectAIModel();
             const messages = [vscode.LanguageModelChatMessage.User(prompt)];
 
             const response = await model.sendRequest(messages, {}, new vscode.CancellationTokenSource().token);
