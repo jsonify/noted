@@ -120,12 +120,10 @@ export function formatModelForDisplay(model: vscode.LanguageModelChat): {
     label: string;
     description: string;
     detail: string;
-    id: string;
 } {
     return {
         label: model.name || model.id,
         description: `${model.vendor} - ${model.family}`,
-        detail: model.id,
-        id: model.id
+        detail: model.id
     };
 }
