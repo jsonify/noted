@@ -105,8 +105,12 @@ export async function generateTemplate(templateType: string | undefined, date: D
 
                     // JSON templates include their own frontmatter
                     return processedContent;
-                } catch {
-                    // JSON template doesn't exist, try legacy format
+                } catch (error: any) {
+                    // Not a JSON template or doesn't exist. Log parsing errors for debugging.
+                    if (error.code !== 'ENOENT') {
+                        console.error(`Error parsing template metadata for '${templateType}.json':`, error);
+                    }
+                    // Try legacy format
                 }
 
                 // Try legacy .txt/.md template

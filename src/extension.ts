@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { promises as fsp } from 'fs';
+import * as os from 'os';
 import { showCalendarView } from './calendar/calendarView';
 import { showGraphView } from './graph/graphView';
 import { showActivityView } from './activity/activityView';
@@ -2426,46 +2427,41 @@ async function createTemplateWithVariables() {
 
         const templateFile = path.join(templatesPath, `${templateName}.json`);
 
-        // Check if template already exists
-        try {
-            await fsp.access(templateFile);
-            vscode.window.showErrorMessage('Template already exists');
-            return;
-        } catch {
-            // Template doesn't exist, create it
-            const template = {
-                id: templateName,
-                name: templateName.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                description: description || '',
-                category: category || 'General',
-                tags: [],
-                version: '1.0.0',
-                author: '',
-                difficulty: 'beginner',
-                variables: [],
-                content: `# {filename}\n\nCreated: {date} at {time}\nAuthor: {user}\n\n---\n\n[Your template content here]\n\nAdd custom variables using the Variable Editor to make this template interactive!`,
-                created: new Date().toISOString(),
-                modified: new Date().toISOString(),
-                usage_count: 0
-            };
+        // Create template object with system username as author
+        const template = {
+            id: templateName,
+            name: templateName.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            description: description || '',
+            category: category || 'General',
+            tags: [],
+            version: '1.0.0',
+            author: os.userInfo().username,
+            difficulty: 'beginner',
+            variables: [],
+            content: `# {filename}\n\nCreated: {date} at {time}\nAuthor: {user}\n\n---\n\n[Your template content here]\n\nAdd custom variables using the Variable Editor to make this template interactive!`,
+            created: new Date().toISOString(),
+            modified: new Date().toISOString(),
+            usage_count: 0
+        };
 
-            await fsp.writeFile(templateFile, JSON.stringify(template, null, 2));
+        // Use atomic write with 'wx' flag to prevent race conditions
+        try {
+            await fsp.writeFile(templateFile, JSON.stringify(template, null, 2), { flag: 'wx' });
 
             vscode.window.showInformationMessage(`Template created: ${templateName}. Opening variable editor...`);
 
-            // Refresh the templates provider
-            templatesProvider.refresh();
-
-            // Open the template browser and trigger variable editor
-            // We'll use a command to show the template browser, then send a message to open the variable editor
+            // Open the template browser
             await vscode.commands.executeCommand('noted.showTemplateBrowser');
 
-            // Small delay to ensure webview is ready
-            setTimeout(async () => {
-                // The template browser should now be open, and we can send a message to it
-                // This will be handled by the webview's message handler
-                vscode.window.showInformationMessage(`Click "Edit Variables" on the "${templateName}" template to add custom variables.`);
-            }, 500);
+            // Note: The template browser will refresh automatically when it opens
+            // The user will see the new template and can click "Edit Variables" to add custom variables
+            vscode.window.showInformationMessage(`Click "Edit Variables" on the "${templateName}" template to add custom variables.`);
+        } catch (error: any) {
+            if (error.code === 'EEXIST') {
+                vscode.window.showErrorMessage('Template already exists');
+            } else {
+                throw error;
+            }
         }
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to create template: ${error instanceof Error ? error.message : String(error)}`);
