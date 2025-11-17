@@ -103,6 +103,18 @@ export async function showTemplateBrowser(context: vscode.ExtensionContext, prov
                     await refreshWebviewTemplates();
                     break;
 
+                case 'createNewTemplate':
+                    await handleCreateNewTemplate();
+                    await refreshWebviewTemplates();
+                    templatesProvider?.refresh(); // Refresh sidebar tree view
+                    break;
+
+                case 'createTemplateWithVariables':
+                    await handleCreateTemplateWithVariables();
+                    await refreshWebviewTemplates();
+                    templatesProvider?.refresh(); // Refresh sidebar tree view
+                    break;
+
                 case 'getPreview':
                     await handleGetPreview(panel, message.templateId, message.maxLines);
                     break;
@@ -291,6 +303,22 @@ async function handleCreateFromTemplate(templateId: string): Promise<void> {
 }
 
 /**
+ * Handle creating a new custom template
+ */
+async function handleCreateNewTemplate(): Promise<void> {
+    // Execute the createCustomTemplate command
+    await vscode.commands.executeCommand('noted.createCustomTemplate');
+}
+
+/**
+ * Handle creating a new template with variables
+ */
+async function handleCreateTemplateWithVariables(): Promise<void> {
+    // Execute the createTemplateWithVariables command
+    await vscode.commands.executeCommand('noted.createTemplateWithVariables');
+}
+
+/**
  * Handle editing a template
  */
 async function handleEditTemplate(templateId: string): Promise<void> {
@@ -302,8 +330,17 @@ async function handleEditTemplate(templateId: string): Promise<void> {
 
     const templateFile = await findTemplateFile(templatesPath, templateId);
     if (templateFile) {
+        // Open the template file for editing
         const document = await vscode.workspace.openTextDocument(templateFile.path);
         await vscode.window.showTextDocument(document);
+
+        // For JSON templates, show a helpful info message
+        if (templateFile.type === 'json') {
+            vscode.window.showInformationMessage(
+                'Edit the "content" field to customize your template. Use {variable_name} for custom variables, or {date}, {time}, {user}, etc. for built-in variables.',
+                'Got it'
+            );
+        }
     } else {
         vscode.window.showErrorMessage(`Template not found: ${templateId}`);
     }
@@ -2221,6 +2258,103 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             color: var(--vscode-textLink-foreground);
         }
 
+        .variable-usage-guide {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .usage-instructions {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            padding: 12px;
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            line-height: 1.5;
+        }
+
+        .usage-instructions strong {
+            color: var(--vscode-foreground);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .usage-instructions ol {
+            margin: 8px 0 0 20px;
+            padding: 0;
+        }
+
+        .usage-instructions li {
+            margin: 4px 0;
+        }
+
+        .variable-usage-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .usage-variable-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+        }
+
+        .usage-variable-name {
+            flex: 1;
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--vscode-textLink-foreground);
+        }
+
+        .usage-variable-type {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            padding: 2px 6px;
+            background: var(--vscode-badge-background);
+            border-radius: 3px;
+        }
+
+        .copy-var-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .copy-var-btn:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .copy-var-btn.copied {
+            background: var(--vscode-testing-iconPassed);
+            color: white;
+        }
+
+        .edit-template-btn-header {
+            padding: 6px 12px;
+            font-size: 13px;
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .edit-template-btn-header:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+
         .empty-variables-state {
             text-align: center;
             padding: 40px 20px;
@@ -2250,7 +2384,11 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 <body>
     <div class="header">
         <h1>📝 Template Browser</h1>
-        <button class="btn" data-command="refresh">🔄 Refresh</button>
+        <div class="header-actions">
+            <button class="btn primary" data-command="createNewTemplate">➕ Create Template</button>
+            <button class="btn primary" data-command="createTemplateWithVariables" title="Create a JSON template with the advanced variable system">⚙️ Create with Variables</button>
+            <button class="btn" data-command="refresh">🔄 Refresh</button>
+        </div>
     </div>
 
     <div class="controls">
@@ -2355,7 +2493,10 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         <div class="variable-editor-container">
             <div class="variable-editor-header">
                 <div class="variable-editor-title" id="variableEditorTitle">Edit Template Variables</div>
-                <button class="modal-close" data-command="closeVariableEditor" aria-label="Close">&times;</button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="edit-template-btn-header" data-command="editTemplateContent" id="editTemplateBtn" aria-label="Edit template content to use variables">📝 Edit Template Content</button>
+                    <button class="modal-close" data-command="closeVariableEditor" aria-label="Close">&times;</button>
+                </div>
             </div>
             <div class="variable-editor-body">
                 <!-- Left Panel: Variable List and Form -->
@@ -2474,11 +2615,23 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     </div>
                 </div>
 
-                <!-- Right Panel: Live Preview -->
+                <!-- Right Panel: Variable Usage Guide -->
                 <div class="variable-preview-panel">
-                    <div class="panel-header">Template Preview</div>
-                    <div class="template-preview-box" id="templatePreview">
-                        <!-- Preview will be populated here -->
+                    <div class="panel-header">How to Use Variables</div>
+                    <div class="variable-usage-guide">
+                        <div class="usage-instructions">
+                            <strong>📚 Usage Instructions:</strong>
+                            <ol>
+                                <li>Define your custom variables in the left panel</li>
+                                <li>Click "📝 Edit Template Content" to open the template file</li>
+                                <li>Add variables to your content using the syntax: <code>{variable_name}</code></li>
+                                <li>Click the copy button (📋) next to each variable to copy it</li>
+                                <li>Save your variables, then save the template file</li>
+                            </ol>
+                        </div>
+                        <div id="variableUsageList">
+                            <!-- Variable usage list will be populated here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2640,6 +2793,12 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 case 'refresh':
                     refresh();
                     break;
+                case 'createNewTemplate':
+                    createNewTemplate();
+                    break;
+                case 'createTemplateWithVariables':
+                    createTemplateWithVariables();
+                    break;
                 case 'setView':
                     setView(view);
                     break;
@@ -2715,6 +2874,9 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                     break;
                 case 'importVariables':
                     importVariablesConfig();
+                    break;
+                case 'editTemplateContent':
+                    editTemplateContent();
                     break;
             }
         });
@@ -3080,7 +3242,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                         <button class="action-btn primary" data-command="createFromTemplate" data-template-id="\${escapeHtml(t.id)}">Create</button>
                         \${!t.isBuiltIn ? \`
                             <button class="action-btn" data-command="editVariables" data-template-id="\${escapeHtml(t.id)}" \${t.fileType !== 'json' ? 'disabled title="Only JSON templates support variables"' : ''}>✏️ Edit Variables</button>
-                            <button class="action-btn" data-command="editTemplate" data-template-id="\${escapeHtml(t.id)}">Edit</button>
+                            <button class="action-btn" data-command="editTemplate" data-template-id="\${escapeHtml(t.id)}">\${t.fileType === 'json' ? '📝 Edit Content' : 'Edit'}</button>
                             <button class="action-btn" data-command="duplicateTemplate" data-template-id="\${escapeHtml(t.id)}">Duplicate</button>
                             <button class="action-btn" data-command="exportTemplate" data-template-id="\${escapeHtml(t.id)}">Export</button>
                             <button class="action-btn danger" data-command="deleteTemplate" data-template-id="\${escapeHtml(t.id)}">Delete</button>
@@ -3161,6 +3323,18 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         function refresh() {
             vscode.postMessage({
                 command: 'refresh'
+            });
+        }
+
+        function createNewTemplate() {
+            vscode.postMessage({
+                command: 'createNewTemplate'
+            });
+        }
+
+        function createTemplateWithVariables() {
+            vscode.postMessage({
+                command: 'createTemplateWithVariables'
             });
         }
 
@@ -3867,7 +4041,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
             document.getElementById('variableEditorTitle').textContent = \`Edit Variables: \${templateData.name}\`;
             renderVariablesList();
-            updateTemplatePreview();
+            updateVariableUsageList();
             updateVariableCount();
             updateBuiltInVariablesDisplay();
         }
@@ -3945,7 +4119,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
         function requestVariableUsageInfo(variableName) {
             vscode.postMessage({
                 command: 'getVariableUsageInfo',
-                templateId: currentEditingTemplate,
+                templateId: currentTemplateData.id,
                 variableName: variableName
             });
         }
@@ -4120,7 +4294,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 document.getElementById('variableForm').style.display = 'none';
                 editingVariableIndex = -1;
                 renderVariablesList();
-                updateTemplatePreview();
+                updateVariableUsageList();
                 updateVariableCount();
 
                 announceToScreenReader('Variable saved successfully');
@@ -4136,7 +4310,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 // Request advanced validation from backend
                 vscode.postMessage({
                     command: 'validateVariable',
-                    templateId: currentEditingTemplate,
+                    templateId: currentTemplateData.id,
                     variable: variable,
                     existingVariables: otherVariables,
                     originalName: originalName
@@ -4251,7 +4425,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 form.innerHTML = originalHTML;
                 editingVariableIndex = -1;
                 renderVariablesList();
-                updateTemplatePreview();
+                updateVariableUsageList();
                 updateVariableCount();
             });
         }
@@ -4322,26 +4496,78 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
             }
         });
 
-        // Update template preview with variables highlighted
-        function updateTemplatePreview() {
+        // Update variable usage list with copy buttons
+        function updateVariableUsageList() {
             if (!currentTemplateData) return;
 
-            const preview = document.getElementById('templatePreview');
-            let content = currentTemplateData.content;
+            const listContainer = document.getElementById('variableUsageList');
 
-            // Highlight all variables (built-in and custom)
-            const allVars = [
-                ...BUILT_IN_VARS,
-                ...customVariables.map(v => v.name)
-            ];
+            if (customVariables.length === 0) {
+                listContainer.innerHTML = \`
+                    <div style="text-align: center; padding: 20px; color: var(--vscode-descriptionForeground); font-size: 12px;">
+                        No custom variables yet. Add some above!
+                    </div>
+                \`;
+                return;
+            }
 
-            // Replace variables with highlighted versions
-            allVars.forEach(varName => {
-                const regex = new RegExp(\`\\\\{\${varName}\\\\}\`, 'g');
-                content = content.replace(regex, \`<span class="variable-highlight">{\${escapeHtml(varName)}}</span>\`);
+            listContainer.innerHTML = \`
+                <div style="font-size: 12px; color: var(--vscode-descriptionForeground); margin-bottom: 8px;">
+                    <strong>Your Custom Variables:</strong>
+                </div>
+                <div class="variable-usage-list">
+                    \${customVariables.map((v, idx) => \`
+                        <div class="usage-variable-item">
+                            <span class="usage-variable-name">{\${escapeHtml(v.name)}}</span>
+                            <span class="usage-variable-type">\${escapeHtml(v.type)}</span>
+                            <button class="copy-var-btn" onclick="copyVariableToClipboard('\${escapeHtml(v.name)}', this)" aria-label="Copy \${escapeHtml(v.name)} to clipboard">
+                                📋 Copy
+                            </button>
+                        </div>
+                    \`).join('')}
+                </div>
+            \`;
+        }
+
+        // Copy variable name to clipboard
+        function copyVariableToClipboard(varName, btnElement) {
+            const text = \`{\${varName}}\`;
+            navigator.clipboard.writeText(text).then(() => {
+                // Visual feedback
+                const originalText = btnElement.textContent;
+                btnElement.textContent = '✓ Copied!';
+                btnElement.classList.add('copied');
+
+                setTimeout(() => {
+                    btnElement.textContent = originalText;
+                    btnElement.classList.remove('copied');
+                }, 2000);
+
+                announceToScreenReader(\`Copied \${varName} to clipboard\`);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                announceToScreenReader(\`Failed to copy \${varName}\`);
+            });
+        }
+
+        // Edit template content button handler
+        function editTemplateContent() {
+            if (!currentTemplateData) return;
+
+            // Send message to open the template file
+            vscode.postMessage({
+                command: 'editTemplate',
+                templateId: currentTemplateData.id
             });
 
-            preview.innerHTML = content;
+            // Show a helpful tip
+            const footer = document.querySelector('.variable-editor-footer .footer-info');
+            if (footer) {
+                footer.innerHTML = \`<span style="color: var(--vscode-textLink-foreground);">💡 Tip: Paste variables using {variable_name} syntax in your template</span>\`;
+                setTimeout(() => {
+                    footer.textContent = \`\${customVariables.length} custom variable\${customVariables.length !== 1 ? 's' : ''}\`;
+                }, 5000);
+            }
         }
 
         // Update variable count
@@ -4429,7 +4655,7 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
                 // Replace current variables with imported ones
                 customVariables = message.variables || [];
                 renderVariablesList();
-                updateTemplatePreview();
+                updateVariableUsageList();
                 updateVariableCount();
                 announceToScreenReader(\`Successfully imported \${customVariables.length} variable\${customVariables.length !== 1 ? 's' : ''}\`);
             } else {
@@ -4505,7 +4731,19 @@ function getTemplateBrowserHtml(templates: TemplateDisplayInfo[]): string {
 
                 case 'saveVariablesResponse':
                     if (message.success) {
-                        closeVariableEditor();
+                        // Show success message with next steps
+                        announceToScreenReader('Variables saved successfully');
+
+                        // Option 1: Show success banner and keep editor open so they can click "Edit Template Content"
+                        const footer = document.querySelector('.variable-editor-footer .footer-info');
+                        if (footer) {
+                            footer.innerHTML = \`<span style="color: var(--vscode-testing-iconPassed);">✓ Variables saved! Click "📝 Edit Template Content" to use them in your template.</span>\`;
+                        }
+
+                        // Automatically close after 8 seconds, or user can manually close or edit template
+                        setTimeout(() => {
+                            closeVariableEditor();
+                        }, 8000);
                     } else {
                         console.error('Save variables error:', message.error);
                         // Show inline error instead of alert

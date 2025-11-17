@@ -37,6 +37,21 @@ function replacePlaceholders(content: string, date: Date, filename?: string): st
 }
 
 /**
+ * Replace custom variables in template content
+ */
+function replaceCustomVariables(content: string, variableValues: Record<string, any>): string {
+    let result = content;
+
+    for (const [name, value] of Object.entries(variableValues)) {
+        // Replace all occurrences of {variable_name} with the value
+        const pattern = new RegExp(`\\{${name}\\}`, 'g');
+        result = result.replace(pattern, String(value ?? ''));
+    }
+
+    return result;
+}
+
+/**
  * Generate YAML frontmatter for a note
  */
 function generateFrontmatter(date: Date, filename?: string): string {
@@ -59,7 +74,7 @@ function generateFrontmatter(date: Date, filename?: string): string {
 /**
  * Generate template content for a note
  */
-export async function generateTemplate(templateType: string | undefined, date: Date, filename?: string): Promise<string> {
+export async function generateTemplate(templateType: string | undefined, date: Date, filename?: string, variableValues?: Record<string, any>): Promise<string> {
     const dateStr = formatDateForNote(date);
     const yamlFrontmatter = generateFrontmatter(date, filename);
 
@@ -80,13 +95,22 @@ export async function generateTemplate(templateType: string | undefined, date: D
                     const jsonContent = await readFile(jsonPath);
                     const template: Template = JSON.parse(jsonContent);
 
-                    // Replace placeholders in template content
-                    const processedContent = replacePlaceholders(template.content, date, filename);
+                    // Replace built-in placeholders in template content
+                    let processedContent = replacePlaceholders(template.content, date, filename);
+
+                    // Replace custom variables if provided
+                    if (variableValues) {
+                        processedContent = replaceCustomVariables(processedContent, variableValues);
+                    }
 
                     // JSON templates include their own frontmatter
                     return processedContent;
-                } catch {
-                    // JSON template doesn't exist, try legacy format
+                } catch (error: any) {
+                    // Not a JSON template or doesn't exist. Log parsing errors for debugging.
+                    if (error.code !== 'ENOENT') {
+                        console.error(`Error parsing template metadata for '${templateType}.json':`, error);
+                    }
+                    // Try legacy format
                 }
 
                 // Try legacy .txt/.md template
@@ -124,6 +148,26 @@ export async function generateTemplate(templateType: string | undefined, date: D
 
     // Default fallback (consistent with quick template - frontmatter only)
     return yamlFrontmatter;
+}
+
+/**
+ * Load template metadata including variables (for JSON templates)
+ * Returns null for built-in or legacy templates
+ */
+export async function loadTemplateMetadata(templateType: string): Promise<Template | null> {
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        return null;
+    }
+
+    try {
+        const jsonPath = path.join(templatesPath, `${templateType}.json`);
+        const jsonContent = await readFile(jsonPath);
+        return JSON.parse(jsonContent) as Template;
+    } catch {
+        // Not a JSON template or doesn't exist
+        return null;
+    }
 }
 
 /**

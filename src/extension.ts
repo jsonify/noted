@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { promises as fsp } from 'fs';
+import * as os from 'os';
 import { showCalendarView } from './calendar/calendarView';
 import { showGraphView } from './graph/graphView';
 import { showActivityView } from './activity/activityView';
@@ -1754,6 +1755,11 @@ export function activate(context: vscode.ExtensionContext) {
         templatesProvider.refresh();
     });
 
+    // Command to create JSON template with variables
+    let createTemplateWithVariablesCmd = vscode.commands.registerCommand('noted.createTemplateWithVariables', async () => {
+        await createTemplateWithVariables();
+    });
+
     // Command to edit custom template
     let editCustomTemplateCmd = vscode.commands.registerCommand('noted.editCustomTemplate', async () => {
         await editCustomTemplate();
@@ -2113,7 +2119,7 @@ export function activate(context: vscode.ExtensionContext) {
         searchTagCmd, renameTagCmd, mergeTagsCmd, deleteTagCmd, exportTagsCmd,
         showStats, exportNotes, duplicateNote, moveNotesFolder,
         setupDefaultFolder, setupCustomFolder, showNotesConfig,
-        createCustomTemplate, editCustomTemplateCmd, deleteCustomTemplateCmd,
+        createCustomTemplate, createTemplateWithVariablesCmd, editCustomTemplateCmd, deleteCustomTemplateCmd,
         duplicateCustomTemplateCmd, previewTemplateCmd, openTemplatesFolder,
         createTemplateWithAI, enhanceTemplate, selectAIModel,
         createBundle, createBundleFromTemplates, editBundle, deleteBundle,
@@ -2371,6 +2377,97 @@ Available placeholders:
     }
 }
 
+async function createTemplateWithVariables() {
+    const templateName = await vscode.window.showInputBox({
+        prompt: 'Enter template name',
+        placeHolder: 'my-advanced-template',
+        validateInput: (value) => {
+            if (!value) {
+                return 'Template name is required';
+            }
+            if (!/^[a-z0-9-_]+$/i.test(value)) {
+                return 'Template name can only contain letters, numbers, hyphens, and underscores';
+            }
+            return null;
+        }
+    });
+
+    if (!templateName) {
+        return;
+    }
+
+    const description = await vscode.window.showInputBox({
+        prompt: 'Enter template description',
+        placeHolder: 'A brief description of what this template is for'
+    });
+
+    if (description === undefined) {
+        return;
+    }
+
+    const category = await vscode.window.showInputBox({
+        prompt: 'Enter template category',
+        placeHolder: 'General',
+        value: 'General'
+    });
+
+    const templatesPath = getTemplatesPath();
+    if (!templatesPath) {
+        vscode.window.showErrorMessage('Please configure notes folder first');
+        return;
+    }
+
+    try {
+        // Create templates folder if it doesn't exist
+        try {
+            await fsp.access(templatesPath);
+        } catch {
+            await fsp.mkdir(templatesPath, { recursive: true });
+        }
+
+        const templateFile = path.join(templatesPath, `${templateName}.json`);
+
+        // Create template object with system username as author
+        const template = {
+            id: templateName,
+            name: templateName.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            description: description || '',
+            category: category || 'General',
+            tags: [],
+            version: '1.0.0',
+            author: os.userInfo().username,
+            difficulty: 'beginner',
+            variables: [],
+            content: `# {filename}\n\nCreated: {date} at {time}\nAuthor: {user}\n\n---\n\n[Your template content here]\n\nAdd custom variables using the Variable Editor to make this template interactive!`,
+            created: new Date().toISOString(),
+            modified: new Date().toISOString(),
+            usage_count: 0
+        };
+
+        // Use atomic write with 'wx' flag to prevent race conditions
+        try {
+            await fsp.writeFile(templateFile, JSON.stringify(template, null, 2), { flag: 'wx' });
+
+            vscode.window.showInformationMessage(`Template created: ${templateName}. Opening variable editor...`);
+
+            // Open the template browser
+            await vscode.commands.executeCommand('noted.showTemplateBrowser');
+
+            // Note: The template browser will refresh automatically when it opens
+            // The user will see the new template and can click "Edit Variables" to add custom variables
+            vscode.window.showInformationMessage(`Click "Edit Variables" on the "${templateName}" template to add custom variables.`);
+        } catch (error: any) {
+            if (error.code === 'EEXIST') {
+                vscode.window.showErrorMessage('Template already exists');
+            } else {
+                throw error;
+            }
+        }
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to create template: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
 async function moveNotesFolderLocation() {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) {
@@ -2513,6 +2610,23 @@ async function createNoteFromTemplate(templateType: string) {
     }
 
     try {
+        // Check if template has custom variables
+        const { loadTemplateMetadata, generateTemplate: generateTemplateContent } = await import('./services/templateService');
+        const templateMetadata = await loadTemplateMetadata(templateType);
+        let variableValues: Record<string, any> | undefined;
+
+        // Collect variable values if template has variables
+        if (templateMetadata?.variables && templateMetadata.variables.length > 0) {
+            const { BundleService } = await import('./templates/BundleService');
+            const bundleService = new BundleService();
+            try {
+                variableValues = await bundleService.collectVariables(templateMetadata.variables);
+            } catch (error) {
+                // User cancelled or error collecting variables
+                return;
+            }
+        }
+
         // Ask for note name
         const noteName = await vscode.window.showInputBox({
             prompt: 'Enter note name',
@@ -2552,7 +2666,7 @@ async function createNoteFromTemplate(templateType: string) {
             return;
         } catch {
             // File doesn't exist, create it
-            const content = await generateTemplate(templateType, now, fileName);
+            const content = await generateTemplateContent(templateType, now, fileName, variableValues);
             await fsp.writeFile(filePath, content);
 
             const document = await vscode.workspace.openTextDocument(filePath);
