@@ -187,7 +187,7 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                 '⚙️ Select AI Model',
                 'noted.selectAIModel',
                 'settings-gear',
-                'Choose which AI model to use for template generation'
+                'Choose AI model for all features (templates, tagging, summarization, search)'
             ),
             new ActionButtonItem(
                 'Template Variables',
