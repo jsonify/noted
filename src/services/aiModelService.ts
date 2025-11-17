@@ -6,7 +6,9 @@ import * as vscode from 'vscode';
  *
  * This is a shared utility used by:
  * - Template generation (TemplateGenerator)
- * - User story creation (templateCommands)
+ * - Tag generation (TagGenerator)
+ * - Summarization (SummarizationService)
+ * - Semantic search (SemanticSearchEngine)
  * - Any other AI-powered features
  *
  * @returns Selected language model
@@ -14,7 +16,9 @@ import * as vscode from 'vscode';
  */
 export async function selectAIModel(): Promise<vscode.LanguageModelChat> {
     const config = vscode.workspace.getConfiguration('noted');
-    const preferredModelId = config.get<string>('templates.preferredModel');
+
+    // Check global AI model preference first, then fall back to template-specific (backwards compatibility)
+    const preferredModelId = config.get<string>('ai.preferredModel') || config.get<string>('templates.preferredModel');
 
     // Get all available models
     const allModels = await vscode.lm.selectChatModels({});
@@ -95,4 +99,31 @@ export async function selectAIModel(): Promise<vscode.LanguageModelChat> {
 
     // Last resort: Return first available model
     return allModels[0];
+}
+
+/**
+ * Get all available AI models with metadata
+ * Used by the model selection command
+ *
+ * @returns Array of available models with vendor, family, and ID info
+ */
+export async function getAvailableModels(): Promise<vscode.LanguageModelChat[]> {
+    return await vscode.lm.selectChatModels({});
+}
+
+/**
+ * Format a model for display in quick pick
+ * @param model - Language model to format
+ * @returns Object with label, description, and detail for quick pick
+ */
+export function formatModelForDisplay(model: vscode.LanguageModelChat): {
+    label: string;
+    description: string;
+    detail: string;
+} {
+    return {
+        label: model.name || model.id,
+        description: `${model.vendor} - ${model.family}`,
+        detail: model.id
+    };
 }

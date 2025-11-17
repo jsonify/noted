@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { NoteTag } from './TagParser';
 import * as crypto from 'crypto';
+import { selectAIModel } from '../services/aiModelService';
 
 /**
  * Cache entry for tag generation results
@@ -54,18 +55,8 @@ export class TagGenerator {
                 return [];
             }
 
-            // Select a language model
-            const models = await vscode.lm.selectChatModels({
-                vendor: 'copilot',
-                family: 'gpt-4o'
-            });
-
-            if (models.length === 0) {
-                // No model available
-                throw new Error('GitHub Copilot is not available. Please sign in to use auto-tagging.');
-            }
-
-            const model = models[0];
+            // Select the appropriate language model using shared service
+            const model = await selectAIModel();
 
             // Build the prompt
             const prompt = this.buildTagPrompt(content, maxTags);

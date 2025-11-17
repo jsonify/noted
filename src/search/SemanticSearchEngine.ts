@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { SmartSearchResult, MatchInfo, SemanticSearchConfig } from './types';
 import { readFile, getFileStats } from '../services/fileSystemService';
+import { selectAIModel } from '../services/aiModelService';
 
 export class SemanticSearchEngine {
     private config: SemanticSearchConfig;
@@ -21,15 +22,12 @@ export class SemanticSearchEngine {
     }
 
     /**
-     * Check if Copilot/LLM is available
+     * Check if LLM is available
      */
     async isAvailable(): Promise<boolean> {
         try {
-            const models = await vscode.lm.selectChatModels({
-                vendor: 'copilot',
-                family: 'gpt-4o',
-            });
-            return models.length > 0;
+            await selectAIModel();
+            return true;
         } catch (error) {
             return false;
         }
@@ -51,16 +49,7 @@ export class SemanticSearchEngine {
         }
 
         // Select model once at the beginning
-        const models = await vscode.lm.selectChatModels({
-            vendor: 'copilot',
-            family: 'gpt-4o',
-        });
-
-        if (models.length === 0) {
-            throw new Error('Copilot LLM is not available. Please sign in to GitHub Copilot.');
-        }
-
-        const model = models[0];
+        const model = await selectAIModel();
         const results: SmartSearchResult[] = [];
         const maxResults = options.maxResults || this.config.maxCandidates;
         const filesToProcess = noteFiles.slice(0, maxResults);

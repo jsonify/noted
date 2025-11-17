@@ -78,9 +78,11 @@ import {
     handleSuggestTags
 } from './commands/autoTagCommands';
 import {
+    handleSelectAIModel
+} from './commands/aiCommands';
+import {
     handleCreateTemplateWithAI,
     handleEnhanceTemplate,
-    handleSelectAIModel,
     handleMigrateTemplates,
     handleCreateUserStoryWithAI
 } from './commands/templateCommands';
