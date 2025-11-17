@@ -2,7 +2,7 @@
   "name": "noted",
   "displayName": "Noted",
   "description": "Comprehensive workspace notes with wiki-style links, diagram embeds (Draw.io & Excalidraw), graph visualization, templates, advanced search, and daily tracking",
-  "version": "1.43.7",
+  "version": "1.43.8",
   "icon": "icon.png",
   "publisher": "jsonify",
   "repository": {
