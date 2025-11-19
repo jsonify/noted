@@ -456,25 +456,24 @@ While Dendron has many features Noted lacks, Noted has some unique strengths:
 ## Implementation Roadmap Suggestion
 
 ### Phase 1: Foundation (v1.45-1.47)
-- Hierarchical note naming support
-- Workspace config file (`.noted.json`)
-- Weekly/monthly note commands
+- [Hierarchical note naming support](#1-hierarchical-note-naming--organization)
+- [Workspace config file (`.noted.json`)](#9-workspace-level-configuration)
+- [Weekly/monthly note commands](#8-dailyperiodic-note-commands)
 
 ### Phase 2: Power Features (v1.48-1.52)
-- Schema system for automatic template application
-- Enhanced lookup (find or create with hierarchy support)
-- Advanced refactoring (regex-based bulk operations)
+- [Schema system for automatic template application](#2-schema-system)
+- [Enhanced lookup (find or create with hierarchy support)](#3-unified-lookupquick-switcher)
+- [Advanced refactoring (regex-based bulk operations)](#5-advanced-refactoring-tools)
 
 ### Phase 3: Collaboration (v1.53-1.57)
-- Multi-vault support
-- Publishing to static sites
-- Import/export pods
+- [Multi-vault support](#4-multi-vault-support)
+- [Publishing to static sites](#6-publishing-to-static-sites)
+- [Import/export pods](#7-pods-importexport-system)
 
 ### Phase 4: Polish (v1.58+)
-- Task management aggregation
-- Enhanced note references (ranges, blocks)
-- Additional pod integrations
-
+- [Task management aggregation](#12-task-management-integration)
+- [Enhanced note references (ranges, blocks)](#10-note-references-with-ranges)
+- [Additional pod integrations](#7-pods-importexport-system)
 ---
 
 *Generated: 2025-11-19*
