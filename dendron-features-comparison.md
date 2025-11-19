@@ -360,51 +360,51 @@ A comprehensive analysis of Dendron features that Noted currently lacks, organiz
 
 ### Immediate Opportunities (Low-hanging fruit)
 
-1. **Daily/Weekly/Monthly Note Commands** (Low complexity, Medium value)
+1. **[Daily/Weekly/Monthly Note Commands](#8-dailyperiodic-note-commands)** (Low complexity, Medium value)
    - Build on existing daily notes feature
    - Add `noted.openWeekly`, `noted.openMonthly` commands
    - Extend calendar to show weekly/monthly views
 
-2. **Workspace Config File** (Low complexity, Medium value)
+2. **[Workspace Config File](#9-workspace-level-configuration)** (Low complexity, Medium value)
    - Add `.noted.json` support
    - Enable version-controlled settings
    - Share configurations across teams
 
 ### High-Impact Features (Worth the investment)
 
-1. **Hierarchical Note Naming** (Medium-High complexity, Very High value)
+1. **[Hierarchical Note Naming](#1-hierarchical-note-naming--organization)** (Medium-High complexity, Very High value)
    - Biggest differentiator for power users
    - Enables topic-based organization
    - Foundation for many other features
 
-2. **Schema System** (Medium complexity, Very High value)
+2. **[Schema System](#2-schema-system)** (Medium complexity, Very High value)
    - Natural extension of existing templates
    - Massive UX improvement
    - Reduces manual template selection
 
-3. **Unified Lookup** (Medium complexity, Very High value)
+3. **[Unified Lookup](#3-unified-lookupquick-switcher)** (Medium complexity, Very High value)
    - Single interface for find/create
    - Works with hierarchical naming
    - Improves daily workflow significantly
 
-4. **Advanced Refactoring** (Medium complexity, High value)
+4. **[Advanced Refactoring](#5-advanced-refactoring-tools)** (Medium complexity, High value)
    - Essential for large knowledge bases
    - Builds on existing link update code
    - Enables fearless reorganization
 
 ### Long-term Investments
 
-1. **Multi-Vault Support** (High complexity, High value)
+1. **[Multi-Vault Support](#4-multi-vault-support)** (High complexity, High value)
    - Major architectural undertaking
    - Critical for work/personal separation
    - Enables advanced use cases
 
-2. **Publishing System** (High complexity, High value)
+2. **[Publishing System](#6-publishing-to-static-sites)** (High complexity, High value)
    - Expands use cases significantly
    - Competitive with other PKM tools
    - Enables team documentation
 
-3. **Pods/Import-Export** (High complexity, High value)
+3. **[Pods/Import-Export](#7-pods-importexport-system)** (High complexity, High value)
    - Reduces lock-in concerns
    - Better migration paths
    - Integration ecosystem
