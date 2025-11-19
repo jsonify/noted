@@ -109,7 +109,7 @@ import {
 } from './commands/summaryHistoryCommands';
 import { markdownItWikilinkEmbed, warmUpPathCache, clearPathResolutionCache } from './features/preview/wikilink-embed';
 import { showMarkdownPreview } from './preview/markdownPreview';
-import { FOLDER_PATTERNS, SPECIAL_FOLDERS, MONTH_NAMES } from './constants';
+import { FOLDER_PATTERNS, SPECIAL_FOLDERS, MONTH_NAMES, SUPPORTED_EXTENSIONS, getDocumentSelector } from './constants';
 import { showModalWarning, showModalInfo, StandardButtons, StandardDetails } from './utils/dialogHelpers';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -169,7 +169,7 @@ export function activate(context: vscode.ExtensionContext) {
     if (tagAutoComplete) {
         const tagCompletionProvider = new TagCompletionProvider(tagService);
         const completionDisposable = vscode.languages.registerCompletionItemProvider(
-            [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+            getDocumentSelector(),
             tagCompletionProvider,
             '#'
         );
@@ -179,7 +179,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register tag rename provider for F2 rename support
     const tagRenameProvider = new TagRenameProvider(tagService, tagEditService);
     const tagRenameDisposable = vscode.languages.registerRenameProvider(
-        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        getDocumentSelector(),
         tagRenameProvider
     );
     context.subscriptions.push(tagRenameDisposable);
@@ -200,7 +200,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register document link provider for clickable [[note-name]] links
     const linkProvider = new NoteLinkProvider(linkService);
     const linkProviderDisposable = vscode.languages.registerDocumentLinkProvider(
-        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        getDocumentSelector(),
         linkProvider
     );
     context.subscriptions.push(linkProviderDisposable);
@@ -208,7 +208,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register hover provider for backlinks
     const backlinkHoverProvider = new BacklinkHoverProvider(linkService);
     const hoverProviderDisposable = vscode.languages.registerHoverProvider(
-        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        getDocumentSelector(),
         backlinkHoverProvider
     );
     context.subscriptions.push(hoverProviderDisposable);
@@ -216,7 +216,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register hover provider for note content previews
     const notePreviewHoverProvider = new NotePreviewHoverProvider(linkService);
     const notePreviewHoverDisposable = vscode.languages.registerHoverProvider(
-        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        getDocumentSelector(),
         notePreviewHoverProvider
     );
     context.subscriptions.push(notePreviewHoverDisposable);
@@ -244,7 +244,7 @@ export function activate(context: vscode.ExtensionContext) {
     if (embedService) {
         const embedHoverProvider = new EmbedHoverProvider(embedService);
         const embedHoverDisposable = vscode.languages.registerHoverProvider(
-            [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+            getDocumentSelector(),
             embedHoverProvider
         );
         context.subscriptions.push(embedHoverDisposable);
@@ -328,7 +328,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register completion provider for note links
     const linkCompletionProvider = new LinkCompletionProvider(linkService, notesPath || '');
     const linkCompletionDisposable = vscode.languages.registerCompletionItemProvider(
-        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        getDocumentSelector(),
         linkCompletionProvider,
         '[', '/' // Trigger on [[ and / for path completion
     );
@@ -361,7 +361,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register code action provider for quick fixes
     const linkCodeActionProvider = new LinkCodeActionProvider(linkService, notesPath || '');
     const codeActionDisposable = vscode.languages.registerCodeActionsProvider(
-        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        getDocumentSelector(),
         linkCodeActionProvider,
         {
             providedCodeActionKinds: [vscode.CodeActionKind.QuickFix]
@@ -466,7 +466,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.workspace.onDidSaveTextDocument(async (document) => {
             // Only update index for note files in the notes folder
             const filePath = document.uri.fsPath;
-            const isSupportedFile = ['.txt', '.md'].some(ext => filePath.endsWith(ext));
+            const isSupportedFile = SUPPORTED_EXTENSIONS.some(ext => filePath.endsWith(ext));
 
             if (isSupportedFile && notesPath && filePath.startsWith(notesPath)) {
                 // Skip if this file is being processed by backlinks service (prevent circular updates)
@@ -530,7 +530,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register hover provider for AI summary previews
     const summaryHoverProvider = new SummaryHoverProvider(linkService, summarizationService);
     const summaryHoverDisposable = vscode.languages.registerHoverProvider(
-        [{ pattern: '**/*.txt' }, { pattern: '**/*.md' }],
+        getDocumentSelector(),
         summaryHoverProvider
     );
     context.subscriptions.push(summaryHoverDisposable);

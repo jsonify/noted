@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { LinkService } from '../services/linkService';
+import { getSupportedExtensionsRegex } from '../constants';
 
 /**
  * Provides autocomplete suggestions for wiki-style [[note]] links
@@ -50,7 +51,7 @@ export class LinkCompletionProvider implements vscode.CompletionItemProvider {
 
             for (const notePath of notePaths) {
                 const relativePath = path.relative(this.notesPath, notePath);
-                const relativePathNoExt = relativePath.replace(/\.(txt|md)$/i, '');
+                const relativePathNoExt = relativePath.replace(getSupportedExtensionsRegex(), '');
 
                 // Filter based on partial input
                 if (partialLink && !basename.toLowerCase().includes(partialLink.toLowerCase()) &&

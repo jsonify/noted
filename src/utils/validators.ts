@@ -1,4 +1,4 @@
-import { FOLDER_PATTERNS } from '../constants';
+import { FOLDER_PATTERNS, getSupportedExtensionsRegex } from '../constants';
 import * as path from 'path';
 
 /**
@@ -21,7 +21,7 @@ export function isMonthFolder(name: string): boolean {
  */
 export function isDailyNote(filePath: string): boolean {
     const fileName = path.basename(filePath);
-    const nameWithoutExt = fileName.replace(/\.(txt|md)$/i, '');
+    const nameWithoutExt = fileName.replace(getSupportedExtensionsRegex(), '');
     return FOLDER_PATTERNS.DAILY_NOTE.test(nameWithoutExt);
 }
 

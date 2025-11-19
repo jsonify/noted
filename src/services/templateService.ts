@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { BUILT_IN_TEMPLATES, TEMPLATE_PLACEHOLDERS, DEFAULTS, DAY_NAMES, MONTH_NAMES } from '../constants';
+import { BUILT_IN_TEMPLATES, TEMPLATE_PLACEHOLDERS, DEFAULTS, DAY_NAMES, MONTH_NAMES, getSupportedExtensionsRegex } from '../constants';
 import { getTemplatesPath, getFileFormat } from './configService';
 import { pathExists, readFile, readDirectory } from './fileSystemService';
 import { formatDateForNote, formatTimeForNote } from '../utils/dateHelpers';
@@ -80,7 +80,7 @@ export async function generateTemplate(templateType: string | undefined, date: D
 
     // Special handling for "quick" template - no frontmatter, just note title
     if (templateType === 'quick') {
-        const noteName = filename ? filename.replace(/\.(txt|md)$/i, '') : 'Note';
+        const noteName = filename ? filename.replace(getSupportedExtensionsRegex(), '') : 'Note';
         return `# ${noteName}\n\n`;
     }
 
