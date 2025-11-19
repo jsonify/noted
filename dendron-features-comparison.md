@@ -415,18 +415,18 @@ A comprehensive analysis of Dendron features that Noted currently lacks, organiz
 
 | Feature | Dendron | Noted | Priority | Complexity |
 |---------|---------|-------|----------|------------|
-| Hierarchical Naming | ✅ | ❌ | High | Medium-High |
-| Schema System | ✅ | ❌ | High | Medium |
-| Unified Lookup | ✅ | Partial | High | Medium |
-| Multi-Vault | ✅ | ❌ | High | High |
-| Advanced Refactoring | ✅ | Partial | High | Medium |
-| Publishing | ✅ | ❌ | Medium | High |
-| Pods (Import/Export) | ✅ | ❌ | Medium | High |
+| [Hierarchical Naming](#1-hierarchical-note-naming--organization) | ✅ | ❌ | High | Medium-High |
+| [Schema System](#2-schema-system) | ✅ | ❌ | High | Medium |
+| [Unified Lookup](#3-unified-lookupquick-switcher) | ✅ | Partial | High | Medium |
+| [Multi-Vault](#4-multi-vault-support) | ✅ | ❌ | High | High |
+| [Advanced Refactoring](#5-advanced-refactoring-tools) | ✅ | Partial | High | Medium |
+| [Publishing](#6-publishing-to-static-sites) | ✅ | ❌ | Medium | High |
+| [Pods (Import/Export)](#7-pods-importexport-system) | ✅ | ❌ | Medium | High |
 | Daily Notes | ✅ | ✅ | ✅ Exists | - |
-| Weekly/Monthly Notes | ✅ | ❌ | Medium | Low |
-| Workspace Config | ✅ | ❌ | Low | Low |
-| Note References | ✅ Advanced | ✅ Basic | Low | Medium |
-| Task Management | ✅ | ❌ | Low | Medium |
+| [Weekly/Monthly Notes](#8-dailyperiodic-note-commands) | ✅ | ❌ | Medium | Low |
+| [Workspace Config](#9-workspace-level-configuration) | ✅ | ❌ | Low | Low |
+| [Note References](#10-note-references-with-ranges) | ✅ Advanced | ✅ Basic | Low | Medium |
+| [Task Management](#12-task-management-integration) | ✅ | ❌ | Low | Medium |
 | Backlinks | ✅ | ✅ | ✅ Exists | - |
 | Graph View | ✅ | ✅ | ✅ Exists | - |
 | Calendar View | ✅ | ✅ | ✅ Exists | - |
