@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { TreeItem, TemplateActionItem, ActionButtonItem, SectionItem, NoteItem } from './treeItems';
+import * as fs from 'fs';
+import { TreeItem, TemplateActionItem, ActionButtonItem, SectionItem, NoteItem, VersionItem } from './treeItems';
 import { getCustomTemplates } from '../services/templateService';
 import { getNotesPath } from '../services/configService';
 import { readDirectoryWithTypes, getFileStats } from '../services/fileSystemService';
@@ -33,6 +34,16 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
     private pinnedNotesService?: PinnedNotesService;
     private bulkOperationsService?: BulkOperationsService;
 
+    // Extension context for version info
+    private context?: vscode.ExtensionContext;
+
+    /**
+     * Set the extension context
+     */
+    setContext(context: vscode.ExtensionContext): void {
+        this.context = context;
+    }
+
     /**
      * Set the pinned notes service
      */
@@ -61,6 +72,9 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
         if (!element) {
             // Root level - show primary actions, 3 template folders, and recent notes
             const items: TreeItem[] = [];
+
+            // Version badge at the top
+            items.push(this.getVersionItem());
 
             // Template Browser - primary interface for browsing and managing templates
             items.push(
@@ -202,6 +216,25 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
                 'Open the templates folder in system file explorer'
             )
         ];
+    }
+
+    /**
+     * Get version badge item
+     */
+    private getVersionItem(): VersionItem {
+        let version = '1.43.12'; // fallback
+
+        if (this.context) {
+            try {
+                const packageJsonPath = path.join(this.context.extensionPath, 'package.json');
+                const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+                version = packageJson.version;
+            } catch (error) {
+                console.error('[NOTED] Error reading version from package.json:', error);
+            }
+        }
+
+        return new VersionItem(version);
     }
 
     /**

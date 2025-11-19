@@ -628,3 +628,25 @@ export class CollectionItem extends TreeItem {
         return tooltip;
     }
 }
+
+/**
+ * Version badge item - displays current extension version
+ */
+export class VersionItem extends TreeItem {
+    constructor(
+        public readonly version: string
+    ) {
+        super(`v${version}`, vscode.TreeItemCollapsibleState.None);
+
+        this.iconPath = new vscode.ThemeIcon('info');
+        this.contextValue = 'version';
+        this.tooltip = 'Click to view recent changes';
+
+        // Make clickable to show changelog
+        this.command = {
+            command: 'noted.showVersionChangelog',
+            title: 'View Changelog',
+            arguments: []
+        };
+    }
+}
