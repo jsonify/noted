@@ -309,7 +309,7 @@ export const SUPPORTED_EXTENSIONS = [
     // Other
     '.lua',             // Lua
     '.vim',             // Vim script
-    '.dart',            // Dart
+    '.dart',             // Dart
     '.pl',              // Perl
     '.hs',              // Haskell
     '.scala',           // Scala
@@ -317,6 +317,27 @@ export const SUPPORTED_EXTENSIONS = [
     '.ex', '.exs',      // Elixir
     '.erl'              // Erlang
 ];
+
+/**
+ * Generate VS Code document selector for all supported file types
+ * Used for registering language providers (completion, hover, rename, etc.)
+ */
+export function getDocumentSelector(): Array<{ pattern: string }> {
+    return SUPPORTED_EXTENSIONS.map(ext => ({ pattern: `**/*${ext}` }));
+}
+
+/**
+ * Generate a regex pattern for matching all supported extensions
+ * Used for stripping file extensions from note names
+ * Example: /\.(txt|md|js|py|...)$/i
+ */
+export function getSupportedExtensionsRegex(): RegExp {
+    const extPattern = SUPPORTED_EXTENSIONS
+        .map(ext => ext.slice(1)) // Remove leading dot
+        .map(ext => ext.replace(/\./g, '\\.')) // Escape dots for regex
+        .join('|');
+    return new RegExp(`\\.(${extPattern})$`, 'i');
+}
 
 /**
  * Image file extensions supported for embedding

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { LinkService, LINK_PATTERN } from '../services/linkService';
-import { IMAGE_EXTENSIONS, DIAGRAM_EXTENSIONS } from '../constants';
+import { IMAGE_EXTENSIONS, DIAGRAM_EXTENSIONS, getSupportedExtensionsRegex } from '../constants';
 
 /**
  * Provides diagnostics for wiki-style links
@@ -190,7 +190,7 @@ export class LinkCodeActionProvider implements vscode.CodeActionProvider {
                 // Create a quick fix for each matching note
                 for (const notePath of allMatches) {
                     const relativePath = path.relative(this.notesPath, notePath);
-                    const relativePathNoExt = relativePath.replace(/\.(txt|md)$/i, '');
+                    const relativePathNoExt = relativePath.replace(getSupportedExtensionsRegex(), '');
                     const pathForLink = relativePathNoExt.replace(/\\/g, '/');
 
                     const action = new vscode.CodeAction(
