@@ -269,8 +269,54 @@ export const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /**
  * File extensions supported for notes
+ * Includes text, markdown, and common programming language file types
  */
-export const SUPPORTED_EXTENSIONS = ['.txt', '.md'];
+export const SUPPORTED_EXTENSIONS = [
+    // Text and Markdown
+    '.txt', '.md',
+
+    // Web Development
+    '.html', '.css', '.scss', '.sass', '.less',
+    '.js', '.jsx', '.ts', '.tsx',
+    '.json', '.xml', '.yaml', '.yml',
+
+    // Programming Languages
+    '.py',              // Python
+    '.java',            // Java
+    '.c', '.cpp', '.h', '.hpp',  // C/C++
+    '.cs',              // C#
+    '.go',              // Go
+    '.rs',              // Rust
+    '.rb',              // Ruby
+    '.php',             // PHP
+    '.swift',           // Swift
+    '.kt', '.kts',      // Kotlin
+    '.r', '.R',         // R
+    '.m',               // MATLAB/Objective-C
+
+    // Shell/Scripting
+    '.sh', '.bash', '.zsh',  // Shell scripts
+    '.ps1',             // PowerShell
+    '.bat', '.cmd',     // Windows batch
+
+    // Data & Config
+    '.sql',             // SQL
+    '.toml',            // TOML
+    '.ini',             // INI
+    '.conf', '.config', // Config files
+    '.env',             // Environment variables
+
+    // Other
+    '.lua',             // Lua
+    '.vim',             // Vim script
+    '.dart',            // Dart
+    '.pl',              // Perl
+    '.hs',              // Haskell
+    '.scala',           // Scala
+    '.clj',             // Clojure
+    '.ex', '.exs',      // Elixir
+    '.erl'              // Erlang
+];
 
 /**
  * Image file extensions supported for embedding
