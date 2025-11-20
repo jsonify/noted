@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { execSync } from 'child_process';
 
 // Latest release information
 export interface LatestRelease {
@@ -13,26 +14,90 @@ export interface LatestRelease {
 }
 
 /**
- * Get latest release information
- * This could be extended to read from Git commits or GitHub API
+ * Get latest merged PR from Git history
+ * Parses git log to find the most recent commit with a PR number (#XXX)
  */
 export function getLatestRelease(): LatestRelease {
+    try {
+        // Get the most recent commit with a PR number in the title
+        // Format: "title (#123)" where #123 is the PR number
+        const gitLog = execSync(
+            'git log --format="%H|%s|%b|%ai" --grep="#[0-9]\\+" --regexp-ignore-case -1',
+            { encoding: 'utf8', cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath }
+        ).trim();
+
+        if (!gitLog) {
+            // Fallback if no PR commits found
+            return getFallbackRelease();
+        }
+
+        const lines = gitLog.split('\n');
+        const firstLine = lines[0];
+        const parts = firstLine.split('|');
+
+        if (parts.length < 4) {
+            return getFallbackRelease();
+        }
+
+        const [hash, title, body, dateStr] = parts;
+
+        // Extract PR number from title (e.g., "Title (#123)" -> 123)
+        const prMatch = title.match(/#(\d+)\)$/);
+        const prNumber = prMatch ? parseInt(prMatch[1], 10) : undefined;
+
+        // Remove PR number from title
+        const cleanTitle = title.replace(/\s*\(#\d+\)\s*$/, '').trim();
+
+        // Parse date
+        const date = new Date(dateStr);
+        const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
+
+        // Get version from package.json
+        let version = '1.43.12'; // fallback
+        try {
+            const packageJsonPath = path.join(
+                vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
+                'package.json'
+            );
+            const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+            version = packageJson.version;
+        } catch (error) {
+            console.error('[NOTED] Error reading version:', error);
+        }
+
+        return {
+            version,
+            date: dateString,
+            prTitle: cleanTitle,
+            prDescription: body.trim() || 'No description available.',
+            prNumber,
+            prUrl: prNumber ? `https://github.com/jsonify/noted/pull/${prNumber}` : undefined
+        };
+    } catch (error) {
+        console.error('[NOTED] Error reading git log:', error);
+        return getFallbackRelease();
+    }
+}
+
+/**
+ * Fallback release info when Git parsing fails
+ */
+function getFallbackRelease(): LatestRelease {
     return {
         version: '1.43.12',
         date: '2025-11-19',
-        prTitle: 'Add version popup feature to show recent changes',
-        prDescription: `Implements a version badge at the top of the Templates & Recent panel that displays the current extension version. When clicked, it opens a beautiful popup showing recent changes and new features.
+        prTitle: 'Check supported file types in MyNotes panel',
+        prDescription: `Extended SUPPORTED_EXTENSIONS to include common programming language file types, enabling users to store and view scripts in the MyNotes panel.
 
-**New in this release:**
-- Version badge displayed at top of Templates & Recent panel
-- "What's New" popup with the latest changes
-- Reads version dynamically from package.json
-- Quick links to documentation and GitHub repository
-- Clean, VS Code-themed UI
+**Added support for:**
+- Web development: HTML, CSS, JS/TS, JSON, YAML, XML
+- Programming languages: Python, Java, C/C++, Go, Rust, Ruby, PHP, Swift, Kotlin, R, etc.
+- Shell/scripting: Bash, PowerShell, Windows batch
+- Data/config: SQL, TOML, INI, ENV files
 
-Similar to the Roo Code extension's version bubble feature.`,
-        prNumber: undefined, // Will be filled when PR is created
-        prUrl: undefined
+Resolves issue where users could only see .md and .txt files in the panel.`,
+        prNumber: 123,
+        prUrl: 'https://github.com/jsonify/noted/pull/123'
     };
 }
 
