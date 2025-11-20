@@ -2,102 +2,38 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
-// Recent version changes (most recent first)
-export interface ChangelogEntry {
+// Latest release information
+export interface LatestRelease {
     version: string;
     date: string;
-    changes: {
-        category: 'feature' | 'bugfix' | 'improvement' | 'documentation';
-        description: string;
-    }[];
+    prTitle: string;
+    prDescription: string;
+    prNumber?: number;
+    prUrl?: string;
 }
 
 /**
- * Get recent changelog entries
+ * Get latest release information
+ * This could be extended to read from Git commits or GitHub API
  */
-export function getRecentChangelog(): ChangelogEntry[] {
-    return [
-        {
-            version: '1.43.12',
-            date: '2025-11-19',
-            changes: [
-                {
-                    category: 'improvement',
-                    description: 'Check supported file types in MyNotes panel'
-                }
-            ]
-        },
-        {
-            version: '1.43.0',
-            date: '2025-11-15',
-            changes: [
-                {
-                    category: 'feature',
-                    description: 'Template Browser Phase 5 - Interactive Enhancements with improved UI/UX'
-                }
-            ]
-        },
-        {
-            version: '1.42.0',
-            date: '2025-11-15',
-            changes: [
-                {
-                    category: 'feature',
-                    description: 'Template Browser Phase 3 - Usage Guidance & Context with variable editor'
-                }
-            ]
-        },
-        {
-            version: '1.41.0',
-            date: '2025-11-13',
-            changes: [
-                {
-                    category: 'feature',
-                    description: 'Template Browser UI - Visual interface for browsing and managing templates'
-                }
-            ]
-        },
-        {
-            version: '1.40.0',
-            date: '2025-11-12',
-            changes: [
-                {
-                    category: 'feature',
-                    description: 'Modal option for warning messages (delete, archive, and export operations)'
-                }
-            ]
-        },
-        {
-            version: '1.38.0',
-            date: '2025-11-07',
-            changes: [
-                {
-                    category: 'feature',
-                    description: 'AI Summarization Phase 2 - Enhanced features including summary history and comparison'
-                }
-            ]
-        },
-        {
-            version: '1.37.0',
-            date: '2025-11-07',
-            changes: [
-                {
-                    category: 'feature',
-                    description: 'AI Summarization Phase 1 (MVP) - Summarize notes with AI-powered insights'
-                }
-            ]
-        },
-        {
-            version: '1.36.0',
-            date: '2025-11-05',
-            changes: [
-                {
-                    category: 'feature',
-                    description: 'Activity View - Track notes created, tags added, and links created over time'
-                }
-            ]
-        }
-    ];
+export function getLatestRelease(): LatestRelease {
+    return {
+        version: '1.43.12',
+        date: '2025-11-19',
+        prTitle: 'Add version popup feature to show recent changes',
+        prDescription: `Implements a version badge at the top of the Templates & Recent panel that displays the current extension version. When clicked, it opens a beautiful popup showing recent changes and new features.
+
+**New in this release:**
+- Version badge displayed at top of Templates & Recent panel
+- "What's New" popup with the latest changes
+- Reads version dynamically from package.json
+- Quick links to documentation and GitHub repository
+- Clean, VS Code-themed UI
+
+Similar to the Roo Code extension's version bubble feature.`,
+        prNumber: undefined, // Will be filled when PR is created
+        prUrl: undefined
+    };
 }
 
 /**
@@ -141,6 +77,11 @@ export async function showChangelogView(
                 case 'openGitHub':
                     vscode.env.openExternal(vscode.Uri.parse('https://github.com/jsonify/noted'));
                     break;
+                case 'openPR':
+                    if (message.url) {
+                        vscode.env.openExternal(vscode.Uri.parse(message.url));
+                    }
+                    break;
             }
         },
         undefined,
@@ -152,37 +93,29 @@ export async function showChangelogView(
  * Generate the HTML content for the changelog webview
  */
 function getChangelogHtml(currentVersion: string): string {
-    const changelog = getRecentChangelog();
+    const release = getLatestRelease();
 
-    // Find the current version entry
-    const currentEntry = changelog.find(entry => entry.version === currentVersion);
-
-    // Build the recent changes list
-    const recentChangesHtml = changelog
-        .slice(0, 5) // Show top 5 recent versions
-        .map(entry => {
-            const isCurrent = entry.version === currentVersion;
-            const changesHtml = entry.changes
-                .map(change => {
-                    const emoji = getCategoryEmoji(change.category);
-                    return `<li><span class="change-category ${change.category}">${emoji}</span> ${change.description}</li>`;
-                })
-                .join('');
-
-            return `
-                <div class="version-entry ${isCurrent ? 'current' : ''}">
-                    <div class="version-header">
-                        <span class="version-number">v${entry.version}</span>
-                        ${isCurrent ? '<span class="current-badge">Current</span>' : ''}
-                        <span class="version-date">${formatDate(entry.date)}</span>
-                    </div>
-                    <ul class="changes-list">
-                        ${changesHtml}
-                    </ul>
-                </div>
-            `;
+    // Convert markdown-style description to HTML paragraphs
+    const descriptionHtml = release.prDescription
+        .split('\n\n')
+        .map(paragraph => {
+            // Handle bold text (**text**)
+            const processed = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            // Handle bullet points
+            if (processed.trim().startsWith('-')) {
+                const items = processed.split('\n')
+                    .filter(line => line.trim().startsWith('-'))
+                    .map(line => `<li>${line.trim().substring(1).trim()}</li>`)
+                    .join('');
+                return `<ul>${items}</ul>`;
+            }
+            return `<p>${processed}</p>`;
         })
         .join('');
+
+    const prLinkHtml = release.prUrl
+        ? `<button class="button secondary" onclick="openPR('${release.prUrl}')">🔗 View Pull Request #${release.prNumber}</button>`
+        : '';
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -196,7 +129,7 @@ function getChangelogHtml(currentVersion: string): string {
             color: var(--vscode-foreground);
             background-color: var(--vscode-editor-background);
             padding: 20px;
-            max-width: 800px;
+            max-width: 700px;
             margin: 0 auto;
             line-height: 1.6;
         }
@@ -214,82 +147,81 @@ function getChangelogHtml(currentVersion: string): string {
             color: var(--vscode-textLink-foreground);
         }
 
-        .header .current-version {
-            font-size: 1.2em;
-            color: var(--vscode-descriptionForeground);
-        }
-
-        .version-entry {
-            margin-bottom: 30px;
-            padding: 20px;
-            background-color: var(--vscode-editor-inactiveSelectionBackground);
-            border-radius: 8px;
-            border-left: 4px solid var(--vscode-panel-border);
-        }
-
-        .version-entry.current {
-            border-left-color: var(--vscode-textLink-foreground);
-            background-color: var(--vscode-list-hoverBackground);
-        }
-
-        .version-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .version-number {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: var(--vscode-textLink-foreground);
-        }
-
-        .current-badge {
+        .header .version-badge {
+            display: inline-block;
             background-color: var(--vscode-textLink-foreground);
             color: var(--vscode-editor-background);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 1.1em;
             font-weight: bold;
+            margin-top: 10px;
         }
 
-        .version-date {
-            margin-left: auto;
+        .release-card {
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--vscode-textLink-foreground);
+        }
+
+        .release-header {
+            margin-bottom: 20px;
+        }
+
+        .release-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: var(--vscode-textLink-foreground);
+            margin: 0 0 8px 0;
+        }
+
+        .release-date {
             color: var(--vscode-descriptionForeground);
-            font-size: 0.9em;
+            font-size: 0.95em;
         }
 
-        .changes-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        .release-description {
+            color: var(--vscode-foreground);
+            font-size: 1em;
         }
 
-        .changes-list li {
-            padding: 8px 0;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
+        .release-description p {
+            margin: 12px 0;
         }
 
-        .change-category {
-            flex-shrink: 0;
-            font-size: 1.2em;
+        .release-description ul {
+            margin: 12px 0;
+            padding-left: 20px;
+        }
+
+        .release-description li {
+            margin: 6px 0;
+        }
+
+        .release-description strong {
+            color: var(--vscode-textLink-foreground);
+            font-weight: 600;
         }
 
         .footer {
             text-align: center;
-            margin-top: 40px;
+            margin-top: 30px;
             padding-top: 20px;
             border-top: 1px solid var(--vscode-panel-border);
+        }
+
+        .footer p {
+            color: var(--vscode-descriptionForeground);
+            margin-bottom: 15px;
         }
 
         .footer-buttons {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-top: 15px;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .button {
@@ -320,11 +252,17 @@ function getChangelogHtml(currentVersion: string): string {
 <body>
     <div class="header">
         <h1>🎉 What's New in Noted</h1>
-        <div class="current-version">Current Version: v${currentVersion}</div>
+        <div class="version-badge">v${currentVersion}</div>
     </div>
 
-    <div class="changelog-container">
-        ${recentChangesHtml}
+    <div class="release-card">
+        <div class="release-header">
+            <h2 class="release-title">${release.prTitle}</h2>
+            <div class="release-date">${formatDate(release.date)}</div>
+        </div>
+        <div class="release-description">
+            ${descriptionHtml}
+        </div>
     </div>
 
     <div class="footer">
@@ -332,6 +270,7 @@ function getChangelogHtml(currentVersion: string): string {
         <div class="footer-buttons">
             <button class="button" onclick="openDocs()">📖 View Documentation</button>
             <button class="button secondary" onclick="openGitHub()">⭐ Star on GitHub</button>
+            ${prLinkHtml}
         </div>
     </div>
 
@@ -345,22 +284,13 @@ function getChangelogHtml(currentVersion: string): string {
         function openGitHub() {
             vscode.postMessage({ command: 'openGitHub' });
         }
+
+        function openPR(url) {
+            vscode.postMessage({ command: 'openPR', url: url });
+        }
     </script>
 </body>
 </html>`;
-}
-
-/**
- * Get emoji for change category
- */
-function getCategoryEmoji(category: string): string {
-    const emojiMap: Record<string, string> = {
-        feature: '✨',
-        bugfix: '🐛',
-        improvement: '⚡',
-        documentation: '📝'
-    };
-    return emojiMap[category] || '•';
 }
 
 /**
@@ -370,7 +300,7 @@ function formatDate(dateString: string): string {
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
         year: 'numeric',
-        month: 'short',
+        month: 'long',
         day: 'numeric'
     };
     return date.toLocaleDateString('en-US', options);
