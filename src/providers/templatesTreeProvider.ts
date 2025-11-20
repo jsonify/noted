@@ -74,7 +74,7 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
             const items: TreeItem[] = [];
 
             // Version badge at the top
-            items.push(this.getVersionItem());
+            items.push(await this.getVersionItem());
 
             // Template Browser - primary interface for browsing and managing templates
             items.push(
