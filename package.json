@@ -826,7 +826,7 @@
           "group": "navigation@1"
         },
         {
-          "command": "noted.openWithTemplate",
+          "command": "noted.createHierarchicalNote",
           "when": "view == notedView",
           "group": "navigation@2"
         },
