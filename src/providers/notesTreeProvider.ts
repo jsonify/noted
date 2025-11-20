@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { TreeItem, NoteItem, SectionItem } from './treeItems';
+import { TreeItem, NoteItem, SectionItem, HierarchyItem } from './treeItems';
 import { getNotesPath } from '../services/configService';
 import { pathExists, createDirectory, readDirectoryWithTypes, getFileStats, renameFile } from '../services/fileSystemService';
 import { isYearFolder, isMonthFolder, isDailyNote } from '../utils/validators';
@@ -8,6 +8,14 @@ import { DEFAULTS, SUPPORTED_EXTENSIONS, SPECIAL_FOLDERS } from '../constants';
 import { PinnedNotesService } from '../services/pinnedNotesService';
 import { ArchiveService } from '../services/archiveService';
 import { BulkOperationsService } from '../services/bulkOperationsService';
+import {
+    buildNotesHierarchy,
+    isHierarchicalNotesEnabled,
+    countNotesInHierarchy,
+    findHierarchyNode
+} from '../services/hierarchicalNoteService';
+import { buildHierarchicalFileName } from '../utils/hierarchicalHelpers';
+import { HierarchyNode } from '../utils/hierarchicalHelpers';
 
 /**
  * Tree data provider for the main notes view
@@ -209,6 +217,19 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                 console.error('[NOTED] Error checking Inbox folder:', error);
             }
 
+            // Hierarchical notes section (if feature is enabled and hierarchical notes exist)
+            if (isHierarchicalNotesEnabled()) {
+                try {
+                    const hierarchyRoot = await buildNotesHierarchy();
+                    const noteCount = countNotesInHierarchy(hierarchyRoot);
+                    if (noteCount > 0) {
+                        items.push(new SectionItem('Hierarchical Notes', 'hierarchical'));
+                    }
+                } catch (error) {
+                    console.error('[NOTED] Error checking hierarchical notes:', error);
+                }
+            }
+
             try {
                 // Get all directories in notes path
                 const allEntries = await readDirectoryWithTypes(notesPath);
@@ -242,7 +263,12 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                 return this.getArchivedNotes();
             } else if (element.sectionType === 'inbox') {
                 return this.getInboxNotes();
+            } else if (element.sectionType === 'hierarchical') {
+                return this.getHierarchicalNotes();
             }
+        } else if (element instanceof HierarchyItem) {
+            // Expanding a hierarchy node - show child hierarchies and notes
+            return this.getHierarchyChildren(element);
         } else if (element instanceof NoteItem) {
             if (element.type === 'custom-folder') {
                 // Both month and custom folders can contain notes and subfolders
@@ -502,5 +528,73 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
      */
     getBulkOperationsService(): BulkOperationsService | undefined {
         return this.bulkOperationsService;
+    }
+
+    /**
+     * Get hierarchical notes (root level of hierarchy tree)
+     */
+    private async getHierarchicalNotes(): Promise<TreeItem[]> {
+        try {
+            const hierarchyRoot = await buildNotesHierarchy();
+            const items: TreeItem[] = [];
+
+            // Convert root children to HierarchyItems
+            for (const [segment, childNode] of hierarchyRoot.children) {
+                const noteCount = countNotesInHierarchy(childNode);
+                items.push(new HierarchyItem(segment, childNode.path, noteCount));
+            }
+
+            // Add root-level notes (notes without hierarchy)
+            const notesPath = getNotesPath();
+            if (notesPath) {
+                for (const note of hierarchyRoot.notes) {
+                    const filePath = path.join(notesPath, note.fullPath);
+                    const noteItem = this.createNoteItemForSection(filePath);
+                    items.push(noteItem);
+                }
+            }
+
+            return items;
+        } catch (error) {
+            console.error('[NOTED] Error getting hierarchical notes:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Get children of a hierarchy node
+     */
+    private async getHierarchyChildren(hierarchyItem: HierarchyItem): Promise<TreeItem[]> {
+        try {
+            const hierarchyRoot = await buildNotesHierarchy();
+            const node = findHierarchyNode(hierarchyRoot, hierarchyItem.hierarchyPath);
+
+            if (!node) {
+                return [];
+            }
+
+            const items: TreeItem[] = [];
+
+            // Add child hierarchy nodes
+            for (const [segment, childNode] of node.children) {
+                const noteCount = countNotesInHierarchy(childNode);
+                items.push(new HierarchyItem(segment, childNode.path, noteCount));
+            }
+
+            // Add notes at this level
+            const notesPath = getNotesPath();
+            if (notesPath) {
+                for (const note of node.notes) {
+                    const filePath = path.join(notesPath, note.fullPath);
+                    const noteItem = this.createNoteItemForSection(filePath);
+                    items.push(noteItem);
+                }
+            }
+
+            return items;
+        } catch (error) {
+            console.error('[NOTED] Error getting hierarchy children:', error);
+            return [];
+        }
     }
 }

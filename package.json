@@ -328,6 +328,21 @@
         "icon": "$(trash)"
       },
       {
+        "command": "noted.createHierarchicalNote",
+        "title": "Noted: Create Hierarchical Note",
+        "icon": "$(symbol-namespace)"
+      },
+      {
+        "command": "noted.openHierarchicalNote",
+        "title": "Noted: Open Hierarchical Note",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "noted.searchHierarchicalNotes",
+        "title": "Noted: Search Hierarchical Notes",
+        "icon": "$(search)"
+      },
+      {
         "command": "noted.migrateTemplates",
         "title": "Noted: Migrate Templates to JSON Format",
         "icon": "$(file-symlink-file)"
@@ -1292,6 +1307,36 @@
           "items": {
             "type": "string"
           }
+        },
+        "noted.hierarchy.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable hierarchical note naming with dot-delimited paths (e.g., project.design.frontend.md)"
+        },
+        "noted.hierarchy.separator": {
+          "type": "string",
+          "default": ".",
+          "enum": [
+            ".",
+            "/"
+          ],
+          "description": "Separator character for hierarchy levels"
+        },
+        "noted.hierarchy.maxDepth": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum depth for hierarchical notes (0 = unlimited)",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "noted.hierarchy.validation": {
+          "type": "string",
+          "default": "strict",
+          "enum": [
+            "strict",
+            "relaxed"
+          ],
+          "description": "Validation level for hierarchical note names"
         },
         "noted.search.enableSemantic": {
           "type": "boolean",

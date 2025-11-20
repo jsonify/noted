@@ -108,6 +108,11 @@ import {
     handleClearSummaryHistory,
     handleShowSummaryHistoryStats
 } from './commands/summaryHistoryCommands';
+import {
+    handleCreateHierarchicalNote,
+    handleOpenHierarchicalNote,
+    handleSearchHierarchicalNotes
+} from './commands/hierarchicalCommands';
 import { markdownItWikilinkEmbed, warmUpPathCache, clearPathResolutionCache } from './features/preview/wikilink-embed';
 import { showMarkdownPreview } from './preview/markdownPreview';
 import { FOLDER_PATTERNS, SPECIAL_FOLDERS, MONTH_NAMES, SUPPORTED_EXTENSIONS, getDocumentSelector } from './constants';
@@ -1938,6 +1943,24 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // ============================================================================
+    // Hierarchical Note Commands
+    // ============================================================================
+
+    let createHierarchicalNote = vscode.commands.registerCommand('noted.createHierarchicalNote', async () => {
+        await handleCreateHierarchicalNote();
+        refreshAllProviders();
+    });
+
+    let openHierarchicalNote = vscode.commands.registerCommand('noted.openHierarchicalNote', async () => {
+        await handleOpenHierarchicalNote();
+        refreshAllProviders();
+    });
+
+    let searchHierarchicalNotes = vscode.commands.registerCommand('noted.searchHierarchicalNotes', async () => {
+        await handleSearchHierarchicalNotes();
+    });
+
+    // ============================================================================
     // Markdown Preview Command
     // ============================================================================
 
@@ -2136,6 +2159,7 @@ export function activate(context: vscode.ExtensionContext) {
         createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph, showActivity, showVersionChangelog,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive, bulkMerge,
+        createHierarchicalNote, openHierarchicalNote, searchHierarchicalNotes,
         showPreview, showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol,
