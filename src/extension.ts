@@ -841,15 +841,16 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Sanitize the link text for use as a filename
-        const sanitizedName = linkText.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
-
         // Use the configured file format
         const config = vscode.workspace.getConfiguration('noted');
         const fileFormat = config.get<string>('fileFormat', 'txt');
 
         // Check if the link text is a date format (YYYY-MM-DD)
         const isDateLink = FOLDER_PATTERNS.DAILY_NOTE.test(linkText);
+
+        // Check if it's a hierarchical note format (contains dots and matches pattern)
+        const { isHierarchicalNote: checkHierarchical, validateHierarchicalName, normalizeHierarchicalName } = await import('./utils/hierarchicalHelpers');
+        const isHierarchical = checkHierarchical(linkText + '.' + fileFormat);
 
         let noteFolder: string;
         let fileName: string;
@@ -874,16 +875,41 @@ export function activate(context: vscode.ExtensionContext) {
                 const monthName = MONTH_NAMES[monthNum - 1]; // Month is 1-indexed, array is 0-indexed
                 const folderName = `${monthStr}-${monthName}`;
                 noteFolder = path.join(notesPath, yearStr, folderName);
-                fileName = `${sanitizedName}.${fileFormat}`;
+                fileName = `${linkText}.${fileFormat}`;
                 dateForTemplate = parsedDate;
             } else {
                 // Invalid date (e.g., 2025-02-30) - treat as regular link and place in Inbox
                 noteFolder = path.join(notesPath, SPECIAL_FOLDERS.INBOX);
+                const sanitizedName = linkText.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+                fileName = `${sanitizedName}.${fileFormat}`;
+                dateForTemplate = new Date();
+            }
+        } else if (isHierarchical) {
+            // Hierarchical note - create in Hierarchical Notes folder
+            const normalized = normalizeHierarchicalName(linkText);
+            if (normalized) {
+                const validation = validateHierarchicalName(normalized);
+                if (validation.valid) {
+                    noteFolder = path.join(notesPath, SPECIAL_FOLDERS.HIERARCHICAL);
+                    fileName = `${normalized}.${fileFormat}`;
+                    dateForTemplate = new Date();
+                } else {
+                    // Invalid hierarchical name - fall back to Inbox with sanitization
+                    noteFolder = path.join(notesPath, SPECIAL_FOLDERS.INBOX);
+                    const sanitizedName = linkText.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+                    fileName = `${sanitizedName}.${fileFormat}`;
+                    dateForTemplate = new Date();
+                }
+            } else {
+                // Couldn't normalize - fall back to Inbox
+                noteFolder = path.join(notesPath, SPECIAL_FOLDERS.INBOX);
+                const sanitizedName = linkText.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
                 fileName = `${sanitizedName}.${fileFormat}`;
                 dateForTemplate = new Date();
             }
         } else {
             // Regular links go to Inbox folder
+            const sanitizedName = linkText.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
             noteFolder = path.join(notesPath, SPECIAL_FOLDERS.INBOX);
             fileName = `${sanitizedName}.${fileFormat}`;
             dateForTemplate = new Date();
