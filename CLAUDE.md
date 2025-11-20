@@ -35,10 +35,12 @@ The extension now uses a fully modular architecture with clear separation of con
   - `dateHelpers.ts`: Date formatting utilities
   - `folderHelpers.ts`: Recursive folder operations
   - `frontmatterParser.ts`: YAML frontmatter parsing and tag extraction (v1.24.0)
+  - `hierarchicalHelpers.ts`: Hierarchical note name parsing and validation (v1.45.0)
 - **`src/services/`**: Business logic and file operations
   - `configService.ts`: Configuration management
   - `fileSystemService.ts`: Async file operation wrappers
   - `noteService.ts`: Note operations (search, stats, export)
+  - `hierarchicalNoteService.ts`: Hierarchical note management with dot-delimited paths (v1.45.0)
   - `searchService.ts`: Advanced search with regex and filters (v1.6.0)
   - `templateService.ts`: Template generation
   - `tagService.ts`: Tag indexing and querying
@@ -79,6 +81,7 @@ The extension now uses a fully modular architecture with clear separation of con
   - `tagCommands.ts`: Tag management commands
   - `bulkCommands.ts`: Bulk operation commands (v1.10.0)
   - `bundleCommands.ts`: Multi-note workflow bundle commands (v1.42.0)
+  - `hierarchicalCommands.ts`: Hierarchical note creation and navigation (v1.45.0)
 - **`src/calendar/`**: Calendar view functionality
   - `calendarHelpers.ts`: Calendar date operations
   - `calendarView.ts`: Webview and HTML generation
@@ -105,12 +108,17 @@ The extension now uses a fully modular architecture with clear separation of con
 
 - **Tree Item Types**:
   - `TreeItem`: Base class extending `vscode.TreeItem`
-  - `SectionItem`: Top-level sections (Templates, Recent Notes)
+  - `SectionItem`: Top-level sections (Templates, Recent Notes, Hierarchical Notes)
   - `TemplateItem`: Template options in the Templates section
   - `NoteItem`: Represents years, months, or individual note files with selection support (v1.10.0)
     - `isSelected` property tracks selection state
     - `setSelected()` method updates visual appearance (checkmark icon when selected)
     - `contextValue` changes to 'note-selected' when in select mode
+  - `HierarchyItem` (v1.45.0): Virtual hierarchy nodes for dot-delimited note organization
+    - Represents hierarchy levels (e.g., 'project', 'design' in 'project.design.frontend.md')
+    - Displays segment name, hierarchy path, and note count
+    - Uses 'symbol-namespace' icon and 'hierarchy' context value
+    - Expandable to show child hierarchies and notes
   - `WelcomeItem`/`ActionItem`: For welcome screen (though currently unused as welcome is defined in package.json)
   - `VersionItem` (v1.43.12+): Displays current extension version badge
     - Shown at top of Templates & Recent panel
@@ -290,11 +298,39 @@ The extension now uses a fully modular architecture with clear separation of con
 
 ### File Organization Pattern
 
-Notes are stored in hierarchical structure:
+Noted supports multiple organization methods:
+
+**1. Date-based Daily Notes** (existing):
 ```
 {notesFolder}/{YYYY}/{MM-MonthName}/{YYYY-MM-DD}.{format}
 ```
 Example: `Notes/2025/10-October/2025-10-02.txt`
+
+**2. Hierarchical Notes** (v1.45.0):
+```
+{notesFolder}/{segment1}.{segment2}.{segment3}.{format}
+```
+Examples:
+- `Notes/project.design.frontend.md` - 3-level hierarchy
+- `Notes/work.meetings.standup.md` - Topic-based organization
+- `Notes/readme.md` - Flat note (no hierarchy)
+
+Notes stored as flat files with dot-delimited names are displayed as tree structure:
+```
+📁 Hierarchical Notes
+  📁 project
+    📁 design
+      📄 frontend.md
+  📁 work
+    📁 meetings
+      📄 standup.md
+```
+
+**3. Custom Folders** (existing):
+```
+{notesFolder}/{CustomFolder}/{note}.{format}
+```
+Example: `Notes/Projects/my-project.md`
 
 ### Template System
 
@@ -409,6 +445,10 @@ Settings in `package.json` contributions:
 - `noted.search.maxCandidates`: Max notes to analyze with AI (default: 20, v1.40.0)
 - `noted.search.hybridCandidates`: Top keyword results to re-rank with AI (default: 20, v1.40.0)
 - `noted.search.enableFuzzyMatch`: Enable fuzzy matching for typos (default: false, v1.40.0)
+- `noted.hierarchy.enabled`: Enable hierarchical note naming with dot-delimited paths (default: true, v1.45.0)
+- `noted.hierarchy.separator`: Separator character for hierarchy levels (default: ".", v1.45.0)
+- `noted.hierarchy.maxDepth`: Maximum depth for hierarchical notes, 0 = unlimited (default: 10, v1.45.0)
+- `noted.hierarchy.validation`: Validation level for hierarchical note names: strict/relaxed (default: "strict", v1.45.0)
 
 ## Commands
 
@@ -444,6 +484,18 @@ All commands are registered in `activate()` and defined in package.json contribu
   - Shows relevance scores and match types (keyword/semantic/hybrid)
   - Falls back to keyword search if Copilot unavailable
 - `noted.quickSwitcher` - Quick access to 20 most recent notes (Cmd+Shift+P)
+
+**Hierarchical Note Commands** (v1.45.0):
+- `noted.createHierarchicalNote` - Create a new hierarchical note with dot-delimited path (e.g., project.design.frontend)
+  - Prompts for hierarchy path with validation
+  - Optional template selection
+  - Creates note in root notes folder
+- `noted.openHierarchicalNote` - Open existing or create new hierarchical note
+  - Quick picker with existing hierarchy suggestions
+  - Option to create new if not found
+- `noted.searchHierarchicalNotes` - Search for hierarchical notes by path prefix
+  - Fuzzy search through all hierarchical notes
+  - Direct navigation to selected note
 
 **Tag Commands** (redesigned v1.36.0):
 - `noted.searchTag` - Search for tag in workspace (opens VS Code search with regex)
