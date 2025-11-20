@@ -5,14 +5,15 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { SUPPORTED_EXTENSIONS } from '../constants';
+import { SUPPORTED_EXTENSIONS, SPECIAL_FOLDERS } from '../constants';
 import { getNotesPath, getFileFormat } from './configService';
 import {
     pathExists,
     readDirectoryWithTypes,
     writeFile,
     getFileStats,
-    readFile
+    readFile,
+    createDirectory
 } from './fileSystemService';
 import {
     isHierarchicalNote,
@@ -25,11 +26,10 @@ import {
     HierarchyNode
 } from '../utils/hierarchicalHelpers';
 import { isYearFolder } from '../utils/validators';
-import { SPECIAL_FOLDERS } from '../constants';
 
 /**
- * Get all hierarchical notes in the notes folder
- * @returns Array of hierarchical note file paths (relative to notes folder)
+ * Get all hierarchical notes in the Hierarchical Notes folder
+ * @returns Array of hierarchical note file paths (relative to Hierarchical Notes folder)
  */
 export async function getHierarchicalNotes(): Promise<string[]> {
     const notesPath = getNotesPath();
@@ -37,12 +37,17 @@ export async function getHierarchicalNotes(): Promise<string[]> {
         return [];
     }
 
+    const hierarchicalPath = path.join(notesPath, SPECIAL_FOLDERS.HIERARCHICAL);
+    if (!(await pathExists(hierarchicalPath))) {
+        return [];
+    }
+
     try {
-        const entries = await readDirectoryWithTypes(notesPath);
+        const entries = await readDirectoryWithTypes(hierarchicalPath);
         const hierarchicalNotes: string[] = [];
 
         for (const entry of entries) {
-            // Skip directories and special folders
+            // Skip directories
             if (entry.isDirectory()) {
                 continue;
             }
@@ -149,10 +154,16 @@ export async function createHierarchicalNote(
             return null;
         }
 
+        // Ensure Hierarchical Notes folder exists
+        const hierarchicalPath = path.join(notesPath, SPECIAL_FOLDERS.HIERARCHICAL);
+        if (!(await pathExists(hierarchicalPath))) {
+            await createDirectory(hierarchicalPath);
+        }
+
         // Determine file extension
         const fileExt = extension || getFileFormat();
         const fileName = buildHierarchicalFileName(normalizedPath.split('.'), fileExt);
-        const filePath = path.join(notesPath, fileName);
+        const filePath = path.join(hierarchicalPath, fileName);
 
         // Check if file already exists
         if (await pathExists(filePath)) {
@@ -195,10 +206,11 @@ export async function openHierarchicalNote(
             return false;
         }
 
-        // Build file path
+        // Build file path in Hierarchical Notes folder
+        const hierarchicalPath = path.join(notesPath, SPECIAL_FOLDERS.HIERARCHICAL);
         const fileExt = getFileFormat();
         const fileName = buildHierarchicalFileName(normalizedPath.split('.'), fileExt);
-        const filePath = path.join(notesPath, fileName);
+        const filePath = path.join(hierarchicalPath, fileName);
 
         // Check if file exists
         if (!(await pathExists(filePath))) {

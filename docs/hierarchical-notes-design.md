@@ -15,23 +15,25 @@ This document describes the design for implementing hierarchical note naming in 
 
 ### 1. Storage Format
 
-**Decision:** Store hierarchical notes as flat files with dot-delimited names in the root notes folder.
+**Decision:** Store hierarchical notes as flat files with dot-delimited names in a dedicated "Hierarchical Notes" folder.
 
 **Example:**
-- File: `Notes/project.design.frontend.md`
+- File: `Notes/Hierarchical Notes/project.design.frontend.md`
 - Displays as hierarchy:
   ```
-  📁 project
-    📁 design
-      📄 frontend.md
+  📁 Hierarchical Notes (real folder)
+    📁 project (virtual)
+      📁 design (virtual)
+        📄 frontend.md
   ```
 
 **Advantages:**
-- Simple to implement and maintain
-- Easy to search (single flat namespace)
+- Clear separation from other note types
+- Easy to search (single flat namespace within dedicated folder)
 - Flexible restructuring (just rename file)
 - No nested folder complexity
-- Matches Dendron's approach
+- First-level folder is real, rest are virtual
+- Matches Dendron's approach while keeping organized
 
 ### 2. File Naming Rules
 
@@ -68,20 +70,22 @@ This document describes the design for implementing hierarchical note naming in 
 **Tree Structure:**
 ```
 📁 Notes (root)
-  📁 Hierarchical Notes (section - shown if hierarchical notes exist)
-    📁 project (HierarchyItem)
-      📁 design (HierarchyItem)
+  📌 Pinned Notes (section - if any)
+  📦 Archive (section - if any)
+  📥 Inbox (section - if any)
+  📁 Hierarchical Notes (real folder - custom folder)
+    📁 project (HierarchyItem - virtual)
+      📁 design (HierarchyItem - virtual)
         📄 frontend.md (NoteItem)
         📄 backend.md (NoteItem)
       📄 overview.md (NoteItem under 'project')
-    📁 work (HierarchyItem)
-      📁 meetings (HierarchyItem)
+    📁 work (HierarchyItem - virtual)
+      📁 meetings (HierarchyItem - virtual)
         📄 standup.md (NoteItem)
-  📌 Pinned Notes (existing section)
-  📦 Archive (existing section)
-  📥 Inbox (existing section)
   📁 Projects (custom folder - existing)
 ```
+
+**Note:** "Hierarchical Notes" appears as a regular custom folder at the root level, but when expanded, it displays the virtual hierarchy tree instead of flat files.
 
 ### 4. Hierarchy Building Algorithm
 
@@ -121,14 +125,15 @@ buildHierarchyTree(files: string[]): HierarchyNode {
 
 ### 5. Storage Location
 
-**Hierarchical notes** are stored in the **root of the notes folder** (same level as year folders, Inbox, Archive, etc.)
+**Hierarchical notes** are stored in the **"Hierarchical Notes" folder** within the notes folder.
 
 **Example file structure:**
 ```
 Notes/
-  project.design.frontend.md          # hierarchical note
-  work.meetings.standup.md            # hierarchical note
-  readme.md                           # flat note (no hierarchy)
+  Hierarchical Notes/                 # hierarchical notes folder
+    project.design.frontend.md        # hierarchical note
+    work.meetings.standup.md          # hierarchical note
+    readme.md                         # flat note (no hierarchy)
   2025/                               # date-based (existing)
     11-November/
       2025-11-20.md
@@ -139,6 +144,10 @@ Notes/
   Projects/                           # custom folder (existing)
     project1.md
 ```
+
+**Folder Creation:**
+- The "Hierarchical Notes" folder is automatically created when the first hierarchical note is created
+- If the folder doesn't exist, no "Hierarchical Notes" item appears in the tree view
 
 ### 6. Backwards Compatibility
 

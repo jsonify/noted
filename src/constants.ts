@@ -204,7 +204,8 @@ export const DEFAULTS = {
 export const SPECIAL_FOLDERS = {
     INBOX: 'Inbox',
     TEMPLATES: '.noted-templates',
-    ARCHIVE: '.archive'
+    ARCHIVE: '.archive',
+    HIERARCHICAL: 'Hierarchical Notes'
 };
 
 /**

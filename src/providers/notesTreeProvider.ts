@@ -217,19 +217,6 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                 console.error('[NOTED] Error checking Inbox folder:', error);
             }
 
-            // Hierarchical notes section (if feature is enabled and hierarchical notes exist)
-            if (isHierarchicalNotesEnabled()) {
-                try {
-                    const hierarchyRoot = await buildNotesHierarchy();
-                    const noteCount = countNotesInHierarchy(hierarchyRoot);
-                    if (noteCount > 0) {
-                        items.push(new SectionItem('Hierarchical Notes', 'hierarchical'));
-                    }
-                } catch (error) {
-                    console.error('[NOTED] Error checking hierarchical notes:', error);
-                }
-            }
-
             try {
                 // Get all directories in notes path
                 const allEntries = await readDirectoryWithTypes(notesPath);
@@ -263,14 +250,17 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
                 return this.getArchivedNotes();
             } else if (element.sectionType === 'inbox') {
                 return this.getInboxNotes();
-            } else if (element.sectionType === 'hierarchical') {
-                return this.getHierarchicalNotes();
             }
         } else if (element instanceof HierarchyItem) {
             // Expanding a hierarchy node - show child hierarchies and notes
             return this.getHierarchyChildren(element);
         } else if (element instanceof NoteItem) {
             if (element.type === 'custom-folder') {
+                // Special handling for Hierarchical Notes folder
+                if (element.label === SPECIAL_FOLDERS.HIERARCHICAL) {
+                    return this.getHierarchicalNotes();
+                }
+
                 // Both month and custom folders can contain notes and subfolders
                 try {
                     const entries = await readDirectoryWithTypes(element.filePath);
@@ -547,8 +537,9 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
             // Add root-level notes (notes without hierarchy)
             const notesPath = getNotesPath();
             if (notesPath) {
+                const hierarchicalPath = path.join(notesPath, SPECIAL_FOLDERS.HIERARCHICAL);
                 for (const note of hierarchyRoot.notes) {
-                    const filePath = path.join(notesPath, note.fullPath);
+                    const filePath = path.join(hierarchicalPath, note.fullPath);
                     const noteItem = this.createNoteItemForSection(filePath);
                     items.push(noteItem);
                 }
@@ -584,8 +575,9 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
             // Add notes at this level
             const notesPath = getNotesPath();
             if (notesPath) {
+                const hierarchicalPath = path.join(notesPath, SPECIAL_FOLDERS.HIERARCHICAL);
                 for (const note of node.notes) {
-                    const filePath = path.join(notesPath, note.fullPath);
+                    const filePath = path.join(hierarchicalPath, note.fullPath);
                     const noteItem = this.createNoteItemForSection(filePath);
                     items.push(noteItem);
                 }
