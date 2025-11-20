@@ -7,6 +7,7 @@ import { showCalendarView } from './calendar/calendarView';
 import { showGraphView } from './graph/graphView';
 import { showActivityView } from './activity/activityView';
 import { showTemplateBrowser } from './templates/templateBrowserView';
+import { showChangelogView } from './version/changelogView';
 import { MarkdownToolbarService } from './services/markdownToolbarService';
 import { TagService } from './services/tagService';
 import { TagRenameProvider } from './services/tagRenameProvider';
@@ -139,6 +140,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Create tree data provider for templates view (empty, uses viewsWelcome)
     const templatesProvider = new TemplatesTreeProvider();
+    templatesProvider.setContext(context); // Set context for version info
     const templatesTreeView = vscode.window.createTreeView('notedTemplatesView', {
         treeDataProvider: templatesProvider
     });
@@ -1687,6 +1689,11 @@ export function activate(context: vscode.ExtensionContext) {
         await showActivityView(context, linkService, tagService);
     });
 
+    // Command to show version changelog popup
+    let showVersionChangelog = vscode.commands.registerCommand('noted.showVersionChangelog', async () => {
+        await showChangelogView(context);
+    });
+
     // Command to show current notes folder configuration (for debugging)
     let showNotesConfig = vscode.commands.registerCommand('noted.showConfig', async () => {
         const config = vscode.workspace.getConfiguration('noted');
@@ -2126,7 +2133,7 @@ export function activate(context: vscode.ExtensionContext) {
         createTemplateWithAI, enhanceTemplate, selectAIModel,
         createBundle, createBundleFromTemplates, editBundle, deleteBundle,
         migrateTemplates, createUserStoryWithAI, showTemplateBrowserCmd,
-        createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph, showActivity,
+        createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph, showActivity, showVersionChangelog,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive, bulkMerge,
         showPreview, showMarkdownToolbar,

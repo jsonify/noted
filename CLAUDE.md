@@ -86,6 +86,11 @@ The extension now uses a fully modular architecture with clear separation of con
   - `graphView.ts`: Interactive graph webview with vis.js
 - **`src/activity/`**: Activity chart visualization (v1.36.0)
   - `activityView.ts`: Stacked area chart webview with Chart.js
+- **`src/version/`**: Version information and changelog (v1.43.12+)
+  - `changelogView.ts`: What's New popup webview with recent changes
+  - Displays version badge in Templates & Recent panel
+  - Shows categorized changes (features, bug fixes, improvements, documentation)
+  - Links to documentation and GitHub repository
 
 **File Operations**:
 - All file I/O uses `fs.promises` API with async/await pattern
@@ -107,6 +112,11 @@ The extension now uses a fully modular architecture with clear separation of con
     - `setSelected()` method updates visual appearance (checkmark icon when selected)
     - `contextValue` changes to 'note-selected' when in select mode
   - `WelcomeItem`/`ActionItem`: For welcome screen (though currently unused as welcome is defined in package.json)
+  - `VersionItem` (v1.43.12+): Displays current extension version badge
+    - Shown at top of Templates & Recent panel
+    - Clickable to open changelog popup with recent changes
+    - Reads version from package.json dynamically
+    - Uses 'info' icon and 'version' context value
 
 - **BulkOperationsService** (v1.10.0): Manages multi-select state and bulk operations
   - Tracks selected notes in a `Set<string>` for efficient operations
@@ -452,6 +462,7 @@ All commands are registered in `activate()` and defined in package.json contribu
 - `noted.showCalendar` - Show calendar view for navigating daily notes (Cmd+Shift+C)
 - `noted.showGraph` - Show interactive graph view of note connections (Cmd+Shift+G)
 - `noted.showActivity` - Show activity chart with notes created, tags added, and links created over 12 weeks (v1.36.0)
+- `noted.showVersionChangelog` - Show "What's New" popup with recent changes and features (v1.43.12+)
 - `noted.exportNotes` - Exports notes by date range to single file (Cmd+Shift+E)
 - `noted.deleteNote`, `renameNote`, `duplicateNote`, `copyPath` - File operations on notes
 - `noted.moveNotesFolder` - Renames the notes folder location

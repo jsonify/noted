@@ -374,6 +374,11 @@
         "icon": "$(pulse)"
       },
       {
+        "command": "noted.showVersionChangelog",
+        "title": "Noted: View What's New",
+        "icon": "$(info)"
+      },
+      {
         "command": "noted.showPreview",
         "title": "Noted: Open Preview (with Diagram Support)",
         "icon": "$(open-preview)"

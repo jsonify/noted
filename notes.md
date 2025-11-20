@@ -1,5 +1,17 @@
 # Noted Extension - Features
 
+## What's New
+
+### Version Popup (v1.43.12+)
+- **Version Badge**: Displays current extension version at the top of the Templates & Recent panel
+- **What's New Popup**: Click the version badge to view recent changes and new features
+- **Features**:
+  - Beautiful popup showing recent version releases
+  - Categorized changes with emojis (✨ Features, 🐛 Bug Fixes, ⚡ Improvements, 📝 Documentation)
+  - Quick links to documentation and GitHub repository
+  - Easy access to release notes without leaving VS Code
+- **Command**: `noted.showVersionChangelog` - View what's new in recent releases
+
 ## Core Note-Taking Features
 
 ### Daily Notes
