@@ -34,6 +34,9 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
     private archiveService?: ArchiveService;
     private bulkOperationsService?: BulkOperationsService;
 
+    // Cache for hierarchical notes tree
+    private hierarchyTreeCache?: HierarchyNode;
+
     /**
      * Set the pinned notes service
      */
@@ -60,6 +63,8 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
     }
 
     refresh(): void {
+        // Invalidate hierarchy tree cache to force rebuild on next access
+        this.hierarchyTreeCache = undefined;
         this._onDidChangeTreeData.fire();
     }
 
@@ -521,11 +526,21 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
     }
 
     /**
+     * Get or build the cached hierarchy tree
+     */
+    private async getHierarchyTree(): Promise<HierarchyNode> {
+        if (!this.hierarchyTreeCache) {
+            this.hierarchyTreeCache = await buildNotesHierarchy();
+        }
+        return this.hierarchyTreeCache;
+    }
+
+    /**
      * Get hierarchical notes (root level of hierarchy tree)
      */
     private async getHierarchicalNotes(): Promise<TreeItem[]> {
         try {
-            const hierarchyRoot = await buildNotesHierarchy();
+            const hierarchyRoot = await this.getHierarchyTree();
             const items: TreeItem[] = [];
 
             // Convert root children to HierarchyItems
@@ -557,7 +572,7 @@ export class NotesTreeProvider implements vscode.TreeDataProvider<TreeItem>, vsc
      */
     private async getHierarchyChildren(hierarchyItem: HierarchyItem): Promise<TreeItem[]> {
         try {
-            const hierarchyRoot = await buildNotesHierarchy();
+            const hierarchyRoot = await this.getHierarchyTree();
             const node = findHierarchyNode(hierarchyRoot, hierarchyItem.hierarchyPath);
 
             if (!node) {

@@ -928,7 +928,8 @@ export function activate(context: vscode.ExtensionContext) {
             // Check if file already exists
             try {
                 await fsp.access(filePath);
-                vscode.window.showInformationMessage(`Note already exists: ${sanitizedName}`);
+                const displayName = path.basename(fileName, path.extname(fileName));
+                vscode.window.showInformationMessage(`Note already exists: ${displayName}`);
                 const document = await vscode.workspace.openTextDocument(filePath);
                 await vscode.window.showTextDocument(document);
                 return;
@@ -947,7 +948,8 @@ export function activate(context: vscode.ExtensionContext) {
             // Refresh the tree view
             refreshAllProviders();
 
-            vscode.window.showInformationMessage(`Created note: ${sanitizedName}`);
+            const displayName = path.basename(fileName, path.extname(fileName));
+            vscode.window.showInformationMessage(`Created note: ${displayName}`);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to create note: ${error}`);
         }

@@ -179,7 +179,7 @@ Notes/
 1. **`noted.createHierarchicalNote`** - Create a new hierarchical note
    - Prompts for hierarchical path (e.g., `project.design.frontend`)
    - Validates format
-   - Creates file in root notes folder
+   - Creates file in `Notes/Hierarchical Notes/` folder
    - Opens in editor
 
 2. **`noted.openHierarchicalNote`** - Open or create a hierarchical note

@@ -4,7 +4,17 @@
  */
 
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { SUPPORTED_EXTENSIONS } from '../constants';
+
+/**
+ * Get the configured hierarchy separator from settings
+ * @returns The configured separator (default: '.')
+ */
+export function getSeparator(): string {
+    const config = vscode.workspace.getConfiguration('noted.hierarchy');
+    return config.get<string>('separator', '.');
+}
 
 /**
  * Regular expression for validating hierarchy segments
@@ -15,28 +25,33 @@ import { SUPPORTED_EXTENSIONS } from '../constants';
 const SEGMENT_PATTERN = /^[a-z0-9]([a-z0-9_-]*[a-z0-9])?$/;
 
 /**
- * Regular expression for validating full hierarchical names (without extension)
- * - One or more segments separated by dots
- * - Each segment follows SEGMENT_PATTERN rules
+ * Build hierarchical name pattern based on separator
+ * @param separator The hierarchy separator
+ * @returns Regular expression for validating hierarchical names
  */
-const HIERARCHICAL_NAME_PATTERN = /^[a-z0-9]([a-z0-9_-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9_-]*[a-z0-9])?)*$/;
+function buildHierarchicalPattern(separator: string): RegExp {
+    const escapedSep = separator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`^[a-z0-9]([a-z0-9_-]*[a-z0-9])?(${escapedSep}[a-z0-9]([a-z0-9_-]*[a-z0-9])?)*$`);
+}
 
 /**
- * Check if a filename uses hierarchical naming (contains dots before extension)
+ * Check if a filename uses hierarchical naming (contains separator before extension)
  * @param filename The filename to check (with or without extension)
  * @returns true if the filename uses hierarchical naming
  */
 export function isHierarchicalNote(filename: string): boolean {
     // Remove extension if present
     const nameWithoutExt = removeExtension(filename);
+    const separator = getSeparator();
 
-    // Must have at least one dot to be hierarchical
-    if (!nameWithoutExt.includes('.')) {
+    // Must have at least one separator to be hierarchical
+    if (!nameWithoutExt.includes(separator)) {
         return false;
     }
 
     // Must match the hierarchical naming pattern
-    return HIERARCHICAL_NAME_PATTERN.test(nameWithoutExt);
+    const pattern = buildHierarchicalPattern(separator);
+    return pattern.test(nameWithoutExt);
 }
 
 /**
@@ -53,7 +68,8 @@ export function parseHierarchicalPath(filename: string): string[] | null {
     }
 
     const nameWithoutExt = removeExtension(filename);
-    return nameWithoutExt.split('.');
+    const separator = getSeparator();
+    return nameWithoutExt.split(separator);
 }
 
 /**
@@ -67,24 +83,26 @@ export function validateHierarchicalName(
     options: { maxDepth?: number; strict?: boolean } = {}
 ): { valid: boolean; error?: string } {
     const { maxDepth = 10, strict = true } = options;
+    const separator = getSeparator();
 
     // Check for empty name
     if (!name || name.trim().length === 0) {
         return { valid: false, error: 'Note name cannot be empty' };
     }
 
-    // Check for leading/trailing dots
-    if (name.startsWith('.') || name.endsWith('.')) {
-        return { valid: false, error: 'Note name cannot start or end with a dot' };
+    // Check for leading/trailing separator
+    if (name.startsWith(separator) || name.endsWith(separator)) {
+        return { valid: false, error: `Note name cannot start or end with separator '${separator}'` };
     }
 
-    // Check for consecutive dots
-    if (name.includes('..')) {
-        return { valid: false, error: 'Note name cannot contain consecutive dots' };
+    // Check for consecutive separators
+    const doubleSep = separator + separator;
+    if (name.includes(doubleSep)) {
+        return { valid: false, error: `Note name cannot contain consecutive separators '${separator}'` };
     }
 
     // Split into segments
-    const segments = name.split('.');
+    const segments = name.split(separator);
 
     // Check max depth
     if (maxDepth > 0 && segments.length > maxDepth) {
@@ -155,7 +173,8 @@ export function getParentPath(filename: string): string | null {
         return null;
     }
 
-    return segments.slice(0, -1).join('.');
+    const separator = getSeparator();
+    return segments.slice(0, -1).join(separator);
 }
 
 /**
@@ -185,8 +204,9 @@ export function getNoteName(filename: string): string {
  * buildHierarchicalFileName(['project', 'design', 'frontend'], 'md') → 'project.design.frontend.md'
  */
 export function buildHierarchicalFileName(segments: string[], extension: string): string {
+    const separator = getSeparator();
     const ext = extension.startsWith('.') ? extension : `.${extension}`;
-    return `${segments.join('.')}${ext}`;
+    return `${segments.join(separator)}${ext}`;
 }
 
 /**
@@ -202,9 +222,10 @@ export function getAncestorPaths(filename: string): string[] {
         return [];
     }
 
+    const separator = getSeparator();
     const ancestors: string[] = [];
     for (let i = 1; i < segments.length; i++) {
-        ancestors.push(segments.slice(0, i).join('.'));
+        ancestors.push(segments.slice(0, i).join(separator));
     }
 
     return ancestors;
@@ -221,17 +242,16 @@ export function getAncestorPaths(filename: string): string[] {
  * isDescendantOf('work.meeting', 'project') → false
  */
 export function isDescendantOf(childPath: string, parentPath: string): boolean {
-    const childSegments = parseHierarchicalPath(childPath);
-    const parentSegments = parseHierarchicalPath(parentPath + '.md'); // Add dummy extension
+    const separator = getSeparator();
+    const childSegments = childPath.split(separator);
+    const parentSegments = parentPath.split(separator);
 
-    if (!childSegments || !parentSegments) {
-        return false;
-    }
-
+    // Child must have more segments than parent to be a descendant
     if (childSegments.length <= parentSegments.length) {
         return false;
     }
 
+    // All parent segments must match corresponding child segments
     for (let i = 0; i < parentSegments.length; i++) {
         if (childSegments[i] !== parentSegments[i]) {
             return false;
