@@ -57,7 +57,7 @@ export function getLatestRelease(): LatestRelease {
         const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
 
         // Get version from package.json
-        let version = '1.43.12'; // fallback
+        let version = '1.43.14'; // fallback
         try {
             const packageJsonPath = path.join(
                 vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
@@ -88,20 +88,32 @@ export function getLatestRelease(): LatestRelease {
  */
 function getFallbackRelease(): LatestRelease {
     return {
-        version: '1.43.12',
-        date: '2025-11-19',
-        prTitle: 'Check supported file types in MyNotes panel',
-        prDescription: `Extended SUPPORTED_EXTENSIONS to include common programming language file types, enabling users to store and view scripts in the MyNotes panel.
+        version: '1.43.14',
+        date: '2025-11-20',
+        prTitle: 'Implement hierarchical note naming and organization',
+        prDescription: `Add comprehensive support for Dendron-style hierarchical note organization using dot-delimited naming (e.g., project.design.frontend.md).
 
-**Added support for:**
-- Web development: HTML, CSS, JS/TS, JSON, YAML, XML
-- Programming languages: Python, Java, C/C++, Go, Rust, Ruby, PHP, Swift, Kotlin, R, etc.
-- Shell/scripting: Bash, PowerShell, Windows batch
-- Data/config: SQL, TOML, INI, ENV files
+**Core Features:**
+- **Dot-delimited hierarchies**: Notes like work.meetings.standup.md are organized into visual tree structures
+- **Virtual hierarchy nodes**: Tree view displays hierarchy without requiring actual folder structure
+- **Flexible organization**: Notes stored as flat files in Hierarchical Notes folder, displayed as hierarchical tree
+- **Full validation**: Strict format validation with helpful error messages
 
-Resolves issue where users could only see .md and .txt files in the panel.`,
-        prNumber: 123,
-        prUrl: 'https://github.com/jsonify/noted/pull/123'
+**New Commands:**
+- Create Hierarchical Note - Create new hierarchical note with template selection
+- Open Hierarchical Note - Quick picker with existing hierarchy suggestions
+- Search Hierarchical Notes - Find hierarchical notes by path prefix
+
+**Configuration:**
+- Enable/disable hierarchical notes (default: enabled)
+- Configure separator character (. or /)
+- Set maximum depth limit (default: 10 levels)
+- Choose validation level (strict/relaxed)
+
+**Backwards Compatibility:**
+All existing features work seamlessly with hierarchical notes - wiki links, search, backlinks, tags, graph view, and more!`,
+        prNumber: 125,
+        prUrl: 'https://github.com/jsonify/noted/pull/125'
     };
 }
 
@@ -124,7 +136,7 @@ export async function showChangelogView(
     // Get the current version from package.json
     const extensionPath = context.extensionPath;
     const packageJsonPath = path.join(extensionPath, 'package.json');
-    let currentVersion = '1.43.12'; // fallback
+    let currentVersion = '1.43.14'; // fallback
 
     try {
         const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));
