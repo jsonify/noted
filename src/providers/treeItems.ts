@@ -24,6 +24,8 @@ export class SectionItem extends TreeItem {
             standard: 'book',
             custom: 'file-code',
             manage: 'settings-gear',
+            hierarchical: 'symbol-namespace',
+            inbox: 'inbox',
         };
         const iconName = iconMap[this.sectionType] || 'folder';
         this.iconPath = new vscode.ThemeIcon(iconName);
@@ -96,6 +98,34 @@ export class NoteItem extends TreeItem {
                 this.contextValue = 'note';
             }
         }
+    }
+}
+
+/**
+ * Hierarchy item representing a virtual hierarchy node in hierarchical notes view
+ * These nodes don't represent actual folders, but rather hierarchy levels in dot-delimited note names
+ * Example: 'project.design.frontend.md' creates hierarchy nodes for 'project' and 'design'
+ */
+export class HierarchyItem extends TreeItem {
+    constructor(
+        public readonly segment: string,
+        public readonly hierarchyPath: string,
+        public readonly noteCount: number
+    ) {
+        super(segment, vscode.TreeItemCollapsibleState.Collapsed);
+
+        this.iconPath = new vscode.ThemeIcon('symbol-namespace');
+        this.contextValue = 'hierarchy';
+        this.description = `${noteCount} note${noteCount !== 1 ? 's' : ''}`;
+        this.tooltip = this.buildTooltip();
+    }
+
+    private buildTooltip(): vscode.MarkdownString {
+        const tooltip = new vscode.MarkdownString('', true);
+        tooltip.appendMarkdown(`**Hierarchy:** \`${this.hierarchyPath}\`\n\n`);
+        tooltip.appendMarkdown(`**Notes:** ${this.noteCount}\n\n`);
+        tooltip.appendMarkdown('Expand to see child hierarchies and notes');
+        return tooltip;
     }
 }
 
