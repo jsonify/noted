@@ -159,28 +159,155 @@ export async function showChangelogView(
 }
 
 /**
+ * Parse markdown text to HTML with proper formatting
+ * Handles: bold text, bullet lists, numbered lists, line breaks, code blocks
+ */
+function parseMarkdownToHtml(markdown: string): string {
+    const lines = markdown.split('\n');
+    const html: string[] = [];
+    let inList = false;
+    let listType: 'ul' | 'ol' | null = null;
+    let currentParagraph: string[] = [];
+
+    const flushParagraph = () => {
+        if (currentParagraph.length > 0) {
+            const text = currentParagraph.join(' ').trim();
+            if (text) {
+                // Apply inline formatting
+                const formatted = applyInlineFormatting(text);
+                html.push(`<p>${formatted}</p>`);
+            }
+            currentParagraph = [];
+        }
+    };
+
+    const closeList = () => {
+        if (inList && listType) {
+            html.push(`</${listType}>`);
+            inList = false;
+            listType = null;
+        }
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+
+        // Empty line
+        if (!trimmed) {
+            flushParagraph();
+            closeList();
+            continue;
+        }
+
+        // Bullet list (-, *, •)
+        const bulletMatch = trimmed.match(/^[-*•]\s+(.+)$/);
+        if (bulletMatch) {
+            flushParagraph();
+            if (!inList || listType !== 'ul') {
+                closeList();
+                html.push('<ul>');
+                inList = true;
+                listType = 'ul';
+            }
+            html.push(`<li>${applyInlineFormatting(bulletMatch[1])}</li>`);
+            continue;
+        }
+
+        // Numbered list (1., 2., etc.)
+        const numberedMatch = trimmed.match(/^\d+\.\s+(.+)$/);
+        if (numberedMatch) {
+            flushParagraph();
+            if (!inList || listType !== 'ol') {
+                closeList();
+                html.push('<ol>');
+                inList = true;
+                listType = 'ol';
+            }
+            html.push(`<li>${applyInlineFormatting(numberedMatch[1])}</li>`);
+            continue;
+        }
+
+        // Code block or special formatting
+        if (trimmed.startsWith('```')) {
+            flushParagraph();
+            closeList();
+            // Skip code blocks for now
+            continue;
+        }
+
+        // Heading (##)
+        const headingMatch = trimmed.match(/^(#{2,})\s+(.+)$/);
+        if (headingMatch) {
+            flushParagraph();
+            closeList();
+            const level = Math.min(headingMatch[1].length, 6);
+            html.push(`<h${level}>${applyInlineFormatting(headingMatch[2])}</h${level}>`);
+            continue;
+        }
+
+        // Regular paragraph line
+        closeList();
+        currentParagraph.push(trimmed);
+    }
+
+    // Flush any remaining content
+    flushParagraph();
+    closeList();
+
+    return html.join('\n');
+}
+
+/**
+ * Apply inline markdown formatting (bold, italic, code)
+ */
+function applyInlineFormatting(text: string): string {
+    // Use placeholders to avoid conflicts during replacement
+    let result = text;
+
+    // Links [text](url) - replace with placeholder
+    const links: string[] = [];
+    result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+        links.push(`<a href="${url}">${text}</a>`);
+        return `__LINK_${links.length - 1}__`;
+    });
+
+    // Inline code - replace with placeholder
+    const codes: string[] = [];
+    result = result.replace(/`([^`]+)`/g, (match, code) => {
+        codes.push(`<code>${code}</code>`);
+        return `__CODE_${codes.length - 1}__`;
+    });
+
+    // Bold (**text** or __text__)
+    result = result.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+    result = result.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+
+    // Italic (*text* or _text_) - only single chars
+    result = result.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
+    result = result.replace(/_([^_]+)_/g, '<em>$1</em>');
+
+    // Restore codes
+    codes.forEach((code, i) => {
+        result = result.replace(`__CODE_${i}__`, code);
+    });
+
+    // Restore links
+    links.forEach((link, i) => {
+        result = result.replace(`__LINK_${i}__`, link);
+    });
+
+    return result;
+}
+
+/**
  * Generate the HTML content for the changelog webview
  */
 function getChangelogHtml(currentVersion: string): string {
     const release = getLatestRelease();
 
-    // Convert markdown-style description to HTML paragraphs
-    const descriptionHtml = release.prDescription
-        .split('\n\n')
-        .map(paragraph => {
-            // Handle bold text (**text**)
-            const processed = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            // Handle bullet points
-            if (processed.trim().startsWith('-')) {
-                const items = processed.split('\n')
-                    .filter(line => line.trim().startsWith('-'))
-                    .map(line => `<li>${line.trim().substring(1).trim()}</li>`)
-                    .join('');
-                return `<ul>${items}</ul>`;
-            }
-            return `<p>${processed}</p>`;
-        })
-        .join('');
+    // Convert markdown-style description to HTML
+    const descriptionHtml = parseMarkdownToHtml(release.prDescription);
 
     const prLinkHtml = release.prUrl
         ? `<button class="button secondary" onclick="openPR('${release.prUrl}')">🔗 View Pull Request #${release.prNumber}</button>`
@@ -260,18 +387,62 @@ function getChangelogHtml(currentVersion: string): string {
             margin: 12px 0;
         }
 
-        .release-description ul {
+        .release-description ul,
+        .release-description ol {
             margin: 12px 0;
-            padding-left: 20px;
+            padding-left: 24px;
         }
 
         .release-description li {
             margin: 6px 0;
+            line-height: 1.5;
         }
 
         .release-description strong {
             color: var(--vscode-textLink-foreground);
             font-weight: 600;
+        }
+
+        .release-description em {
+            font-style: italic;
+        }
+
+        .release-description code {
+            background-color: var(--vscode-textCodeBlock-background);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 0.9em;
+        }
+
+        .release-description h2,
+        .release-description h3,
+        .release-description h4 {
+            margin: 16px 0 8px 0;
+            color: var(--vscode-textLink-foreground);
+        }
+
+        .release-description h2 {
+            font-size: 1.2em;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            padding-bottom: 4px;
+        }
+
+        .release-description h3 {
+            font-size: 1.1em;
+        }
+
+        .release-description h4 {
+            font-size: 1.05em;
+        }
+
+        .release-description a {
+            color: var(--vscode-textLink-foreground);
+            text-decoration: none;
+        }
+
+        .release-description a:hover {
+            text-decoration: underline;
         }
 
         .footer {
