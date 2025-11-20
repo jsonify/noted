@@ -127,7 +127,7 @@ export async function showChangelogView(
     let currentVersion = '1.43.12'; // fallback
 
     try {
-        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+        const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));
         currentVersion = packageJson.version;
     } catch (error) {
         console.error('[NOTED] Error reading package.json:', error);
