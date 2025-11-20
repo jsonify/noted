@@ -221,21 +221,22 @@ export class TemplatesTreeProvider implements vscode.TreeDataProvider<TreeItem> 
     /**
      * Get version badge item
      */
-    private getVersionItem(): VersionItem {
-        let version = '1.43.12'; // fallback
+private async getVersionItem(): Promise<VersionItem> {
+    let version = '1.43.12'; // fallback
 
-        if (this.context) {
-            try {
-                const packageJsonPath = path.join(this.context.extensionPath, 'package.json');
-                const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-                version = packageJson.version;
-            } catch (error) {
-                console.error('[NOTED] Error reading version from package.json:', error);
-            }
+    if (this.context) {
+        try {
+            const packageJsonPath = path.join(this.context.extensionPath, 'package.json');
+            const packageJsonContent = await fs.promises.readFile(packageJsonPath, 'utf8');
+            const packageJson = JSON.parse(packageJsonContent);
+            version = packageJson.version;
+        } catch (error) {
+            console.error('[NOTED] Error reading version from package.json:', error);
         }
-
-        return new VersionItem(version);
     }
+
+    return new VersionItem(version);
+}
 
     /**
      * Get recent notes
