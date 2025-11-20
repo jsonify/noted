@@ -31,15 +31,19 @@ export function getLatestRelease(): LatestRelease {
             return getFallbackRelease();
         }
 
-        const lines = gitLog.split('\n');
-        const firstLine = lines[0];
-        const parts = firstLine.split('|');
+        // Split by pipe, but limit to 4 parts (hash, title, body, date)
+        // Body can contain newlines and multiple pipes, so we need to handle carefully
+        const parts = gitLog.split('|');
 
         if (parts.length < 4) {
             return getFallbackRelease();
         }
 
-        const [hash, title, body, dateStr] = parts;
+        // Extract parts: hash, title, body (everything between title and date), date (last part)
+        const hash = parts[0];
+        const title = parts[1];
+        const dateStr = parts[parts.length - 1]; // Last part is date
+        const body = parts.slice(2, parts.length - 1).join('|'); // Everything in between is body
 
         // Extract PR number from title (e.g., "Title (#123)" -> 123)
         const prMatch = title.match(/#(\d+)\)$/);
