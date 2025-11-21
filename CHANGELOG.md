@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.43.16](https://github.com/jsonify/noted/compare/v1.43.15...v1.43.16) (2025-11-21)
+
+
+### Bug Fixes
+
+* Add double-click support for persistent note tabs ([#127](https://github.com/jsonify/noted/issues/127)) ([2be82aa](https://github.com/jsonify/noted/commit/2be82aab24c803dbbe5f81dd33bb3460b31019f1))
+
 ### [1.43.15](https://github.com/jsonify/noted/compare/v1.43.14...v1.43.15) (2025-11-21)
 
 ### [1.43.14](https://github.com/jsonify/noted/compare/v1.43.13...v1.43.14) (2025-11-20)
