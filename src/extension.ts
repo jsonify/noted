@@ -827,10 +827,29 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // Double-click detection for tree view
+    let lastClickedFile: string | null = null;
+    let lastClickTime: number = 0;
+    const DOUBLE_CLICK_THRESHOLD = 300; // milliseconds
+
     // Command to open note from tree
     let openNote = vscode.commands.registerCommand('noted.openNote', async (filePath: string) => {
+        const now = Date.now();
+        const timeSinceLastClick = now - lastClickTime;
+        const isDoubleClick = lastClickedFile === filePath && timeSinceLastClick < DOUBLE_CLICK_THRESHOLD;
+
+        // Update tracking variables
+        lastClickedFile = filePath;
+        lastClickTime = now;
+
         const document = await vscode.workspace.openTextDocument(filePath);
-        await vscode.window.showTextDocument(document, { preserveFocus: true });
+
+        // Open in persistent mode (non-preview) if double-clicked, otherwise open in preview mode
+        if (isDoubleClick) {
+            await vscode.window.showTextDocument(document, { preview: false, preserveFocus: false });
+        } else {
+            await vscode.window.showTextDocument(document, { preview: true, preserveFocus: true });
+        }
     });
 
     // Command to create a note from a link (used in hover preview for broken links)
