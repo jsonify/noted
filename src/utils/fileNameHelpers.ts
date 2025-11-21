@@ -69,6 +69,9 @@ export function sanitizeFileName(input: string, defaultExtension: string): {
 } {
     const { baseName, extension } = extractFileExtension(input);
 
+    console.log('[NOTED] sanitizeFileName - input:', input);
+    console.log('[NOTED] sanitizeFileName - baseName:', baseName, 'extension:', extension);
+
     // Sanitize the base name: replace spaces with dashes, remove special chars
     // Keep alphanumeric, dashes, and underscores only
     const sanitized = baseName
@@ -78,6 +81,8 @@ export function sanitizeFileName(input: string, defaultExtension: string): {
 
     // Use user's extension if provided, otherwise use default
     const finalExtension = extension || defaultExtension;
+
+    console.log('[NOTED] sanitizeFileName - result:', sanitized, 'final extension:', finalExtension);
 
     return {
         sanitizedName: sanitized,
