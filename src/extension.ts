@@ -119,7 +119,9 @@ import { FOLDER_PATTERNS, SPECIAL_FOLDERS, MONTH_NAMES, SUPPORTED_EXTENSIONS, ge
 import { showModalWarning, showModalInfo, StandardButtons, StandardDetails } from './utils/dialogHelpers';
 
 export function activate(context: vscode.ExtensionContext) {
+    console.log('========== NOTED EXTENSION ACTIVATED - VERSION 1.43.16-dev ==========');
     console.log('Noted extension is now active');
+    vscode.window.showInformationMessage('[DEBUG] Noted extension activated!');
 
     const config = vscode.workspace.getConfiguration('noted');
     const notesFolder = config.get<string>('notesFolder', 'Notes');
@@ -618,6 +620,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command to create a quick note directly
     let createQuickNote = vscode.commands.registerCommand('noted.createQuickNote', async () => {
+        console.log('========== NOTED.CREATEQUICKNOTE COMMAND TRIGGERED ==========');
+        vscode.window.showInformationMessage('[DEBUG] createQuickNote command started!');
         await createNoteFromTemplate('quick');
         refreshAllProviders();
     });
