@@ -5,6 +5,7 @@ import { getNotesPath, getFileFormat } from './configService';
 import { pathExists, createDirectory, writeFile, readFile, readDirectoryWithTypes, getFileStats } from './fileSystemService';
 import { generateTemplate } from './templateService';
 import { getYear, getMonth, getMonthName, getDay, getFolderName, getTimeForFilename } from '../utils/dateHelpers';
+import { sanitizeFileName } from '../utils/fileNameHelpers';
 import { TagService } from './tagService';
 import { SummarizationService } from './summarizationService';
 
@@ -73,18 +74,15 @@ export async function createNoteFromTemplate(templateType: string): Promise<void
             return;
         }
 
-        // Sanitize filename: replace spaces with dashes, remove special chars
-        const sanitizedName = noteName
-            .toLowerCase()
-            .replace(/\s+/g, '-')
-            .replace(/[^a-z0-9-_]/g, '');
+        // Sanitize filename and extract extension if provided
+        const defaultFormat = getFileFormat();
+        const { sanitizedName, extension } = sanitizeFileName(noteName, defaultFormat);
 
-        const fileFormat = getFileFormat();
         const now = new Date();
 
         // All non-daily notes go to Inbox folder
         const noteFolder = path.join(notesPath, 'Inbox');
-        const fileName = `${sanitizedName}.${fileFormat}`;
+        const fileName = `${sanitizedName}.${extension}`;
         const filePath = path.join(noteFolder, fileName);
 
         // Create Inbox folder if it doesn't exist

@@ -10,6 +10,7 @@ import { getNotesPath, getFileFormat } from './configService';
 import { pathExists, createDirectory, writeFile } from './fileSystemService';
 import { generateTemplate } from './templateService';
 import { getYear, getMonth, getFolderName, getDay, getTimeForFilename } from '../utils/dateHelpers';
+import { sanitizeFileName } from '../utils/fileNameHelpers';
 
 /**
  * Get category for a given template type
@@ -90,12 +91,9 @@ export async function getCategoryFolderPath(
     // Generate filename - either user-provided or timestamp-based
     let fileName: string;
     if (noteName) {
-        // Sanitize the note name
-        const sanitizedName = noteName
-            .toLowerCase()
-            .replace(/\s+/g, '-')
-            .replace(/[^a-z0-9-_]/g, '');
-        fileName = `${sanitizedName}.${fileFormat}`;
+        // Sanitize the note name and extract extension if provided
+        const { sanitizedName, extension } = sanitizeFileName(noteName, fileFormat);
+        fileName = `${sanitizedName}.${extension}`;
     } else {
         // Use timestamp for unique filename
         const year = getYear(now);
