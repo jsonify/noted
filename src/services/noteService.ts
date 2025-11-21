@@ -64,6 +64,9 @@ export async function createNoteFromTemplate(templateType: string): Promise<void
     }
 
     try {
+        console.log('[NOTED] ========== createNoteFromTemplate CALLED ==========');
+        console.log('[NOTED] Template type:', templateType);
+
         // Ask for note name
         const noteName = await vscode.window.showInputBox({
             prompt: 'Enter note name',
@@ -74,8 +77,11 @@ export async function createNoteFromTemplate(templateType: string): Promise<void
             return;
         }
 
+        console.log('[NOTED] User entered note name:', noteName);
+
         // Sanitize filename and extract extension if provided
         const defaultFormat = getFileFormat();
+        console.log('[NOTED] Default format:', defaultFormat);
         const { sanitizedName, extension } = sanitizeFileName(noteName, defaultFormat);
 
         const now = new Date();
@@ -84,6 +90,9 @@ export async function createNoteFromTemplate(templateType: string): Promise<void
         const noteFolder = path.join(notesPath, 'Inbox');
         const fileName = `${sanitizedName}.${extension}`;
         const filePath = path.join(noteFolder, fileName);
+
+        console.log('[NOTED] Final fileName:', fileName);
+        console.log('[NOTED] Full filePath:', filePath);
 
         // Create Inbox folder if it doesn't exist
         if (!(await pathExists(noteFolder))) {
