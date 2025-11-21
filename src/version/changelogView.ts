@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { execSync } from 'child_process';
+import fallbackReleaseData from './fallback-release.json';
 
 // Latest release information
 export interface LatestRelease {
@@ -57,7 +58,7 @@ export function getLatestRelease(): LatestRelease {
         const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
 
         // Get version from package.json
-        let version = '1.43.14'; // fallback
+        let version = fallbackReleaseData.version;
         try {
             const packageJsonPath = path.join(
                 vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
@@ -85,36 +86,10 @@ export function getLatestRelease(): LatestRelease {
 
 /**
  * Fallback release info when Git parsing fails
+ * Reads from fallback-release.json to centralize release data
  */
 function getFallbackRelease(): LatestRelease {
-    return {
-        version: '1.43.14',
-        date: '2025-11-20',
-        prTitle: 'Implement hierarchical note naming and organization',
-        prDescription: `Add comprehensive support for Dendron-style hierarchical note organization using dot-delimited naming (e.g., project.design.frontend.md).
-
-**Core Features:**
-- **Dot-delimited hierarchies**: Notes like work.meetings.standup.md are organized into visual tree structures
-- **Virtual hierarchy nodes**: Tree view displays hierarchy without requiring actual folder structure
-- **Flexible organization**: Notes stored as flat files in Hierarchical Notes folder, displayed as hierarchical tree
-- **Full validation**: Strict format validation with helpful error messages
-
-**New Commands:**
-- Create Hierarchical Note - Create new hierarchical note with template selection
-- Open Hierarchical Note - Quick picker with existing hierarchy suggestions
-- Search Hierarchical Notes - Find hierarchical notes by path prefix
-
-**Configuration:**
-- Enable/disable hierarchical notes (default: enabled)
-- Configure separator character (. or /)
-- Set maximum depth limit (default: 10 levels)
-- Choose validation level (strict/relaxed)
-
-**Backwards Compatibility:**
-All existing features work seamlessly with hierarchical notes - wiki links, search, backlinks, tags, graph view, and more!`,
-        prNumber: 125,
-        prUrl: 'https://github.com/jsonify/noted/pull/125'
-    };
+    return fallbackReleaseData;
 }
 
 /**
@@ -136,7 +111,7 @@ export async function showChangelogView(
     // Get the current version from package.json
     const extensionPath = context.extensionPath;
     const packageJsonPath = path.join(extensionPath, 'package.json');
-    let currentVersion = '1.43.14'; // fallback
+    let currentVersion = fallbackReleaseData.version;
 
     try {
         const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));
