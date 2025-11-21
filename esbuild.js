@@ -57,6 +57,10 @@ async function main() {
     ],
     // Bundle all dependencies except those in VS Code's runtime
     packages: 'bundle',
+    // Enable JSON module imports
+    loader: {
+      '.json': 'json',
+    },
   });
 
   if (watch) {

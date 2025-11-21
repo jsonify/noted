@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { execSync } from 'child_process';
+import fallbackReleaseData from './fallback-release.json';
 
 // Latest release information
 export interface LatestRelease {
@@ -57,7 +58,7 @@ export function getLatestRelease(): LatestRelease {
         const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
 
         // Get version from package.json
-        let version = '1.43.12'; // fallback
+        let version = fallbackReleaseData.version;
         try {
             const packageJsonPath = path.join(
                 vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
@@ -85,24 +86,10 @@ export function getLatestRelease(): LatestRelease {
 
 /**
  * Fallback release info when Git parsing fails
+ * Reads from fallback-release.json to centralize release data
  */
 function getFallbackRelease(): LatestRelease {
-    return {
-        version: '1.43.12',
-        date: '2025-11-19',
-        prTitle: 'Check supported file types in MyNotes panel',
-        prDescription: `Extended SUPPORTED_EXTENSIONS to include common programming language file types, enabling users to store and view scripts in the MyNotes panel.
-
-**Added support for:**
-- Web development: HTML, CSS, JS/TS, JSON, YAML, XML
-- Programming languages: Python, Java, C/C++, Go, Rust, Ruby, PHP, Swift, Kotlin, R, etc.
-- Shell/scripting: Bash, PowerShell, Windows batch
-- Data/config: SQL, TOML, INI, ENV files
-
-Resolves issue where users could only see .md and .txt files in the panel.`,
-        prNumber: 123,
-        prUrl: 'https://github.com/jsonify/noted/pull/123'
-    };
+    return fallbackReleaseData;
 }
 
 /**
@@ -124,7 +111,7 @@ export async function showChangelogView(
     // Get the current version from package.json
     const extensionPath = context.extensionPath;
     const packageJsonPath = path.join(extensionPath, 'package.json');
-    let currentVersion = '1.43.12'; // fallback
+    let currentVersion = fallbackReleaseData.version;
 
     try {
         const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));

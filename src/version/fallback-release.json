@@ -1,0 +1,8 @@
+{
+  "version": "1.43.14",
+  "date": "2025-11-20",
+  "prTitle": "Implement hierarchical note naming and organization",
+  "prDescription": "Add comprehensive support for Dendron-style hierarchical note organization using dot-delimited naming (e.g., project.design.frontend.md).\n\n**Core Features:**\n- **Dot-delimited hierarchies**: Notes like work.meetings.standup.md are organized into visual tree structures\n- **Virtual hierarchy nodes**: Tree view displays hierarchy without requiring actual folder structure\n- **Flexible organization**: Notes stored as flat files in Hierarchical Notes folder, displayed as hierarchical tree\n- **Full validation**: Strict format validation with helpful error messages\n\n**New Commands:**\n- Create Hierarchical Note - Create new hierarchical note with template selection\n- Open Hierarchical Note - Quick picker with existing hierarchy suggestions\n- Search Hierarchical Notes - Find hierarchical notes by path prefix\n\n**Configuration:**\n- Enable/disable hierarchical notes (default: enabled)\n- Configure separator character (. or /)\n- Set maximum depth limit (default: 10 levels)\n- Choose validation level (strict/relaxed)\n\n**Backwards Compatibility:**\nAll existing features work seamlessly with hierarchical notes - wiki links, search, backlinks, tags, graph view, and more!",
+  "prNumber": 125,
+  "prUrl": "https://github.com/jsonify/noted/pull/125"
+}
