@@ -2,7 +2,7 @@
   "name": "noted",
   "displayName": "Noted",
   "description": "Comprehensive workspace notes with wiki-style links, diagram embeds (Draw.io & Excalidraw), graph visualization, templates, advanced search, and daily tracking",
-  "version": "1.43.16",
+  "version": "1.43.17",
   "icon": "icon.png",
   "publisher": "jsonify",
   "repository": {
@@ -392,6 +392,11 @@
         "command": "noted.showVersionChangelog",
         "title": "Noted: View What's New",
         "icon": "$(info)"
+      },
+      {
+        "command": "noted.showOutput",
+        "title": "Noted: Show Output Channel",
+        "icon": "$(output)"
       },
       {
         "command": "noted.showPreview",
@@ -1155,6 +1160,11 @@
           ],
           "default": "md",
           "description": "File format for notes"
+        },
+        "noted.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging to the 'Noted' output channel (View > Output > Noted)"
         },
         "noted.useTemplate": {
           "type": "boolean",
