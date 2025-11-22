@@ -394,6 +394,11 @@
         "icon": "$(info)"
       },
       {
+        "command": "noted.showOutput",
+        "title": "Noted: Show Output Channel",
+        "icon": "$(output)"
+      },
+      {
         "command": "noted.showPreview",
         "title": "Noted: Open Preview (with Diagram Support)",
         "icon": "$(open-preview)"
@@ -1155,6 +1160,11 @@
           ],
           "default": "md",
           "description": "File format for notes"
+        },
+        "noted.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging to the 'Noted' output channel (View > Output > Noted)"
         },
         "noted.useTemplate": {
           "type": "boolean",

@@ -93,6 +93,7 @@ import {
     handleEditBundle,
     handleDeleteBundle
 } from './commands/bundleCommands';
+import { logger, LogLevel } from './services/logService';
 import {
     handleCreatePromptTemplate,
     handleEditPromptTemplate,
@@ -119,9 +120,16 @@ import { FOLDER_PATTERNS, SPECIAL_FOLDERS, MONTH_NAMES, SUPPORTED_EXTENSIONS, ge
 import { showModalWarning, showModalInfo, StandardButtons, StandardDetails } from './utils/dialogHelpers';
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Noted extension is now active');
-
+    // Initialize logger and add to subscriptions for proper disposal
     const config = vscode.workspace.getConfiguration('noted');
+    const debugMode = config.get<boolean>('debug', false);
+    if (debugMode) {
+        logger.setMinLogLevel(LogLevel.Debug);
+    }
+    context.subscriptions.push({ dispose: () => logger.dispose() });
+
+    logger.info('Noted extension activated');
+    logger.debug('Configuration loaded', { notesFolder: config.get('notesFolder') });
     const notesFolder = config.get<string>('notesFolder', 'Notes');
     const workspaceFolders = vscode.workspace.workspaceFolders;
 
@@ -1747,6 +1755,11 @@ export function activate(context: vscode.ExtensionContext) {
         await showChangelogView(context);
     });
 
+    // Command to show the Noted output channel (for debugging)
+    let showOutput = vscode.commands.registerCommand('noted.showOutput', () => {
+        logger.show(false); // Show the output channel and focus it
+    });
+
     // Command to show current notes folder configuration (for debugging)
     let showNotesConfig = vscode.commands.registerCommand('noted.showConfig', async () => {
         const config = vscode.workspace.getConfiguration('noted');
@@ -2204,7 +2217,7 @@ export function activate(context: vscode.ExtensionContext) {
         createTemplateWithAI, enhanceTemplate, selectAIModel,
         createBundle, createBundleFromTemplates, editBundle, deleteBundle,
         migrateTemplates, createUserStoryWithAI, showTemplateBrowserCmd,
-        createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph, showActivity, showVersionChangelog,
+        createFolder, moveNote, renameFolder, deleteFolder, showCalendar, showGraph, showActivity, showVersionChangelog, showOutput,
         togglePinNote, archiveNote, unarchiveNote, archiveOldNotes, rebuildBacklinks, clearBacklinks,
         toggleSelectMode, toggleNoteSelection, selectAllNotes, clearSelection, bulkDelete, bulkMove, bulkArchive, bulkMerge,
         createHierarchicalNote, openHierarchicalNote, searchHierarchicalNotes,
@@ -2632,6 +2645,7 @@ async function openDailyNote(templateType?: string) {
     const notesPath = getNotesPath();
     if (!notesPath) {
         vscode.window.showErrorMessage('Please open a workspace folder first');
+        logger.warn('openDailyNote: No workspace folder');
         return;
     }
 
@@ -2651,6 +2665,8 @@ async function openDailyNote(templateType?: string) {
         const noteFolder = path.join(notesPath, year, folderName);
         const filePath = path.join(noteFolder, fileName);
 
+        logger.debug('openDailyNote', { fileName, templateType });
+
         try {
             await fsp.access(noteFolder);
         } catch {
@@ -2660,10 +2676,12 @@ async function openDailyNote(templateType?: string) {
         let isNewNote = false;
         try {
             await fsp.access(filePath);
+            logger.info('Opening existing daily note', { fileName });
         } catch {
             const content = await generateTemplate(templateType, now);
             await fsp.writeFile(filePath, content);
             isNewNote = true;
+            logger.info('Created new daily note', { fileName, templateType });
         }
 
         const document = await vscode.workspace.openTextDocument(filePath);
@@ -2679,6 +2697,7 @@ async function openDailyNote(templateType?: string) {
             autoTagNewNote(filePath);
         }
     } catch (error) {
+        logger.error('Failed to open daily note', error instanceof Error ? error : new Error(String(error)));
         vscode.window.showErrorMessage(`Failed to open daily note: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -3289,4 +3308,6 @@ async function previewTemplate() {
     `;
 }
 
-export function deactivate() {}
+export function deactivate() {
+    logger.info('Noted extension deactivated');
+}
