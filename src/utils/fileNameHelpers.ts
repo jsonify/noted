@@ -2,8 +2,6 @@
  * Utility functions for handling filenames and extensions
  */
 
-import { logger } from '../services/logService';
-
 /**
  * List of common file extensions that should be preserved
  * when user explicitly provides them in the filename
@@ -71,8 +69,6 @@ export function sanitizeFileName(input: string, defaultExtension: string): {
 } {
     const { baseName, extension } = extractFileExtension(input);
 
-    logger.info('sanitizeFileName called', { input, baseName, extension });
-
     // Sanitize the base name: replace spaces with dashes, remove special chars
     // Keep alphanumeric, dashes, and underscores only
     const sanitized = baseName
@@ -83,20 +79,8 @@ export function sanitizeFileName(input: string, defaultExtension: string): {
     // Use user's extension if provided, otherwise use default
     const finalExtension = extension || defaultExtension;
 
-    logger.info('sanitizeFileName result', { sanitized, finalExtension });
-
     return {
         sanitizedName: sanitized,
         extension: finalExtension
     };
-}
-
-/**
- * Build complete filename with extension
- * @param sanitizedName The sanitized base name
- * @param extension The extension (without dot)
- * @returns Complete filename with extension
- */
-export function buildFileName(sanitizedName: string, extension: string): string {
-    return `${sanitizedName}.${extension}`;
 }

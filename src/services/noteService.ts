@@ -8,7 +8,6 @@ import { getYear, getMonth, getMonthName, getDay, getFolderName, getTimeForFilen
 import { sanitizeFileName } from '../utils/fileNameHelpers';
 import { TagService } from './tagService';
 import { SummarizationService } from './summarizationService';
-import { logger } from './logService';
 
 /**
  * Open or create today's daily note
@@ -78,11 +77,8 @@ export async function createNoteFromTemplate(templateType: string): Promise<void
             return;
         }
 
-        logger.info('User entered note name', { noteName });
-
         // Sanitize filename and extract extension if provided
         const defaultFormat = getFileFormat();
-        logger.info('Default format', { defaultFormat });
         const { sanitizedName, extension } = sanitizeFileName(noteName, defaultFormat);
 
         const now = new Date();
@@ -91,8 +87,6 @@ export async function createNoteFromTemplate(templateType: string): Promise<void
         const noteFolder = path.join(notesPath, 'Inbox');
         const fileName = `${sanitizedName}.${extension}`;
         const filePath = path.join(noteFolder, fileName);
-
-        logger.info('Final file details', { fileName, filePath });
 
         // Create Inbox folder if it doesn't exist
         if (!(await pathExists(noteFolder))) {
