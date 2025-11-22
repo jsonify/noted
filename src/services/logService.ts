@@ -51,10 +51,11 @@ export class LogService {
 	 * Check if a log level should be logged based on current min level
 	 */
 	private shouldLog(level: LogLevel): boolean {
-		const levels = [LogLevel.Debug, LogLevel.Info, LogLevel.Warning, LogLevel.Error];
-		const currentLevelIndex = levels.indexOf(this.minLogLevel);
-		const messageLevelIndex = levels.indexOf(level);
-		return messageLevelIndex >= currentLevelIndex;
+		const levelOrder: Record<LogLevel, number> = {
+			[LogLevel.Debug]: 0, [LogLevel.Info]: 1,
+			[LogLevel.Warning]: 2, [LogLevel.Error]: 3
+		};
+		return levelOrder[level] >= levelOrder[this.minLogLevel];
 	}
 
 	/**
