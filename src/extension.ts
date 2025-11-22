@@ -126,7 +126,7 @@ export function activate(context: vscode.ExtensionContext) {
     if (debugMode) {
         logger.setMinLogLevel(LogLevel.Debug);
     }
-    context.subscriptions.push({ dispose: () => logger.dispose() });
+    context.subscriptions.push(logger);
 
     logger.info('Noted extension activated');
     logger.debug('Configuration loaded', { notesFolder: config.get('notesFolder') });
