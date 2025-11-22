@@ -128,10 +128,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
     context.subscriptions.push(logger);
 
-    // Show the output channel immediately on activation to confirm logging is working
-    logger.show(true);
-    logger.info('========== NOTED EXTENSION ACTIVATED WITH LOGGING ==========');
-    logger.info('Noted extension activated - version with custom extension support');
+    logger.info('Noted extension activated');
     logger.debug('Configuration loaded', { notesFolder: config.get('notesFolder') });
     const notesFolder = config.get<string>('notesFolder', 'Notes');
     const workspaceFolders = vscode.workspace.workspaceFolders;
