@@ -62,7 +62,7 @@ export class LogService {
 	 * Format a log message with timestamp and level
 	 */
 	private formatMessage(level: LogLevel, message: string, data?: any): string {
-		const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+		const timestamp = new Date().toISOString().slice(11, 23); // Extracts HH:mm:ss.sss from YYYY-MM-DDTHH:mm:ss.sssZ
 		let formatted = `[${timestamp}] [${level}] ${message}`;
 
 		if (data !== undefined) {
