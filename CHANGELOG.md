@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](https://github.com/jsonify/noted/compare/v1.43.17...v2.0.0) (2025-11-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* None - maintains backward compatibility with default behavior
+
+* debug: Add console logging to sanitizeFileName for troubleshooting
+
+* debug: Add extensive logging to trace note creation flow
+
+* debug: Add visible activation and command trigger logs with info messages
+
+* feat: Enhance logging and support for custom file extensions in note creation
+
+* Update src/extension.ts
+
+Co-authored-by: gemini-code-assist[bot] <176961590+gemini-code-assist[bot]@users.noreply.github.com>
+
+* fix: Remove logger imports and calls that broke tests
+
+- Remove logger import from fileNameHelpers.ts
+- Remove logger.info calls from sanitizeFileName
+- Remove logger import and calls from noteService.ts createNoteFromTemplate
+- Remove unused buildFileName function per code review
+- All 599 unit tests now passing
+
+* Claude/custom file extensions 01 lh d3jpyebr ec f34tfrua5y (#129) ([40b88cd](https://github.com/jsonify/noted/commit/40b88cd0d9f968755c4b30166015c9725e1c627a)), closes [#129](https://github.com/jsonify/noted/issues/129)
+
 ### [1.43.17](https://github.com/jsonify/noted/compare/v1.43.16...v1.43.17) (2025-11-22)
 
 ### [1.43.16](https://github.com/jsonify/noted/compare/v1.43.15...v1.43.16) (2025-11-21)
