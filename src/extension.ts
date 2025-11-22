@@ -128,7 +128,10 @@ export function activate(context: vscode.ExtensionContext) {
     }
     context.subscriptions.push(logger);
 
-    logger.info('Noted extension activated');
+    // Show the output channel immediately on activation to confirm logging is working
+    logger.show(true);
+    logger.info('========== NOTED EXTENSION ACTIVATED WITH LOGGING ==========');
+    logger.info('Noted extension activated - version with custom extension support');
     logger.debug('Configuration loaded', { notesFolder: config.get('notesFolder') });
     const notesFolder = config.get<string>('notesFolder', 'Notes');
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -2739,20 +2742,18 @@ async function createNoteFromTemplate(templateType: string) {
             return;
         }
 
-        // Sanitize filename: replace spaces with dashes, remove special chars
-        const sanitizedName = noteName
-            .toLowerCase()
-            .replace(/\s+/g, '-')
-            .replace(/[^a-z0-9-_]/g, '');
-
         const config = vscode.workspace.getConfiguration('noted');
         const fileFormat = config.get<string>('fileFormat', 'txt');
+
+        // Sanitize filename and respect user-provided file extensions
+        const { sanitizeFileName } = await import('./utils/fileNameHelpers');
+        const { sanitizedName, extension } = sanitizeFileName(noteName, fileFormat);
 
         const now = new Date();
 
         // All non-daily notes go to Inbox folder
         const noteFolder = path.join(notesPath, 'Inbox');
-        const fileName = `${sanitizedName}.${fileFormat}`;
+        const fileName = `${sanitizedName}.${extension}`;
         const filePath = path.join(noteFolder, fileName);
 
         // Create Inbox folder if it doesn't exist
