@@ -626,6 +626,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command to create a quick note directly
     let createQuickNote = vscode.commands.registerCommand('noted.createQuickNote', async () => {
+        console.log('========== NOTED.CREATEQUICKNOTE COMMAND TRIGGERED ==========');
+        vscode.window.showInformationMessage('[DEBUG] createQuickNote command started!');
         await createNoteFromTemplate('quick');
         refreshAllProviders();
     });
@@ -2737,20 +2739,18 @@ async function createNoteFromTemplate(templateType: string) {
             return;
         }
 
-        // Sanitize filename: replace spaces with dashes, remove special chars
-        const sanitizedName = noteName
-            .toLowerCase()
-            .replace(/\s+/g, '-')
-            .replace(/[^a-z0-9-_]/g, '');
-
         const config = vscode.workspace.getConfiguration('noted');
         const fileFormat = config.get<string>('fileFormat', 'txt');
+
+        // Sanitize filename and respect user-provided file extensions
+        const { sanitizeFileName } = await import('./utils/fileNameHelpers');
+        const { sanitizedName, extension } = sanitizeFileName(noteName, fileFormat);
 
         const now = new Date();
 
         // All non-daily notes go to Inbox folder
         const noteFolder = path.join(notesPath, 'Inbox');
-        const fileName = `${sanitizedName}.${fileFormat}`;
+        const fileName = `${sanitizedName}.${extension}`;
         const filePath = path.join(noteFolder, fileName);
 
         // Create Inbox folder if it doesn't exist
