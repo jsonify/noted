@@ -75,6 +75,8 @@ import {
     handleClearUndoHistory
 } from './commands/undoCommands';
 import { SummarizationCommands } from './commands/summarizationCommands';
+import { ActionItemsService } from './services/actionItemsService';
+import { ActionItemsCommands } from './commands/actionItemsCommands';
 import {
     handleSuggestTags
 } from './commands/autoTagCommands';
@@ -538,6 +540,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Initialize summarization command handlers
     const summarizationCommands = new SummarizationCommands(summarizationService, context, notesProvider);
+
+    // Initialize action items service and commands
+    const actionItemsService = new ActionItemsService();
+    const actionItemsCommands = new ActionItemsCommands(actionItemsService);
 
     // Initialize auto-tagging service (Phase 4)
     const autoTagService = new AutoTagService();
@@ -2085,6 +2091,14 @@ export function activate(context: vscode.ExtensionContext) {
         await summarizationCommands.handleSummarizeSelection();
     });
 
+    let extractActionItemsCheckboxes = vscode.commands.registerCommand('noted.extractActionItemsCheckboxes', async () => {
+        await actionItemsCommands.handleExtractActionItemsCheckboxes();
+    });
+
+    let extractActionItemsBullets = vscode.commands.registerCommand('noted.extractActionItemsBullets', async () => {
+        await actionItemsCommands.handleExtractActionItemsBullets();
+    });
+
     let summarizeRecent = vscode.commands.registerCommand('noted.summarizeRecent', async () => {
         await summarizationCommands.handleSummarizeRecent();
     });
@@ -2230,7 +2244,7 @@ export function activate(context: vscode.ExtensionContext) {
         showPreview, showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol,
-        summarizeNote, summarizeCurrentNote, summarizeSelection, summarizeRecent, summarizeWeek, summarizeMonth, summarizeCustomRange, clearSummaryCache, summarizeSearchResults,
+        summarizeNote, summarizeCurrentNote, summarizeSelection, extractActionItemsCheckboxes, extractActionItemsBullets, summarizeRecent, summarizeWeek, summarizeMonth, summarizeCustomRange, clearSummaryCache, summarizeSearchResults,
         showSummaryHistory, compareSummaries, restoreSummaryVersion, clearSummaryHistory, showSummaryHistoryStats,
         createPromptTemplate, editPromptTemplate, deletePromptTemplate, duplicatePromptTemplate, listPromptTemplates, viewTemplateVariables,
         suggestTags,

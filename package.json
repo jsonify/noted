@@ -687,6 +687,16 @@
         "icon": "$(sparkle)"
       },
       {
+        "command": "noted.extractActionItemsCheckboxes",
+        "title": "As Checkboxes",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "noted.extractActionItemsBullets",
+        "title": "As Bullet Points",
+        "icon": "$(list-unordered)"
+      },
+      {
         "command": "noted.batchGenerateTags",
         "title": "Noted: Batch Generate Tags",
         "icon": "$(tag-add)"
@@ -802,6 +812,10 @@
       {
         "id": "noted.editorContext",
         "label": "Noted"
+      },
+      {
+        "id": "noted.actionItemsMenu",
+        "label": "Create Action Items"
       }
     ],
     "menus": {
@@ -817,14 +831,29 @@
           "group": "2_ai@1"
         },
         {
+          "submenu": "noted.actionItemsMenu",
+          "when": "editorHasSelection",
+          "group": "2_ai@2"
+        },
+        {
           "command": "noted.summarizeCurrentNote",
           "when": "resourcePath =~ /Notes.*\\.(txt|md)$/",
-          "group": "2_ai@2"
+          "group": "2_ai@3"
         },
         {
           "command": "noted.generateTagsCurrentNote",
           "when": "resourcePath =~ /Notes.*\\.(txt|md)$/",
-          "group": "2_ai@3"
+          "group": "2_ai@4"
+        }
+      ],
+      "noted.actionItemsMenu": [
+        {
+          "command": "noted.extractActionItemsCheckboxes",
+          "group": "1_format@1"
+        },
+        {
+          "command": "noted.extractActionItemsBullets",
+          "group": "1_format@2"
         }
       ],
       "editor/context": [
