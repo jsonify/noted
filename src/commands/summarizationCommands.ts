@@ -381,22 +381,16 @@ export class SummarizationCommands {
                         return;
                     }
 
-                    // Insert summary below the selection
-                    const endPosition = selection.end;
-                    const insertPosition = new vscode.Position(endPosition.line + 1, 0);
+                    // Insert summary at the end of the line containing the selection's end point
+                    // to ensure consistent spacing.
+                    const endLine = editor.document.lineAt(selection.end.line);
+                    const insertPosition = endLine.range.end;
 
                     // Format the summary with header (extra blank line before header)
                     const summaryText = `\n\n## Summary of Selection\n\n${summary}\n`;
 
                     await editor.edit(editBuilder => {
-                        // If we're at the end of a line, add a newline first
-                        const lineText = editor.document.lineAt(endPosition.line).text;
-                        if (endPosition.character === lineText.length) {
-                            editBuilder.insert(new vscode.Position(endPosition.line, lineText.length), summaryText);
-                        } else {
-                            // Insert at the beginning of the next line
-                            editBuilder.insert(insertPosition, summaryText);
-                        }
+                        editBuilder.insert(insertPosition, summaryText);
                     });
 
                     vscode.window.showInformationMessage('Summary inserted below selection');
