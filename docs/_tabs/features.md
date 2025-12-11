@@ -161,10 +161,12 @@ Visualize your note-taking activity over time with stacked area charts showing n
 
 [Learn more →](/noted/posts/activity-chart/)
 
-## ✨ AI Summarization
+## ✨ AI Summarization & Action Items
 
-Generate intelligent summaries of your notes using GitHub Copilot. Summarize single notes or batch process multiple notes by time period.
+Generate intelligent summaries and extract action items from your notes using GitHub Copilot. **New in v2.0**: Context menu actions for selected text.
 
+- **Summarize Selection** ⭐ NEW: Select text → right-click → get instant AI summary below selection
+- **Create Action Items** ⭐ NEW: Extract tasks from selected text as checkboxes or bullets
 - **Single Note Summaries**: Right-click any note to generate instant summary
 - **Batch Processing**: Summarize week, month, or custom date ranges
 - **Smart Caching**: Instant retrieval for previously generated summaries
