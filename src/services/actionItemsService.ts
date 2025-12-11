@@ -15,6 +15,12 @@ export type ActionItemFormat = 'checkboxes' | 'bullets';
  * Service for extracting action items from text using AI
  */
 export class ActionItemsService {
+    /** Message returned when no action items are found */
+    public static readonly NO_ACTION_ITEMS_MESSAGE = 'No action items identified';
+
+    /** Maximum characters to send to the AI model */
+    private static readonly MAX_INPUT_CHARACTERS = 16000;
+
     /**
      * Check if Language Model API is available
      */
@@ -55,7 +61,7 @@ Instructions:
 - ${formatInstruction}
 - Include any mentioned deadlines, assignees, or priorities in parentheses
 - Group related items together if applicable
-- If no clear action items can be identified, respond with exactly: "No action items identified"
+- If no clear action items can be identified, respond with exactly: "${ActionItemsService.NO_ACTION_ITEMS_MESSAGE}"
 - Do not include any preamble or explanation, only the action items list
 
 Action items:`;
@@ -84,9 +90,8 @@ Action items:`;
         }
 
         // Truncate if too large
-        const maxChars = 16000;
-        const truncatedText = selectedText.length > maxChars
-            ? selectedText.substring(0, maxChars) + '\n\n[Text truncated for analysis]'
+        const truncatedText = selectedText.length > ActionItemsService.MAX_INPUT_CHARACTERS
+            ? selectedText.substring(0, ActionItemsService.MAX_INPUT_CHARACTERS) + '\n\n[Text truncated for analysis]'
             : selectedText;
 
         // Build prompt

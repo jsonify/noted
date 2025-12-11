@@ -72,6 +72,12 @@ export class ActionItemsCommands {
                         return;
                     }
 
+                    // Check if no action items were found
+                    if (actionItems === ActionItemsService.NO_ACTION_ITEMS_MESSAGE) {
+                        vscode.window.showInformationMessage('No action items were identified in the selected text');
+                        return;
+                    }
+
                     // Insert action items at the end of the line containing the selection's end point
                     const endLine = editor.document.lineAt(selection.end.line);
                     const insertPosition = endLine.range.end;
@@ -83,11 +89,7 @@ export class ActionItemsCommands {
                         editBuilder.insert(insertPosition, actionItemsText);
                     });
 
-                    if (actionItems === 'No action items identified') {
-                        vscode.window.showInformationMessage('No action items were identified in the selected text');
-                    } else {
-                        vscode.window.showInformationMessage('Action items inserted below selection');
-                    }
+                    vscode.window.showInformationMessage('Action items inserted below selection');
                 }
             );
         } catch (error) {
