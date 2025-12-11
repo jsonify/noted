@@ -375,7 +375,7 @@ export class SummarizationCommands {
                         return;
                     }
 
-                    const summary = await this.summarizationService.summarizeSelection(selectedText);
+                    const summary = await this.summarizationService.summarizeSelection(selectedText, token);
 
                     if (token.isCancellationRequested) {
                         return;
