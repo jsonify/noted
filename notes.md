@@ -2,6 +2,11 @@
 
 ## What's New
 
+### AI Context Menu Features (v2.0.0+) ⭐ LATEST
+- **Summarize Selection** (v2.0.1): Select text → Right-click → Get instant AI summary
+- **Create Action Items** (v2.0.2): Select text → Right-click → Extract tasks as checkboxes or bullets
+- **Custom File Extensions** (v2.0.0): Creating "example.sh" now preserves the extension
+
 ### Version Popup (v1.43.12+)
 - **Version Badge**: Displays current extension version at the top of the Templates & Recent panel
 - **What's New Popup**: Click the version badge to view recent changes and new features
@@ -300,6 +305,19 @@ Templates support powerful variable substitution with 10 built-in placeholders:
   - Responsive design that adapts to webview size
   - VS Code theme integration for consistent appearance
   - Tooltip shows week date range and detailed counts
+
+### AI Context Menu Features (v2.0.0+) ⭐ NEW
+- **Summarize Selection** (v2.0.1): Instant AI summaries of selected text
+  - Select any text in a note → Right-click → "Summarize Selection"
+  - AI-generated summary inserted directly below selection with `## Summary` header
+  - Cancellable progress indicator
+  - Great for: meeting notes, email threads, research findings
+- **Create Action Items** (v2.0.2): Extract actionable tasks from selected text
+  - Select text → Right-click → "Create Action Items" submenu
+  - Two formats: "As Checkboxes" (`- [ ]`) or "As Bullets" (`-`)
+  - AI extracts tasks with deadlines, assignees, and priority markers
+  - Inserts action items below selection with `## Action Items` header
+  - Smart detection: Shows "No action items identified" when text is purely informational
 
 ### AI Summarization (v1.37.0 - Phase 2)
 - **Single Note Summarization**: Generate AI-powered summaries of individual notes

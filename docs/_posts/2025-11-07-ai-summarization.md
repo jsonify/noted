@@ -11,6 +11,16 @@ Generate intelligent summaries of your notes using GitHub Copilot's AI capabilit
 
 ## Quick Start
 
+**Summarize Selection (v2.0.1):**
+```
+Select text → Right-click → Summarize Selection
+```
+
+**Create Action Items (v2.0.2):**
+```
+Select text → Right-click → Create Action Items → As Checkboxes / As Bullets
+```
+
 **Single Note:**
 ```
 Right-click any note → Summarize Note
@@ -31,13 +41,110 @@ Command Palette → Noted: Summarize Custom Date Range
 
 ## Overview
 
-AI Summarization provides three main capabilities:
+AI Summarization provides five main capabilities:
 
-1. **Single Note Summarization**: Quick summaries of individual notes
-2. **Batch Summarization**: Analyze multiple notes across time periods
-3. **Smart Caching**: Performance optimization with automatic cache management
+1. **Summarize Selection** ⭐ NEW (v2.0.1): Instant summaries of selected text
+2. **Create Action Items** ⭐ NEW (v2.0.2): Extract tasks from selected text
+3. **Single Note Summarization**: Quick summaries of individual notes
+4. **Batch Summarization**: Analyze multiple notes across time periods
+5. **Smart Caching**: Performance optimization with automatic cache management
 
 All summaries are generated locally using VS Code's Language Model API, ensuring your notes remain private on your machine.
+
+## Summarize Selection (v2.0.1)
+
+Instantly summarize any selected text and insert the summary directly below your selection.
+
+### How to Use
+
+1. Select any text in a note
+2. Right-click to open context menu
+3. Click "Summarize Selection"
+4. AI generates summary and inserts it below your selection
+
+### Features
+
+- **Inline Results**: Summary inserted directly below selection with a header
+- **Cancellable**: Click X during generation to cancel
+- **Smart Formatting**: Uses markdown formatting for readability
+- **Context Preservation**: Original selection remains intact
+
+### Output Format
+
+```markdown
+[Your selected text here]
+
+## Summary
+
+[AI-generated summary of the selected text]
+```
+
+### Use Cases
+
+- Summarize long meeting notes or discussions
+- Create quick TL;DR for email threads pasted into notes
+- Condense research findings or documentation
+- Get the gist of copied content before deciding to keep it
+
+## Create Action Items (v2.0.2)
+
+Extract actionable tasks from any selected text with AI analysis.
+
+### How to Use
+
+1. Select text containing tasks, discussions, or notes
+2. Right-click to open context menu
+3. Hover over "Create Action Items"
+4. Choose format:
+   - **As Checkboxes**: Creates `- [ ] Task description`
+   - **As Bullets**: Creates `- Task description`
+
+### Features
+
+- **Smart Extraction**: AI identifies actionable items from conversational text
+- **Deadline Detection**: Preserves mentioned dates and deadlines
+- **Assignee Tracking**: Includes mentioned people in parentheses
+- **Priority Markers**: Identifies and marks urgent items
+- **Grouped Output**: Related items organized together
+
+### Output Format
+
+**Checkboxes (for task tracking):**
+```markdown
+## Action Items
+
+- [ ] Review the authentication PR (John)
+- [ ] Deploy API updates by Friday
+- [ ] [URGENT] Fix production bug in payment service
+- [ ] Update documentation for new endpoints
+```
+
+**Bullets (for simple lists):**
+```markdown
+## Action Items
+
+- Review the authentication PR (John)
+- Deploy API updates by Friday
+- [URGENT] Fix production bug in payment service
+- Update documentation for new endpoints
+```
+
+### Use Cases
+
+- Extract tasks from meeting notes
+- Convert brainstorm sessions into actionable lists
+- Parse email threads for follow-up items
+- Turn project discussions into task lists
+- Create checklists from requirements documents
+
+### When No Items Found
+
+If the AI cannot identify actionable items in your selection, you'll see a notification:
+```
+No action items identified
+```
+
+This happens when the text is purely informational without specific tasks.
 
 ## Single Note Summarization
 

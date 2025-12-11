@@ -83,9 +83,16 @@ Visual monthly calendar for daily notes with highlighted indicators showing days
 
 Identify orphaned notes (no incoming or outgoing links) and placeholder links (references to notes that don't exist yet). The Orphans panel shows three categories: isolated notes, notes with no backlinks, and notes with no outgoing links. The Placeholders panel groups broken links by target, showing all source locations with context snippets and line numbers.
 
-### AI-powered summarization with GitHub Copilot
+### AI-powered features with GitHub Copilot
 
-Generate intelligent summaries of your notes using GitHub Copilot. Summarize single notes instantly or batch process multiple notes by time period (week, month, custom range). Summaries extract key insights, action items, and keywords with smart caching for instant access. Use custom prompt templates for different contexts (meeting notes, technical reviews, brainstorm sessions) and track summary versions over time. Auto-tag notes based on AI-extracted keywords.
+Generate intelligent summaries, extract action items, and more using GitHub Copilot. **New in v2.0**: Select any text and right-click for instant AI analysis:
+
+- **Summarize Selection**: Get a concise summary inserted right below your selected text
+- **Create Action Items**: Extract tasks as checkboxes (`- [ ]`) or bullets (`-`) from any text
+- **Summarize Notes**: Batch process multiple notes by time period (week, month, custom range)
+- **Custom Prompts**: Use templates for different contexts (meetings, technical reviews, brainstorms)
+- **Smart Caching**: Instant retrieval for previously generated summaries
+- **Auto-Tagging**: Generate tags based on AI-extracted keywords
 
 ### Browse templates visually
 
