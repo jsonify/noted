@@ -1,8 +1,8 @@
 {
-  "version": "1.43.14",
-  "date": "2025-11-20",
-  "prTitle": "Implement hierarchical note naming and organization",
-  "prDescription": "Add comprehensive support for Dendron-style hierarchical note organization using dot-delimited naming (e.g., project.design.frontend.md).\n\n**Core Features:**\n- **Dot-delimited hierarchies**: Notes like work.meetings.standup.md are organized into visual tree structures\n- **Virtual hierarchy nodes**: Tree view displays hierarchy without requiring actual folder structure\n- **Flexible organization**: Notes stored as flat files in Hierarchical Notes folder, displayed as hierarchical tree\n- **Full validation**: Strict format validation with helpful error messages\n\n**New Commands:**\n- Create Hierarchical Note - Create new hierarchical note with template selection\n- Open Hierarchical Note - Quick picker with existing hierarchy suggestions\n- Search Hierarchical Notes - Find hierarchical notes by path prefix\n\n**Configuration:**\n- Enable/disable hierarchical notes (default: enabled)\n- Configure separator character (. or /)\n- Set maximum depth limit (default: 10 levels)\n- Choose validation level (strict/relaxed)\n\n**Backwards Compatibility:**\nAll existing features work seamlessly with hierarchical notes - wiki links, search, backlinks, tags, graph view, and more!",
-  "prNumber": 125,
-  "prUrl": "https://github.com/jsonify/noted/pull/125"
+  "version": "2.0.2",
+  "date": "2025-12-11",
+  "prTitle": "Add create action items context menu feature",
+  "prDescription": "**New Feature: Create Action Items**\n\nExtract actionable tasks from selected text using AI-powered analysis.\n\n**How to use:**\n- Select text in any note\n- Right-click and choose \"Create Action Items\" from the context menu\n- Choose format: checkboxes (- [ ]) or bullets (- )\n\n**Features:**\n- AI-powered action item extraction using VS Code LLM API\n- Two format options: checkboxes for task tracking, bullets for simple lists\n- Inserts action items below your selection with \"## Action Items\" header\n- Smart detection - shows message when no actionable content is found\n\n**Technical Details:**\n- New ActionItemsService for AI-powered extraction\n- Integrated into Noted editor context menu\n- Uses GitHub Copilot (gpt-4o) for intelligent parsing",
+  "prNumber": 131,
+  "prUrl": "https://github.com/jsonify/noted/pull/131"
 }
