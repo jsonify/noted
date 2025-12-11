@@ -341,6 +341,72 @@ export class SummarizationCommands {
         }
     }
 
+    /**
+     * Handle summarizing selected text and inserting summary below the selection
+     */
+    public async handleSummarizeSelection(): Promise<void> {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No editor is currently open');
+            return;
+        }
+
+        const selection = editor.selection;
+        if (selection.isEmpty) {
+            vscode.window.showErrorMessage('No text is selected. Please select some text to summarize.');
+            return;
+        }
+
+        const selectedText = editor.document.getText(selection);
+        if (!selectedText.trim()) {
+            vscode.window.showErrorMessage('Selected text is empty or contains only whitespace');
+            return;
+        }
+
+        try {
+            await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: 'Summarizing selection...',
+                    cancellable: true
+                },
+                async (progress, token) => {
+                    if (token.isCancellationRequested) {
+                        return;
+                    }
+
+                    const summary = await this.summarizationService.summarizeSelection(selectedText);
+
+                    if (token.isCancellationRequested) {
+                        return;
+                    }
+
+                    // Insert summary below the selection
+                    const endPosition = selection.end;
+                    const insertPosition = new vscode.Position(endPosition.line + 1, 0);
+
+                    // Format the summary with header
+                    const summaryText = `\n## Summary of Selection\n\n${summary}\n`;
+
+                    await editor.edit(editBuilder => {
+                        // If we're at the end of a line, add a newline first
+                        const lineText = editor.document.lineAt(endPosition.line).text;
+                        if (endPosition.character === lineText.length) {
+                            editBuilder.insert(new vscode.Position(endPosition.line, lineText.length), summaryText);
+                        } else {
+                            // Insert at the beginning of the next line
+                            editBuilder.insert(insertPosition, summaryText);
+                        }
+                    });
+
+                    vscode.window.showInformationMessage('Summary inserted below selection');
+                }
+            );
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
     // ========================================================================
     // Private Helper Methods
     // ========================================================================

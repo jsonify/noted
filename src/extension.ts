@@ -2081,6 +2081,10 @@ export function activate(context: vscode.ExtensionContext) {
         await summarizationCommands.handleSummarizeCurrentNote();
     });
 
+    let summarizeSelection = vscode.commands.registerCommand('noted.summarizeSelection', async () => {
+        await summarizationCommands.handleSummarizeSelection();
+    });
+
     let summarizeRecent = vscode.commands.registerCommand('noted.summarizeRecent', async () => {
         await summarizationCommands.handleSummarizeRecent();
     });
@@ -2226,7 +2230,7 @@ export function activate(context: vscode.ExtensionContext) {
         showPreview, showMarkdownToolbar,
         undoCommand, redoCommand, showUndoHistory, clearUndoHistory,
         renameSymbol,
-        summarizeNote, summarizeCurrentNote, summarizeRecent, summarizeWeek, summarizeMonth, summarizeCustomRange, clearSummaryCache, summarizeSearchResults,
+        summarizeNote, summarizeCurrentNote, summarizeSelection, summarizeRecent, summarizeWeek, summarizeMonth, summarizeCustomRange, clearSummaryCache, summarizeSearchResults,
         showSummaryHistory, compareSummaries, restoreSummaryVersion, clearSummaryHistory, showSummaryHistoryStats,
         createPromptTemplate, editPromptTemplate, deletePromptTemplate, duplicatePromptTemplate, listPromptTemplates, viewTemplateVariables,
         suggestTags,
