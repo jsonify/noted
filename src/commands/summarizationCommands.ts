@@ -385,8 +385,8 @@ export class SummarizationCommands {
                     const endPosition = selection.end;
                     const insertPosition = new vscode.Position(endPosition.line + 1, 0);
 
-                    // Format the summary with header
-                    const summaryText = `\n## Summary of Selection\n\n${summary}\n`;
+                    // Format the summary with header (extra blank line before header)
+                    const summaryText = `\n\n## Summary of Selection\n\n${summary}\n`;
 
                     await editor.edit(editBuilder => {
                         // If we're at the end of a line, add a newline first
