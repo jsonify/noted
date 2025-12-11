@@ -682,6 +682,11 @@
         "icon": "$(sparkle)"
       },
       {
+        "command": "noted.summarizeSelection",
+        "title": "Summarize Selection",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "noted.batchGenerateTags",
         "title": "Noted: Batch Generate Tags",
         "icon": "$(tag-add)"
@@ -807,14 +812,19 @@
           "group": "1_edit@1"
         },
         {
+          "command": "noted.summarizeSelection",
+          "when": "editorHasSelection",
+          "group": "2_ai@1"
+        },
+        {
           "command": "noted.summarizeCurrentNote",
           "when": "resourcePath =~ /Notes.*\\.(txt|md)$/",
-          "group": "2_ai@1"
+          "group": "2_ai@2"
         },
         {
           "command": "noted.generateTagsCurrentNote",
           "when": "resourcePath =~ /Notes.*\\.(txt|md)$/",
-          "group": "2_ai@2"
+          "group": "2_ai@3"
         }
       ],
       "editor/context": [

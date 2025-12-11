@@ -526,4 +526,46 @@ ${note.content}
         }
         return 'GitHub Copilot';
     }
+
+    /**
+     * Summarize selected text (concise 2-3 sentence summary)
+     */
+    async summarizeSelection(selectedText: string, token: vscode.CancellationToken): Promise<string> {
+        // Check if AI is enabled
+        if (!this.isAIEnabled()) {
+            throw new Error('AI summarization is disabled. Enable it in settings: noted.ai.enabled');
+        }
+
+        // Check if Language Model API is available
+        if (!(await this.isLanguageModelAvailable())) {
+            throw new Error('Copilot is not available. Please install and enable GitHub Copilot to use AI summarization features.');
+        }
+
+        // Truncate if too large
+        const maxChars = 16000;
+        const truncatedText = selectedText.length > maxChars
+            ? selectedText.substring(0, maxChars) + '\n\n[Text truncated for summarization]'
+            : selectedText;
+
+        // Build a concise summarization prompt
+        const prompt = `Summarize the following text in 2-3 concise sentences, capturing the main points:\n\n---\n${truncatedText}\n---\n\nProvide only the summary without any preamble or extra formatting.`;
+
+        // Call Language Model API
+        try {
+            const model = await selectAIModel();
+            const messages = [vscode.LanguageModelChatMessage.User(prompt)];
+
+            const response = await model.sendRequest(messages, {}, token);
+
+            let summary = '';
+            for await (const chunk of response.text) {
+                summary += chunk;
+            }
+
+            return summary.trim();
+
+        } catch (error) {
+            throw new Error(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
 }
