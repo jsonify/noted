@@ -92,6 +92,7 @@ Generate intelligent summaries, extract action items, and more using GitHub Copi
 - **Summarize Notes**: Batch process multiple notes by time period (week, month, custom range)
 - **Custom Prompts**: Use templates for different contexts (meetings, technical reviews, brainstorms)
 - **Smart Caching**: Instant retrieval for previously generated summaries
+- **Version History**: Track and compare different versions of summaries over time
 - **Auto-Tagging**: Generate tags based on AI-extracted keywords
 
 ### Browse templates visually
