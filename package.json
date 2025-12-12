@@ -10,7 +10,7 @@
     "url": "https://github.com/jsonify/noted"
   },
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.107.0"
   },
   "categories": [
     "Other"
