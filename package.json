@@ -1489,30 +1489,30 @@
     }
   },
   "devDependencies": {
-    "@types/chai": "4",
+    "@types/chai": "^4.3.20",
     "@types/js-yaml": "^4.0.9",
     "@types/markdown-it": "^14.1.2",
     "@types/marked": "^6.0.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^18.0.0",
+    "@types/node": "^18.19.130",
     "@types/sinon": "^17.0.4",
-    "@types/vscode": "^1.80.0",
+    "@types/vscode": "^1.107.0",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.2.1",
-    "chai": "4",
+    "@vscode/vsce": "^3.7.1",
+    "chai": "^4.5.0",
     "conventional-changelog-cli": "^5.0.0",
-    "esbuild": "^0.27.0",
+    "esbuild": "^0.27.1",
     "glob": "^11.1.0",
-    "mocha": "^11.7.4",
+    "mocha": "^11.7.5",
     "sinon": "^21.0.0",
     "standard-version": "^9.5.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "chrono-node": "^2.9.0",
     "fuse.js": "^7.1.0",
     "js-yaml": "^4.1.1",
     "markdown-it-regex": "^0.2.2",
-    "marked": "^16.4.1"
+    "marked": "^16.4.2"
   }
 }
