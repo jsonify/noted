@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.4](https://github.com/jsonify/noted/compare/v2.0.3...v2.0.4) (2025-12-12)
+
+
+### Bug Fixes
+
+* align engines.vscode with @types/vscode version ([#134](https://github.com/jsonify/noted/issues/134)) ([263ec0a](https://github.com/jsonify/noted/commit/263ec0a762982d820021e7dd348a266a4faf889d))
+
+
+### Chores
+
+* update code structure for improved readability and maintainability ([#133](https://github.com/jsonify/noted/issues/133)) ([e546a4d](https://github.com/jsonify/noted/commit/e546a4df771bcfe83cce42de91a414724485531d))
+
 ### [2.0.3](https://github.com/jsonify/noted/compare/v2.0.2...v2.0.3) (2025-12-11)
 
 ### [2.0.2](https://github.com/jsonify/noted/compare/v2.0.1...v2.0.2) (2025-12-11)
