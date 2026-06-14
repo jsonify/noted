@@ -1501,7 +1501,7 @@
     "@vscode/vsce": "^3.7.1",
     "chai": "^4.5.0",
     "conventional-changelog-cli": "^5.0.0",
-    "esbuild": "^0.27.1",
+    "esbuild": "^0.28.1",
     "glob": "^11.1.0",
     "mocha": "^11.7.5",
     "sinon": "^21.0.0",
