@@ -1511,7 +1511,7 @@
   "dependencies": {
     "chrono-node": "^2.9.0",
     "fuse.js": "^7.1.0",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^4.3.1",
     "markdown-it-regex": "^0.2.2",
     "marked": "^16.4.2"
   }
